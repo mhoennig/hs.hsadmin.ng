@@ -2,7 +2,7 @@ get:
     tags:
         - hs-office-relations
     description: 'Fetch a single person relation by its uuid, if visible for the current subject.'
-    operationId: getRelationByUuid
+    operationId: getSingleRelationByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

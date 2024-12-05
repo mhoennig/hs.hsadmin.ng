@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembershipsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
@@ -33,6 +34,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.office.membership.api.getListOfMemberships")
     public ResponseEntity<List<HsOfficeMembershipResource>> getListOfMemberships(
             final String currentSubject,
             final String assumedRoles,
@@ -53,6 +55,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.membership.api.postNewMembership")
     public ResponseEntity<HsOfficeMembershipResource> postNewMembership(
             final String currentSubject,
             final String assumedRoles,
@@ -76,6 +79,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.office.membership.api.getSingleMembershipByUuid")
     public ResponseEntity<HsOfficeMembershipResource> getSingleMembershipByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -93,6 +97,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.membership.api.deleteMembershipByUuid")
     public ResponseEntity<Void> deleteMembershipByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -109,6 +114,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.membership.api.patchMembership")
     public ResponseEntity<HsOfficeMembershipResource> patchMembership(
             final String currentSubject,
             final String assumedRoles,

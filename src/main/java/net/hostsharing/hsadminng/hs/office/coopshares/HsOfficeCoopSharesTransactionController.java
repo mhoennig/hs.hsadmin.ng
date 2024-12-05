@@ -1,6 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import jakarta.persistence.EntityNotFoundException;
+
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopSharesApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionInsertResource;
@@ -38,6 +40,8 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Override
     @Transactional(readOnly = true)
+
+    @Timed("app.office.coopShares.api.getListOfCoopShares")
     public ResponseEntity<List<HsOfficeCoopSharesTransactionResource>> getListOfCoopShares(
             final String currentSubject,
             final String assumedRoles,
@@ -57,6 +61,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Override
     @Transactional
+    @Timed("app.office.coopShares.repo.postNewCoopSharesTransaction")
     public ResponseEntity<HsOfficeCoopSharesTransactionResource> postNewCoopSharesTransaction(
             final String currentSubject,
             final String assumedRoles,
@@ -80,6 +85,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.office.coopShares.repo.getSingleCoopShareTransactionByUuid")
     public ResponseEntity<HsOfficeCoopSharesTransactionResource> getSingleCoopShareTransactionByUuid(
         final String currentSubject, final String assumedRoles, final UUID shareTransactionUuid) {
 

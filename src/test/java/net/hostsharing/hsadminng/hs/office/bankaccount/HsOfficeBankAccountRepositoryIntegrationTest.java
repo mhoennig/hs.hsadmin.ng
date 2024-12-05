@@ -128,7 +128,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
     }
 
     @Nested
-    class ListBankAccounts {
+    class GetListOfBankAccounts {
 
         @Test
         public void globalAdmin_canViewAllBankAccounts() {

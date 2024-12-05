@@ -3,7 +3,7 @@ get:
     description: Returns the list of (optionally filtered) contacts which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-office-contacts
-    operationId: listContacts
+    operationId: getListOfContacts
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -31,7 +31,7 @@ post:
     summary: Adds a new contact.
     tags:
         - hs-office-contacts
-    operationId: addContact
+    operationId: postNewContact
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

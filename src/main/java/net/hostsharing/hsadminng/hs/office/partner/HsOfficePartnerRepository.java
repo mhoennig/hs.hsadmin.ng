@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
+import io.micrometer.core.annotation.Timed;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -9,9 +10,11 @@ import java.util.UUID;
 
 public interface HsOfficePartnerRepository extends Repository<HsOfficePartnerEntity, UUID> {
 
+    @Timed("app.office.partners.repo.findByUuid")
     Optional<HsOfficePartnerEntity> findByUuid(UUID id);
 
-    List<HsOfficePartnerEntity> findAll(); // TODO.impl: move to a repo in test sources
+    @Timed("app.office.partners.repo.findAll")
+    List<HsOfficePartnerEntity> findAll(); // TODO.refa: move to a repo in test sources
 
     @Query("""
             SELECT partner FROM HsOfficePartnerEntity partner
@@ -25,12 +28,18 @@ public interface HsOfficePartnerRepository extends Repository<HsOfficePartnerEnt
                     OR person.givenName like concat(cast(:name as text), '%')
                     OR person.familyName like concat(cast(:name as text), '%')
                """)
+    @Timed("app.office.partners.repo.findPartnerByOptionalNameLike")
     List<HsOfficePartnerEntity> findPartnerByOptionalNameLike(String name);
+
+    @Timed("app.office.partners.repo.findPartnerByPartnerNumber")
     HsOfficePartnerEntity findPartnerByPartnerNumber(Integer partnerNumber);
 
+    @Timed("app.office.partners.repo.save")
     HsOfficePartnerEntity save(final HsOfficePartnerEntity entity);
 
+    @Timed("app.office.partners.repo.count")
     long count();
 
+    @Timed("app.office.partners.repo.deleteByUuid")
     int deleteByUuid(UUID uuid);
 }

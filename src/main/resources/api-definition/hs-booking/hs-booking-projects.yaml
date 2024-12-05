@@ -3,7 +3,7 @@ get:
     description: Returns the list of all booking projects for a specified debitor which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-booking-projects
-    operationId: listBookingProjectsByDebitorUuid
+    operationId: getListOfBookingProjectsByDebitorUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -32,7 +32,7 @@ post:
     summary: Adds a new project as a container for booking items.
     tags:
         - hs-booking-projects
-    operationId: addBookingProject
+    operationId: postNewBookingProject
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

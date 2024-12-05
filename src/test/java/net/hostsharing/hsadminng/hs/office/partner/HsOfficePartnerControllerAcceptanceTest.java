@@ -58,7 +58,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
     @Nested
     @Transactional
-    class ListPartners {
+    class GetListOfPartners {
 
         @Test
         void globalAdmin_withoutAssumedRoles_canViewAllPartners_ifNoCriteriaGiven() {
@@ -87,10 +87,10 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
     @Nested
     @Transactional
-    class AddPartner {
+    class PostNewPartner {
 
         @Test
-        void globalAdmin_withoutAssumedRole_canAddPartner() {
+        void globalAdmin_withoutAssumedRole_canPostNewPartner() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
@@ -150,7 +150,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void globalAdmin_canNotAddPartner_ifContactDoesNotExist() {
+        void globalAdmin_canNotPostNewPartner_ifContactDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
@@ -188,7 +188,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void globalAdmin_canNotAddPartner_ifPersonDoesNotExist() {
+        void globalAdmin_canNotPostNewPartner_ifPersonDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
             final var mandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);

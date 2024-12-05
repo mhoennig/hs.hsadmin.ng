@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
+import io.micrometer.core.annotation.Timed;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEntity, UUID> {
 
+    @Timed("app.office.debitors.repo.findByUuid")
     Optional<HsOfficeDebitorEntity> findByUuid(UUID id);
 
     @Query("""
@@ -19,12 +21,13 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
                 WHERE partner.partnerNumber = :partnerNumber
                   AND debitor.debitorNumberSuffix = :debitorNumberSuffix
             """)
-     List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int partnerNumber, String debitorNumberSuffix);
+    @Timed("app.office.debitors.repo.findDebitorByPartnerNumberAndDebitorNumberSuffix")
+    List<HsOfficeDebitorEntity> findDebitorByPartnerNumberAndDebitorNumberSuffix(int partnerNumber, String debitorNumberSuffix);
 
     default List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int debitorNumber) {
         final var partnerNumber = debitorNumber / 100;
         final String suffix = String.format("%02d", debitorNumber % 100);
-        final var result = findDebitorByDebitorNumber(partnerNumber, suffix);
+        final var result = findDebitorByPartnerNumberAndDebitorNumberSuffix(partnerNumber, suffix);
         return result;
     }
 
@@ -46,11 +49,15 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
                     OR person.givenName like concat(cast(:name as text), '%')
                     OR contact.caption like concat(cast(:name as text), '%')
                """)
+    @Timed("app.office.debitors.repo.findDebitorByOptionalNameLike")
     List<HsOfficeDebitorEntity> findDebitorByOptionalNameLike(String name);
 
+    @Timed("app.office.debitors.repo.save")
     HsOfficeDebitorEntity save(final HsOfficeDebitorEntity entity);
 
+    @Timed("app.office.debitors.repo.count")
     long count();
 
+    @Timed("app.office.debitors.repo.deleteByUuid")
     int deleteByUuid(UUID uuid);
 }

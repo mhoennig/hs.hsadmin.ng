@@ -9,9 +9,11 @@ management:
         web:
             exposure:
                 include: info, health, metrics
+    observations:
+        annotations:
+            enabled: true
 
 spring:
-
     datasource:
         driver-class-name: org.postgresql.Driver
         password: password
@@ -33,3 +35,11 @@ liquibase:
 hsadminng:
     postgres:
         leakproof:
+
+metrics:
+    distribution:
+        percentiles-histogram:
+            http:
+                server:
+                    requests: true
+

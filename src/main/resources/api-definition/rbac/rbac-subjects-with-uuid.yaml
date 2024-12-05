@@ -2,7 +2,7 @@ get:
     tags:
         - rbac-subjects
     description: 'Fetch a single subject by its id, if visible for the current subject.'
-    operationId: getSubjectById
+    operationId: getSingleSubjectByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

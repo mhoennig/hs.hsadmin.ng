@@ -45,7 +45,7 @@ class RbacSubjectControllerRestTest {
 
 
     @Test
-    void createSubjectUsesGivenUuid() throws Exception {
+    void postNewSubjectUsesGivenUuid() throws Exception {
         // given
         final var givenUuid = UUID.randomUUID();
 
@@ -69,7 +69,7 @@ class RbacSubjectControllerRestTest {
     }
 
     @Test
-    void createSubjectGeneratesRandomUuidIfNotGiven() throws Exception {
+    void postNewSubjectGeneratesRandomUuidIfNotGiven() throws Exception {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/rbac/subjects")

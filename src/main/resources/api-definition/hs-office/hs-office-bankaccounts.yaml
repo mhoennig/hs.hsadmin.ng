@@ -3,7 +3,7 @@ get:
     description: Returns the list of (optionally filtered) bankaccounts which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-office-bank-accounts
-    operationId: listBankAccounts
+    operationId: getListOfBankAccounts
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -31,7 +31,7 @@ post:
     summary: Adds a new bank account.
     tags:
         - hs-office-bank-accounts
-    operationId: addBankAccount
+    operationId: postNewBankAccount
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

@@ -1,7 +1,7 @@
 get:
     tags:
         - rbac-grants
-    operationId: listSubjectGrants
+    operationId: getListOfSubjectGrants
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -18,7 +18,7 @@ get:
 post:
     tags:
         - rbac-grants
-    operationId: grantRoleToSubject
+    operationId: postNewRoleGrantToSubject
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

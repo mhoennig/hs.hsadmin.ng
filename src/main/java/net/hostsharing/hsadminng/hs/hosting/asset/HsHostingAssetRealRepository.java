@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import io.micrometer.core.annotation.Timed;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -10,8 +11,10 @@ import java.util.UUID;
 
 public interface HsHostingAssetRealRepository extends HsHostingAssetRepository<HsHostingAssetRealEntity>, Repository<HsHostingAssetRealEntity, UUID> {
 
+    @Timed("app.hostingAsset.repo.findByUuid.real")
     Optional<HsHostingAssetRealEntity> findByUuid(final UUID serverUuid);
 
+    @Timed("app.hostingAsset.repo.findByIdentifier.real")
     List<HsHostingAssetRealEntity> findByIdentifier(String assetIdentifier);
 
     default List<HsHostingAssetRealEntity> findByTypeAndIdentifier(@NotNull HsHostingAssetType type,  @NotNull String identifier) {
@@ -24,6 +27,7 @@ public interface HsHostingAssetRealRepository extends HsHostingAssetRepository<H
              where cast(ha.type as String) = :type
                and ha.identifier = :identifier
             """)
+    @Timed("app.hostingAsset.repo.findByTypeAndIdentifierImpl.real")
     List<HsHostingAssetRealEntity> findByTypeAndIdentifierImpl(@NotNull String type, @NotNull String identifier);
 
     @Query(value = """
@@ -46,14 +50,19 @@ public interface HsHostingAssetRealRepository extends HsHostingAssetRepository<H
     """, nativeQuery = true)
     // The JPQL query did not generate "left join" but just "join".
     // I also optimized the query by not using the _rv for hs_booking.item and hs_hosting.asset, only for hs_hosting.asset_rv.
+    @Timed("app.hostingAsset.repo.findAllByCriteriaImpl.real")
     List<HsHostingAssetRealEntity> findAllByCriteriaImpl(UUID projectUuid, UUID parentAssetUuid, String type);
+
     default List<HsHostingAssetRealEntity> findAllByCriteria(final UUID projectUuid, final UUID parentAssetUuid, final HsHostingAssetType type) {
         return findAllByCriteriaImpl(projectUuid, parentAssetUuid, HsHostingAssetType.asString(type));
     }
 
+    @Timed("app.hostingAsset.repo.save.real")
     HsHostingAssetRealEntity save(HsHostingAssetRealEntity current);
 
+    @Timed("app.hostingAsset.repo.deleteByUuid.real")
     int deleteByUuid(final UUID uuid);
 
+    @Timed("app.hostingAsset.repo.count.real")
     long count();
 }

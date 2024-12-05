@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopAssetsApi;
@@ -55,6 +56,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.office.coopAssets.api.getListOfCoopAssets")
     public ResponseEntity<List<HsOfficeCoopAssetsTransactionResource>> getListOfCoopAssets(
             final String currentSubject,
             final String assumedRoles,
@@ -77,6 +79,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Override
     @Transactional
+    @Timed("app.office.coopAssets.api.postNewCoopAssetTransaction")
     public ResponseEntity<HsOfficeCoopAssetsTransactionResource> postNewCoopAssetTransaction(
             final String currentSubject,
             final String assumedRoles,
@@ -102,6 +105,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.office.coopAssets.api.getSingleCoopAssetTransactionByUuid")
     public ResponseEntity<HsOfficeCoopAssetsTransactionResource> getSingleCoopAssetTransactionByUuid(
             final String currentSubject, final String assumedRoles, final UUID assetTransactionUuid) {
 

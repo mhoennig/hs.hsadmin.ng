@@ -132,10 +132,10 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    class AddSepaMandate {
+    class PostNewSepaMandate {
 
         @Test
-        void globalAdmin_canAddSepaMandate() {
+        void globalAdmin_canPostNewSepaMandate() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
@@ -177,7 +177,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
         // TODO.test: move validation tests to a ...WebMvcTest
         @Test
-        void globalAdmin_canNotAddSepaMandateWhenDebitorUuidIsMissing() {
+        void globalAdmin_canNotPostNewSepaMandateWhenDebitorUuidIsMissing() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
@@ -202,7 +202,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        void globalAdmin_canNotAddSepaMandate_ifBankAccountDoesNotExist() {
+        void globalAdmin_canNotPostNewSepaMandate_ifBankAccountDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
@@ -232,7 +232,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        void globalAdmin_canNotAddSepaMandate_ifPersonDoesNotExist() {
+        void globalAdmin_canNotPostNewSepaMandate_ifPersonDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitorUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");

@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

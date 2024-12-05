@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeSepaMandatesApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateInsertResource;
@@ -38,7 +39,8 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeSepaMandateResource>> listSepaMandatesByIban(
+    @Timed("app.office.sepaMandates.api.getListOfSepaMandates")
+    public ResponseEntity<List<HsOfficeSepaMandateResource>> getListOfSepaMandates(
             final String currentSubject,
             final String assumedRoles,
             final String iban) {
@@ -53,7 +55,8 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeSepaMandateResource> addSepaMandate(
+    @Timed("app.office.sepaMandates.api.postNewSepaMandate")
+    public ResponseEntity<HsOfficeSepaMandateResource> postNewSepaMandate(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficeSepaMandateInsertResource body) {
@@ -76,7 +79,8 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeSepaMandateResource> getSepaMandateByUuid(
+    @Timed("app.office.sepaMandates.api.getSingleSepaMandateByUuid")
+    public ResponseEntity<HsOfficeSepaMandateResource> getSingleSepaMandateByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID sepaMandateUuid) {
@@ -93,6 +97,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Override
     @Transactional
+    @Timed("app.office.sepaMandates.api.deleteSepaMandateByUuid")
     public ResponseEntity<Void> deleteSepaMandateByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -109,6 +114,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Override
     @Transactional
+    @Timed("app.office.sepaMandates.api.patchSepaMandate")
     public ResponseEntity<HsOfficeSepaMandateResource> patchSepaMandate(
             final String currentSubject,
             final String assumedRoles,

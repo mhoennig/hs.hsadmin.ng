@@ -10,6 +10,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
@@ -20,7 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.persistence.Table;
 
-import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
+import java.lang.annotation.Annotation;
+
+import static com.tngtech.archunit.core.domain.JavaModifier.PUBLIC;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static java.lang.String.format;
@@ -98,7 +101,7 @@ public class ArchitectureTest {
     @SuppressWarnings("unused")
     public static final ArchRule testClassesAreProperlyNamed = classes()
             .that().haveSimpleNameEndingWith("Test")
-            .and().doNotHaveModifier(ABSTRACT)
+            .and().doNotHaveModifier(JavaModifier.ABSTRACT)
             .should().haveNameMatching(".*(UnitTest|RestTest|IntegrationTest|AcceptanceTest|ScenarioTest|ArchitectureTest)$");
 
     @ArchTest
@@ -348,8 +351,22 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
+    static final ArchRule restControllerMethods = classes()
+            .that().areAnnotatedWith(RestController.class)
+            .and().resideOutsideOfPackages("net.hostsharing.hsadminng.rbac.test", "net.hostsharing.hsadminng.rbac.test.*")
+            .should(haveAllPublicMethodsAnnotatedWith(Timed.class));
+
+    @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule repositoryNaming =
         classes().that().areAssignableTo(Repository.class).should().haveSimpleNameEndingWith("Repository");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    static final ArchRule repositoryMethods = classes()
+            .that().areAssignableTo(Repository.class)
+            .and().resideOutsideOfPackages("net.hostsharing.hsadminng.rbac.test", "net.hostsharing.hsadminng.rbac.test.*")
+            .should(haveAllPublicMethodsAnnotatedWith(Timed.class));
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -388,5 +405,36 @@ public class ArchitectureTest {
                 }
             }
         };
+    }
+
+    private static ArchCondition<JavaClass> haveAllPublicMethodsAnnotatedWith(Class<? extends Annotation> annotation) {
+        return new ArchCondition<>("have all public methods annotated with @" + annotation.getSimpleName()) {
+            @Override
+            public void check(final JavaClass item, final ConditionEvents events) {
+                for (JavaMethod method : item.getMethods()) {
+                    if (method.isAnnotatedWith(annotation)) {
+                        continue;
+                    }
+                    if (isGeneratedSpringRepositoryMethod(item, method)) {
+                        continue;
+                    }
+                    if (item.isAnnotatedWith(RestController.class) && !method.getModifiers().contains(PUBLIC)) {
+                        continue;
+                    }
+                    final var message = String.format(
+                            "Method %s in class %s is not annotated with @%s",
+                            method.getName(),
+                            item.getName(),
+                            annotation.getSimpleName()
+                    );
+                    events.add(SimpleConditionEvent.violated(method, message));
+                }
+            }
+        };
+    }
+
+    private static boolean isGeneratedSpringRepositoryMethod(final JavaClass item, final JavaMethod method) {
+        // this is a heuristic, ideally we can determine all methods with generated database calls
+        return item.isAssignableTo(Repository.class) && !method.getModifiers().contains(JavaModifier.ABSTRACT);
     }
 }

@@ -2,7 +2,7 @@ get:
     tags:
         - hs-office-contacts
     description: 'Fetch a single business contact by its uuid, if visible for the current subject.'
-    operationId: getContactByUuid
+    operationId: getSingleContactByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

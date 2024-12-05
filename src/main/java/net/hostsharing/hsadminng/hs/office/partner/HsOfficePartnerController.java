@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.ReferenceNotFoundException;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
@@ -50,7 +51,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficePartnerResource>> listPartners(
+    @Timed("app.office.partners.api.getListOfPartners")
+    public ResponseEntity<List<HsOfficePartnerResource>> getListOfPartners(
             final String currentSubject,
             final String assumedRoles,
             final String name) {
@@ -64,7 +66,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficePartnerResource> addPartner(
+    @Timed("app.office.partners.api.postNewPartner")
+    public ResponseEntity<HsOfficePartnerResource> postNewPartner(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficePartnerInsertResource body) {
@@ -86,7 +89,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficePartnerResource> getPartnerByUuid(
+    @Timed("app.office.partners.api.getSinglePartnerByUuid")
+    public ResponseEntity<HsOfficePartnerResource> getSinglePartnerByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid) {
@@ -102,6 +106,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Override
     @Transactional
+    @Timed("app.office.partners.api.deletePartnerByUuid")
     public ResponseEntity<Void> deletePartnerByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -122,6 +127,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Override
     @Transactional
+    @Timed("app.office.partners.api.patchPartner")
     public ResponseEntity<HsOfficePartnerResource> patchPartner(
             final String currentSubject,
             final String assumedRoles,

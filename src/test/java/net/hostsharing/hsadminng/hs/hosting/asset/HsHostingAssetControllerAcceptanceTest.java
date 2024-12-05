@@ -76,7 +76,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
     @Nested
     @Order(2)
-    class ListAssets {
+    class GetListOfHostingAssets {
 
         @Test
         void globalAdmin_canViewAllAssetsOfArbitraryDebitor() {
@@ -146,7 +146,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
     @Nested
     @Order(3)
-    class AddAsset {
+    class PostNewHostingAsset {
 
         @Test
         void globalAdmin_canAddBookedAsset() {
@@ -481,7 +481,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
     @Nested
     @Order(4)
-    class PatchAsset {
+    class PatchHostingAsset {
 
         @Test
         void globalAdmin_canPatchAllUpdatablePropertiesOfAsset() {

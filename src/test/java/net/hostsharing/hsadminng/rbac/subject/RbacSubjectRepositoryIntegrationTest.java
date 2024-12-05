@@ -41,7 +41,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
     HttpServletRequest request;
 
     @Nested
-    class CreateSubject {
+    class PostNewSubject {
 
         @Test
         @Transactional(propagation = Propagation.NEVER)
@@ -178,7 +178,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Nested
-    class ListSubjectPermissions {
+    class GetListOfSubjectPermissions {
 
         private static final String[] ALL_USER_PERMISSIONS = Array.of(
                 // @formatter:off

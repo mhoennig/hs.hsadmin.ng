@@ -139,10 +139,10 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
     @Nested
     @Order(3)
-    class AddBookingItem {
+    class PostNewBookingItem {
 
         @Test
-        void globalAdmin_canAddBookingItem() {
+        void globalAdmin_canPostNewBookingItem() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);
@@ -349,7 +349,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         }
 
         @Test
-        void projectAgent_canAddBookingItemEvenIfHostingAssetCreationFails() {
+        void projectAgent_canPostNewBookingItemEvenIfHostingAssetCreationFails() {
 
             context.define("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);

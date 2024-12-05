@@ -5,7 +5,7 @@ get:
         To match data, all given query parameters must be fulfilled ('and' / logical conjunction).
     tags:
         - hs-office-relations
-    operationId: listRelations
+    operationId: getListOfRelations
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -52,7 +52,7 @@ post:
     summary: Adds a new person relation.
     tags:
         - hs-office-relations
-    operationId: addRelation
+    operationId: postNewRelation
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

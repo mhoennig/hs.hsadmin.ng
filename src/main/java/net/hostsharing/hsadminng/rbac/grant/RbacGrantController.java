@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.grant;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacGrantsApi;
@@ -32,7 +33,8 @@ public class RbacGrantController implements RbacGrantsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<RbacGrantResource> getGrantById(
+    @Timed("app.rbac.grants.api.getListOfGrantsByUuid")
+    public ResponseEntity<RbacGrantResource> getListOfGrantsByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID grantedRoleUuid,
@@ -50,7 +52,8 @@ public class RbacGrantController implements RbacGrantsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<RbacGrantResource>> listSubjectGrants(
+    @Timed("app.rbac.grants.api.getListOfSubjectGrants")
+    public ResponseEntity<List<RbacGrantResource>> getListOfSubjectGrants(
             final String currentSubject,
             final String assumedRoles) {
 
@@ -61,7 +64,8 @@ public class RbacGrantController implements RbacGrantsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<RbacGrantResource> grantRoleToSubject(
+    @Timed("app.rbac.grants.api.postNewRoleGrantToSubject")
+    public ResponseEntity<RbacGrantResource> postNewRoleGrantToSubject(
             final String currentSubject,
             final String assumedRoles,
             final RbacGrantResource body) {
@@ -82,7 +86,8 @@ public class RbacGrantController implements RbacGrantsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<Void> revokeRoleFromSubject(
+    @Timed("app.rbac.grants.api.deleteRoleGrantFromSubject")
+    public ResponseEntity<Void> deleteRoleGrantFromSubject(
             final String currentSubject,
             final String assumedRoles,
             final UUID grantedRoleUuid,

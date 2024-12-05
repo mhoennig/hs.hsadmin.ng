@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePersonsApi;
@@ -30,7 +31,8 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficePersonResource>> listPersons(
+    @Timed("app.office.persons.api.getListOfPersons")
+    public ResponseEntity<List<HsOfficePersonResource>> getListOfPersons(
             final String currentSubject,
             final String assumedRoles,
             final String caption) {
@@ -44,7 +46,8 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficePersonResource> addPerson(
+    @Timed("app.office.persons.api.postNewPerson")
+    public ResponseEntity<HsOfficePersonResource> postNewPerson(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficePersonInsertResource body) {
@@ -66,7 +69,8 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficePersonResource> getPersonByUuid(
+    @Timed("app.office.persons.api.getSinglePersonByUuid")
+    public ResponseEntity<HsOfficePersonResource> getSinglePersonByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID personUuid) {
@@ -82,6 +86,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.persons.api.deletePersonByUuid")
     public ResponseEntity<Void> deletePersonByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -98,6 +103,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.persons.api.patchPerson")
     public ResponseEntity<HsOfficePersonResource> patchPerson(
             final String currentSubject,
             final String assumedRoles,

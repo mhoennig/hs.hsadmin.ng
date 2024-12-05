@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeBankAccountsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountInsertResource;
@@ -31,7 +32,8 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeBankAccountResource>> listBankAccounts(
+    @Timed("app.office.bankAccounts.api.patchDebitor")
+    public ResponseEntity<List<HsOfficeBankAccountResource>> getListOfBankAccounts(
             final String currentSubject,
             final String assumedRoles,
             final String holder) {
@@ -45,7 +47,8 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeBankAccountResource> addBankAccount(
+    @Timed("app.office.bankAccounts.api.postNewBankAccount")
+    public ResponseEntity<HsOfficeBankAccountResource> postNewBankAccount(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficeBankAccountInsertResource body) {
@@ -71,7 +74,8 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeBankAccountResource> getBankAccountByUuid(
+    @Timed("app.office.bankAccounts.api.getSingleBankAccountByUuid")
+    public ResponseEntity<HsOfficeBankAccountResource> getSingleBankAccountByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID bankAccountUuid) {
@@ -87,6 +91,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.bankAccounts.api.deleteBankAccountByUuid")
     public ResponseEntity<Void> deleteBankAccountByUuid(
             final String currentSubject,
             final String assumedRoles,

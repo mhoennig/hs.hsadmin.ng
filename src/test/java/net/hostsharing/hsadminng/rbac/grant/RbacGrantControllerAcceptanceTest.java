@@ -161,7 +161,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     }
 
     @Nested
-    class GetGrantById {
+    class GetListOfGrantsByUuid {
 
         @Test
         void customerAdmin_withAssumedPacketAdminRole_canReadPacketAdminsGrantById() {
@@ -171,7 +171,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
 
             // when
-            final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
+            final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
                     .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
 
             // then
@@ -190,7 +190,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
 
             // when
-            final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
+            final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
                     .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
 
             // then
@@ -211,7 +211,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
 
             // when
-            final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
+            final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
                     .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
 
             // then
@@ -231,7 +231,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     "rbactest.package#xxx00:TENANT");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
             final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
-            final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
+            final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
                     .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
 
             // then
@@ -360,8 +360,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             return new RevokeFixture(givenOwnPackageAdminRole);
         }
 
-        GetGrantByIdFixture getGrantById() {
-            return new GetGrantByIdFixture();
+        GetListOfGrantsByUuidFixture getListOfGrantsByUuid() {
+            return new GetListOfGrantsByUuidFixture();
         }
 
         class GrantFixture {
@@ -443,12 +443,12 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             }
         }
 
-        private class GetGrantByIdFixture {
+        private class GetListOfGrantsByUuidFixture {
 
             private Subject currentSubject = Subject.this;
             private RbacRoleEntity grantedRole;
 
-            GetGrantByIdFixture forGrantedRole(final RbacRoleEntity grantedRole) {
+            GetListOfGrantsByUuidFixture forGrantedRole(final RbacRoleEntity grantedRole) {
                 this.grantedRole = grantedRole;
                 return this;
             }

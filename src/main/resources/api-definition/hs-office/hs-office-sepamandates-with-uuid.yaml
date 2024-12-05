@@ -2,7 +2,7 @@ get:
     tags:
         - hs-office-sepaMandates
     description: 'Fetch a single SEPA Mandate by its uuid, if visible for the current subject.'
-    operationId: getSepaMandateByUuid
+    operationId: getSingleSepaMandateByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

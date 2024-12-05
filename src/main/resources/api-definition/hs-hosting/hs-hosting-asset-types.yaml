@@ -3,7 +3,7 @@ get:
     description: Returns the list of asset types to enable an adaptive UI.
     tags:
         - hs-hosting-asset-props
-    operationId: listAssetTypes
+    operationId: getListOfHostingAssetTypes
     responses:
         "200":
             description: OK

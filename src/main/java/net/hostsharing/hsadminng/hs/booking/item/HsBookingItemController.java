@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.booking.item;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingItemsApi;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
@@ -51,7 +52,8 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsBookingItemResource>> listBookingItemsByProjectUuid(
+    @Timed("app.bookingItems.api.getListOfBookingItemsByProjectUuid")
+    public ResponseEntity<List<HsBookingItemResource>> getListOfBookingItemsByProjectUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID projectUuid) {
@@ -65,7 +67,8 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsBookingItemResource> addBookingItem(
+    @Timed("app.bookingItems.api.postNewBookingItem")
+    public ResponseEntity<HsBookingItemResource> postNewBookingItem(
             final String currentSubject,
             final String assumedRoles,
             final HsBookingItemInsertResource body) {
@@ -94,7 +97,8 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsBookingItemResource> getBookingItemByUuid(
+    @Timed("app.bookingItems.api.getSingleBookingItemByUuid")
+    public ResponseEntity<HsBookingItemResource> getSingleBookingItemByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID bookingItemUuid) {
@@ -111,6 +115,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Override
     @Transactional
+    @Timed("app.bookingItems.api.deleteBookingIemByUuid")
     public ResponseEntity<Void> deleteBookingIemByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -125,6 +130,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Override
     @Transactional
+    @Timed("app.bookingItems.api.patchBookingItem")
     public ResponseEntity<HsBookingItemResource> patchBookingItem(
             final String currentSubject,
             final String assumedRoles,

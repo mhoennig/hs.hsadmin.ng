@@ -2,7 +2,7 @@ get:
     tags:
         - hs-hosting-assets
     description: 'Fetch a single managed asset by its uuid, if visible for the current subject.'
-    operationId: getAssetByUuid
+    operationId: getSingleHostingAssetByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -30,7 +30,7 @@ patch:
     tags:
         - hs-hosting-assets
     description: 'Updates a single hosting asset identified by its uuid, if permitted for the current subject.'
-    operationId: patchAsset
+    operationId: patchHostingAsset
     parameters:
         -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -61,7 +61,7 @@ delete:
     tags:
         - hs-hosting-assets
     description: 'Delete a single hosting asset identified by its uuid, if permitted for the current subject.'
-    operationId: deleteAssetUuid
+    operationId: deleteHostingAssetByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

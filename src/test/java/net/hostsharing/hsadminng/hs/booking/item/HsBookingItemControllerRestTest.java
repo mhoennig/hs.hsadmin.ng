@@ -84,7 +84,7 @@ class HsBookingItemControllerRestTest {
     }
 
     @Nested
-    class AddBookingItem {
+    class PostNewBookingItem {
 
         @Test
         void globalAdmin_canAddValidBookingItem() throws Exception {

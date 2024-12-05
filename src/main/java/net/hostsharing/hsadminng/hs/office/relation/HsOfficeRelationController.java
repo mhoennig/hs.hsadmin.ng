@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeRelationsApi;
@@ -21,7 +22,6 @@ import java.util.function.BiConsumer;
 
 
 @RestController
-
 public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Autowired
@@ -44,7 +44,8 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeRelationResource>> listRelations(
+    @Timed("app.office.relations.api.getListOfRelations")
+    public ResponseEntity<List<HsOfficeRelationResource>> getListOfRelations(
             final String currentSubject,
             final String assumedRoles,
             final UUID personUuid,
@@ -66,7 +67,8 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeRelationResource> addRelation(
+    @Timed("app.office.relations.api.postNewRelation")
+    public ResponseEntity<HsOfficeRelationResource> postNewRelation(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficeRelationInsertResource body) {
@@ -100,7 +102,8 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeRelationResource> getRelationByUuid(
+    @Timed("app.office.relations.api.getSingleRelationByUuid")
+    public ResponseEntity<HsOfficeRelationResource> getSingleRelationByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID relationUuid) {
@@ -116,6 +119,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Override
     @Transactional
+    @Timed("apprelations.api..deleteRelationByUuid")
     public ResponseEntity<Void> deleteRelationByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -132,6 +136,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.relations.api.patchRelation")
     public ResponseEntity<HsOfficeRelationResource> patchRelation(
             final String currentSubject,
             final String assumedRoles,

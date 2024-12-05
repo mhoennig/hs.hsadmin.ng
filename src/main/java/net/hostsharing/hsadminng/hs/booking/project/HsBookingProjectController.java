@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingProjectsApi;
@@ -35,7 +36,8 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsBookingProjectResource>> listBookingProjectsByDebitorUuid(
+    @Timed("app.bookingProjects.api.getListOfBookingProjectsByDebitorUuid")
+    public ResponseEntity<List<HsBookingProjectResource>> getListOfBookingProjectsByDebitorUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
@@ -49,7 +51,8 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsBookingProjectResource> addBookingProject(
+    @Timed("app.bookingProjects.api.postNewBookingProject")
+    public ResponseEntity<HsBookingProjectResource> postNewBookingProject(
             final String currentSubject,
             final String assumedRoles,
             final HsBookingProjectInsertResource body) {
@@ -71,6 +74,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.bookingProjects.api.getBookingProjectByUuid")
     public ResponseEntity<HsBookingProjectResource> getBookingProjectByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -87,6 +91,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Override
     @Transactional
+    @Timed("app.bookingProjects.api.deleteBookingIemByUuid")
     public ResponseEntity<Void> deleteBookingIemByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -101,6 +106,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Override
     @Transactional
+    @Timed("app.bookingProjects.api.patchBookingProject")
     public ResponseEntity<HsBookingProjectResource> patchBookingProject(
             final String currentSubject,
             final String assumedRoles,

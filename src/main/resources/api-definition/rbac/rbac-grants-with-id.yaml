@@ -1,7 +1,7 @@
 get:
   tags:
     - rbac-grants
-  operationId: getGrantById
+  operationId: getListOfGrantsByUuid
   parameters:
     - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -36,7 +36,7 @@ get:
 delete:
     tags:
         - rbac-grants
-    operationId: revokeRoleFromSubject
+    operationId: deleteRoleGrantFromSubject
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

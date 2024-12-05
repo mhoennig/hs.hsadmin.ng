@@ -1,7 +1,7 @@
 get:
     tags:
         - rbac-roles
-    operationId: listRoles
+    operationId: getListOfRoles
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

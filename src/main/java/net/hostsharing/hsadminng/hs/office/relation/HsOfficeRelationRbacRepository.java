@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
+import io.micrometer.core.annotation.Timed;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -10,12 +11,14 @@ import java.util.UUID;
 
 public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelationRbacEntity, UUID> {
 
+    @Timed("app.office.relations.repo.findByUuid.rbac")
     Optional<HsOfficeRelationRbacEntity> findByUuid(UUID id);
 
     @Query(value = """
             SELECT p.* FROM hs_office.relation_rv AS p
                 WHERE p.anchorUuid = :personUuid OR p.holderUuid = :personUuid
             """, nativeQuery = true)
+    @Timed("app.office.relations.repo.findRelationRelatedToPersonUuid.rbac")
     List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuid(@NotNull UUID personUuid);
 
     /**
@@ -51,16 +54,20 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
                             OR lower(CAST(rel.contact.emailAddresses AS String)) LIKE :contactData
                             OR lower(CAST(rel.contact.phoneNumbers AS String)) LIKE :contactData )
             """)
+    @Timed("app.office.relations.repo.findRelationRelatedToPersonUuidRelationTypePersonAndContactDataImpl.rbac")
     List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidRelationTypePersonAndContactDataImpl(
             final UUID personUuid,
             final String relationType,
             final String personData,
             final String contactData);
 
+    @Timed("app.office.relations.repo.save.rbac")
     HsOfficeRelationRbacEntity save(final HsOfficeRelationRbacEntity entity);
 
+    @Timed("app.office.relations.repo.count.rbac")
     long count();
 
+    @Timed("app.office.relations.repo.deleteByUuid.rbac")
     int deleteByUuid(UUID uuid);
 
     private static String toSqlLikeOperand(final String text) {

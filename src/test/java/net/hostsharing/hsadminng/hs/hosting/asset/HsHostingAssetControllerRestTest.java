@@ -583,7 +583,7 @@ public class HsHostingAssetControllerRestTest {
 
     @ParameterizedTest
     @EnumSource(HsHostingAssetControllerRestTest.ListTestCases.class)
-    void shouldListAssets(final HsHostingAssetControllerRestTest.ListTestCases testCase) throws Exception {
+    void shouldGetListOfHostingAssets(final HsHostingAssetControllerRestTest.ListTestCases testCase) throws Exception {
         // given
         when(rbacAssetRepo.findAllByCriteria(null, null, testCase.assetType))
                 .thenReturn(testCase.givenHostingAssetsOfType);
@@ -607,7 +607,7 @@ public class HsHostingAssetControllerRestTest {
     }
 
     @Test
-    void shouldPatchAsset() throws Exception {
+    void shouldPatchHostingAsset() throws Exception {
         // given
         final var givenDomainSetup = HsHostingAssetRealEntity.builder()
                 .type(HsHostingAssetType.DOMAIN_SETUP)

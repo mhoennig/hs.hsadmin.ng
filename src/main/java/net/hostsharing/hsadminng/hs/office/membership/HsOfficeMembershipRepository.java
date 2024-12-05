@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
+import io.micrometer.core.annotation.Timed;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -10,10 +11,13 @@ import java.util.UUID;
 
 public interface HsOfficeMembershipRepository extends Repository<HsOfficeMembershipEntity, UUID> {
 
+    @Timed("app.office.membership.repo.findByUuid")
     Optional<HsOfficeMembershipEntity> findByUuid(UUID id);
 
+    @Timed("app.office.membership.repo.save")
     HsOfficeMembershipEntity save(final HsOfficeMembershipEntity entity);
 
+    @Timed("app.office.membership.repo.findAll")
     List<HsOfficeMembershipEntity> findAll();
 
     @Query("""
@@ -22,6 +26,7 @@ public interface HsOfficeMembershipRepository extends Repository<HsOfficeMembers
                         OR membership.partner.uuid = :partnerUuid )
                 ORDER BY membership.partner.partnerNumber, membership.memberNumberSuffix
             """)
+    @Timed("app.office.membership.repo.findMembershipsByOptionalPartnerUuid")
     List<HsOfficeMembershipEntity> findMembershipsByOptionalPartnerUuid(UUID partnerUuid);
 
     @Query("""
@@ -30,6 +35,7 @@ public interface HsOfficeMembershipRepository extends Repository<HsOfficeMembers
                     AND (membership.memberNumberSuffix = :suffix)
                 ORDER BY membership.memberNumberSuffix
                """)
+    @Timed("app.office.membership.repo.findMembershipByPartnerNumberAndSuffix")
     HsOfficeMembershipEntity findMembershipByPartnerNumberAndSuffix(
             @NotNull Integer partnerNumber,
             @NotNull String suffix);
@@ -41,7 +47,9 @@ public interface HsOfficeMembershipRepository extends Repository<HsOfficeMembers
         return result;
     }
 
+    @Timed("app.office.membership.repo.count")
     long count();
 
+    @Timed("app.office.membership.repo.deleteByUuid")
     int deleteByUuid(UUID uuid);
 }

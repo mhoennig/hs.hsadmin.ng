@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.role;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacRolesApi;
@@ -25,7 +26,8 @@ public class RbacRoleController implements RbacRolesApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<RbacRoleResource>> listRoles(
+    @Timed("app.rbac.roles.api.getListOfRoles")
+    public ResponseEntity<List<RbacRoleResource>> getListOfRoles(
             final String currentSubject,
             final String assumedRoles) {
 

@@ -2,7 +2,7 @@ get:
     tags:
         - rbac-subjects
     description: List accessible RBAC subjects with optional filter by name.
-    operationId: listSubjects
+    operationId: getListOfSubjects
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -29,7 +29,7 @@ post:
     tags:
         - rbac-subjects
     description: Create a new RBAC subject (e.g. user).
-    operationId: createSubject
+    operationId: postNewSubject
     requestBody:
         required: true
         content:

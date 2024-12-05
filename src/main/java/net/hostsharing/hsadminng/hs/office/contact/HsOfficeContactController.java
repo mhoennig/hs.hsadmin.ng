@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeContactsApi;
@@ -33,7 +34,8 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeContactResource>> listContacts(
+    @Timed("app.office.contacts.api.getListOfContacts")
+    public ResponseEntity<List<HsOfficeContactResource>> getListOfContacts(
             final String currentSubject,
             final String assumedRoles,
             final String caption) {
@@ -47,7 +49,8 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeContactResource> addContact(
+    @Timed("app.office.contacts.api.postNewContact")
+    public ResponseEntity<HsOfficeContactResource> postNewContact(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficeContactInsertResource body) {
@@ -69,7 +72,8 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeContactResource> getContactByUuid(
+    @Timed("app.office.contacts.api.getSingleContactByUuid")
+    public ResponseEntity<HsOfficeContactResource> getSingleContactByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID contactUuid) {
@@ -85,6 +89,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.contacts.api.deleteContactByUuid")
     public ResponseEntity<Void> deleteContactByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -101,6 +106,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.contacts.api.patchContact")
     public ResponseEntity<HsOfficeContactResource> patchContact(
             final String currentSubject,
             final String assumedRoles,

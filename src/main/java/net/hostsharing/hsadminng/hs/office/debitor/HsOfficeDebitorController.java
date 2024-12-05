@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeDebitorsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorInsertResource;
@@ -51,6 +52,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.office.debitors.api.getListOfDebitors")
     public ResponseEntity<List<HsOfficeDebitorResource>> getListOfDebitors(
             final String currentSubject,
             final String assumedRoles,
@@ -68,6 +70,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.debitors.api.postNewDebitor")
     public ResponseEntity<HsOfficeDebitorResource> postNewDebitor(
             String currentSubject,
             String assumedRoles,
@@ -115,6 +118,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Override
     @Transactional(readOnly = true)
+    @Timed("app.office.debitors.api.getSingleDebitorByUuid")
     public ResponseEntity<HsOfficeDebitorResource> getSingleDebitorByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -131,6 +135,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.debitors.api.deleteDebitorByUuid")
     public ResponseEntity<Void> deleteDebitorByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -147,6 +152,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Override
     @Transactional
+    @Timed("app.office.debitors.api.patchDebitor")
     public ResponseEntity<HsOfficeDebitorResource> patchDebitor(
             final String currentSubject,
             final String assumedRoles,

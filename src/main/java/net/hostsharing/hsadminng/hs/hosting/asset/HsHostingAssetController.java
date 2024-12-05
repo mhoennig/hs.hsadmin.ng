@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
@@ -48,7 +49,8 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsHostingAssetResource>> listAssets(
+    @Timed("app.hosting.assets.api.getListOfHostingAssets")
+    public ResponseEntity<List<HsHostingAssetResource>> getListOfHostingAssets(
             final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid,
@@ -65,7 +67,8 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsHostingAssetResource> addAsset(
+    @Timed("app.hosting.assets.api.postNewHostingAsset")
+    public ResponseEntity<HsHostingAssetResource> postNewHostingAsset(
             final String currentSubject,
             final String assumedRoles,
             final HsHostingAssetInsertResource body) {
@@ -93,7 +96,8 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsHostingAssetResource> getAssetByUuid(
+    @Timed("app.hosting.assets.api.getSingleHostingAssetByUuid")
+    public ResponseEntity<HsHostingAssetResource> getSingleHostingAssetByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID assetUuid) {
@@ -109,7 +113,8 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<Void> deleteAssetUuid(
+    @Timed("app.hosting.assets.api.deleteHostingAssetByUuid")
+    public ResponseEntity<Void> deleteHostingAssetByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID assetUuid) {
@@ -123,7 +128,8 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsHostingAssetResource> patchAsset(
+    @Timed("app.hosting.assets.api.patchHostingAsset")
+    public ResponseEntity<HsHostingAssetResource> patchHostingAsset(
             final String currentSubject,
             final String assumedRoles,
             final UUID assetUuid,

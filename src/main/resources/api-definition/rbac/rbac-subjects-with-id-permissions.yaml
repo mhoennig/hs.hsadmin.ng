@@ -2,7 +2,7 @@ get:
     tags:
         - rbac-subjects
     description: 'List all visible permissions granted to the given subject; reduced '
-    operationId: listSubjectPermissions
+    operationId: getListOfSubjectPermissions
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

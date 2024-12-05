@@ -91,7 +91,7 @@ class HsOfficePartnerControllerRestTest {
     }
 
     @Nested
-    class AddPartner {
+    class PostNewPartner {
 
         @Test
         void respondBadRequest_ifPersonUuidIsInvalid() throws Exception {

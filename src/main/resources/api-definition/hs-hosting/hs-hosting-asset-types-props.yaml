@@ -3,7 +3,7 @@ get:
     description: Returns the list of available properties and their validations for a given asset type.
     tags:
         - hs-hosting-asset-props
-    operationId: listAssetTypeProps
+    operationId: getListOfHostingAssetTypeProps
     parameters:
         - name: assetType
           in: path

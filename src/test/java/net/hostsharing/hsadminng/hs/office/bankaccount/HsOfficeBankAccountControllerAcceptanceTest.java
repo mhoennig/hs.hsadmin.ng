@@ -50,7 +50,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     EntityManager em;
 
     @Nested
-    class ListBankAccounts {
+    class GetListOfBankAccounts {
 
         @Test
         void globalAdmin_withoutAssumedRoles_canViewAllBankAccounts_ifNoCriteriaGiven() throws JSONException {
@@ -117,7 +117,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     class CreateBankAccount {
 
         @Test
-        void globalAdmin_withoutAssumedRole_canAddBankAccount() {
+        void globalAdmin_withoutAssumedRole_canPostNewBankAccount() {
 
             context.define("superuser-alex@hostsharing.net");
 

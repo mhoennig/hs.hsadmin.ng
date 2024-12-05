@@ -3,7 +3,7 @@ get:
     description: Returns the list of (optionally filtered) SEPA Mandates which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-office-sepaMandates
-    operationId: listSepaMandatesByIBAN
+    operationId: getListOfSepaMandates
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -31,7 +31,7 @@ post:
     summary: Adds a new SEPA Mandate.
     tags:
         - hs-office-sepaMandates
-    operationId: addSepaMandate
+    operationId: postNewSepaMandate
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

@@ -79,10 +79,10 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
     }
 
     @Nested
-    class AddBookingProject {
+    class PostNewBookingProject {
 
         @Test
-        void globalAdmin_canAddBookingProject() {
+        void globalAdmin_canPostNewBookingProject() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).stream()

@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacSubjectsApi;
@@ -28,7 +29,8 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<RbacSubjectResource> createSubject(
+    @Timed("app.rbac.subjects.api.postNewSubject")
+    public ResponseEntity<RbacSubjectResource> postNewSubject(
             final RbacSubjectResource body
     ) {
         context.define(null);
@@ -48,6 +50,7 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
     @Override
     @Transactional
+    @Timed("app.rbac.subjects.api.deleteSubjectByUuid")
     public ResponseEntity<Void> deleteSubjectByUuid(
             final String currentSubject,
             final String assumedRoles,
@@ -62,7 +65,8 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<RbacSubjectResource> getSubjectById(
+    @Timed("app.rbac.subjects.api.getSingleSubjectByUuid")
+    public ResponseEntity<RbacSubjectResource> getSingleSubjectByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID subjectUuid) {
@@ -78,7 +82,8 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<RbacSubjectResource>> listSubjects(
+    @Timed("app.rbac.subjects.api.getListOfSubjects")
+    public ResponseEntity<List<RbacSubjectResource>> getListOfSubjects(
             final String currentSubject,
             final String assumedRoles,
             final String userName
@@ -90,7 +95,8 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<RbacSubjectPermissionResource>> listSubjectPermissions(
+    @Timed("app.rbac.subjects.api.getListOfSubjectPermissions")
+    public ResponseEntity<List<RbacSubjectPermissionResource>> getListOfSubjectPermissions(
             final String currentSubject,
             final String assumedRoles,
             final UUID subjectUuid

@@ -2,7 +2,7 @@ get:
     tags:
         - hs-office-bank-accounts
     description: 'Fetch a single bank account by its uuid, if visible for the current subject.'
-    operationId: getBankAccountByUuid
+    operationId: getSingleBankAccountByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

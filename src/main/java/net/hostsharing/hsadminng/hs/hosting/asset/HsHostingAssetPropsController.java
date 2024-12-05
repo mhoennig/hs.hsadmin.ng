@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetPropsApi;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
@@ -14,7 +15,8 @@ import java.util.Map;
 public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
 
     @Override
-    public ResponseEntity<List<String>> listAssetTypes() {
+    @Timed("app.hosting.assets.api.getListOfHostingAssetTypes")
+    public ResponseEntity<List<String>> getListOfHostingAssetTypes() {
         final var resource = HostingAssetEntityValidatorRegistry.types().stream()
                 .map(Enum::name)
                 .toList();
@@ -22,7 +24,8 @@ public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
     }
 
     @Override
-    public ResponseEntity<List<Object>> listAssetTypeProps(
+    @Timed("app.hosting.assets.api.getListOfHostingAssetTypeProps")
+    public ResponseEntity<List<Object>> getListOfHostingAssetTypeProps(
             final HsHostingAssetTypeResource assetType) {
 
         final Enum<HsHostingAssetType> type = HsHostingAssetType.of(assetType);

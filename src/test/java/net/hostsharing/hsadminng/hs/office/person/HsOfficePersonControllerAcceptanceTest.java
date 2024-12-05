@@ -52,7 +52,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     EntityManager em;
 
     @Nested
-    class ListPersons {
+    class GetListOfPersons {
 
         @Test
         void globalAdmin_withoutAssumedRoles_canViewAllPersons_ifNoCriteriaGiven() {

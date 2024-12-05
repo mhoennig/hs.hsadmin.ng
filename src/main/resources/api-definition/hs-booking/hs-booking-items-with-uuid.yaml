@@ -2,7 +2,7 @@ get:
     tags:
         - hs-booking-items
     description: 'Fetch a single booking item its uuid, if visible for the current subject.'
-    operationId: getBookingItemByUuid
+    operationId: getSingleBookingItemByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

@@ -54,7 +54,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     JpaAttempt jpaAttempt;
 
     @Nested
-    class ListRelations {
+    class GetListOfRelations {
 
         @Test
         void globalAdmin_withoutAssumedRoles_canViewAllRelationsOfGivenPersonAndType() {
