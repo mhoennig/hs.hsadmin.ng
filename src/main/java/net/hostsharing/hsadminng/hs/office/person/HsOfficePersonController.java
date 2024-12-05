@@ -27,7 +27,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     private StandardMapper mapper;
 
     @Autowired
-    private HsOfficePersonRepository personRepo;
+    private HsOfficePersonRbacRepository personRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,7 +54,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
         context.define(currentSubject, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsOfficePersonEntity.class);
+        final var entityToSave = mapper.map(body, HsOfficePersonRbacEntity.class);
 
         final var saved = personRepo.save(entityToSave);
 

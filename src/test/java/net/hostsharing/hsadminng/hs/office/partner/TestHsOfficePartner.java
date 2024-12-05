@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 
@@ -16,12 +16,12 @@ public class TestHsOfficePartner {
                 .partnerNumber(10001)
                 .partnerRel(
                         HsOfficeRelationRealEntity.builder()
-                                .holder(HsOfficePersonEntity.builder()
+                                .holder(HsOfficePersonRealEntity.builder()
                                         .personType(LEGAL_PERSON)
                                         .tradeName("Hostsharing eG")
                                         .build())
                                 .type(HsOfficeRelationType.PARTNER)
-                                .holder(HsOfficePersonEntity.builder()
+                                .holder(HsOfficePersonRealEntity.builder()
                                         .personType(LEGAL_PERSON)
                                         .tradeName(tradeName)
                                         .build())

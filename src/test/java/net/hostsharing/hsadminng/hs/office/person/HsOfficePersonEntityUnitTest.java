@@ -11,7 +11,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void getDisplayReturnsTradeNameIfAvailable() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
                 .personType(HsOfficePersonType.LEGAL_PERSON)
                 .tradeName("some trade name")
                 .build();
@@ -23,7 +23,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void getDisplayReturnsFamilyAndGivenNameIfNoTradeNameAvailable() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
                 .personType(HsOfficePersonType.NATURAL_PERSON)
                 .familyName("some family name")
                 .givenName("some given name")
@@ -36,7 +36,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toShortStringWithTradeNameReturnsTradeName() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
                 .personType(HsOfficePersonType.LEGAL_PERSON)
                 .tradeName("some trade name")
                 .familyName("some family name")
@@ -50,7 +50,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toShortStringWithoutTradeNameReturnsFamilyAndGivenName() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
                 .personType(HsOfficePersonType.NATURAL_PERSON)
                 .familyName("some family name")
                 .givenName("some given name")
@@ -63,7 +63,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toShortStringWithSalutationAndTitleReturnsSalutationAndTitle() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
             .personType(HsOfficePersonType.NATURAL_PERSON)
             .salutation("Frau")
             .title("Dr.")
@@ -78,7 +78,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toShortStringWithSalutationAndWithoutTitleReturnsSalutation() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
             .personType(HsOfficePersonType.NATURAL_PERSON)
             .salutation("Frau")
             .familyName("some family name")
@@ -92,7 +92,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toShortStringWithoutSalutationAndWithTitleReturnsTitle() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
             .personType(HsOfficePersonType.NATURAL_PERSON)
             .title("Dr. Dr.")
             .familyName("some family name")
@@ -106,7 +106,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toStringWithAllFieldsReturnsAllButUuid() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
                 .uuid(UUID.randomUUID())
                 .personType(HsOfficePersonType.NATURAL_PERSON)
                 .tradeName("some trade name")
@@ -122,7 +122,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toStringSkipsNullFields() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
                 .familyName("some family name")
                 .givenName("some given name")
                 .build();
@@ -133,7 +133,7 @@ class HsOfficePersonEntityUnitTest {
     }
     @Test
     void toStringWithSalutationAndTitleRetursSalutationAndTitle() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
             .salutation("Herr")
             .title("Prof. Dr.")
             .familyName("some family name")
@@ -146,7 +146,7 @@ class HsOfficePersonEntityUnitTest {
     }
     @Test
     void toStringWithSalutationAndWithoutTitleSkipsTitle() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
             .salutation("Herr")
             .familyName("some family name")
             .givenName("some given name")
@@ -159,7 +159,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void toStringWithoutSalutationAndWithTitleSkipsSalutation() {
-        final var givenPersonEntity = HsOfficePersonEntity.builder()
+        final var givenPersonEntity = HsOfficePersonRbacEntity.builder()
             .title("some title")
             .familyName("some family name")
             .givenName("some given name")
@@ -172,7 +172,7 @@ class HsOfficePersonEntityUnitTest {
 
     @Test
     void definesRbac() {
-        final var rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficePersonEntity.rbac()).toString();
+        final var rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficePersonRbacEntity.rbac()).toString();
         assertThat(rbacFlowchart).isEqualTo("""
                 %%{init:{'flowchart':{'htmlLabels':false}}}%%
                 flowchart TB

@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeRelationsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +34,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     private HsOfficeRelationRbacRepository relationRbacRepo;
 
     @Autowired
-    private HsOfficePersonRepository holderRepo;
+    private HsOfficePersonRealRepository personRepo;
 
     @Autowired
     private HsOfficeContactRealRepository realContactRepo;
@@ -78,10 +78,10 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
         final var entityToSave = new HsOfficeRelationRbacEntity();
         entityToSave.setType(HsOfficeRelationType.valueOf(body.getType()));
         entityToSave.setMark(body.getMark());
-        entityToSave.setAnchor(holderRepo.findByUuid(body.getAnchorUuid()).orElseThrow(
+        entityToSave.setAnchor(personRepo.findByUuid(body.getAnchorUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find Person by anchorUuid: " + body.getAnchorUuid())
         ));
-        entityToSave.setHolder(holderRepo.findByUuid(body.getHolderUuid()).orElseThrow(
+        entityToSave.setHolder(personRepo.findByUuid(body.getHolderUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find Person by holderUuid: " + body.getHolderUuid())
         ));
         entityToSave.setContact(realContactRepo.findByUuid(body.getContactUuid()).orElseThrow(

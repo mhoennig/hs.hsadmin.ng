@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static net.hostsharing.hsadminng.hs.office.person.TestHsOfficePerson.hsOfficePerson;
+import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacTestEntity.hsOfficePersonRbacEntity;
 import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
@@ -29,10 +29,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
+class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRbacRepository personRbacRepo;
 
     @Autowired
     RawRbacRoleRepository rawRoleRepo;
@@ -56,34 +56,34 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         public void globalAdmin_withoutAssumedRole_canCreateNewPerson() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var count = personRepo.count();
+            final var count = personRbacRepo.count();
 
             // when
-            final var result = attempt(em, () -> toCleanup(personRepo.save(
-                    hsOfficePerson("a new person"))));
+            final var result = attempt(em, () -> toCleanup(personRbacRepo.save(
+                    hsOfficePersonRbacEntity("a new person"))));
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficePersonEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficePersonRbacEntity::getUuid).isNotNull();
             assertThatPersonIsPersisted(result.returnedValue());
-            assertThat(personRepo.count()).isEqualTo(count + 1);
+            assertThat(personRbacRepo.count()).isEqualTo(count + 1);
         }
 
         @Test
         public void arbitraryUser_canCreateNewPerson() {
             // given
             context("selfregistered-user-drew@hostsharing.org");
-            final var count = personRepo.count();
+            final var count = personRbacRepo.count();
 
             // when
-            final var result = attempt(em, () -> toCleanup(personRepo.save(
-                    hsOfficePerson("another new person"))));
+            final var result = attempt(em, () -> toCleanup(personRbacRepo.save(
+                    hsOfficePersonRbacEntity("another new person"))));
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficePersonEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficePersonRbacEntity::getUuid).isNotNull();
             assertThatPersonIsPersisted(result.returnedValue());
-            assertThat(personRepo.count()).isEqualTo(count + 1);
+            assertThat(personRbacRepo.count()).isEqualTo(count + 1);
         }
 
         @Test
@@ -95,7 +95,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when
             attempt(em, () -> toCleanup(
-                    personRepo.save(hsOfficePerson("another new person"))
+                    personRbacRepo.save(hsOfficePersonRbacEntity("another new person"))
             )).assumeSuccessful();
 
             // then
@@ -122,8 +122,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     ));
         }
 
-        private void assertThatPersonIsPersisted(final HsOfficePersonEntity saved) {
-            final var found = personRepo.findByUuid(saved.getUuid());
+        private void assertThatPersonIsPersisted(final HsOfficePersonRbacEntity saved) {
+            final var found = personRbacRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
@@ -137,7 +137,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = personRepo.findPersonByOptionalNameLike(null);
+            final var result = personRbacRepo.findPersonByOptionalNameLike(null);
 
             // then
             allThesePersonsAreReturned(
@@ -155,7 +155,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when:
             context("pac-admin-zzz00@zzz.example.com");
-            final var result = personRepo.findPersonByOptionalNameLike(null);
+            final var result = personRbacRepo.findPersonByOptionalNameLike(null);
 
             // then:
             exactlyThesePersonsAreReturned(result, givenPerson.getTradeName());
@@ -171,7 +171,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             context("superuser-alex@hostsharing.net", null);
 
             // when
-            final var result = personRepo.findPersonByOptionalNameLike("Second");
+            final var result = personRbacRepo.findPersonByOptionalNameLike("Second");
 
             // then
             exactlyThesePersonsAreReturned(result, "Second e.K.");
@@ -184,7 +184,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when:
             context("selfregistered-user-drew@hostsharing.org");
-            final var result = personRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
+            final var result = personRbacRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
 
             // then:
             exactlyThesePersonsAreReturned(result, givenPerson.getTradeName());
@@ -202,14 +202,14 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                personRepo.deleteByUuid(givenPerson.getUuid());
+                personRbacRepo.deleteByUuid(givenPerson.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                return personRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
+                return personRbacRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
 
@@ -221,14 +221,14 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("selfregistered-user-drew@hostsharing.org", null);
-                personRepo.deleteByUuid(givenPerson.getUuid());
+                personRbacRepo.deleteByUuid(givenPerson.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                return personRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
+                return personRbacRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
 
@@ -245,7 +245,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("selfregistered-user-drew@hostsharing.org", null);
-                return personRepo.deleteByUuid(givenPerson.getUuid());
+                return personRbacRepo.deleteByUuid(givenPerson.getUuid());
             });
 
             // then
@@ -276,29 +276,29 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                 "[creating person test-data, hs_office.person, INSERT, Third OHG, null]");
     }
 
-    private HsOfficePersonEntity givenSomeTemporaryPerson(
+    private HsOfficePersonRbacEntity givenSomeTemporaryPerson(
             final String createdByUser,
-            Supplier<HsOfficePersonEntity> entitySupplier) {
+            Supplier<HsOfficePersonRbacEntity> entitySupplier) {
         return jpaAttempt.transacted(() -> {
             context(createdByUser);
-            return toCleanup(personRepo.save(entitySupplier.get()));
+            return toCleanup(personRbacRepo.save(entitySupplier.get()));
         }).assumeSuccessful().returnedValue();
     }
 
-    private HsOfficePersonEntity givenSomeTemporaryPerson(final String createdByUser) {
+    private HsOfficePersonRbacEntity givenSomeTemporaryPerson(final String createdByUser) {
         return givenSomeTemporaryPerson(createdByUser, () ->
-                hsOfficePerson("some temporary person #" + RandomStringUtils.random(12)));
+                hsOfficePersonRbacEntity("some temporary person #" + RandomStringUtils.random(12)));
     }
 
-    void exactlyThesePersonsAreReturned(final List<HsOfficePersonEntity> actualResult, final String... personCaptions) {
+    void exactlyThesePersonsAreReturned(final List<HsOfficePersonRbacEntity> actualResult, final String... personCaptions) {
         assertThat(actualResult)
-                .extracting(HsOfficePersonEntity::getTradeName)
+                .extracting(HsOfficePersonRbacEntity::getTradeName)
                 .containsExactlyInAnyOrder(personCaptions);
     }
 
-    void allThesePersonsAreReturned(final List<HsOfficePersonEntity> actualResult, final String... personCaptions) {
+    void allThesePersonsAreReturned(final List<HsOfficePersonRbacEntity> actualResult, final String... personCaptions) {
         assertThat(actualResult)
-                .extracting(hsOfficePersonEntity -> hsOfficePersonEntity.toShortString())
+                .extracting(HsOfficePerson::toShortString)
                 .contains(personCaptions);
     }
 }

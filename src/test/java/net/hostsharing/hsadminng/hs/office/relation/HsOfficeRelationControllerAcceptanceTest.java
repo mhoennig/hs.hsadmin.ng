@@ -3,11 +3,11 @@ package net.hostsharing.hsadminng.hs.office.relation;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationTypeResource;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.test.DisableSecurityConfig;
 import org.junit.jupiter.api.Nested;
@@ -45,7 +45,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     HsOfficeRelationRealRepository relationrealRepo;
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRealRepository personRepo;
 
     @Autowired
     HsOfficeContactRealRepository contactrealRepo;

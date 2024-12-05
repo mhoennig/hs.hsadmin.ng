@@ -11,7 +11,7 @@ import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
@@ -81,7 +81,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
     );
 
     static Map<Integer, HsOfficeContactRealEntity> contacts = new WriteOnceMap<>();
-    static Map<Integer, HsOfficePersonEntity> persons = new WriteOnceMap<>();
+    static Map<Integer, HsOfficePersonRealEntity> persons = new WriteOnceMap<>();
     static Map<Integer, HsOfficePartnerEntity> partners = new WriteOnceMap<>();
     static Map<Integer, HsOfficeDebitorEntity> debitors = new WriteOnceMap<>();
     static Map<Integer, HsOfficeMembershipEntity> memberships = new WriteOnceMap<>();
@@ -731,7 +731,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                         return;
                     }
 
-                    final var person = HsOfficePersonEntity.builder().build();
+                    final var person = HsOfficePersonRealEntity.builder().build();
 
                     final var partnerRel = addRelation(
                             HsOfficeRelationType.PARTNER,
@@ -880,6 +880,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                     coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);
                 });
 
+
         coopAssets.entrySet().forEach(entry -> {
             final var legacyId = entry.getKey();
             final var assetTransaction = entry.getValue();
@@ -995,14 +996,14 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                         addPerson(partnerPerson, rec);
                     }
 
-                    HsOfficePersonEntity contactPerson = partnerPerson;
+                    HsOfficePersonRealEntity contactPerson = partnerPerson;
                     if (!StringUtils.equals(rec.getString("firma"), partnerPerson.getTradeName()) ||
                             partnerPerson.getPersonType() != determinePersonType(rec) ||
                             !StringUtils.equals(rec.getString("title"), partnerPerson.getTitle()) ||
                             !StringUtils.equals(rec.getString("salut"), partnerPerson.getSalutation()) ||
                             !StringUtils.equals(rec.getString("first_name"), partnerPerson.getGivenName()) ||
                             !StringUtils.equals(rec.getString("last_name"), partnerPerson.getFamilyName())) {
-                        contactPerson = addPerson(HsOfficePersonEntity.builder().build(), rec);
+                        contactPerson = addPerson(HsOfficePersonRealEntity.builder().build(), rec);
                     }
 
                     final var contact = HsOfficeContactRealEntity.builder().build();
@@ -1085,8 +1086,8 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
 
     private static HsOfficeRelationRealEntity addRelation(
             final HsOfficeRelationType type,
-            final HsOfficePersonEntity anchor,
-            final HsOfficePersonEntity holder,
+            final HsOfficePersonRealEntity anchor,
+            final HsOfficePersonRealEntity holder,
             final HsOfficeContactRealEntity contact) {
         final var rel = HsOfficeRelationRealEntity.builder()
                 .anchor(anchor)
@@ -1098,7 +1099,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         return rel;
     }
 
-    private HsOfficePersonEntity addPerson(final HsOfficePersonEntity person, final Record contactRecord) {
+    private HsOfficePersonRealEntity addPerson(final HsOfficePersonRealEntity person, final Record contactRecord) {
         person.setSalutation(contactRecord.getString("salut"));
         person.setTitle(contactRecord.getString("title"));
         person.setGivenName(contactRecord.getString("first_name"));

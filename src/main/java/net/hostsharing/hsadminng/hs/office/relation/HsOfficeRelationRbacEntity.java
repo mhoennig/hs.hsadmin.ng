@@ -6,7 +6,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 
@@ -52,11 +52,11 @@ public class HsOfficeRelationRbacEntity extends HsOfficeRelation {
                 .withRestrictedViewOrderBy(SQL.expression(
                         "(select idName from hs_office.person_iv p where p.uuid = target.holderUuid)"))
                 .withUpdatableColumns("contactUuid")
-                .importEntityAlias("anchorPerson", HsOfficePersonEntity.class, usingDefaultCase(),
+                .importEntityAlias("anchorPerson", HsOfficePersonRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("anchorUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)
-                .importEntityAlias("holderPerson", HsOfficePersonEntity.class, usingDefaultCase(),
+                .importEntityAlias("holderPerson", HsOfficePersonRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("holderUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)

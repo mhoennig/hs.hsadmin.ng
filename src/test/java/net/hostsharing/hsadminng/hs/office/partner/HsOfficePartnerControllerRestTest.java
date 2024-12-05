@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
@@ -66,10 +66,10 @@ class HsOfficePartnerControllerRestTest {
     EntityManagerFactory emf;
 
     @Mock
-    HsOfficePersonEntity mandateMock;
+    HsOfficePersonRealEntity mandateMock;
 
     @Mock
-    HsOfficePersonEntity personMock;
+    HsOfficePersonRealEntity personMock;
 
     @Mock
     HsOfficeContactRbacEntity contactMock;
@@ -84,8 +84,8 @@ class HsOfficePartnerControllerRestTest {
         when(emf.createEntityManager(any(SynchronizationType.class))).thenReturn(em);
         when(emf.createEntityManager(any(SynchronizationType.class), any(Map.class))).thenReturn(em);
 
-        lenient().when(em.getReference(HsOfficePersonEntity.class, GIVEN_MANDANTE_UUID)).thenReturn(mandateMock);
-        lenient().when(em.getReference(HsOfficePersonEntity.class, GIVEN_PERSON_UUID)).thenReturn(personMock);
+        lenient().when(em.getReference(HsOfficePersonRealEntity.class, GIVEN_MANDANTE_UUID)).thenReturn(mandateMock);
+        lenient().when(em.getReference(HsOfficePersonRealEntity.class, GIVEN_PERSON_UUID)).thenReturn(personMock);
         lenient().when(em.getReference(HsOfficeContactRbacEntity.class, GIVEN_CONTACT_UUID)).thenReturn(contactMock);
         lenient().when(em.getReference(any(), eq(GIVEN_INVALID_UUID))).thenThrow(EntityNotFoundException.class);
     }
@@ -127,7 +127,7 @@ class HsOfficePartnerControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", startsWith("ERROR: [400] Cannot resolve HsOfficePersonEntity with uuid ")));
+                    .andExpect(jsonPath("message", startsWith("ERROR: [400] Cannot resolve HsOfficePersonRealEntity with uuid ")));
         }
 
         @Test

@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.lambda.Reducer;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -68,7 +68,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
     Integer port;
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRbacRepository personRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -117,7 +117,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
                                     null,
                                     personRepo.findPersonByOptionalNameLike("Hostsharing eG")
                                             .stream()
-                                            .map(HsOfficePersonEntity::getUuid)
+                                            .map(HsOfficePersonRbacEntity::getUuid)
                                             .reduce(Reducer::toSingleElement).orElseThrow())
                     );
                 }

@@ -4,7 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
@@ -45,11 +45,11 @@ public class HsOfficeRelation implements BaseEntity<HsOfficeRelation>, Stringify
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "anchoruuid")
-    private HsOfficePersonEntity anchor;
+    private HsOfficePersonRealEntity anchor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "holderuuid")
-    private HsOfficePersonEntity holder;
+    private HsOfficePersonRealEntity holder;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contactuuid")

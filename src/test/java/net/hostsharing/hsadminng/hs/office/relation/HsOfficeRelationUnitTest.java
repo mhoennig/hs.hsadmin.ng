@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;
@@ -9,11 +9,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeRelationUnitTest {
 
-    private HsOfficePersonEntity anchor = HsOfficePersonEntity.builder()
+    private HsOfficePersonRealEntity anchor = HsOfficePersonRealEntity.builder()
             .personType(HsOfficePersonType.LEGAL_PERSON)
             .tradeName("some trade name")
             .build();
-    private HsOfficePersonEntity holder = HsOfficePersonEntity.builder()
+    private HsOfficePersonRealEntity holder = HsOfficePersonRealEntity.builder()
             .personType(HsOfficePersonType.NATURAL_PERSON)
             .familyName("Meier")
             .givenName("Mellie")

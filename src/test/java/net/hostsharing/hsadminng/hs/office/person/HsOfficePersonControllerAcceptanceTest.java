@@ -43,7 +43,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     Context contextMock;
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRealRepository personRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -327,10 +327,10 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
     }
 
-    private HsOfficePersonEntity givenSomeTemporaryPersonCreatedBy(final String creatingUser) {
+    private HsOfficePersonRealEntity givenSomeTemporaryPersonCreatedBy(final String creatingUser) {
         return jpaAttempt.transacted(() -> {
             context.define(creatingUser);
-            final var newPerson = HsOfficePersonEntity.builder()
+            final var newPerson = HsOfficePersonRealEntity.builder()
                     .uuid(UUID.randomUUID())
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("Temp " + Context.getCallerMethodNameFromStackFrame(2))
@@ -347,7 +347,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
             em.createQuery("""
-                    DELETE FROM HsOfficePersonEntity p 
+                    DELETE FROM HsOfficePersonRealEntity p
                         WHERE p.tradeName LIKE 'Temp %' OR p.givenName LIKE 'Temp %'
                     """).executeUpdate();
         }).assertSuccessful();

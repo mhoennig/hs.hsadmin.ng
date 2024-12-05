@@ -9,9 +9,9 @@ import java.util.Optional;
 
 class HsOfficePersonEntityPatcher implements EntityPatcher<HsOfficePersonPatchResource> {
 
-    private final HsOfficePersonEntity entity;
+    private final HsOfficePersonRbacEntity entity;
 
-    HsOfficePersonEntityPatcher(final HsOfficePersonEntity entity) {
+    HsOfficePersonEntityPatcher(final HsOfficePersonRbacEntity entity) {
         this.entity = entity;
     }
 

@@ -7,7 +7,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -57,16 +57,16 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficePartnerRepository partnerRepo;
 
     @Autowired
-    HsOfficeContactRealRepository contactrealRepo;
+    HsOfficeContactRealRepository contactRealRepo;
 
     @Autowired
     HsOfficeBankAccountRepository bankAccountRepo;
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRealRepository personRealRepo;
 
     @Autowired
-    HsOfficeRelationRealRepository relrealRepo;
+    HsOfficeRelationRealRepository relationRealRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -270,13 +270,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
-            final var givenBillingPerson = personRepo.findPersonByOptionalNameLike("Fourth").get(0);
+            final var givenBillingPerson = personRealRepo.findPersonByOptionalNameLike("Fourth").get(0);
 
             final var givenDebitorRelUUid = jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net");
-                return relrealRepo.save(HsOfficeRelationRealEntity.builder()
+                return relationRealRepo.save(HsOfficeRelationRealEntity.builder()
                         .type(DEBITOR)
                         .anchor(givenPartner.getPartnerRel().getHolder())
                         .holder(givenBillingPerson)
@@ -327,7 +327,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -554,7 +554,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -724,7 +724,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0).load();
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
                     .debitorNumberSuffix(nextDebitorSuffix())
                     .billable(true)

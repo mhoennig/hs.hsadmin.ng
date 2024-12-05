@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
@@ -13,11 +13,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HsOfficeDebitorEntityUnitTest {
 
     private final HsOfficeRelationRealEntity givenDebitorRel = HsOfficeRelationRealEntity.builder()
-            .anchor(HsOfficePersonEntity.builder()
+            .anchor(HsOfficePersonRealEntity.builder()
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("some partner trade name")
                     .build())
-            .holder(HsOfficePersonEntity.builder()
+            .holder(HsOfficePersonRealEntity.builder()
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("some billing trade name")
                     .build())

@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerDetailsPatchResource;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -45,8 +45,8 @@ class HsOfficePartnerDetailsEntityPatcherUnitTest extends PatchUnitTestBase<
     void initMocks() {
         lenient().when(em.getReference(eq(HsOfficeContactRbacEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeContactRbacEntity.builder().uuid(invocation.getArgument(1)).build());
-        lenient().when(em.getReference(eq(HsOfficePersonEntity.class), any())).thenAnswer(invocation ->
-                HsOfficePersonEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficePersonRbacEntity.class), any())).thenAnswer(invocation ->
+                HsOfficePersonRbacEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override

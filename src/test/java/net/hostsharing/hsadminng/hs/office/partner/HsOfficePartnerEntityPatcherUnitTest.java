@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +33,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final UUID INITIAL_DETAILS_UUID = UUID.randomUUID();
     private static final UUID PATCHED_PARTNER_ROLE_UUID = UUID.randomUUID();
 
-    private final HsOfficePersonEntity givenInitialPerson = HsOfficePersonEntity.builder()
+    private final HsOfficePersonRealEntity givenInitialPerson = HsOfficePersonRealEntity.builder()
             .uuid(INITIAL_PERSON_UUID)
             .build();
     private final HsOfficeContactRealEntity givenInitialContact = HsOfficeContactRealEntity.builder()

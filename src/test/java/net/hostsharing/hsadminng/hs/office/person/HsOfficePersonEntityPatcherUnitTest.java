@@ -13,14 +13,14 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestInstance(PER_CLASS)
 class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
         HsOfficePersonPatchResource,
-        HsOfficePersonEntity
+        HsOfficePersonRbacEntity
         > {
 
     private static final UUID INITIAL_PERSON_UUID = UUID.randomUUID();
 
     @Override
-    protected HsOfficePersonEntity newInitialEntity() {
-        final var entity = new HsOfficePersonEntity();
+    protected HsOfficePersonRbacEntity newInitialEntity() {
+        final var entity = new HsOfficePersonRbacEntity();
         entity.setUuid(INITIAL_PERSON_UUID);
         entity.setPersonType(HsOfficePersonType.LEGAL_PERSON);
         entity.setTradeName("initial trade name");
@@ -37,7 +37,7 @@ class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficePersonEntityPatcher createPatcher(final HsOfficePersonEntity entity) {
+    protected HsOfficePersonEntityPatcher createPatcher(final HsOfficePersonRbacEntity entity) {
         return new HsOfficePersonEntityPatcher(entity);
     }
 
@@ -48,34 +48,34 @@ class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
                         "personType",
                         HsOfficePersonPatchResource::setPersonType,
                         HsOfficePersonTypeResource.INCORPORATED_FIRM,
-                        HsOfficePersonEntity::setPersonType,
+                        HsOfficePersonRbacEntity::setPersonType,
                         HsOfficePersonType.INCORPORATED_FIRM)
                         .notNullable(),
                 new JsonNullableProperty<>(
                         "tradeName",
                         HsOfficePersonPatchResource::setTradeName,
                         "patched trade name",
-                        HsOfficePersonEntity::setTradeName),
+                        HsOfficePersonRbacEntity::setTradeName),
                 new JsonNullableProperty<>(
                         "title",
                         HsOfficePersonPatchResource::setTitle,
                         "Dr. Patch.",
-                        HsOfficePersonEntity::setTitle),
+                        HsOfficePersonRbacEntity::setTitle),
                 new JsonNullableProperty<>(
                         "salutation",
                         HsOfficePersonPatchResource::setSalutation,
                         "Hallo Ini",
-                        HsOfficePersonEntity::setSalutation),
+                        HsOfficePersonRbacEntity::setSalutation),
                 new JsonNullableProperty<>(
                         "familyName",
                         HsOfficePersonPatchResource::setFamilyName,
                         "patched family name",
-                        HsOfficePersonEntity::setFamilyName),
+                        HsOfficePersonRbacEntity::setFamilyName),
                 new JsonNullableProperty<>(
                         "patched given name",
                         HsOfficePersonPatchResource::setGivenName,
                         "patched given name",
-                        HsOfficePersonEntity::setGivenName)
+                        HsOfficePersonRbacEntity::setGivenName)
         );
     }
 }

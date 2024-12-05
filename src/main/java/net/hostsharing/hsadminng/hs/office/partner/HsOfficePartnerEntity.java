@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContact;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
@@ -51,7 +51,7 @@ public class HsOfficePartnerEntity implements Stringifyable, BaseEntity<HsOffice
             .withIdProp(HsOfficePartnerEntity::toShortString)
             .withProp(p -> ofNullable(p.getPartnerRel())
                     .map(HsOfficeRelation::getHolder)
-                    .map(HsOfficePersonEntity::toShortString)
+                    .map(HsOfficePerson::toShortString)
                     .orElse(null))
             .withProp(p -> ofNullable(p.getPartnerRel())
                     .map(HsOfficeRelation::getContact)

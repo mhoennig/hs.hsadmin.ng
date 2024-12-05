@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
@@ -45,7 +45,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     HsOfficeRelationRealRepository relationRepo;
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRealRepository personRepo;
 
     @Autowired
     HsOfficeContactRealRepository contactrealRepo;

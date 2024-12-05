@@ -36,7 +36,7 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
                 JOIN HsOfficePartnerEntity partner
                     ON partner.partnerRel.holder = debitor.debitorRel.anchor
                         AND partner.partnerRel.type = 'PARTNER' AND debitor.debitorRel.type = 'DEBITOR'
-                JOIN HsOfficePersonEntity person
+                JOIN HsOfficePersonRealEntity person
                     ON person.uuid = partner.partnerRel.holder.uuid
                         OR person.uuid = debitor.debitorRel.holder.uuid
                 JOIN HsOfficeContactRealEntity contact

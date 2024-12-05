@@ -5,8 +5,8 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
@@ -48,10 +48,10 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficeRelationRealRepository relationRepo;
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRealRepository personRealRepo;
 
     @Autowired
-    HsOfficeContactRealRepository contactrealRepo;
+    HsOfficeContactRealRepository contactRealRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -93,9 +93,9 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void globalAdmin_withoutAssumedRole_canPostNewPartner() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Third").stream().findFirst().orElseThrow();
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").stream().findFirst().orElseThrow();
+            final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
+            final var givenPerson = personRealRepo.findPersonByOptionalNameLike("Third").stream().findFirst().orElseThrow();
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").stream().findFirst().orElseThrow();
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -153,8 +153,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void globalAdmin_canNotPostNewPartner_ifContactDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
+            final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
+            final var givenPerson = personRealRepo.findPersonByOptionalNameLike("Third").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -191,8 +191,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void globalAdmin_canNotPostNewPartner_ifPersonDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var mandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var mandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -224,7 +224,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     // TODO.impl: we want this error message:
                     // .body("message", is("ERROR: [400] Unable to find Person by uuid: " + GIVEN_NON_EXISTING_UUID));
                     // but ModelMapper creates this error message:
-                    .body("message", is("ERROR: [400] Unable to find " + HsOfficePersonEntity.class.getName() + " with id " + GIVEN_NON_EXISTING_UUID));
+                    .body("message", is("ERROR: [400] Unable to find " + HsOfficePersonRealEntity.class.getName() + " with id " + GIVEN_NON_EXISTING_UUID));
                 // @formatter:on
         }
     }
@@ -528,9 +528,9 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final String contactName) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
-            final var givenPerson = personRepo.findPersonByOptionalNameLike(partnerHolderName).stream().findFirst().orElseThrow();
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike(contactName).stream().findFirst().orElseThrow();
+            final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
+            final var givenPerson = personRealRepo.findPersonByOptionalNameLike(partnerHolderName).stream().findFirst().orElseThrow();
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike(contactName).stream().findFirst().orElseThrow();
 
             final var partnerRel = new HsOfficeRelationRealEntity();
             partnerRel.setType(HsOfficeRelationType.PARTNER);

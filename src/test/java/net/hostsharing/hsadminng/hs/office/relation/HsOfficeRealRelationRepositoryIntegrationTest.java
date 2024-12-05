@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -30,7 +30,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
     HsOfficeRelationRealRepository relationRealRepo;
 
     @Autowired
-    HsOfficePersonRepository personRepo;
+    HsOfficePersonRbacRepository personRepo;
 
     @PersistenceContext
     EntityManager em;

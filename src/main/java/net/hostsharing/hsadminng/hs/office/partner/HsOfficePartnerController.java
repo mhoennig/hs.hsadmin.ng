@@ -9,7 +9,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartne
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerRelInsertResource;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
@@ -166,8 +166,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     private HsOfficeRelationRealEntity persistPartnerRel(final HsOfficePartnerRelInsertResource resource) {
         final var entity = new HsOfficeRelationRealEntity();
         entity.setType(HsOfficeRelationType.PARTNER);
-        entity.setAnchor(ref(HsOfficePersonEntity.class, resource.getAnchorUuid()));
-        entity.setHolder(ref(HsOfficePersonEntity.class, resource.getHolderUuid()));
+        entity.setAnchor(ref(HsOfficePersonRealEntity.class, resource.getAnchorUuid()));
+        entity.setHolder(ref(HsOfficePersonRealEntity.class, resource.getHolderUuid()));
         entity.setContact(ref(HsOfficeContactRealEntity.class, resource.getContactUuid()));
         em.persist(entity);
         return entity;
