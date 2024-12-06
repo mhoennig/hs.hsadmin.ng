@@ -14,8 +14,11 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FinallyDeleteSepaMa
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsClearingTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDepositTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDisbursalTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsLimitationTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsLossTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertSimpleTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertTransferTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsTransferTransaction;
@@ -508,6 +511,45 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("transferredValue", 2 * 64)
                     .given("comment", "reverting some incorrect transfer transaction")
                     .given("dateOfIncorrectTransaction", "2024-02-15")
+                    .doRun();
+        }
+
+        @Test
+        @Order(4306)
+        @Requires("Coop-Assets: M-3101000 - Test AG - DEPOSIT Transaction")
+        void shouldSettleMembersDebtWithCoopAssetsViaClearing() {
+            new CreateCoopAssetsClearingTransaction(scenarioTest)
+                    .given("memberNumber", "M-3101000")
+                    .given("reference", "cancel 2024-01-15")
+                    .given("valueToClear", 2 * 64)
+                    .given("comment", "clearing according to members debt")
+                    .given("transactionDate", "2024-02-15")
+                    .doRun();
+        }
+
+        @Test
+        @Order(4307)
+        @Requires("Coop-Assets: M-3101000 - Test AG - DEPOSIT Transaction")
+        void shouldAssignmentBalanceSheetLossInCaseOfCancellationOfShares() {
+            new CreateCoopAssetsLossTransaction(scenarioTest)
+                    .given("memberNumber", "M-3101000")
+                    .given("reference", "cancel 2024-01-15")
+                    .given("valueLost", 2 * 64)
+                    .given("comment", "assign balance sheet loss")
+                    .given("transactionDate", "2024-02-15")
+                    .doRun();
+        }
+
+        @Test
+        @Order(4307)
+        @Requires("Coop-Assets: M-3101000 - Test AG - DEPOSIT Transaction")
+        void shouldAdjustCoopAssetsAfterLimitationPeriod() {
+            new CreateCoopAssetsLimitationTransaction(scenarioTest)
+                    .given("memberNumber", "M-3101000")
+                    .given("reference", "cancel 2024-01-15")
+                    .given("valueForLimitation", 2 * 64)
+                    .given("comment", "adjust coop ")
+                    .given("transactionDate", "2024-02-15")
                     .doRun();
         }
     }
