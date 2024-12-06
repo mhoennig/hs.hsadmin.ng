@@ -8,7 +8,8 @@ management:
     endpoints:
         web:
             exposure:
-                include: info, health, metrics
+                # HOWTO: view _clickable_ Spring Actuator (Micrometer) Metrics endpoints: http://localhost:8081/actuator/metric-links
+                include: info, health, metrics, metric-links
     observations:
         annotations:
             enabled: true

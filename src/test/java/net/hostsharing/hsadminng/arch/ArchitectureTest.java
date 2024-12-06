@@ -16,6 +16,7 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.repository.Repository;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -120,6 +121,7 @@ public class ArchitectureTest {
     @SuppressWarnings("unused")
     public static final ArchRule configPackageRule = classes()
             .that().resideInAPackage("..config..")
+            .and().areNotAnnotatedWith(SpringBootTest.class)
             .should().onlyDependOnClassesThat()
             .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 
