@@ -43,6 +43,20 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
+    public void shouldSupportSwaggerUi() {
+        final var result = this.restTemplate.getForEntity(
+                "http://localhost:" + this.managementPort + "/swagger-ui/index.html", String.class);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void shouldSupportApiDocs() {
+        final var result = this.restTemplate.getForEntity(
+                "http://localhost:" + this.managementPort + "/v3/api-docs/swagger-config", String.class);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND); // permitted but not configured
+    }
+
+    @Test
     public void shouldSupportHealthEndpoint() {
         final var result = this.restTemplate.getForEntity(
                 "http://localhost:" + this.managementPort + "/actuator/health", Map.class);
