@@ -62,7 +62,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // given
             context("superuser-alex@hostsharing.net");
             final var count = coopAssetsTransactionRepo.count();
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).load();
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow().load();
 
             // when
             final var result = attempt(em, () -> {
@@ -94,7 +94,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
 
             // when
             attempt(em, () -> {
-                final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
+                final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
                 final var newCoopAssetsTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
                         .membership(givenMembership)
                         .transactionType(HsOfficeCoopAssetsTransactionType.DEPOSIT)
@@ -166,7 +166,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
         public void globalAdmin_canViewCoopAssetsTransactions_filteredByMembershipUuid() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             // when
             final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
@@ -189,7 +189,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
         public void globalAdmin_canViewCoopAssetsTransactions_filteredByMembershipUuidAndValueDateRange() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             // when
             final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(

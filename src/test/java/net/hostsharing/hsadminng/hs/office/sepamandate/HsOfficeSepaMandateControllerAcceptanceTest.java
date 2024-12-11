@@ -138,7 +138,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         void globalAdmin_canPostNewSepaMandate() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
+            final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("Third").get(0);
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             final var location = RestAssured // @formatter:off
@@ -180,7 +180,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         void globalAdmin_canNotPostNewSepaMandateWhenDebitorUuidIsMissing() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
+            final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("Third").get(0);
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             final var location = RestAssured // @formatter:off
@@ -205,7 +205,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         void globalAdmin_canNotPostNewSepaMandate_ifBankAccountDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
+            final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("Third").get(0);
             final var givenBankAccountUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
@@ -524,7 +524,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandateForDebitorNumber(final int debitorNumber) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).get(0);
+            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).orElseThrow();
             final var bankAccountHolder = ofNullable(givenDebitor.getPartner().getPartnerRel().getHolder().getTradeName())
                     .orElse(givenDebitor.getPartner().getPartnerRel().getHolder().getFamilyName());
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike(bankAccountHolder).get(0);

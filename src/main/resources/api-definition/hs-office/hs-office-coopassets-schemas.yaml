@@ -27,8 +27,6 @@ components:
                     nullable: false
                 membership.memberNumber:
                     type: string
-                    minLength: 9
-                    maxLength: 9
                     pattern: 'M-[0-9]{7}'
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
@@ -69,8 +67,6 @@ components:
                     nullable: false
                 membership.memberNumber:
                     type: string
-                    minLength: 9
-                    maxLength: 9
                     pattern: 'M-[0-9]{7}'
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
@@ -130,8 +126,6 @@ components:
                     format: uuid
                 adoptingMembership.memberNumber:
                     type: string
-                    minLength: 9
-                    maxLength: 9
                     pattern: 'M-[0-9]{7}'
             required:
                 - membership.uuid

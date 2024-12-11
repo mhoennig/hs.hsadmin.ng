@@ -1,0 +1,28 @@
+get:
+    tags:
+        - hs-office-partners
+    description: 'Fetch a single business partner by its partner-number (prefixed with "P-"), if visible for the current subject.'
+    operationId: getSinglePartnerByPartnerNumber
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: partnerNumber
+          in: path
+          required: true
+          schema:
+              type: integer
+              minimum: 10000
+              maximum: 99999
+          description: partner-number (prefixed with "P-") of the partner to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

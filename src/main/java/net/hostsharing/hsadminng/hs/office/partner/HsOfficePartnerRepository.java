@@ -32,7 +32,7 @@ public interface HsOfficePartnerRepository extends Repository<HsOfficePartnerEnt
     List<HsOfficePartnerEntity> findPartnerByOptionalNameLike(String name);
 
     @Timed("app.office.partners.repo.findPartnerByPartnerNumber")
-    HsOfficePartnerEntity findPartnerByPartnerNumber(Integer partnerNumber);
+    Optional<HsOfficePartnerEntity> findPartnerByPartnerNumber(Integer partnerNumber);
 
     @Timed("app.office.partners.repo.save")
     HsOfficePartnerEntity save(final HsOfficePartnerEntity entity);

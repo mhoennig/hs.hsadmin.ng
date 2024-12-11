@@ -120,7 +120,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // given
             context("superuser-alex@hostsharing.net");
             final var count = rbacBookingItemRepo.count();
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+            final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
             final var givenProject = realProjectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
 
             // when
@@ -151,7 +151,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
 
             // when
             attempt(em, () -> {
-                final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+                final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
                 final var givenProject = realProjectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
                 final var newBookingItem = HsBookingItemRbacEntity.builder()
                         .project(givenProject)

@@ -290,11 +290,10 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         if (adoptingMembershipMemberNumber != null) {
             final var adoptingMemberNumber = Integer.valueOf(adoptingMembershipMemberNumber.substring("M-".length()));
             final var adoptingMembership = membershipRepo.findMembershipByMemberNumber(adoptingMemberNumber);
-            if (adoptingMembership != null) {
-                return adoptingMembership;
-            }
-            throw new ValidationException("adoptingMembership.memberNumber='" + adoptingMembershipMemberNumber
-                    + "' not found or not accessible");
+            return adoptingMembership.orElseThrow( () ->
+                    new ValidationException("adoptingMembership.memberNumber='" + adoptingMembershipMemberNumber
+                            + "' not found or not accessible")
+            );
         }
 
         throw new ValidationException(

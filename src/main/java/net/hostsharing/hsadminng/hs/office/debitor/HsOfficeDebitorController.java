@@ -57,12 +57,15 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
             final String currentSubject,
             final String assumedRoles,
             final String name,
-            final String debitorNumber) {
+            final UUID partnerUuid,
+            final String partnerNumber) {
         context.define(currentSubject, assumedRoles);
 
-        final var entities = debitorNumber != null
-                ? debitorRepo.findDebitorByDebitorNumber(cropTag("D-", debitorNumber))
-                : debitorRepo.findDebitorByOptionalNameLike(name);
+        final var entities = partnerNumber != null
+                ? debitorRepo.findDebitorsByPartnerNumber(cropTag("P-", partnerNumber))
+                    : partnerUuid != null
+                        ? debitorRepo.findDebitorsByPartnerUuid(partnerUuid)
+                        : debitorRepo.findDebitorsByOptionalNameLike(name);
 
         final var resources = mapper.mapList(entities, HsOfficeDebitorResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
@@ -127,6 +130,23 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         context.define(currentSubject, assumedRoles);
 
         final var result = debitorRepo.findByUuid(debitorUuid);
+        if (result.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeDebitorResource.class, ENTITY_TO_RESOURCE_POSTMAPPER));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Timed("app.office.debitors.api.getSingleDebitorByDebitorNumber")
+    public ResponseEntity<HsOfficeDebitorResource> getSingleDebitorByDebitorNumber(
+            final String currentSubject,
+            final String assumedRoles,
+            final Integer debitorNumber) {
+
+        context.define(currentSubject, assumedRoles);
+
+        final var result = debitorRepo.findDebitorByDebitorNumber(debitorNumber);
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

@@ -13,6 +13,9 @@ paths:
   /api/hs/office/partners:
     $ref: "hs-office-partners.yaml"
 
+  /api/hs/office/partners/P-{partnerNumber}:
+    $ref: "hs-office-partners-with-partnerNumber.yaml"
+
   /api/hs/office/partners/{partnerUUID}:
     $ref: "hs-office-partners-with-uuid.yaml"
 
@@ -58,6 +61,9 @@ paths:
   /api/hs/office/debitors:
     $ref: "hs-office-debitors.yaml"
 
+  /api/hs/office/debitors/D-{debitorNumber}:
+    $ref: "hs-office-debitors-with-debitorNumber.yaml"
+
   /api/hs/office/debitors/{debitorUUID}:
     $ref: "hs-office-debitors-with-uuid.yaml"
 
@@ -75,6 +81,9 @@ paths:
 
   /api/hs/office/memberships:
     $ref: "hs-office-memberships.yaml"
+
+  /api/hs/office/memberships/M-{membershipNumber}:
+    $ref: "hs-office-memberships-with-membershipNumber.yaml"
 
   /api/hs/office/memberships/{membershipUUID}:
     $ref: "hs-office-memberships-with-uuid.yaml"

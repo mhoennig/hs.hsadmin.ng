@@ -156,7 +156,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = membershipRepo.findMembershipsByOptionalPartnerUuid(null);
+            final var result = membershipRepo.findAll();
 
             // then
             exactlyTheseMembershipsAreReturned(
@@ -173,7 +173,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
 
             // when
-            final var result = membershipRepo.findMembershipsByOptionalPartnerUuid(givenPartner.getUuid());
+            final var result = membershipRepo.findMembershipsByPartnerUuid(givenPartner.getUuid());
 
             // then
             exactlyTheseMembershipsAreReturned(result,
@@ -186,13 +186,41 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = membershipRepo.findMembershipByMemberNumber(1000202);
+            final var result = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             // then
             assertThat(result)
                     .isNotNull()
                     .extracting(Object::toString)
                     .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)");
+        }
+
+        @Test
+        public void globalAdmin_withoutAssumedRole_canFindAllMembershipsByPartnerNumberAndSuffix() {
+            // given
+            context("superuser-alex@hostsharing.net");
+
+            // when
+            final var result = membershipRepo.findMembershipByPartnerNumberAndSuffix(10002, "02").orElseThrow();
+
+            // then
+            assertThat(result)
+                    .isNotNull()
+                    .extracting(Object::toString)
+                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)");
+        }
+
+        @Test
+        public void globalAdmin_withoutAssumedRole_canFindAllMembershipsByPartnerNumber() {
+            // given
+            context("superuser-alex@hostsharing.net");
+
+            // when
+            final var result = membershipRepo.findMembershipsByPartnerNumber(10002);
+
+            // then
+            exactlyTheseMembershipsAreReturned(result,
+                    "Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)");
         }
     }
 
@@ -339,7 +367,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                 select currentTask, targetTable, targetOp, targetdelta->>'membernumbersuffix'
                     from base.tx_journal_v
                     where targettable = 'hs_office.membership';
-                    """);
+                """);
 
         // when
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();

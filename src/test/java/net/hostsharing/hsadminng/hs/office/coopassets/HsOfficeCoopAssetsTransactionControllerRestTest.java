@@ -915,7 +915,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                 AVAILABLE_MEMBER_ENTITY);
 
         final var availableMemberNumber = Integer.valueOf(AVAILABLE_TARGET_MEMBER_NUMBER.substring("M-".length()));
-        when(membershipRepo.findMembershipByMemberNumber(eq(availableMemberNumber))).thenReturn(AVAILABLE_MEMBER_ENTITY);
+        when(membershipRepo.findMembershipByMemberNumber(eq(availableMemberNumber))).thenReturn(Optional.of(AVAILABLE_MEMBER_ENTITY));
 
         when(membershipRepo.findByUuid(eq(ORIGIN_MEMBERSHIP_UUID))).thenReturn(Optional.of(ORIGIN_TARGET_MEMBER_ENTITY));
         when(membershipRepo.findByUuid(eq(AVAILABLE_TARGET_MEMBERSHIP_UUID))).thenReturn(Optional.of(AVAILABLE_MEMBER_ENTITY));

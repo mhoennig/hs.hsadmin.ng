@@ -243,7 +243,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = partnerRepo.findPartnerByPartnerNumber(10001);
+            final var result = partnerRepo.findPartnerByPartnerNumber(10001).orElseThrow();
 
             // then
             assertThat(result)

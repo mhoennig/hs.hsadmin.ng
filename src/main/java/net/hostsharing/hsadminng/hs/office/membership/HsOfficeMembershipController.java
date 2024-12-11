@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembersh
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipResource;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.errors.Validate.validate;
 import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
@@ -39,16 +40,20 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
             final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid,
-            final String memberNumber) {
+            final String partnerNumber) {
         context.define(currentSubject, assumedRoles);
 
-        final var entities = (memberNumber != null)
-                ? ofNullable(membershipRepo.findMembershipByMemberNumber(
-                    cropTag(HsOfficeMembershipEntity.MEMBER_NUMBER_TAG, memberNumber))).stream()
-                    .toList()
-                : membershipRepo.findMembershipsByOptionalPartnerUuid(partnerUuid);
+        validate("partnerUuid, partnerNumber").atMaxOneNonNull(partnerUuid, partnerNumber);
 
-        final var resources = mapper.mapList(entities, HsOfficeMembershipResource.class,
+        final var entities = partnerNumber != null
+                ? membershipRepo.findMembershipsByPartnerNumber(
+                        cropTag(HsOfficePartnerEntity.PARTNER_NUMBER_TAG, partnerNumber))
+                : partnerUuid != null
+                    ? membershipRepo.findMembershipsByPartnerUuid(partnerUuid)
+                    : membershipRepo.findAll();
+
+        final var resources = mapper.mapList(
+                entities, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
@@ -72,7 +77,8 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
                         .path("/api/hs/office/memberships/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
-        final var mapped = mapper.map(saved, HsOfficeMembershipResource.class,
+        final var mapped = mapper.map(
+                saved, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
@@ -91,7 +97,27 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeMembershipResource.class,
+        return ResponseEntity.ok(mapper.map(
+                result.get(), HsOfficeMembershipResource.class,
+                SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Timed("app.office.membership.api.getSingleMembershipByMembershipNumber")
+    public ResponseEntity<HsOfficeMembershipResource> getSingleMembershipByMembershipNumber(
+            final String currentSubject,
+            final String assumedRoles,
+            final Integer membershipNumber) {
+
+        context.define(currentSubject, assumedRoles);
+
+        final var result = membershipRepo.findMembershipByMemberNumber(membershipNumber);
+        if (result.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(mapper.map(
+                result.get(), HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER));
     }
 

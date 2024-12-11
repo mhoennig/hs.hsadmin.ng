@@ -169,6 +169,45 @@ class HsOfficePartnerControllerRestTest {
     }
 
     @Nested
+    class GetSinglePartnerByPartnerNumber {
+
+        @Test
+        void respondWithPartner_ifPartnerNumberIsAvailable() throws Exception {
+            // given
+            when(partnerRepo.findPartnerByPartnerNumber(12345)).thenReturn(Optional.of(HsOfficePartnerEntity.builder()
+                    .partnerNumber(12345)
+                    .build()));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                    .get("/api/hs/office/partners/P-12345")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON))
+
+            // then
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("partnerNumber", is("P-12345")));
+        }
+
+        @Test
+        void respondNotFound_ifPartnerNumberIsNotAvailable() throws Exception {
+            // given
+            when(partnerRepo.findPartnerByPartnerNumber(12345)).thenReturn(Optional.empty());
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                    .get("/api/hs/office/partners/P-12345")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON))
+
+            // then
+            .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
     class DeletePartner {
 
         @Test

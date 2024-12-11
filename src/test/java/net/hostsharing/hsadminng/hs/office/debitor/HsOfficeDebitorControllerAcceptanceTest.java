@@ -31,7 +31,10 @@ import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -73,6 +76,69 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
     @PersistenceContext
     EntityManager em;
+
+    @Nested
+    class GetSingleDebitor {
+
+        @Test
+        void globalAdmin_withoutAssumedRoles_canGetDebitorByDebitorUuid() {
+
+            final var givenDebitor = jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net");
+                return debitorRepo.findDebitorByDebitorNumber(1000212).orElseThrow();
+            }).assertSuccessful().returnedValue();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                        {
+                            "debitorNumber": "D-1000212",
+                            "partner": { "partnerNumber": "P-10002" },
+                            "debitorRel": {
+                               "contact": { "caption": "second contact" }
+                            },
+                            "vatId": null,
+                            "vatCountryCode": null,
+                            "vatBusiness": true
+                        }
+                        """));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_withoutAssumedRoles_canGetDebitorByDebitorNumber() {
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/debitors/D-1000212")
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                         {
+                             "debitorNumber": "D-1000212",
+                             "partner": { "partnerNumber": "P-10002" },
+                             "debitorRel": {
+                                "contact": { "caption": "second contact" }
+                             },
+                             "vatId": null,
+                             "vatCountryCode": null,
+                             "vatBusiness": true
+                         }
+                        """));
+            // @formatter:on
+        }
+    }
 
     @Nested
     class GetListOfDebitors {
@@ -233,32 +299,28 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canFindDebitorDebitorByDebitorNumber() {
+        void globalAdmin_withoutAssumedRoles_canFindDebitorsByPartnerNumber() {
 
             RestAssured // @formatter:off
-                    .given()
+                .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
-                    .when()
-                    .get("http://localhost/api/hs/office/debitors?debitorNumber=D-1000212")
-                    .then().log().all().assertThat()
+                .when()
+                    .get("http://localhost/api/hs/office/debitors?partnerNumber=P-10002")
+                .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
-                     [
-                         {
-                             "debitorNumber": "D-1000212",
-                             "partner": { "partnerNumber": "P-10002" },
-                             "debitorRel": {
-                                "contact": { "caption": "second contact" }
-                             },
-                             "vatId": null,
-                             "vatCountryCode": null,
-                             "vatBusiness": true
-                         }
-                     ]
+                    [
+                        {
+                            "debitorNumber": "D-1000212",
+                            "partner": {
+                                "partnerNumber": "P-10002"
+                            }
+                        }
+                    ]
                     """));
-            // @formatter:on
+                    // @formatter:on
         }
     }
 
@@ -444,7 +506,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryDebitor() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitorUuid = debitorRepo.findDebitorByOptionalNameLike("First").get(0).getUuid();
+            final var givenDebitorUuid = debitorRepo.findDebitorsByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -509,7 +571,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void normalUser_canNotGetUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitorUuid = debitorRepo.findDebitorByOptionalNameLike("First").get(0).getUuid();
+            final var givenDebitorUuid = debitorRepo.findDebitorsByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -524,7 +586,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void contactAdminUser_canGetRelatedDebitorExceptRefundBankAccount() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitorUuid = debitorRepo.findDebitorByOptionalNameLike("first contact").get(0).getUuid();
+            final var givenDebitorUuid = debitorRepo.findDebitorsByOptionalNameLike("first contact").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()

@@ -15,15 +15,13 @@ get:
               type: string
               format: uuid
           description: UUID of the business partner, exclusive to `memberNumber`.
-        - name: memberNumber
+        - name: partnerNumber
           in: query
           required: false
           schema:
               type: string
-              minLength: 9
-              maxLength: 9
-              pattern: 'M-[0-9]{7}'
-          description: Member number, exclusive to `partnerUuid`.
+              pattern: 'P-[0-9]{5}'
+          description: partnerNumber of the partner the memberships belong to
     responses:
         "200":
             description: OK

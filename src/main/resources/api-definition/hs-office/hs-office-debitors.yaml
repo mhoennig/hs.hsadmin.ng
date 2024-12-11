@@ -13,15 +13,20 @@ get:
           schema:
               type: string
           description: Prefix of name properties from person or contact to filter the results.
-        - name: debitorNumber
+        - name: partnerUuid
           in: query
           required: false
           schema:
               type: string
-              minLength: 9
-              maxLength: 9
-              pattern: 'D-[0-9]{7}'
-          description: Debitor number of the requested debitor.
+              format: uuid
+          description: UUID of the business partner, exclusive to `memberNumber`.
+        - name: partnerNumber
+          in: query
+          required: false
+          schema:
+              type: string
+              pattern: 'P-[0-9]{5}'
+          description: Partner number of the requested debitor.
     responses:
         "200":
             description: OK

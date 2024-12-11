@@ -112,16 +112,16 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         void globalAdmin_canViewMembershipsByPartnerUuid() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var partner = partnerRepo.findPartnerByPartnerNumber(10001);
+            final var partner = partnerRepo.findPartnerByPartnerNumber(10001).orElseThrow();
 
             RestAssured // @formatter:off
-                    .given()
+                .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
-                    .when()
+                .when()
                     .queryParam("partnerUuid", partner.getUuid() )
                     .get("http://localhost/api/hs/office/memberships")
-                    .then().log().all().assertThat()
+                .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
@@ -140,30 +140,30 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
 
         @Test
-        void globalAdmin_canViewMembershipsByMemberNumber() {
+        void globalAdmin_canViewMembershipsByPartnerNumber() {
 
             RestAssured // @formatter:off
                     .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
-                    .port(port)
+                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .port(port)
                     .when()
-                    .queryParam("memberNumber", "M-1000202" )
-                    .get("http://localhost/api/hs/office/memberships")
+                        .queryParam("partnerNumber", "P-10002" )
+                        .get("http://localhost/api/hs/office/memberships")
                     .then().log().all().assertThat()
-                    .statusCode(200)
-                    .contentType("application/json")
-                    .body("", lenientlyEquals("""
-                      [
-                          {
-                              "partner": { "partnerNumber": "P-10002" },
-                              "memberNumber": "M-1000202",
-                              "memberNumberSuffix": "02",
-                              "validFrom": "2022-10-01",
-                              "validTo": null,
-                              "status": "ACTIVE"
-                          }
-                      ]
-                    """));
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                          [
+                              {
+                                  "partner": { "partnerNumber": "P-10002" },
+                                  "memberNumber": "M-1000202",
+                                  "memberNumberSuffix": "02",
+                                  "validFrom": "2022-10-01",
+                                  "validTo": null,
+                                  "status": "ACTIVE"
+                              }
+                          ]
+                        """));
             // @formatter:on
         }
     }
@@ -220,7 +220,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Test
         void globalAdmin_canGetArbitraryMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).getUuid();
+            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -246,7 +246,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Test
         void normalUser_canNotGetUnrelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).getUuid();
+            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -261,7 +261,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Test
         void partnerRelAgent_canGetRelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000303).getUuid();
+            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000303).orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()

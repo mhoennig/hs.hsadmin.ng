@@ -105,6 +105,23 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Timed("app.office.partners.api.getSinglePartnerByPartnerNumber")
+    public ResponseEntity<HsOfficePartnerResource> getSinglePartnerByPartnerNumber(
+            final String currentSubject,
+            final String assumedRoles,
+            final Integer partnerNumber) {
+
+        context.define(currentSubject, assumedRoles);
+
+        final var result = partnerRepo.findPartnerByPartnerNumber(partnerNumber);
+        if (result.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficePartnerResource.class));
+    }
+
+    @Override
     @Transactional
     @Timed("app.office.partners.api.deletePartnerByUuid")
     public ResponseEntity<Void> deletePartnerByUuid(

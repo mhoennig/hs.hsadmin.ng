@@ -1,0 +1,29 @@
+get:
+    tags:
+        - hs-office-memberships
+    description: 'Fetch a single membership by its membershipNumber, if visible for the current subject.'
+    operationId: getSingleMembershipByMembershipNumber
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: membershipNumber
+          in: path
+          required: true
+          schema:
+              type: number
+              format: integer
+              minimum: 1000000
+              maximum: 9999999
+          description: membershipNumber of the membership to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembership'
+
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

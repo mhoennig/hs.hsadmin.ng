@@ -66,7 +66,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // given
             context("superuser-alex@hostsharing.net");
             final var count = sepaMandateRepo.count();
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+            final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Paul Winkler").get(0);
 
             // when
@@ -100,7 +100,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             attempt(em, () -> {
-                final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+                final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
                 final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Paul Winkler").get(0);
                 final var newSepaMandate = HsOfficeSepaMandateEntity.builder()
                         .debitor(givenDebitor)
@@ -397,7 +397,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandate(final String iban) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+            final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc(iban).get(0);
             final var newSepaMandate = HsOfficeSepaMandateEntity.builder()
                     .debitor(givenDebitor)

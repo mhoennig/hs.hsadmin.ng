@@ -11,8 +11,6 @@ components:
                     format: uuid
                 partnerNumber:
                     type: string
-                    minLength: 7
-                    maxLength: 7
                     pattern: 'P-[0-9]{5}'
                 partnerRel:
                     $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
@@ -87,8 +85,6 @@ components:
             properties:
                 partnerNumber:
                     type: string
-                    minLength: 7
-                    maxLength: 7
                     pattern: 'P-[0-9]{5}'
                 partnerRel:
                     $ref: '#/components/schemas/HsOfficePartnerRelInsert'

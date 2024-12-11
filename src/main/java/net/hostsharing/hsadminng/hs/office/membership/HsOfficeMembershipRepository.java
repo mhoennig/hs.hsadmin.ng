@@ -22,12 +22,19 @@ public interface HsOfficeMembershipRepository extends Repository<HsOfficeMembers
 
     @Query("""
             SELECT membership FROM HsOfficeMembershipEntity membership
-                WHERE ( CAST(:partnerUuid as org.hibernate.type.UUIDCharType) IS NULL
-                        OR membership.partner.uuid = :partnerUuid )
+                WHERE membership.partner.uuid = :partnerUuid
                 ORDER BY membership.partner.partnerNumber, membership.memberNumberSuffix
             """)
     @Timed("app.office.membership.repo.findMembershipsByOptionalPartnerUuid")
-    List<HsOfficeMembershipEntity> findMembershipsByOptionalPartnerUuid(UUID partnerUuid);
+    List<HsOfficeMembershipEntity> findMembershipsByPartnerUuid(UUID partnerUuid);
+
+    @Query("""
+            SELECT membership FROM HsOfficeMembershipEntity membership
+                WHERE membership.partner.partnerNumber = :partnerNumber
+                ORDER BY membership.partner.partnerNumber, membership.memberNumberSuffix
+            """)
+    @Timed("app.office.membership.repo.findMembershipsByPartnerNumber")
+    List<HsOfficeMembershipEntity> findMembershipsByPartnerNumber(Integer partnerNumber);
 
     @Query("""
             SELECT membership FROM HsOfficeMembershipEntity membership
@@ -35,12 +42,12 @@ public interface HsOfficeMembershipRepository extends Repository<HsOfficeMembers
                     AND (membership.memberNumberSuffix = :suffix)
                 ORDER BY membership.memberNumberSuffix
                """)
-    @Timed("app.office.membership.repo.findMembershipByPartnerNumberAndSuffix")
-    HsOfficeMembershipEntity findMembershipByPartnerNumberAndSuffix(
+    @Timed("app.office.membership.repo.findMembershipByMemberNumber")
+    Optional<HsOfficeMembershipEntity> findMembershipByPartnerNumberAndSuffix(
             @NotNull Integer partnerNumber,
             @NotNull String suffix);
 
-    default HsOfficeMembershipEntity findMembershipByMemberNumber(Integer memberNumber) {
+    default Optional<HsOfficeMembershipEntity> findMembershipByMemberNumber(final Integer memberNumber) {
         final var partnerNumber = memberNumber / 100;
         final String suffix = String.format("%02d", memberNumber % 100);
         final var result = findMembershipByPartnerNumberAndSuffix(partnerNumber, suffix);

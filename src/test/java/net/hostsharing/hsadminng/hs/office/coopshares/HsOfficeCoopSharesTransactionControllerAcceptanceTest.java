@@ -87,7 +87,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         void globalAdmin_canFindCoopSharesTransactionsByMemberNumber() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             RestAssured // @formatter:off
                 .given().header("current-subject", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid=" + givenMembership.getUuid()).then().log().all().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
@@ -142,7 +142,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         void globalAdmin_canFindCoopSharesTransactionsByMembershipUuidAndDateRange() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             RestAssured // @formatter:off
                 .given().header("current-subject", "superuser-alex@hostsharing.net").port(port).when()
@@ -167,7 +167,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         void globalAdmin_canAddCoopSharesTransaction() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
 
             final var location = RestAssured // @formatter:off
                 .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
@@ -198,7 +198,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         void globalAdmin_canAddCoopSharesReversalTransaction() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
             final var givenTransaction = jpaAttempt.transacted(() -> {
                 // TODO.impl: introduce something like transactedAsSuperuser / transactedAs("...", ...)
                 context.define("superuser-alex@hostsharing.net");
@@ -266,7 +266,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         void globalAdmin_canNotCancelMoreSharesThanCurrentlySubscribed() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
 
             RestAssured // @formatter:off
                 .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""

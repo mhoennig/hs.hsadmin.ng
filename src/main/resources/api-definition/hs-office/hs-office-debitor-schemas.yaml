@@ -13,8 +13,6 @@ components:
                     $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
                 debitorNumber:
                     type: string
-                    minLength: 9
-                    maxLength: 9
                     pattern: 'D-[0-9]{7}'
                 debitorNumberSuffix:
                     type: string

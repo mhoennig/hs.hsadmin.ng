@@ -17,9 +17,9 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
     protected HttpResponse run() {
 
         obtain("Debitor: Test AG - main debitor", () ->
-            httpGet("/api/hs/office/debitors?debitorNumber=&{debitorNumber}")
+            httpGet("/api/hs/office/debitors/%{debitorNumber}")
                     .expecting(OK).expecting(JSON),
-            response -> response.expectArrayElements(1).getFromBody("[0].uuid")
+            response -> response.getFromBody("uuid")
         );
 
         obtain("BankAccount: Test AG - debit bank account", () ->

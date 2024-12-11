@@ -18,9 +18,9 @@ public abstract class CreateCoopSharesTransaction extends UseCase<CreateCoopShar
     protected HttpResponse run() {
 
         obtain("#{Find }membershipUuid", () ->
-            httpGet("/api/hs/office/memberships?memberNumber=&{memberNumber}")
-                    .expecting(OK).expecting(JSON).expectArrayElements(1),
-            response -> response.getFromBody("$[0].uuid")
+            httpGet("/api/hs/office/memberships/%{memberNumber}")
+                    .expecting(OK).expecting(JSON),
+            response -> response.getFromBody("uuid")
         );
 
         return withTitle("Create the Coop-Shares-%{transactionType} Transaction", () ->

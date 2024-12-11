@@ -13,6 +13,7 @@ map:
         - type: string:uuid => java.util.UUID
         - type: string:format => java.lang.String
         - type: number:currency => java.math.BigDecimal
+        - type: number:integer => java.lang.Integer
 
     paths:
         /api/hs/office/partners/{partnerUUID}:

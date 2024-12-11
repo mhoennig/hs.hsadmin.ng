@@ -18,9 +18,8 @@ public class CancelMembership extends UseCase<CancelMembership> {
     protected HttpResponse run() {
 
         obtain("Membership: %{memberNumber}", () ->
-                httpGet("/api/hs/office/memberships?memberNumber=%{memberNumber}")
-                        .expectArrayElements(1),
-                response -> response.expectArrayElements(1).getFromBody("[0].uuid")
+                httpGet("/api/hs/office/memberships/%{memberNumber}"),
+                response -> response.getFromBody("uuid")
         );
 
         return withTitle("Patch the New Status Into the Membership", () ->
