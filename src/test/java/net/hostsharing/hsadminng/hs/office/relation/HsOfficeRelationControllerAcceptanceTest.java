@@ -223,7 +223,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     class AddRelation {
 
         @Test
-        void globalAdmin_withoutAssumedRole_canAddRelation() {
+        void globalAdmin_withoutAssumedRole_canAddRelationWithHolderUuidAndContactUuid() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
@@ -261,7 +261,62 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         .body("holder.givenName", is("Paul"))
                         .body("contact.caption", is("second contact"))
                         .header("Location", startsWith("http://localhost"))
-                    .extract().header("Location");  // @formatter:on
+                    .extract().header("Location"); // @formatter:on
+
+            // finally, the new relation can be accessed under the generated UUID
+            final var newSubjectUuid = toCleanup(HsOfficeRelationRealEntity.class, UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1)));
+            assertThat(newSubjectUuid).isNotNull();
+        }
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canAddRelationWithHolderAndContactData() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "type": "%s",
+                                "mark": "%s",
+                                "anchor.uuid": "%s",
+                                "holder":   {
+                                   "personType": "NATURAL_PERSON",
+                                   "familyName": "Person",
+                                   "givenName": "Temp"
+                                 },
+                                "contact": {
+                                   "caption": "Temp Contact",
+                                   "emailAddresses": {
+                                        "main": "test@example.org"
+                                   }
+                                 }
+                            }
+                            """.formatted(
+                                    HsOfficeRelationTypeResource.SUBSCRIBER,
+                                    "operations-discuss",
+                                    givenAnchorPerson.getUuid()
+                            )
+                    )
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/relations")
+                .then().log().all().assertThat()
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("uuid", isUuidValid())
+                    .body("type", is("SUBSCRIBER"))
+                    .body("mark", is("operations-discuss"))
+                    .body("anchor.tradeName", is("Third OHG"))
+                    .body("holder.givenName", is("Temp"))
+                    .body("holder.familyName", is("Person"))
+                    .body("contact.caption", is("Temp Contact"))
+                    .header("Location", startsWith("http://localhost"))
+                    .extract().header("Location"); // @formatter:on
 
             // finally, the new relation can be accessed under the generated UUID
             final var newSubjectUuid = toCleanup(HsOfficeRelationRealEntity.class, UUID.fromString(
@@ -277,7 +332,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Smith").get(0);
             final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)

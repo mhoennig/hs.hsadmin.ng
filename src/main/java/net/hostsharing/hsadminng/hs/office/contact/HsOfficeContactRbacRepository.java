@@ -21,6 +21,16 @@ public interface HsOfficeContactRbacRepository extends Repository<HsOfficeContac
     @Timed("app.office.contacts.repo.findContactByOptionalCaptionLike.rbac")
     List<HsOfficeContactRbacEntity> findContactByOptionalCaptionLike(String caption);
 
+    @Query(value = """
+            select c.* from hs_office.contact_rv c
+                where exists (
+                    SELECT 1 FROM jsonb_each_text(c.emailAddresses) AS kv(key, value)
+                        WHERE kv.value LIKE :emailAddressRegEx
+                )
+            """, nativeQuery = true)
+    @Timed("app.office.contacts.repo.findContactByEmailAddress.rbac")
+    List<HsOfficeContactRbacEntity> findContactByEmailAddress(final String emailAddressRegEx);
+
     @Timed("app.office.contacts.repo.save.rbac")
     HsOfficeContactRbacEntity save(final HsOfficeContactRbacEntity entity);
 

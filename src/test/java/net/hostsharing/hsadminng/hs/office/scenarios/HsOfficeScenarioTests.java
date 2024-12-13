@@ -31,7 +31,8 @@ import net.hostsharing.hsadminng.hs.office.scenarios.partner.CreatePartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.DeletePartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.person.ShouldUpdatePersonData;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.RemoveOperationsContactFromPartner;
-import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeToMailinglist;
+import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeExistingPersonAndContactToMailinglist;
+import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeNewPersonAndContactToMailinglist;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.UnsubscribeFromMailinglist;
 import net.hostsharing.hsadminng.hs.scenarios.Produces;
 import net.hostsharing.hsadminng.hs.scenarios.Requires;
@@ -564,7 +565,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Person: Test AG")
         @Produces("Subscription: Michael Miller to operations-announce")
         void shouldSubscribeNewPersonAndContactToMailinglist() {
-            new SubscribeToMailinglist(scenarioTest)
+            new SubscribeNewPersonAndContactToMailinglist(scenarioTest)
                     // TODO.spec: do we need the personType? or is an operational contact always a natural person? what about distribution lists?
                     .given("partnerPersonTradeName", "Test AG")
                     .given("subscriberFamilyName", "Miller")
@@ -578,7 +579,22 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Test
         @Order(5001)
         @Requires("Subscription: Michael Miller to operations-announce")
-        void shouldUnsubscribeNewPersonAndContactToMailinglist() {
+        @Produces("Subscription: Michael Miller to operations-discussion")
+        void shouldSubscribeExistingPersonAndContactToMailinglist() {
+            new SubscribeExistingPersonAndContactToMailinglist(scenarioTest)
+                    .given("partnerPersonTradeName", "Test AG")
+                    .given("subscriberFamilyName", "Miller")
+                    .given("subscriberGivenName", "Michael")
+                    .given("subscriberEMailAddress", "michael.miller@example.org")
+                    .given("mailingList", "operations-discussion")
+                    .doRun()
+                    .keep();
+        }
+
+        @Test
+        @Order(5002)
+        @Requires("Subscription: Michael Miller to operations-announce")
+        void shouldUnsubscribePersonAndContactFromMailinglist() {
             new UnsubscribeFromMailinglist(scenarioTest)
                     .given("mailingList", "operations-announce")
                     .given("subscriberEMailAddress", "michael.miller@example.org")

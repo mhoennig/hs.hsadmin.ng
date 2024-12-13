@@ -52,6 +52,8 @@ components:
                 holder.uuid:
                     type: string
                     format: uuid
+                holder:
+                    $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonInsert'
                 type:
                     type: string
                     nullable: true
@@ -61,11 +63,17 @@ components:
                 contact.uuid:
                     type: string
                     format: uuid
+                contact:
+                    $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContactInsert'
             required:
-              - anchor.uuid
-              - holder.uuid
-              - type
-              - contact.uuid
+                - anchor.uuid
+                - type
+                # soon we might need to be able to use this:
+                # https://community.smartbear.com/discussions/swaggerostools/defining-conditional-attributes-in-openapi/222410
+                # For now we just describe the conditionally required properties:
+            description:
+                Additionally to `type` and `anchor.uuid`, either `anchor.uuid` or `anchor`
+                and either `contact` or `contact.uuid` need to be given.
 
         # relation created as a sub-element with implicitly known type
         HsOfficeRelationSubInsert:

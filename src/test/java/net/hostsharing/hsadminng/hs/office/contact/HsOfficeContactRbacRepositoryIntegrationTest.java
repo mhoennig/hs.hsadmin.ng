@@ -127,7 +127,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
     }
 
     @Nested
-    class FindAllContacts {
+    class FindContacts {
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllContacts() {
@@ -181,6 +181,22 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // then:
             exactlyTheseContactsAreReturned(result, givenContact.getCaption());
+        }
+    }
+
+    @Nested
+    class FindByEmailAddress {
+
+        @Test
+        public void globalAdmin_withoutAssumedRole_canFindContactsByEmailAddress() {
+            // given
+            context("superuser-alex@hostsharing.net", null);
+
+            // when
+            final var result = contactRepo.findContactByEmailAddress("%@secondcontact.example.com");
+
+            // then
+            exactlyTheseContactsAreReturned(result, "second contact");
         }
     }
 

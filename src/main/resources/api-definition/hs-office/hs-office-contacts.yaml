@@ -7,12 +7,19 @@ get:
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
-        - name: name
+        - name: caption
           in: query
           required: false
           schema:
               type: string
-          description: Prefix of caption to filter the results.
+          description: Beginning of caption to filter the results.
+        - name: emailAddress
+          in: query
+          required: false
+          schema:
+              type: string
+          description:
+              Email-address to filter the results, use '%' as wildcard.
     responses:
         "200":
             description: OK

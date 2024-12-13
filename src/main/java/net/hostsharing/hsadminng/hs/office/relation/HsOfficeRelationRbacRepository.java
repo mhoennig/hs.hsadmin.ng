@@ -26,24 +26,29 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
      *      *
      * @param personUuid the optional UUID of the anchorPerson or holderPerson
      * @param relationType the type of the relation
+     * @param mark the mark (use '%' for wildcard), case ignored
      * @param personData a string to match the persons tradeName, familyName or givenName (use '%' for wildcard), case ignored
      * @param contactData a string to match the contacts caption, postalAddress, emailAddresses or phoneNumbers (use '%' for wildcard), case ignored
      * @return a list of (accessible) relations which match all given criteria
      */
-    default List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidRelationTypePersonAndContactData(
+    default List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
             final UUID personUuid,
             final HsOfficeRelationType relationType,
+            final String mark,
             final String personData,
             final String contactData) {
-        return findRelationRelatedToPersonUuidRelationTypePersonAndContactDataImpl(
-                personUuid, toStringOrNull(relationType), toSqlLikeOperand(personData), toSqlLikeOperand(contactData));
+        return findRelationRelatedToPersonUuidRelationByTypeMarkPersonAndContactDataImpl(
+                personUuid, toStringOrNull(relationType),
+                toSqlLikeOperand(mark), toSqlLikeOperand(personData), toSqlLikeOperand(contactData));
     }
 
+    // TODO: use ELIKE instead of lower(...) LIKE ...? Or use jsonb_path with RegEx like emailAddressRegEx in ContactRepo?
     @Query(value = """
             SELECT rel FROM HsOfficeRelationRbacEntity AS rel
                 WHERE (:relationType IS NULL OR CAST(rel.type AS String) = :relationType)
                     AND ( :personUuid IS NULL
                             OR rel.anchor.uuid = :personUuid OR rel.holder.uuid = :personUuid )
+                    AND ( :mark IS NULL OR lower(rel.mark) LIKE :mark )
                     AND ( :personData IS NULL
                             OR lower(rel.anchor.tradeName) LIKE :personData OR lower(rel.holder.tradeName) LIKE :personData
                             OR lower(rel.anchor.familyName) LIKE :personData OR lower(rel.holder.familyName) LIKE :personData
@@ -54,10 +59,11 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
                             OR lower(CAST(rel.contact.emailAddresses AS String)) LIKE :contactData
                             OR lower(CAST(rel.contact.phoneNumbers AS String)) LIKE :contactData )
             """)
-    @Timed("app.office.relations.repo.findRelationRelatedToPersonUuidRelationTypePersonAndContactDataImpl.rbac")
-    List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidRelationTypePersonAndContactDataImpl(
+    @Timed("app.office.relations.repo.findRelationRelatedToPersonUuidRelationByTypeMarkPersonAndContactDataImpl.rbac")
+    List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidRelationByTypeMarkPersonAndContactDataImpl(
             final UUID personUuid,
             final String relationType,
+            final String mark,
             final String personData,
             final String contactData);
 

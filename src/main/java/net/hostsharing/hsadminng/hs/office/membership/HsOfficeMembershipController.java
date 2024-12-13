@@ -43,7 +43,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
             final String partnerNumber) {
         context.define(currentSubject, assumedRoles);
 
-        validate("partnerUuid, partnerNumber").atMaxOneNonNull(partnerUuid, partnerNumber);
+        validate("partnerUuid, partnerNumber").atMaxOne(partnerUuid, partnerNumber);
 
         final var entities = partnerNumber != null
                 ? membershipRepo.findMembershipsByPartnerNumber(

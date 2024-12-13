@@ -13,8 +13,16 @@ public class Validate {
         return new Validate(variableNames);
     }
 
-    public final void atMaxOneNonNull(final Object var1, final Object var2) {
+    public final void atMaxOne(final Object var1, final Object var2) {
         if (var1 != null && var2 != null) {
+            throw new ValidationException(
+                    "At maximum one of (" + variableNames + ") must be non-null, " +
+                            "but are (" + var1 + ", " + var2 + ")");
+        }
+    }
+
+    public final void exactlyOne(final Object var1, final Object var2) {
+        if ((var1 != null) == (var2 != null)) {
             throw new ValidationException(
                     "Exactly one of (" + variableNames + ") must be non-null, " +
                             "but are (" + var1 + ", " + var2 + ")");

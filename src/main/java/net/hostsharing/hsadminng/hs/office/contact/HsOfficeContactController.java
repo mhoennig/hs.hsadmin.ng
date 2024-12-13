@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import static net.hostsharing.hsadminng.errors.Validate.validate;
 import static net.hostsharing.hsadminng.mapper.KeyValueMap.from;
 
 @RestController
@@ -38,10 +39,14 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     public ResponseEntity<List<HsOfficeContactResource>> getListOfContacts(
             final String currentSubject,
             final String assumedRoles,
-            final String caption) {
+            final String caption,
+            final String emailAddress) {
         context.define(currentSubject, assumedRoles);
 
-        final var entities = contactRepo.findContactByOptionalCaptionLike(caption);
+        validate("caption, emailAddress").atMaxOne(caption, emailAddress);
+        final var entities = emailAddress != null
+             ? contactRepo.findContactByEmailAddress(emailAddress)
+             : contactRepo.findContactByOptionalCaptionLike(caption);
 
         final var resources = mapper.mapList(entities, HsOfficeContactResource.class);
         return ResponseEntity.ok(resources);
