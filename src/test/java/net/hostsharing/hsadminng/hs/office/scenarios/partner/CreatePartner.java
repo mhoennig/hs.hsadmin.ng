@@ -69,8 +69,11 @@ public class CreatePartner extends UseCase<CreatePartner> {
                          "contact.uuid": ${Contact: %{contactCaption}}
                     },
                     "details": {
-                        "registrationOffice": "Registergericht Hamburg",
-                        "registrationNumber": "1234567"
+                        "birthday": ${birthday???},
+                        "birthPlace": ${birthPlace???},
+                        "birthName": ${birthName???},
+                        "registrationOffice": ${registrationOffice???},
+                        "registrationNumber": ${registrationNumber???}
                     }
                 }
                 """))

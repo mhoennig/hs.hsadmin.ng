@@ -21,7 +21,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.UUID;
@@ -50,16 +49,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
         return Optional.of(currentTestMethodProduces.pop());
     }
 
-    record Alias<T extends UseCase<T>>(Class<T> useCase, UUID uuid) {
-
-        @Override
-        public String toString() {
-            return Objects.toString(uuid);
-        }
-
-    }
-
-    private final static Map<String, Alias<?>> aliases = new HashMap<>();
+    private final static Map<String, UUID> aliases = new HashMap<>();
 
     private final static Map<String, Object> properties = new HashMap<>();
     public final TestReport testReport = new TestReport(aliases);
@@ -90,18 +80,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
     @AfterEach
     void afterScenario(final TestInfo testInfo) { // final TestInfo testInfo
-        testInfo.getTestMethod() .ifPresent(currentTestMethod -> {
-            // FIXME: extract to method
-            final var producesAnnot = currentTestMethod.getAnnotation(Produces.class);
-            if (producesAnnot != null && producesAnnot.permanent()) {
-                final var testMethodProduces = producedAliases(producesAnnot);
-                testMethodProduces.forEach(declaredAlias ->
-                        assertThat(knowVariables().containsKey(declaredAlias))
-                                .as("@Producer method " + currentTestMethod.getName() +
-                                        " did declare but not produce \"" + declaredAlias + "\"")
-                                .isTrue() );
-            }
-        });
+        verifyProduceDeclaration(testInfo);
 
         properties.clear();
         testReport.close();
@@ -111,14 +90,11 @@ public abstract class ScenarioTest extends ContextBasedTest {
         jpaAttempt.transacted(() ->
                 {
                     context.define("superuser-alex@hostsharing.net");
-                    aliases.put(
+                    putAlias(
                             "Person: Hostsharing eG",
-                            new Alias<>(
-                                    null,
-                                    personRepo.findPersonByOptionalNameLike("Hostsharing eG")
-                                            .stream()
+                            personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream()
                                             .map(HsOfficePersonRbacEntity::getUuid)
-                                            .reduce(Reducer::toSingleElement).orElseThrow())
+                                            .reduce(Reducer::toSingleElement).orElseThrow()
                     );
                 }
         );
@@ -195,6 +171,20 @@ public abstract class ScenarioTest extends ContextBasedTest {
         }
     }
 
+    private static void verifyProduceDeclaration(final TestInfo testInfo) {
+        testInfo.getTestMethod().ifPresent(currentTestMethod -> {
+            final var producesAnnot = currentTestMethod.getAnnotation(Produces.class);
+            if (producesAnnot != null && producesAnnot.permanent()) {
+                final var testMethodProduces = producedAliases(producesAnnot);
+                testMethodProduces.forEach(declaredAlias ->
+                        assertThat(knowVariables().containsKey(declaredAlias))
+                                .as("@Producer method " + currentTestMethod.getName() +
+                                        " did declare but not produce \"" + declaredAlias + "\"")
+                                .isTrue() );
+            }
+        });
+    }
+
     static boolean containsAlias(final String alias) {
         return aliases.containsKey(alias);
     }
@@ -210,7 +200,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
         return alias;
     }
 
-    static void putAlias(final String name, final Alias<?> value) {
+    static void putAlias(final String name, final UUID value) {
         aliases.put(name, value);
     }
 
@@ -224,7 +214,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
     static Map<String, Object> knowVariables() {
         final var map = new LinkedHashMap<String, Object>();
-        ScenarioTest.aliases.forEach((key, value) -> map.put(key, value.uuid()));
+        map.putAll(ScenarioTest.aliases);
         map.putAll(ScenarioTest.properties);
         return map;
     }

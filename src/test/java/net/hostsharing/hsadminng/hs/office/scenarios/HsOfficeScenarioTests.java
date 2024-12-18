@@ -29,6 +29,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.partner.AddOperationsContac
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.AddRepresentativeToPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.CreatePartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.DeletePartner;
+import net.hostsharing.hsadminng.hs.office.scenarios.partner.ReplaceDeceasedPartnerWithCommunityOfHeirs;
 import net.hostsharing.hsadminng.hs.office.scenarios.person.ShouldUpdatePersonData;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.RemoveOperationsContactFromPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeExistingPersonAndContactToMailinglist;
@@ -93,6 +94,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
                                     """)
                     .given("officePhoneNumber", "+49 40 654321-0")
                     .given("emailAddress", "hamburg@test-ag.example.org")
+                    .given("registrationOffice", "Registergericht Hamburg")
+                    .given("registrationNumber", "1234567")
                     .doRun()
                     .keep();
         }
@@ -118,6 +121,9 @@ class HsOfficeScenarioTests extends ScenarioTest {
                                     """)
                     .given("officePhoneNumber", "+49 40 123456")
                     .given("emailAddress", "michelle.matthieu@example.org")
+                    .given("birthday", "1951-03-25")
+                    .given("birthPlace", "Neustadt a.d.R.")
+                    .given("birthName", "Eichbaum")
                     .doRun()
                     .keep();
         }
@@ -221,16 +227,17 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new ReplaceContactData(scenarioTest)
                     .given("partnerName", "Test AG")
                     .given("newContactCaption", "Test AG - China")
-                    .given("newPostalAddress", """
-                                     "firm": "Test AG",
-                                     "name": "Fi Zhong-Kha",
-                                     "building": "Thi Chi Koh Building",
-                                     "street": "No.2 Commercial Second Street",
-                                     "district": "Niushan Wei Wu",
-                                     "city": "Dongguan City",
-                                     "province": "Guangdong Province",
-                                     "country": "China"
-                            """)
+                    .given(
+                            "newPostalAddress", """
+                                             "firm": "Test AG",
+                                             "name": "Fi Zhong-Kha",
+                                             "building": "Thi Chi Koh Building",
+                                             "street": "No.2 Commercial Second Street",
+                                             "district": "Niushan Wei Wu",
+                                             "city": "Dongguan City",
+                                             "province": "Guangdong Province",
+                                             "country": "China"
+                                    """)
                     .given("newOfficePhoneNumber", "++15 999 654321")
                     .given("newEmailAddress", "norden@test-ag.example.org")
                     .doRun();
@@ -257,6 +264,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Order(20)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class DebitorScenarios {
+
         @Test
         @Order(2010)
         @Requires("Partner: P-31010 - Test AG")
@@ -598,6 +606,33 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new UnsubscribeFromMailinglist(scenarioTest)
                     .given("mailingList", "operations-announce")
                     .given("subscriberEMailAddress", "michael.miller@example.org")
+                    .doRun();
+        }
+    }
+
+    @Nested
+    @Order(60)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class PartnerDeceasedScenarios {
+
+        @Test
+        @Order(6010)
+        @Requires("Partner: P-31011 - Michelle Matthieu")
+        void shouldReplaceDeceasedPartnerByCommunityOfHeirs() {
+            new ReplaceDeceasedPartnerWithCommunityOfHeirs(scenarioTest)
+                    .given("partnerNumber", "P-31011")
+                    .given("dateOfDeath", "2024-11-15")
+                    .given("representativeGivenName", "Lena")
+                    .given("representativeFamilyName", "Stadland")
+                    .given(
+                            "communityOfHeirsPostalAddress", """
+                                    "street": "Im Wischer 14",
+                                    "zipcode": "22987",
+                                    "city": "Hamburg",
+                                    "country": "Germany"
+                                    """)
+                    .given("communityOfHeirsOfficePhoneNumber", "+49 40 666666")
+                    .given("communityOfHeirsEmailAddress", "lena.stadland@example.org")
                     .doRun();
         }
     }

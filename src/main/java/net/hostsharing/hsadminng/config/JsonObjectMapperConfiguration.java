@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.config;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.openapitools.jackson.nullable.JsonNullableModule;
@@ -13,6 +14,10 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Configuration
 public class JsonObjectMapperConfiguration {
+
+    public static ObjectMapper build() {
+        return  new JsonObjectMapperConfiguration().customObjectMapper().build();
+    }
 
     @Bean
     @Primary

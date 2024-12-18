@@ -1,6 +1,9 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.system.SystemProcess;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Order;
@@ -15,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static java.lang.String.join;
@@ -23,10 +27,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestReport {
 
     public static final File BUILD_DOC_SCENARIOS = new File("build/doc/scenarios");
-    private final static File markdownLogFile = new File(BUILD_DOC_SCENARIOS, ".last-debug-log.md");
     public static final SimpleDateFormat MM_DD_YYYY_HH_MM_SS = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
 
-    private final Map<String, ?> aliases;
+    private static final File markdownLogFile = new File(BUILD_DOC_SCENARIOS, ".last-debug-log.md");
+    private static final ObjectMapper objectMapper = JsonObjectMapperConfiguration.build();
+
+    private final Map<String, UUID> aliases;
     private final PrintWriter markdownLog; // records everything for debugging purposes
     private File markdownReportFile;
     private PrintWriter markdownReport; // records only the use-case under test, without its pre-requisites
@@ -38,7 +44,7 @@ public class TestReport {
     }
 
     @SneakyThrows
-    public TestReport(final Map<String, ?> aliases) {
+    public TestReport(final Map<String, UUID> aliases) {
         this.aliases = aliases;
         this.markdownLog = new PrintWriter(new FileWriter(markdownLogFile));
     }
@@ -76,6 +82,11 @@ public class TestReport {
         printLine("\n" +output + "\n");
     }
 
+    @SneakyThrows
+    public void printJson(final String json) {
+        printLine(prettyJson(json));
+    }
+
     void silent(final Runnable code) {
         silent++;
         code.run();
@@ -100,6 +111,14 @@ public class TestReport {
         return convertedTestMethodName.replaceAll(": should ", ": ");
     }
 
+    private static String prettyJson(final String json) throws JsonProcessingException {
+        if (json == null) {
+            return "";
+        }
+        final var jsonNode = objectMapper.readTree(json);
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+    }
+
     private String asClickableLink(final File file) {
         return file.toURI().toString().replace("file:/", "file:///");
     }
@@ -113,9 +132,8 @@ public class TestReport {
         final var result = new StringBuilder();
 
         for (String line : lines) {
-            for (Map.Entry<String, ?> entry : aliases.entrySet()) {
-                final var uuidString = entry.getValue().toString();
-                if (line.contains(uuidString)) {
+            for (Map.Entry<String, UUID> entry : aliases.entrySet()) {
+                if ( entry.getValue() != null  && line.contains(entry.getValue().toString())) {
                     line = line + " // " + entry.getKey();
                     break;  // only add comment for one UUID per row (in our case, there is only one per row)
                 }
@@ -150,5 +168,9 @@ public class TestReport {
             System.err.println(exc);
             return "unknown";
         }
+    }
+
+    public boolean isSilent() {
+        return silent > 0;
     }
 }

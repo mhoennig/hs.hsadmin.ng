@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
+import java.util.Objects;
+import java.util.UUID;
 
 public final class JsonOptional<V> {
 
@@ -40,5 +42,13 @@ public final class JsonOptional<V> {
             }
         }
         return jsonValue == null ? null : jsonValue.toString();
+    }
+
+    public UUID givenUUID() {
+        try {
+            return UUID.fromString(Objects.toString(jsonValue));
+        } catch(final IllegalArgumentException e) {
+            throw new ClassCastException("expected a UUID, but got '" + jsonValue + "'");
+        }
     }
 }

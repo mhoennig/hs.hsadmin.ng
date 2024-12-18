@@ -122,29 +122,33 @@ public abstract class UseCase<T extends UseCase<?>> {
         return new JsonTemplate(jsonTemplate);
     }
 
-    public final void obtain(
+    public final HttpResponse obtain(
             final String title,
             final Supplier<HttpResponse> http,
             final Function<HttpResponse, String> extractor,
             final String... extraInfo) {
-        withTitle(title, () -> {
+        return withTitle(title, () -> {
             final var response = http.get().keep(extractor);
+            response.optionallyReportRequestAndResponse();
             Arrays.stream(extraInfo).forEach(testReport::printPara);
             return response;
         });
     }
 
-    public final void obtain(final String alias, final Supplier<HttpResponse> http, final String... extraInfo) {
-        withTitle(alias, () -> {
-            final var response = http.get().keep();
+    public final HttpResponse obtain(final String alias, final Supplier<HttpResponse> httpCall, final String... extraInfo) {
+        return withTitle(alias, () -> {
+            final var response = httpCall.get().keep();
+            response.optionallyReportRequestAndResponse();
             Arrays.stream(extraInfo).forEach(testReport::printPara);
             return response;
         });
     }
 
-    public HttpResponse withTitle(final String resolvableTitle, final Supplier<HttpResponse> code) {
+    public HttpResponse withTitle(final String resolvableTitle, final Supplier<HttpResponse> httpCall, final String... extraInfo) {
         this.nextTitle = resolvableTitle;
-        final var response = code.get();
+        final var response = httpCall.get();
+        response.optionallyReportRequestAndResponse();
+        Arrays.stream(extraInfo).forEach(testReport::printPara);
         this.nextTitle = null;
         return response;
     }
@@ -261,6 +265,10 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     public final class HttpResponse {
 
+        private final HttpMethod httpMethod;
+        private final String uri;
+        private final String requestBody;
+
         @Getter
         private final java.net.http.HttpResponse<String> response;
 
@@ -270,6 +278,9 @@ public abstract class UseCase<T extends UseCase<?>> {
         @Getter
         private UUID locationUuid;
 
+        private boolean reportGenerated = false;
+        private boolean reportGeneratedWithResponse = false;
+
         @SneakyThrows
         public HttpResponse(
                 final HttpMethod httpMethod,
@@ -277,6 +288,9 @@ public abstract class UseCase<T extends UseCase<?>> {
                 final String requestBody,
                 final java.net.http.HttpResponse<String> response
         ) {
+            this.httpMethod = httpMethod;
+            this.uri = uri;
+            this.requestBody = requestBody;
             this.response = response;
             this.status = HttpStatus.valueOf(response.statusCode());
             if (this.status == HttpStatus.CREATED) {
@@ -284,40 +298,42 @@ public abstract class UseCase<T extends UseCase<?>> {
                 assertThat(location).startsWith("http://localhost:");
                 locationUuid = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
             }
-
-            reportRequestAndResponse(httpMethod, uri, requestBody);
         }
 
         public HttpResponse expecting(final HttpStatus httpStatus) {
+            optionallyReportRequestAndResponse();
             assertThat(HttpStatus.valueOf(response.statusCode())).isEqualTo(httpStatus);
             return this;
         }
 
         public HttpResponse expecting(final ContentType contentType) {
+            optionallyReportRequestAndResponse();
             assertThat(response.headers().firstValue("content-type"))
                     .contains(contentType.toString());
             return this;
         }
 
         public HttpResponse keep(final Function<HttpResponse, String> extractor) {
+            optionallyReportRequestAndResponse();
+
             final var alias = nextTitle != null ? ScenarioTest.resolve(nextTitle, DROP_COMMENTS) : resultAlias;
             assertThat(alias).as("cannot keep result, no alias found").isNotNull();
 
             final var value = extractor.apply(this);
-            ScenarioTest.putAlias(
-                    alias,
-                    new ScenarioTest.Alias<>(UseCase.this.getClass(), UUID.fromString(value)));
+            ScenarioTest.putAlias(alias, UUID.fromString(value));
             return this;
         }
 
         public HttpResponse keepAs(final String alias) {
-            ScenarioTest.putAlias(
-                    nonNullAlias(alias),
-                    new ScenarioTest.Alias<>(UseCase.this.getClass(), locationUuid));
+            optionallyReportRequestAndResponse();
+
+            ScenarioTest.putAlias(nonNullAlias(alias), locationUuid);
             return this;
         }
 
         public HttpResponse keep() {
+            optionallyReportRequestAndResponse();
+
             final var alias = nextTitle != null ? ScenarioTest.resolve(nextTitle, DROP_COMMENTS) : resultAlias;
             assertThat(alias).as("cannot keep result, no title or alias found for locationUuid: " + locationUuid).isNotNull();
 
@@ -326,12 +342,23 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         @SneakyThrows
         public HttpResponse expectArrayElements(final int expectedElementCount) {
+            optionallyReportRequestAndResponse();
+
             final var rootNode = objectMapper.readTree(response.body());
             assertThat(rootNode.isArray()).as("array expected, but got: " + response.body()).isTrue();
 
             final var root = (List<?>) objectMapper.readValue(response.body(), new TypeReference<List<Object>>() {
             });
             assertThat(root.size()).as("unexpected number of array elements").isEqualTo(expectedElementCount);
+            return this;
+        }
+
+        @SneakyThrows
+        public HttpResponse expectObject() {
+            optionallyReportRequestAndResponse();
+
+            final var rootNode = objectMapper.readTree(response.body());
+            assertThat(rootNode.isArray()).as("object expected, but got array: " + response.body()).isFalse();
             return this;
         }
 
@@ -357,14 +384,23 @@ public abstract class UseCase<T extends UseCase<?>> {
             return assertThat(getFromBodyAsOptional(path).givenAsString());
         }
 
+        public HttpResponse reportWithResponse() {
+           return reportRequestAndResponse(true);
+        }
+
         @SneakyThrows
-        private void reportRequestAndResponse(final HttpMethod httpMethod, final String uri, final String requestBody) {
+        private HttpResponse reportRequestAndResponse(final boolean unconditionallyWithResponse) {
+            if (reportGenerated) {
+                throw new IllegalStateException("request report already generated");
+            }
 
             // the title
             if (nextTitle != null) {
-                testReport.printLine("\n### " + ScenarioTest.resolve(nextTitle, KEEP_COMMENTS) + "\n");
+                testReport.printPara("### " + ScenarioTest.resolve(nextTitle, KEEP_COMMENTS));
             } else if (resultAlias != null) {
-                testReport.printLine("\n### Create " + resultAlias + "\n");
+                testReport.printPara("### Create " + resultAlias);
+            } else if (testReport.isSilent()) {
+                testReport.printPara("### Untitled Section");
             } else {
                 fail("please wrap the http...-call in the UseCase using `withTitle(...)`");
             }
@@ -372,17 +408,34 @@ public abstract class UseCase<T extends UseCase<?>> {
             // the request
             testReport.printLine("```");
             testReport.printLine(httpMethod.name() + " " + uri);
-            testReport.printLine((requestBody != null ? requestBody.trim() : ""));
+            testReport.printJson(requestBody);
 
             // the response
             testReport.printLine("=> status: " + status + " " + (locationUuid != null ? locationUuid : ""));
-            if (httpMethod == HttpMethod.GET || status.isError()) {
-                final var jsonNode = objectMapper.readTree(response.body());
-                final var prettyJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
-                testReport.printLine(prettyJson);
+            if (unconditionallyWithResponse || httpMethod == HttpMethod.GET || status.isError()) {
+                testReport.printJson(response.body());
+                this.reportGeneratedWithResponse = true;
             }
             testReport.printLine("```");
             testReport.printLine("");
+            this.reportGenerated = true;
+            return this;
+        }
+
+        @SneakyThrows
+        private void optionallyReportRequestAndResponse() {
+            if (!reportGenerated) {
+                reportRequestAndResponse(false);
+            }
+        }
+
+        private void verifyResponseReported(final String action) {
+            if (!reportGenerated) {
+                throw new IllegalStateException("report not generated yet, but expected for `" + action + "`");
+            }
+            if (!reportGeneratedWithResponse) {
+                throw new IllegalStateException("report without response, but response report required for `" + action + "`");
+            }
         }
 
         private String nonNullAlias(final String alias) {
@@ -390,6 +443,24 @@ public abstract class UseCase<T extends UseCase<?>> {
             // But if it appears in generated Markdown files, it should show up when that marker tag is searched.
             final var onlyVisibleInGeneratedMarkdownNotInSource = new String(new char[]{'F', 'I', 'X', 'M', 'E'});
             return alias == null ? "unknown alias -- " + onlyVisibleInGeneratedMarkdownNotInSource : alias;
+        }
+
+        public HttpResponse extractUuidAlias(final String jsonPath, final String resolvableName) {
+            verifyResponseReported("extractUuidAlias");
+
+            final var resolvedName = ScenarioTest.resolve(resolvableName, DROP_COMMENTS);
+            final var resolvedJsonPath = getFromBodyAsOptional(jsonPath).givenUUID();
+            ScenarioTest.putAlias(resolvedName, resolvedJsonPath);
+            return this;
+        }
+
+        public HttpResponse extractValue(final String jsonPath, final String resolvableName) {
+            verifyResponseReported("extractValue");
+
+            final var resolvedName = ScenarioTest.resolve(resolvableName, DROP_COMMENTS);
+            final var resolvedJsonPath = getFromBodyAsOptional(jsonPath).givenAsString();
+            ScenarioTest.putProperty(resolvedName, resolvedJsonPath);
+            return this;
         }
     }
 
