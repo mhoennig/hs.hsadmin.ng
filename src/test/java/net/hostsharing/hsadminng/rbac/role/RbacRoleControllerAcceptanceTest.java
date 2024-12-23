@@ -4,7 +4,7 @@ import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

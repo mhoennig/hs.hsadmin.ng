@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.rbac.test;
+package net.hostsharing.hsadminng.test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

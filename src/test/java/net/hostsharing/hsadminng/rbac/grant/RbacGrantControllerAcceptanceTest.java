@@ -10,7 +10,7 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

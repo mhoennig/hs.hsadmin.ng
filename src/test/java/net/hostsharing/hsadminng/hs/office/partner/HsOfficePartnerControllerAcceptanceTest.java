@@ -13,7 +13,7 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealReposito
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,7 +25,7 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.EX_PARTNER;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 

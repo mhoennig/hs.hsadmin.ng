@@ -3,13 +3,13 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 
-import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,

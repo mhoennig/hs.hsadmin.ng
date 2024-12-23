@@ -7,7 +7,7 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

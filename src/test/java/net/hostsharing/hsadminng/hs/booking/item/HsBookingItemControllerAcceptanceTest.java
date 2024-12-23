@@ -12,7 +12,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.Dns;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.ClassOrderer;
@@ -38,7 +38,7 @@ import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
-import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
 

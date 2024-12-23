@@ -6,7 +6,7 @@ import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -29,7 +30,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.hamcrest.Matchers.matchesRegex;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -41,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(HsBookingItemController.class)
 @Import({StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class})
 @RunWith(SpringRunner.class)
+@ActiveProfiles("test")
 class HsBookingItemControllerRestTest {
 
     @Autowired

@@ -1,0 +1,165 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ] || [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+  cat <<EOF
+  curl-wrapper utilizing CAS-authentication for hsadmin-ng
+  usage: $0 [--trace] <<command>> [parameters]
+
+  commands:
+EOF
+  grep '") ''# ' $0
+  exit
+fi
+
+if [ "$1" == "--trace" ]; then
+  function trace() {
+    echo "$*" >&2
+  }
+  function doCurl() {
+    set -x
+    curl --fail-with-body --header "Authorization: $HSADMINNG_CAS_TICKET" "$@"
+    set +x
+  }
+  shift
+else
+  function trace() {
+    : # noop
+  }
+  function doCurl() {
+    curl --fail-with-body --header "Authorization: $HSADMINNG_CAS_TICKET" "$@"
+  }
+fi
+
+if [ -z "$HSADMINNG_CAS_LOGIN" ] || [ -z "$HSADMINNG_CAS_VALIDATE" ] || \
+   [ -z "$HSADMINNG_CAS_SERVICE_ID" ]; then
+  cat >&2 <<EOF
+  ERROR: environment incomplete
+
+  please set the following environment variables:
+  export HSADMINNG_CAS_LOGIN=https://login.hostsharing.net/cas/v1/tickets
+  export HSADMINNG_CAS_VALIDATE=https://login.hostsharing.net/cas/proxyValidate
+  export HSADMINNG_CAS_USERNAME=<<optionally, your username, or leave empty after '='>>
+  export HSADMINNG_CAS_PASSWORD=<<optionally, your password, or leave empty after '='>>
+  export HSADMINNG_CAS_SERVICE_ID=https://hsadminng.hostsharing.net:443/
+EOF
+  exit 1
+fi
+
+function casLogout() {
+  rm -f ~/.cas-login-tgt
+}
+
+function casLogin() {
+  # ticket granting ticket exists and not expired?
+  if find ~/.cas-login-tgt -type f -size +0c -mmin -60 2>/dev/null | grep -q .; then
+    return
+  fi
+
+  if [ -z "$HSADMINNG_CAS_USERNAME" ]; then
+    read -e -p "Username: " HSADMINNG_CAS_USERNAME
+  fi
+
+  if [ -z "$HSADMINNG_CAS_PASSWORD" ]; then
+    read -s -e -p "Password: " HSADMINNG_CAS_PASSWORD
+  fi
+
+  # Do NOT use doCurl here! We do neither want to print the password nor pass a CAS service ticket.
+  trace "+ curl --fail-with-body -s -i -X POST \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -d \"username=$HSADMINNG_CAS_USERNAME&password=<<PASSWORD OMITTED>>\" \
+        $HSADMINNG_CAS_LOGIN -o ~/.cas-login-tgt.response -D -"
+  HSADMINNG_CAS_TGT=`curl --fail-with-body -s -i -X POST \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -d "username=$HSADMINNG_CAS_USERNAME&password=$HSADMINNG_CAS_PASSWORD" \
+        $HSADMINNG_CAS_LOGIN -o ~/.cas-login-tgt.response -D - \
+        | grep -i "^Location: " |  sed -e 's/^Location: //' -e 's/\\r//'`
+  if [ -z "$HSADMINNG_CAS_TGT" ]; then
+    echo "ERROR: could not get ticket granting ticket" >&2
+    cat ~/.cas-login-tgt.response >&2
+  fi
+  echo "$HSADMINNG_CAS_TGT" >~/.cas-login-tgt
+  trace "$HSADMINNG_CAS_TGT"
+}
+
+function casTicket() {
+  HSADMINNG_CAS_TGT=$(<~/.cas-login-tgt)
+  if [[ -z "$HSADMINNG_CAS_TGT" ]]; then
+    echo "ERROR: cannot get CAS ticket granting ticket for $HSADMINNG_CAS_USERNAME" >&2
+    exit 1
+  fi
+  trace "CAS-TGT: $HSADMINNG_CAS_TGT"
+
+  trace "fetching CAS service ticket"
+  trace "curl -s -d \"service=$HSADMINNG_CAS_SERVICE_ID\" $HSADMINNG_CAS_TGT"
+  HSADMINNG_CAS_TICKET=$(curl -s -d "service=$HSADMINNG_CAS_SERVICE_ID" $HSADMINNG_CAS_TGT)
+  if [[ -z "$HSADMINNG_CAS_TICKET" ]]; then
+    echo "ERROR: cannot get CAS service ticket" >&2
+    exit 1
+  fi
+
+  echo $HSADMINNG_CAS_TICKET
+}
+
+function casValidate() {
+  HSADMINNG_CAS_TICKET=`casTicket`
+
+  trace "validating CAS-TICKET: $HSADMINNG_CAS_TICKET"
+  # Do NOT use doCurl here! We do not pass a CAS service ticket.
+  trace curl -i -s $HSADMINNG_CAS_VALIDATE?ticket=${HSADMINNG_CAS_TICKET}\&service=${HSADMINNG_CAS_SERVICE_ID}
+  HSADMINNG_CAS_USER=`curl -i -s $HSADMINNG_CAS_VALIDATE?ticket=${HSADMINNG_CAS_TICKET}\&service=${HSADMINNG_CAS_SERVICE_ID} | grep -oPm1 "(?<=<cas:user>)[^<]+"`
+  if [ -z "$HSADMINNG_CAS_USER" ]; then
+    echo "validation failed" >&2
+    exit 1
+  fi
+  echo "CAS-User: $HSADMINNG_CAS_USER"
+}
+
+case "${1,,}" in
+  "login") # reads username+password and fetches ticket granting ticket (bypasses HSADMINNG_CAS_USERNAME+HSADMINNG_CAS_PASSWORD)
+    casLogout
+    export HSADMINNG_CAS_USERNAME=
+    export HSADMINNG_CAS_PASSWORD=
+    casLogin
+    ;;
+  "logout") # logout, deleting ticket granting ticket
+    casLogout
+    ;;
+  "validate") # validates ticket granting ticket and prints currently logged in user
+    casValidate
+    ;;
+  "get") # HTTP GET, add URL as parameter
+    shift
+    casLogin
+    HSADMINNG_CAS_TICKET=`casTicket`
+    doCurl "$*"
+    ;;
+  "post") # HTTP POST, add curl options to specify the request body and the URL as last parameter
+    shift
+    casLogin
+    HSADMINNG_CAS_TICKET=`casTicket`
+    doCurl --header "Content-Type: application/json" -X POST "$@"
+    ;;
+  "patch") # HTTP PATCH, add curl options to specify the request body and the URL as last parameter
+    shift
+    casLogin
+    HSADMINNG_CAS_TICKET=`casTicket`
+    doCurl --header "Content-Type: application/json" -X POST "$*"
+    ;;
+  "delete") # HTTP DELETE, add curl options to specify the request body and the URL as last parameter
+    shift
+    casLogin
+    HSADMINNG_CAS_TICKET=`casTicket`
+    curl -X POST "$@"
+    ;;
+  *)
+    cat >&2 <<EOF
+    unknown command: '$1'
+    valid commands: help, login, logout, validate, get, post, patch, delete
+EOF
+    exit 1
+    ;;
+esac
+
+
+
+

@@ -93,6 +93,8 @@ alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResource
 alias gw-test='. .aliases; ./gradlew test'
 alias gw-check='. .aliases; gw test check -x pitest'
 
+alias cas-curl='bin/cas-curl'
+
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
 alias gw-importOfficeData-in-docker-compose='
         docker-compose -f etc/docker-compose.yml down &&

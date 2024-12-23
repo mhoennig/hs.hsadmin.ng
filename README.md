@@ -67,29 +67,37 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
     gw scenarioTests    # compiles and scenario-tests - takes ~1min on a decent machine
     
     # if the container has not been built yet, run this:
-    pg-sql-run      # downloads + runs PostgreSQL in a Docker container on localhost:5432
+    pg-sql-run          # downloads + runs PostgreSQL in a Docker container on localhost:5432
+
     # if the container has been built already and you want to keep the data, run this:
     pg-sql-start
 
-    gw bootRun      # compiles and runs the application on localhost:8080
+Next, compile and run the application without CAS-authentication on `localhost:8080`:
+
+    export HSADMINNG_CAS_SERVER=
+    gw bootRun
+
+For using the REST-API with CAS-authentication, see `bin/cas-curl`.   
+
+Now we can access the REST API, e.g. using curl:
 
     # the following command should reply with "pong":
-    curl -f http://localhost:8080/api/ping
+    curl -f -s http://localhost:8080/api/ping
 
     # the following command should return a JSON array with just all customers:
-    curl -f\
+    curl -f -s\
         -H 'current-subject: superuser-alex@hostsharing.net' \
         http://localhost:8080/api/test/customers \
     | jq # just if `jq` is installed, to prettyprint the output
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
-    curl -f\
+    curl -f -s\
         -H 'current-subject: superuser-alex@hostsharing.net' -H 'assumed-roles: rbactest.customer#yyy:ADMIN' \
         http://localhost:8080/api/test/packages \
     | jq
 
     # add a new customer
-    curl -f\
+    curl -f -s\
         -H 'current-subject: superuser-alex@hostsharing.net' -H "Content-Type: application/json" \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
         -X POST http://localhost:8080/api/test/customers \
@@ -805,6 +813,29 @@ postgres-autodoc
 ```
 
 The output will list the generated files.
+
+
+### How to Add (Real) Admin Users
+
+```sql
+DO $$
+DECLARE
+    -- replace with your admin account names
+    admin_users TEXT[] := ARRAY['admin-1', 'admin-2', 'admin-3'];
+    admin TEXT;
+BEGIN
+    -- run as superuser
+    call base.defineContext('adding real admin users', null, null, null);
+    
+    -- for all new admin accounts
+    FOREACH admin IN ARRAY admin_users LOOP
+        call rbac.grantRoleToSubjectUnchecked(
+                rbac.findRoleId(rbac.global_ADMIN()), -- granted by role
+                rbac.findRoleId(rbac.global_ADMIN()), -- role to grant
+                rbac.create_subject(admin)); -- creates the new admin account
+        END LOOP;
+END $$;
+```
 
 
 ## Further Documentation

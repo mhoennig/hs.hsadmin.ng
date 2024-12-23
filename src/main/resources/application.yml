@@ -36,6 +36,9 @@ liquibase:
 hsadminng:
     postgres:
         leakproof:
+    cas:
+        server: https://login.hostsharing.net/cas # use empty string to bypass CAS-validation and directly use current-subject
+        service: https://hsadminng.hostsharing.net:443 # TODO.conf: deployment target + matching CAS service ID
 
 metrics:
     distribution:

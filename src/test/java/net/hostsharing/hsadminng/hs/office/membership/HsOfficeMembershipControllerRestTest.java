@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransact
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static io.hypersistence.utils.hibernate.type.range.Range.localDateRange;
-import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;

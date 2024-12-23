@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;

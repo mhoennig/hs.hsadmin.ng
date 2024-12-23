@@ -93,6 +93,7 @@ dependencies {
     testImplementation 'org.hamcrest:hamcrest-core:3.0'
     testImplementation 'org.pitest:pitest-junit5-plugin:1.2.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testImplementation 'org.wiremock:wiremock-standalone:3.10.0'
 }
 
 dependencyManagement {

@@ -39,7 +39,7 @@ import net.hostsharing.hsadminng.hs.scenarios.Produces;
 import net.hostsharing.hsadminng.hs.scenarios.Requires;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import net.hostsharing.hsadminng.test.IgnoreOnFailureExtension;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.Disabled;

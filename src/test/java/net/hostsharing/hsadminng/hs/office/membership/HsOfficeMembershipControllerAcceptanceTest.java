@@ -8,7 +8,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.test.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -27,7 +27,7 @@ import java.util.UUID;
 import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.ACTIVE;
 import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.CANCELLED;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 

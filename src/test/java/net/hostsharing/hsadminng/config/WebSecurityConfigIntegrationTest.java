@@ -2,20 +2,28 @@ package net.hostsharing.hsadminng.config;
 
 import java.util.Map;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {"management.port=0", "server.port=0"})
-// IMPORTANT: To test prod config, do not use test profile!
+@ActiveProfiles("wiremock") // IMPORTANT: To test prod config, do not use test profile!
 class WebSecurityConfigIntegrationTest {
 
     @Value("${local.server.port}")
@@ -24,15 +32,44 @@ class WebSecurityConfigIntegrationTest {
     @Value("${local.management.port}")
     private int managementPort;
 
+    @Value("${hsadminng.cas.service}")
+    private String serviceUrl;
+
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private WireMockServer wireMockServer;
+
     @Test
     public void shouldSupportPingEndpoint() {
-        final var result = this.restTemplate.getForEntity(
-                "http://localhost:" + this.serverPort + "/api/ping", String.class);
+        // given
+        wireMockServer.stubFor(get(urlEqualTo("/cas/p3/serviceValidate?service=" + serviceUrl + "&ticket=test-user"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody("""
+                                <cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
+                                    <cas:authenticationSuccess>
+                                        <cas:user>test-user</cas:user>
+                                    </cas:authenticationSuccess>
+                                </cas:serviceResponse>
+                                """)));
+
+
+        // fake Authorization header
+        final var headers = new HttpHeaders();
+        headers.set("Authorization", "test-user");
+
+        // http request
+        final var result = restTemplate.exchange(
+                "http://localhost:" + this.serverPort + "/api/ping",
+                HttpMethod.GET,
+                new HttpEntity<>(null, headers),
+                String.class
+        );
+
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).startsWith("pong");
+        assertThat(result.getBody()).startsWith("pong test-user");
     }
 
     @Test
