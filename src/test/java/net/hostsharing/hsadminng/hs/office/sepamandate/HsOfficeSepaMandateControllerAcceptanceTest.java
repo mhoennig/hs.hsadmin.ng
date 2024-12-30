@@ -83,7 +83,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                          },
                          {
                              "debitor": { "debitorNumber": "D-1000212" },
-                             "bankAccount": { "holder": "Second e.K." },
+                             "bankAccount": { "holder": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K." },
                              "reference": "ref-10002-12",
                              "validFrom": "2022-10-01",
                              "validTo": "2026-12-31"

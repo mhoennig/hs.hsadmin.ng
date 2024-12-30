@@ -251,9 +251,14 @@ begin
         execute sql into uuid;
     exception
         when others then
-            raise exception 'function %_uuid_by_id_name(...) not found, add identity view support for table %', objectTable, objectTable;
+            raise exception 'function %_uuid_by_id_name(''%'') failed: %, SQLSTATE: %. If it could not be found, add identity view support to %\nSQL:%',
+                objectTable, objectIdName, SQLERRM, SQLSTATE, objectTable, sql;
     end;
-    return uuid;
+    if uuid is null then
+        raise exception 'SQL returned null: %', sql;
+    else
+        return uuid;
+    end if;
 end ; $$;
 
 create or replace function rbac.findIdNameByObjectUuid(objectTable varchar, objectUuid uuid)
@@ -270,7 +275,8 @@ begin
         execute sql into idName;
     exception
         when others then
-            raise exception 'function %_id_name_by_uuid(...) not found, add identity view support for table %', objectTable, objectTable;
+            raise exception 'function %_id_name_by_uuid(''%'') failed: %, SQLSTATE: %. If it could not be found, add identity view support to %',
+                objectTable, objectUuid, SQLERRM, SQLSTATE, objectTable;
     end;
     return idName;
 end ; $$;

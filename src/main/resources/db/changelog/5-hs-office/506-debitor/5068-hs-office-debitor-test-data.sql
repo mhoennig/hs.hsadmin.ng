@@ -53,7 +53,7 @@ do language plpgsql $$
         call base.defineContext('creating debitor test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call hs_office.debitor_create_test_data(11, 'First GmbH', 'first contact', 'fir');
-        call hs_office.debitor_create_test_data(12, 'Second e.K.', 'second contact', 'sec');
+        call hs_office.debitor_create_test_data(12, 'Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', 'second contact', 'sec');
         call hs_office.debitor_create_test_data(13, 'Third OHG', 'third contact', 'thi');
     end;
 $$;

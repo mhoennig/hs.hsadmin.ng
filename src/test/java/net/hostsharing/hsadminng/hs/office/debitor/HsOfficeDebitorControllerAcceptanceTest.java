@@ -227,8 +227,8 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                       },
                       {
                         "debitorRel": {
-                          "anchor": {"tradeName": "Second e.K."},
-                          "holder": {"tradeName": "Second e.K."},
+                          "anchor": {"tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K."},
+                          "holder": {"tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K."},
                           "type": "DEBITOR",
                           "contact": {
                             "emailAddresses": { "main": "contact-admin@secondcontact.example.com" }
@@ -240,7 +240,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                           "partnerNumber": "P-10002",
                           "partnerRel": {
                             "anchor": {"tradeName": "Hostsharing eG"},
-                            "holder": {"tradeName": "Second e.K."},
+                            "holder": {"tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K."},
                             "type": "PARTNER",
                             "contact": {
                                 "emailAddresses": { "main": "contact-admin@secondcontact.example.com" }

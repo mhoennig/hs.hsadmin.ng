@@ -91,9 +91,9 @@ do language plpgsql $$
         call hs_office.relation_create_test_data('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');
         call hs_office.relation_create_test_data('First GmbH', 'DEBITOR', 'First GmbH', 'first contact');
 
-        call hs_office.relation_create_test_data('Second e.K.', 'PARTNER', 'Hostsharing eG', 'second contact');
-        call hs_office.relation_create_test_data('Smith', 'REPRESENTATIVE', 'Second e.K.', 'second contact');
-        call hs_office.relation_create_test_data('Second e.K.', 'DEBITOR', 'Second e.K.', 'second contact');
+        call hs_office.relation_create_test_data('Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', 'PARTNER', 'Hostsharing eG', 'second contact');
+        call hs_office.relation_create_test_data('Smith', 'REPRESENTATIVE', 'Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', 'second contact');
+        call hs_office.relation_create_test_data('Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', 'DEBITOR', 'Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', 'second contact');
 
         call hs_office.relation_create_test_data('Third OHG', 'PARTNER', 'Hostsharing eG', 'third contact');
         call hs_office.relation_create_test_data('Tucker', 'REPRESENTATIVE', 'Third OHG', 'third contact');

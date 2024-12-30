@@ -90,7 +90,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         },
                         {
                             "anchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
-                            "holder": { "personType": "LEGAL_PERSON", "tradeName": "Second e.K.", "givenName": "Peter", "familyName": "Smith" },
+                            "holder": { "personType": "LEGAL_PERSON", "tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.", "givenName": "Peter", "familyName": "Smith" },
                             "type": "PARTNER",
                             "mark": null,
                             "contact": { "caption": "second contact" }

@@ -240,7 +240,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             allTheseDebitorsAreReturned(
                     result,
                     "debitor(D-1000111: rel(anchor='LP First GmbH', type='DEBITOR', holder='LP First GmbH'), fir)",
-                    "debitor(D-1000212: rel(anchor='LP Second e.K.', type='DEBITOR', holder='LP Second e.K.'), sec)",
+                    "debitor(D-1000212: rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='DEBITOR', holder='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.'), sec)",
                     "debitor(D-1000313: rel(anchor='IF Third OHG', type='DEBITOR', holder='IF Third OHG'), thi)");
         }
 

@@ -3,10 +3,11 @@ package net.hostsharing.hsadminng.hs.office.relation;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
-import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.lambda.Reducer;
+import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
-import net.hostsharing.hsadminng.mapper.Array;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,17 +31,20 @@ import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@Import({ Context.class, JpaAttempt.class })
 class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeRelationRbacRepository relationRbacRepo;
 
     @Autowired
+    HsOfficeRelationRealRepository relationRealRepo;
+
+    @Autowired
     HsOfficePersonRealRepository personRepo;
 
     @Autowired
-    HsOfficeContactRealRepository contactrealRepo;
+    HsOfficeContactRealRepository contactRealRepo;
 
     @Autowired
     RawRbacRoleRepository rawRoleRepo;
@@ -58,12 +62,36 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
     HttpServletRequest request;
 
     @Nested
+    class AssumeRelationRole {
+
+        // TODO.test: these tests would be better placed in the rbac module,
+        //  but for this we need an extra long object-idname in the rbac test data
+
+        @Test
+        public void testHostsharingAdminCanAssumeRelationRoleWithLongIdName() {
+            context(
+                    "superuser-alex@hostsharing.net",
+                    "hs_office.relation#HostsharingeG-with-PARTNER-PeterSmith-TheSecondHandandThriftStores-n-Shippinge.K.SmithPeter:AGENT");
+        }
+
+        @Test
+        public void testHostsharingAdminCanAssumeRelationRoleWithUuid() {
+            final var relationUuid = relationRealRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
+                    null, HsOfficeRelationType.PARTNER, null, "%Second%", null)
+                    .stream().reduce(Reducer::toSingleElement).orElseThrow().getUuid();
+
+            context("superuser-alex@hostsharing.net", "hs_office.relation#" + relationUuid + ":AGENT");
+        }
+    }
+
+    @Nested
     class CreateRelation {
 
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewRelation() {
             // given
             context("superuser-alex@hostsharing.net");
+
             final var count = relationRbacRepo.count();
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
                     .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
@@ -71,20 +99,21 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").stream()
                     .filter(p -> p.getPersonType() == NATURAL_PERSON)
                     .findFirst().orElseThrow();
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
                     .findFirst().orElseThrow();
 
             // when
-            final var result = attempt(em, () -> {
-                final var newRelation = HsOfficeRelationRbacEntity.builder()
-                        .anchor(givenAnchorPerson)
-                        .holder(givenHolderPerson)
-                        .type(HsOfficeRelationType.SUBSCRIBER)
-                        .mark("operations-announce")
-                        .contact(givenContact)
-                        .build();
-                return toCleanup(relationRbacRepo.save(newRelation));
-            });
+            final var result = attempt(
+                    em, () -> {
+                        final var newRelation = HsOfficeRelationRbacEntity.builder()
+                                .anchor(givenAnchorPerson)
+                                .holder(givenHolderPerson)
+                                .type(HsOfficeRelationType.SUBSCRIBER)
+                                .mark("operations-announce")
+                                .contact(givenContact)
+                                .build();
+                        return toCleanup(relationRbacRepo.save(newRelation));
+                    });
 
             // then
             result.assertSuccessful();
@@ -93,7 +122,8 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             assertThat(relationRbacRepo.count()).isEqualTo(count + 1);
             final var stored = relationRbacRepo.findByUuid(result.returnedValue().getUuid());
             assertThat(stored).isNotEmpty().map(HsOfficeRelation::toString).get()
-                    .isEqualTo("rel(anchor='UF Erben Bessler', type='SUBSCRIBER', mark='operations-announce', holder='NP Winkler, Paul', contact='fourth contact')");
+                    .isEqualTo(
+                            "rel(anchor='UF Erben Bessler', type='SUBSCRIBER', mark='operations-announce', holder='NP Winkler, Paul', contact='fourth contact')");
         }
 
         @Test
@@ -104,23 +134,24 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            attempt(em, () -> {
-                final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
-                        .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
-                        .findFirst().orElseThrow();
-                final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Bert").stream()
-                        .filter(p -> p.getPersonType() == NATURAL_PERSON)
-                        .findFirst().orElseThrow();
-                final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
-                        .findFirst().orElseThrow();
-                final var newRelation = HsOfficeRelationRbacEntity.builder()
-                        .anchor(givenAnchorPerson)
-                        .holder(givenHolderPerson)
-                        .type(HsOfficeRelationType.REPRESENTATIVE)
-                        .contact(givenContact)
-                        .build();
-                return toCleanup(relationRbacRepo.save(newRelation));
-            });
+            attempt(
+                    em, () -> {
+                        final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                                .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                                .findFirst().orElseThrow();
+                        final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Bert").stream()
+                                .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                                .findFirst().orElseThrow();
+                        final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
+                                .findFirst().orElseThrow();
+                        final var newRelation = HsOfficeRelationRbacEntity.builder()
+                                .anchor(givenAnchorPerson)
+                                .holder(givenHolderPerson)
+                                .type(HsOfficeRelationType.REPRESENTATIVE)
+                                .contact(givenContact)
+                                .build();
+                        return toCleanup(relationRbacRepo.save(newRelation));
+                    });
 
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
@@ -180,7 +211,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             allTheseRelationsAreReturned(
                     result,
                     "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
-                    "rel(anchor='LP Second e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
                     "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')");
         }
 
@@ -193,12 +224,17 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     .findFirst().orElseThrow();
 
             // when:
-            final var result = relationRbacRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(person.getUuid(), null, null, null, null);
+            final var result = relationRbacRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
+                    person.getUuid(),
+                    null,
+                    null,
+                    null,
+                    null);
 
             // then:
             exactlyTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Second e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
                     "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')",
                     "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
                     "rel(anchor='NP Smith, Peter', type='DEBITOR', holder='NP Smith, Peter', contact='third contact')");
@@ -219,7 +255,10 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     givenRelation,
                     "hs_office.person#ErbenBesslerMelBessler:ADMIN");
             context("superuser-alex@hostsharing.net");
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("sixth contact").stream().findFirst().orElseThrow();
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("sixth contact")
+                    .stream()
+                    .findFirst()
+                    .orElseThrow();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -258,13 +297,16 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
+                context(
+                        "superuser-alex@hostsharing.net",
+                        "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
                 givenRelation.setContact(null);
                 return relationRbacRepo.save(givenRelation);
             });
 
             // then
-            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
+            result.assertExceptionWithRootCauseMessage(
+                    JpaSystemException.class,
                     "[403] Subject ", " is not allowed to update hs_office.relation uuid");
         }
 
@@ -287,7 +329,8 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             });
 
             // then
-            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
+            result.assertExceptionWithRootCauseMessage(
+                    JpaSystemException.class,
                     "[403] Subject ", " is not allowed to update hs_office.relation uuid");
         }
 
@@ -397,7 +440,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                 select currentTask, targetTable, targetOp, targetdelta->>'mark'
                     from base.tx_journal_v
                     where targettable = 'hs_office.relation';
-                    """);
+                """);
 
         // when
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
@@ -412,7 +455,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             context("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderPerson).get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike(contact).get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike(contact).get(0);
             final var newRelation = HsOfficeRelationRbacEntity.builder()
                     .type(HsOfficeRelationType.REPRESENTATIVE)
                     .anchor(givenAnchorPerson)

@@ -411,7 +411,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             // and an ex-partner-relation got created
             final var anchorpartnerPersonUUid = givenPartner.getPartnerRel().getAnchor().getUuid();
-            assertThat(relationRepo.findRelationRelatedToPersonUuidAndRelationType(anchorpartnerPersonUUid, EX_PARTNER))
+            assertThat(relationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(anchorpartnerPersonUUid, EX_PARTNER, null, null, null))
                     .map(HsOfficeRelation::toShortString)
                     .contains("rel(anchor='LP Hostsharing eG', type='EX_PARTNER', holder='UF Erben Bessler')");
         }

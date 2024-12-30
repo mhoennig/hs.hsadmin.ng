@@ -45,7 +45,8 @@ do language plpgsql $$
         call hs_office.person_create_test_data('NP', null, 'Smith', 'Peter');
         call hs_office.person_create_test_data('NP', null, 'Tucker', 'Jack');
         call hs_office.person_create_test_data('NP', null, 'Fouler', 'Ellie');
-        call hs_office.person_create_test_data('LP', 'Second e.K.', 'Smith', 'Peter');
+        -- the next tradeName is deliberately 63 chars in length, the max length for that field, also to test long rbac-role names
+        call hs_office.person_create_test_data('LP', 'Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', 'Smith', 'Peter');
         call hs_office.person_create_test_data('IF', 'Third OHG');
         call hs_office.person_create_test_data('LP', 'Fourth eG');
         call hs_office.person_create_test_data('UF', 'Erben Bessler', 'Mel', 'Bessler');

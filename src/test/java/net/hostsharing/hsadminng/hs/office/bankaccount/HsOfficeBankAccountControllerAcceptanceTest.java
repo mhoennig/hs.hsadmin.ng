@@ -97,7 +97,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                                   "bic": "INGDDEFF"
                               },
                               {
-                                  "holder": "Second e.K.",
+                                  "holder": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.",
                                   "iban": "DE02100500000054540402",
                                   "bic": "BELADEBE"
                               },

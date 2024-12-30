@@ -58,7 +58,7 @@ public class Context {
                     cast(:currentTask as varchar(127)),
                     cast(:currentRequest as text),
                     cast(:currentSubject as varchar(63)),
-                    cast(:assumedRoles as varchar(1023)));
+                    cast(:assumedRoles as text));
                 """);
         query.setParameter("currentTask", shortenToMaxLength(currentTask, 127));
         query.setParameter("currentRequest", currentRequest);

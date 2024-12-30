@@ -1,14 +1,10 @@
 #!/bin/bash
 
-if [ "$#" -eq 0 ] || [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-  cat <<EOF
-  curl-wrapper utilizing CAS-authentication for hsadmin-ng
-  usage: $0 [--trace] <<command>> [parameters]
-
-  commands:
-EOF
-  grep '") ''# ' $0
-  exit
+if [ "$2" == "--show-password" ]; then
+  HSADMINNG_CAS_SHOW_PASSWORD=yes
+  shift
+else
+  HSADMINNG_CAS_SHOW_PASSWORD=
 fi
 
 if [ "$1" == "--trace" ]; then
@@ -17,7 +13,10 @@ if [ "$1" == "--trace" ]; then
   }
   function doCurl() {
     set -x
-    curl --fail-with-body --header "Authorization: $HSADMINNG_CAS_TICKET" "$@"
+    curl --fail-with-body \
+        --header "Authorization: $HSADMINNG_CAS_TICKET" \
+        --header "assumed-roles: $HSADMINNG_CAS_ASSUME" \
+        "$@"
     set +x
   }
   shift
@@ -28,6 +27,13 @@ else
   function doCurl() {
     curl --fail-with-body --header "Authorization: $HSADMINNG_CAS_TICKET" "$@"
   }
+fi
+
+export HSADMINNG_CAS_ASSUME_HEADER
+if [ -f ~/.cas-curl-assume ]; then
+  HSADMINNG_CAS_ASSUME="$(cat ~/.cas-curl-assume)"
+else
+  HSADMINNG_CAS_ASSUME=
 fi
 
 if [ -z "$HSADMINNG_CAS_LOGIN" ] || [ -z "$HSADMINNG_CAS_VALIDATE" ] || \
@@ -45,8 +51,16 @@ EOF
   exit 1
 fi
 
-function casLogout() {
-  rm -f ~/.cas-login-tgt
+function casCurlDocumentation() {
+  cat <<EOF
+  curl-wrapper utilizing CAS-authentication for hsadmin-ng
+  usage: $0 [--trace] [--show-password] <<command>> [parameters]
+
+  commands:
+EOF
+  # filters out help texts (containing double-# and following lines with leading single-#) from the commands itself
+  # (the '' makes sure that this line is not found, just the lines with actual help texts)
+  sed -n '/#''#/ {x; p; x; s/#''#//; p; :a; n; /^[[:space:]]*#/!b; s/^[[:space:]]*#//; p; ba}' <$0
 }
 
 function casLogin() {
@@ -63,10 +77,16 @@ function casLogin() {
     read -s -e -p "Password: " HSADMINNG_CAS_PASSWORD
   fi
 
+  if [ "$HSADMINNG_CAS_SHOW_PASSWORD" == "--show-password" ]; then
+    HSADMINNG_CAS_PASSWORD_DISPLAY=$HSADMINNG_CAS_PASSWORD
+  else
+    HSADMINNG_CAS_PASSWORD_DISPLAY="<<password hidden - use --show-password to show>>"
+  fi
+
   # Do NOT use doCurl here! We do neither want to print the password nor pass a CAS service ticket.
   trace "+ curl --fail-with-body -s -i -X POST \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        -d \"username=$HSADMINNG_CAS_USERNAME&password=<<PASSWORD OMITTED>>\" \
+        -d \"username=$HSADMINNG_CAS_USERNAME&password=$HSADMINNG_CAS_PASSWORD_DISPLAY\" \
         $HSADMINNG_CAS_LOGIN -o ~/.cas-login-tgt.response -D -"
   HSADMINNG_CAS_TGT=`curl --fail-with-body -s -i -X POST \
         -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -76,9 +96,14 @@ function casLogin() {
   if [ -z "$HSADMINNG_CAS_TGT" ]; then
     echo "ERROR: could not get ticket granting ticket" >&2
     cat ~/.cas-login-tgt.response >&2
+    exit 1
   fi
   echo "$HSADMINNG_CAS_TGT" >~/.cas-login-tgt
   trace "$HSADMINNG_CAS_TGT"
+}
+
+function casLogout() {
+  rm -f ~/.cas-login-tgt
 }
 
 function casTicket() {
@@ -115,37 +140,90 @@ function casValidate() {
 }
 
 case "${1,,}" in
-  "login") # reads username+password and fetches ticket granting ticket (bypasses HSADMINNG_CAS_USERNAME+HSADMINNG_CAS_PASSWORD)
+
+  # -- generic commands --------------------------------------------------------------------------
+
+  ""|"-h"|"--help"|"help") ## prints documentation about commands and options
+      casCurlDocumentation
+      exit
+    ;;
+
+  "env") ## prints all related HSADMINNG_CAS_... environment variables; use '--show-password' to show the password as well
+  #       example: cas-curl env --show-password
+    echo "HSADMINNG_CAS_LOGIN: $HSADMINNG_CAS_LOGIN"
+    echo "HSADMINNG_CAS_VALIDATE: $HSADMINNG_CAS_VALIDATE"
+    echo "HSADMINNG_CAS_USERNAME: $HSADMINNG_CAS_USERNAME"
+    if [ "$2" == "--show-password" ]; then
+      echo "HSADMINNG_CAS_PASSWORD: $HSADMINNG_CAS_PASSWORD"
+    elif [ -z "$HSADMINNG_CAS_PASSWORD" ]; then
+      echo "HSADMINNG_CAS_PASSWORD: <<not given>>"
+    else
+      echo "HSADMINNG_CAS_PASSWORD: <<given, but hidden - add --show-password to show>>"
+    fi
+    echo "HSADMINNG_CAS_SERVICE_ID: $HSADMINNG_CAS_SERVICE_ID"
+    ;;
+
+  # --- authentication-related commands ------------------------------------------------------------
+
+  "login") ## reads username+password and fetches ticket granting ticket (bypasses HSADMINNG_CAS_USERNAME+HSADMINNG_CAS_PASSWORD)
+  #       example: cas-curl login
     casLogout
     export HSADMINNG_CAS_USERNAME=
     export HSADMINNG_CAS_PASSWORD=
     casLogin
     ;;
-  "logout") # logout, deleting ticket granting ticket
-    casLogout
+  "assume") ## assumes the given comma-separated roles
+  #       example using object-id-name: cas-curl assume 'hs_office.relation#ExampleMandant-with-PARTNER-ExamplePartner:AGENT'
+  #       example using object-uuid:    cas-curl assume 'hs_office.relation#1d3bc468-c5c8-11ef-9d0d-4751ecfda2b7:AGENT'
+    shift
+    if [ -z "$1" ]; then
+      echo "ERROR: requires comma-separated list of roles to assume" >&2
+      exit 1
+    fi
+    echo "$1" >~/.cas-curl-assume
     ;;
-  "validate") # validates ticket granting ticket and prints currently logged in user
+  "unassume") ## do not assume any particular role anymore, use the plain user as RBAC subject
+    rm ~/.cas-curl-assume
+    ;;
+  "validate") ## validates current ticket granting ticket and prints currently logged in user
     casValidate
     ;;
-  "get") # HTTP GET, add URL as parameter
+  "logout") ## logout, deletes ticket granting ticket
+    casLogout
+    ;;
+
+  # --- HTTP-commands ----------------------------------------------------------------------
+
+  "get") ## HTTP GET, add URL as parameter
+  #       example: cas-curl GET http://localhost:8080/api/hs/office/partners/P-10003 | jq
+  #       hint: '| jq' is just for human-readable formatted JSON output
     shift
     casLogin
     HSADMINNG_CAS_TICKET=`casTicket`
     doCurl "$*"
     ;;
-  "post") # HTTP POST, add curl options to specify the request body and the URL as last parameter
+  "post") ## HTTP POST, add curl options to specify the request body and the URL as last parameter
+  #       example: cas-curl POST \
+  #                   -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
+  #                   http://localhost:8080/api/test/customers | jq
+  #       hint: '| jq' is just for human-readable formatted JSON output
     shift
     casLogin
     HSADMINNG_CAS_TICKET=`casTicket`
     doCurl --header "Content-Type: application/json" -X POST "$@"
     ;;
-  "patch") # HTTP PATCH, add curl options to specify the request body and the URL as last parameter
+  "patch") ## HTTP PATCH, add curl options to specify the request body and the URL as last parameterparameter
+  #       example: cas-curl PATCH \
+  #                   -d '{ "reference":80002 }' \
+  #                   http://localhost:8080/api/test/customers/ae90ac2a-4728-4ca9-802e-a0d0108b2324 | jq
+  #       hint: '| jq' is just for human-readable formatted JSON output
     shift
     casLogin
     HSADMINNG_CAS_TICKET=`casTicket`
     doCurl --header "Content-Type: application/json" -X POST "$*"
     ;;
-  "delete") # HTTP DELETE, add curl options to specify the request body and the URL as last parameter
+  "delete") ## HTTP DELETE, add curl options to specify the request body and the URL as last parameter
+  #     example: cas-curl DELETE http://localhost:8080/api/hs/office/persons/ae90ac2a-4728-4ca9-802e-a0d0108b2324
     shift
     casLogin
     HSADMINNG_CAS_TICKET=`casTicket`

@@ -68,7 +68,7 @@ class RbacRoleRepositoryIntegrationTest {
         }
 
         @Test
-        public void globalAdmin_withAssumedglobalAdminRole_canViewAllRbacRoles() {
+        public void globalAdmin_withAssumedGlobalAdminRole_canViewAllRbacRoles() {
             given:
             context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
 

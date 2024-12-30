@@ -199,7 +199,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             allThesePartnersAreReturned(
                     result,
                     "partner(P-10001: LP First GmbH, first contact)",
-                    "partner(P-10002: LP Second e.K., second contact)",
+                    "partner(P-10002: LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K., second contact)",
                     "partner(P-10003: IF Third OHG, third contact)",
                     "partner(P-10004: LP Fourth eG, fourth contact)",
                     "partner(P-10010: NP Smith, Peter, sixth contact)");

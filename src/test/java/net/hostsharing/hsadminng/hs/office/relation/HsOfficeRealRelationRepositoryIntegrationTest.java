@@ -47,13 +47,13 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             final var personUuid = determinePersonUuid(NATURAL_PERSON, "Smith");
 
             // when
-            final var result = relationRealRepo.findRelationRelatedToPersonUuidAndRelationType(personUuid, null);
+            final var result = relationRealRepo.findRelationRelatedToPersonUuid(personUuid);
 
             // then
             context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
             exactlyTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Second e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
                     "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
                     "rel(anchor='NP Smith, Peter', type='DEBITOR', holder='NP Smith, Peter', contact='third contact')",
                     "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')"
@@ -66,13 +66,13 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             final var personUuid = determinePersonUuid(NATURAL_PERSON, "Smith");
 
             // when:
-            final var result = relationRealRepo.findRelationRelatedToPersonUuidAndRelationType(personUuid, REPRESENTATIVE);
+            final var result = relationRealRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(personUuid, REPRESENTATIVE, null, null, null);
 
             // then:
             context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
             exactlyTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Second e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')"
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')"
             );
         }
     }

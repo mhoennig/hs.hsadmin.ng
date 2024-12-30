@@ -23,7 +23,7 @@ begin
     return currentSubjectUuid;
 end; $$;
 
-create or replace function rbac.determinecurrentsubjectorassumedrolesuuids(currentSubjectOrAssumedRolesUuids uuid, assumedRoles varchar)
+create or replace function rbac.determinecurrentsubjectorassumedrolesuuids(currentSubjectOrAssumedRolesUuids uuid, assumedRoles text)
     returns uuid[]
     stable -- leakproof
     language plpgsql as $$
@@ -31,7 +31,7 @@ declare
     roleName            text;
     roleNameParts       text;
     objectTableToAssume varchar(63);
-    objectNameToAssume  varchar(63);
+    objectNameToAssume  varchar(1024); -- e.g. for relation: 2*(96+48+48)+length('-with-REPRESENTATIVE-') = 405
     objectUuidToAssume  uuid;
     roleTypeToAssume    rbac.RoleType;
     roleIdsToAssume     uuid[];
@@ -55,7 +55,12 @@ begin
             objectNameToAssume = split_part(roleNameParts, '#', 2);
             roleTypeToAssume = split_part(roleNameParts, '#', 3);
 
-            objectUuidToAssume = rbac.findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
+            begin
+                objectUuidToAssume = objectNameToAssume::uuid;
+            exception when invalid_text_representation then
+                objectUuidToAssume = rbac.findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
+            end;
+
             if objectUuidToAssume is null then
                 raise exception '[401] object % cannot be found in table % (from roleNameParts=%)', objectNameToAssume, objectTableToAssume, roleNameParts;
             end if;
@@ -88,7 +93,7 @@ create or replace procedure base.contextDefined(
     currentTask varchar(127),
     currentRequest text,
     currentSubject varchar(63),
-    assumedRoles varchar(1023)
+    assumedRoles varchar(4096)
 )
     language plpgsql as $$
 declare
@@ -104,7 +109,7 @@ begin
 
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
     execute format('set local hsadminng.currentSubjectOrAssumedRolesUuids to %L',
-       (select array_to_string(rbac.determinecurrentsubjectorassumedrolesuuids(currentSubjectUuid, assumedRoles), ';')));
+       (select array_to_string(rbac.determineCurrentSubjectOrAssumedRolesUuids(currentSubjectUuid, assumedRoles), ';')));
 
     raise notice 'Context defined as: %, %, %, [%]', currentTask, currentRequest, currentSubject, assumedRoles;
 end; $$;

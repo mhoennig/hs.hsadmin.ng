@@ -143,7 +143,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
             allThesePersonsAreReturned(
                     result,
                     "NP Smith, Peter",
-                    "LP Second e.K.",
+                    "LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.",
                     "IF Third OHG",
                     "UF Erben Bessler");
         }
@@ -171,10 +171,10 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
             context("superuser-alex@hostsharing.net", null);
 
             // when
-            final var result = personRbacRepo.findPersonByOptionalNameLike("Second");
+            final var result = personRbacRepo.findPersonByOptionalNameLike("Peter Smith - The Second Hand%");
 
             // then
-            exactlyThesePersonsAreReturned(result, "Second e.K.");
+            exactlyThesePersonsAreReturned(result, "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.");
         }
 
         @Test
@@ -272,7 +272,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         assertThat(customerLogEntries).map(Arrays::toString).contains(
                 "[creating person test-data, hs_office.person, INSERT, Hostsharing eG, null]",
                 "[creating person test-data, hs_office.person, INSERT, First GmbH, null]",
-                "[creating person test-data, hs_office.person, INSERT, Second e.K., null]",
+                "[creating person test-data, hs_office.person, INSERT, Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K., null]",
                 "[creating person test-data, hs_office.person, INSERT, Third OHG, null]");
     }
 

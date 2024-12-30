@@ -13,7 +13,7 @@ create procedure base.contextDefined(
     currentTask varchar(127),
     currentRequest text,
     currentSubject varchar(63),
-    assumedRoles varchar(1023)
+    assumedRoles varchar(4096)
 )
     language plpgsql as $$
 begin
@@ -26,7 +26,7 @@ create or replace procedure base.defineContext(
     currentTask varchar(127),
     currentRequest text = null,
     currentSubject varchar(63) = null,
-    assumedRoles varchar(1023) = null
+    assumedRoles text = null
 )
     language plpgsql as $$
 begin
@@ -43,7 +43,7 @@ begin
     execute format('set local hsadminng.currentSubject to %L', currentSubject);
 
     assumedRoles := coalesce(assumedRoles, '');
-    assert length(assumedRoles) <= 1023, FORMAT('assumedRoles must not be longer than 1023 characters: "%s"', assumedRoles);
+    assert length(assumedRoles) <= 4096, FORMAT('assumedRoles must not be longer than 4096 characters: "%s"', assumedRoles);
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
 
     call base.contextDefined(currentTask, currentRequest, currentSubject, assumedRoles);

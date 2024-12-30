@@ -42,22 +42,22 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
                 toSqlLikeOperand(mark), toSqlLikeOperand(personData), toSqlLikeOperand(contactData));
     }
 
-    // TODO: use ELIKE instead of lower(...) LIKE ...? Or use jsonb_path with RegEx like emailAddressRegEx in ContactRepo?
+    // TODO: Or use jsonb_path with RegEx like emailAddressRegEx in ContactRepo?
     @Query(value = """
             SELECT rel FROM HsOfficeRelationRbacEntity AS rel
                 WHERE (:relationType IS NULL OR CAST(rel.type AS String) = :relationType)
                     AND ( :personUuid IS NULL
                             OR rel.anchor.uuid = :personUuid OR rel.holder.uuid = :personUuid )
-                    AND ( :mark IS NULL OR lower(rel.mark) LIKE :mark )
+                    AND ( :mark IS NULL OR rel.mark ILIKE :mark )
                     AND ( :personData IS NULL
-                            OR lower(rel.anchor.tradeName) LIKE :personData OR lower(rel.holder.tradeName) LIKE :personData
-                            OR lower(rel.anchor.familyName) LIKE :personData OR lower(rel.holder.familyName) LIKE :personData
-                            OR lower(rel.anchor.givenName) LIKE :personData OR lower(rel.holder.givenName) LIKE :personData )
+                            OR rel.anchor.tradeName ILIKE :personData OR rel.holder.tradeName ILIKE :personData
+                            OR rel.anchor.familyName ILIKE :personData OR rel.holder.familyName ILIKE :personData
+                            OR rel.anchor.givenName ILIKE :personData OR rel.holder.givenName ILIKE :personData )
                     AND ( :contactData IS NULL
-                            OR lower(rel.contact.caption) LIKE :contactData
-                            OR lower(CAST(rel.contact.postalAddress AS String)) LIKE :contactData
-                            OR lower(CAST(rel.contact.emailAddresses AS String)) LIKE :contactData
-                            OR lower(CAST(rel.contact.phoneNumbers AS String)) LIKE :contactData )
+                            OR rel.contact.caption ILIKE :contactData
+                            OR CAST(rel.contact.postalAddress AS String) ILIKE :contactData
+                            OR CAST(rel.contact.emailAddresses AS String) ILIKE :contactData
+                            OR CAST(rel.contact.phoneNumbers AS String) ILIKE :contactData )
             """)
     @Timed("app.office.relations.repo.findRelationRelatedToPersonUuidRelationByTypeMarkPersonAndContactDataImpl.rbac")
     List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidRelationByTypeMarkPersonAndContactDataImpl(

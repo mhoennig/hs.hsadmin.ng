@@ -147,7 +147,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
                     "Mel Bessler",
                     "Paul Winkler",
                     "Peter Smith",
-                    "Second e.K.",
+                    "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.",
                     "Third OHG");
         }
 

@@ -74,7 +74,7 @@ do language plpgsql $$
         call base.defineContext('creating partner test-data ', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call hs_office.partner_create_test_data('Hostsharing eG', 10001, 'First GmbH', 'first contact');
-        call hs_office.partner_create_test_data('Hostsharing eG', 10002, 'Second e.K.', 'second contact');
+        call hs_office.partner_create_test_data('Hostsharing eG', 10002, 'Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', 'second contact');
         call hs_office.partner_create_test_data('Hostsharing eG', 10003, 'Third OHG', 'third contact');
         call hs_office.partner_create_test_data('Hostsharing eG', 10004, 'Fourth eG', 'fourth contact');
         call hs_office.partner_create_test_data('Hostsharing eG', 10010, 'Smith', 'fifth contact');
