@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(schema = "rbac", name = "grants_ev")
+@Table(schema = "rbac", name = "grant_ev")
 @Getter
 @Setter
 @Builder

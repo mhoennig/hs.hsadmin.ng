@@ -295,14 +295,14 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void rebuildingTheRbacSystemWitSameRbacSpecDoesNotChangeGrantNorRoleCount() {
-            final var grantCountBefore = sql("SELECT COUNT(*) FROM rbac.grants");
+            final var grantCountBefore = sql("SELECT COUNT(*) FROM rbac.grant");
             final var roleCountBefore = sql("SELECT COUNT(*) FROM rbac.role");
 
             jpaAttempt.transacted(() ->
                     em.createNativeQuery("CALL rbactest.package_rebuild_rbac_system()")
             );
 
-            final var grantCountAfter = sql("SELECT COUNT(*) FROM rbac.grants");
+            final var grantCountAfter = sql("SELECT COUNT(*) FROM rbac.grant");
             assertThat(grantCountBefore).as("grant count must not change").isEqualTo(grantCountAfter);
 
             final var roleCountAfter = sql("SELECT COUNT(*) FROM rbac.role");

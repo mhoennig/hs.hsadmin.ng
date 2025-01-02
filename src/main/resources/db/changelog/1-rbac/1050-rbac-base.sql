@@ -360,7 +360,7 @@ create or replace function rbac.delete_grants_of_role_tf()
     strict as $$
 begin
     if TG_OP = 'DELETE' then
-        delete from rbac.grants g where old.uuid in (g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid);
+        delete from rbac.grant g where old.uuid in (g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid);
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
     end if;
@@ -541,7 +541,7 @@ $$;
 /*
     Table to store grants / role- or permission assignments to subjects or roles.
  */
-create table rbac.grants
+create table rbac.grant
 (
     uuid                uuid primary key default uuid_generate_v4(),
     grantedByTriggerOf  uuid references rbac.object (uuid) on delete cascade initially deferred ,
@@ -551,21 +551,21 @@ create table rbac.grants
     assumed             boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
     unique (ascendantUuid, descendantUuid),
     constraint rbacGrant_createdBy check ( grantedByRoleUuid is null or grantedByTriggerOf is null) );
-create index on rbac.grants (ascendantUuid);
-create index on rbac.grants (descendantUuid);
+create index on rbac.grant (ascendantUuid);
+create index on rbac.grant (descendantUuid);
 
-call base.create_journal('rbac.grants');
+call base.create_journal('rbac.grant');
 create or replace function rbac.findGrantees(grantedId uuid)
     returns setof  rbac.reference
     returns null on null input
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from rbac.grants
+        from rbac.grant
         where descendantUuid = grantedId
     union all
     select g.descendantUuid, g.ascendantUuid
-        from rbac.grants g
+        from rbac.grant g
                  inner join grants on grants.ascendantUuid = g.descendantUuid
 )
 select ref.*
@@ -579,11 +579,11 @@ create or replace function rbac.isGranted(granteeIds uuid[], grantedId uuid)
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from rbac.grants
+        from rbac.grant
         where descendantUuid = grantedId
     union all
     select "grant".descendantUuid, "grant".ascendantUuid
-        from rbac.grants "grant"
+        from rbac.grant "grant"
                  inner join grants recur on recur.ascendantUuid = "grant".descendantUuid
 )
 select exists (
@@ -605,11 +605,11 @@ create or replace function rbac.isPermissionGrantedToSubject(permissionId uuid, 
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from rbac.grants
+        from rbac.grant
         where descendantUuid = permissionId
     union all
     select g.descendantUuid, g.ascendantUuid
-        from rbac.grants g
+        from rbac.grant g
                  inner join grants on grants.ascendantUuid = g.descendantUuid
 )
 select exists(
@@ -637,7 +637,7 @@ create or replace function rbac.hasGlobalRoleGranted(forAscendantUuid uuid)
     language sql as $$
 select exists(
            select r.uuid
-               from rbac.grants as g
+               from rbac.grant as g
                         join rbac.role as r on r.uuid = g.descendantuuid
                         join rbac.object as o on o.uuid = r.objectuuid
                where g.ascendantuuid = forAscendantUuid
@@ -652,7 +652,7 @@ begin
     perform rbac.assertReferenceType('permissionId (descendant)', permissionUuid, 'rbac.permission');
 
     insert
-        into rbac.grants (grantedByTriggerOf, ascendantUuid, descendantUuid, assumed)
+        into rbac.grant (grantedByTriggerOf, ascendantUuid, descendantUuid, assumed)
         values (rbac.currentTriggerObjectUuid(), roleUuid, permissionUuid, true)
     on conflict do nothing; -- allow granting multiple times
 end;
@@ -676,7 +676,7 @@ begin
     end if;
 
     insert
-        into rbac.grants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
+        into rbac.grant (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
         values (rbac.currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
@@ -704,7 +704,7 @@ begin
     end if;
 
     insert
-        into rbac.grants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
+        into rbac.grant (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
         values (rbac.currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
@@ -722,7 +722,7 @@ begin
     perform rbac.assertReferenceType('subRoleId (descendant)', subRoleId, 'rbac.role');
 
     if (rbac.isGranted(superRoleId, subRoleId)) then
-        delete from rbac.grants where ascendantUuid = superRoleId and descendantUuid = subRoleId;
+        delete from rbac.grant where ascendantUuid = superRoleId and descendantUuid = subRoleId;
     else
         raise exception 'cannot revoke role % (%) from % (%) because it is not granted',
             subRole, subRoleId, superRole, superRoleId;
@@ -743,10 +743,10 @@ begin
     perform rbac.assertReferenceType('permission (descendant)', permissionId, 'rbac.permission');
 
     if (rbac.isGranted(superRoleId, permissionId)) then
-        delete from rbac.grants where ascendantUuid = superRoleId and descendantUuid = permissionId;
+        delete from rbac.grant where ascendantUuid = superRoleId and descendantUuid = permissionId;
     else
         select p.op, o.objectTable, o.uuid
-            from rbac.grants g
+            from rbac.grant g
                      join rbac.permission p on p.uuid=g.descendantUuid
                      join rbac.object o on o.uuid=p.objectUuid
             where g.uuid=permissionId
@@ -777,12 +777,12 @@ begin
     return query
         WITH RECURSIVE grants AS (
             SELECT descendantUuid, ascendantUuid, 1 AS level
-                FROM rbac.grants
+                FROM rbac.grant
                 WHERE assumed
                   AND ascendantUuid = any(subjectIds)
             UNION ALL
             SELECT g.descendantUuid, g.ascendantUuid, grants.level + 1 AS level
-                FROM rbac.grants g
+                FROM rbac.grant g
                          INNER JOIN grants ON grants.descendantUuid = g.ascendantUuid
                 WHERE g.assumed
         ),
@@ -821,11 +821,11 @@ create or replace function rbac.queryPermissionsGrantedToSubjectId(subjectId uui
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from rbac.grants
+        from rbac.grant
         where ascendantUuid = subjectId
     union all
     select g.descendantUuid, g.ascendantUuid
-        from rbac.grants g
+        from rbac.grant g
                  inner join grants on grants.descendantUuid = g.ascendantUuid
 )
 select perm.*
@@ -855,11 +855,11 @@ select *
         -- @formatter:off
         with recursive grants as (
             select descendantUuid, ascendantUuid
-                from rbac.grants
+                from rbac.grant
                 where descendantUuid = objectId
             union all
             select "grant".descendantUuid, "grant".ascendantUuid
-                from rbac.grants "grant"
+                from rbac.grant "grant"
                 inner join grants recur on recur.ascendantUuid = "grant".descendantUuid
         )
         -- @formatter:on

@@ -28,7 +28,7 @@ begin
     perform rbac.assertReferenceType('subjectUuid (ascendant)', subjectUuid, 'rbac.subject');
 
     insert
-        into rbac.grants (grantedByRoleUuid, ascendantUuid, descendantUuid, assumed)
+        into rbac.grant (grantedByRoleUuid, ascendantUuid, descendantUuid, assumed)
         values (grantedByRoleUuid, subjectUuid, grantedRoleUuid, doAssume)
     -- TODO: check if grantedByRoleUuid+doAssume are the same, otherwise raise exception?
     on conflict do nothing; -- allow granting multiple times
@@ -61,7 +61,7 @@ begin
     end if;
 
     insert
-        into rbac.grants (grantedByRoleUuid, ascendantUuid, descendantUuid, assumed)
+        into rbac.grant (grantedByRoleUuid, ascendantUuid, descendantUuid, assumed)
         values (grantedByRoleUuid, subjectUuid, grantedRoleUuid, doAssume);
     -- TODO.impl: What should happen on multiple grants? What if options (doAssume) are not the same?
     --      Most powerful or latest grant wins? What about managed?
@@ -104,8 +104,8 @@ create or replace procedure rbac.revokeRoleFromSubject(grantedByRoleUuid uuid, g
 begin
     call rbac.checkRevokeRoleFromSubjectPreconditions(grantedByRoleUuid, grantedRoleUuid, subjectUuid);
 
-    raise INFO 'delete from rbac.grants where ascendantUuid = % and descendantUuid = %', subjectUuid, grantedRoleUuid;
-    delete from rbac.grants as g
+    raise INFO 'delete from rbac.grant where ascendantUuid = % and descendantUuid = %', subjectUuid, grantedRoleUuid;
+    delete from rbac.grant as g
        where g.ascendantUuid = subjectUuid and g.descendantUuid = grantedRoleUuid
          and g.grantedByRoleUuid = revokeRoleFromSubject.grantedByRoleUuid;
 end; $$;
@@ -118,8 +118,8 @@ end; $$;
 create or replace procedure rbac.revokePermissionFromRole(permissionUuid uuid, superRoleUuid uuid)
     language plpgsql as $$
 begin
-    raise INFO 'delete from rbac.grants where ascendantUuid = % and descendantUuid = %', superRoleUuid, permissionUuid;
-    delete from rbac.grants as g
+    raise INFO 'delete from rbac.grant where ascendantUuid = % and descendantUuid = %', superRoleUuid, permissionUuid;
+    delete from rbac.grant as g
            where g.ascendantUuid = superRoleUuid and g.descendantUuid = permissionUuid;
 end; $$;
 --//

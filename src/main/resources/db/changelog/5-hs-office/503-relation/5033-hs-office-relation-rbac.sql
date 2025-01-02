@@ -125,7 +125,7 @@ create or replace procedure hs_office.relation_update_rbac_system(
 begin
 
     if NEW.contactUuid is distinct from OLD.contactUuid then
-        delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
+        delete from rbac.grant g where g.grantedbytriggerof = OLD.uuid;
         call hs_office.relation_build_rbac_system(NEW);
     end if;
 end; $$;
@@ -286,18 +286,18 @@ DECLARE
     grantsAfter numeric;
     grantsBefore numeric;
 BEGIN
-    SELECT count(*) INTO grantsBefore FROM rbac.grants;
+    SELECT count(*) INTO grantsBefore FROM rbac.grant;
 
     FOR row IN SELECT * FROM hs_office.relation LOOP
             -- first delete all generated grants for this row from the previously defined RBAC system
-            DELETE FROM rbac.grants g
+            DELETE FROM rbac.grant g
                    WHERE g.grantedbytriggerof = row.uuid;
 
             -- then build the grants according to the currently defined RBAC rules
             CALL hs_office.relation_build_rbac_system(row);
         END LOOP;
 
-    select count(*) into grantsAfter from rbac.grants;
+    select count(*) into grantsAfter from rbac.grant;
 
     -- print how the total count of grants has changed
     raise notice 'total grant count before -> after: % -> %', grantsBefore, grantsAfter;

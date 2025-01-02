@@ -52,8 +52,8 @@ grant all privileges on rbac.role_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME
     Creates a view to the grants table with additional columns
     for easier human readability.
  */
-drop view if exists rbac.grants_ev;
-create or replace view rbac.grants_ev as
+drop view if exists rbac.grant_ev;
+create or replace view rbac.grant_ev as
     -- @formatter:off
     select x.grantUuid as uuid,
            x.grantedByTriggerOf as grantedByTriggerOf,
@@ -85,7 +85,7 @@ create or replace view rbac.grants_ev as
                     ) as descendingIdName,
                     dro.objectTable, dro.uuid,
                     dp.op, dp.optablename
-                 from rbac.grants as g
+                 from rbac.grant as g
 
                 left outer join rbac.role as ar on ar.uuid = g.ascendantUuid
                     left outer join rbac.object as aro on aro.uuid = ar.objectuuid
@@ -112,7 +112,7 @@ create or replace view rbac.grants_ev as
     Creates a view to the grants table with row-level limitation
     based on the direct grants of the current user.
  */
-create or replace view rbac.grants_rv as
+create or replace view rbac.grant_rv as
 -- @formatter:off
 select o.objectTable || '#' || rbac.findIdNameByObjectUuid(o.objectTable, o.uuid) || ':' || r.roletype as grantedByRoleIdName,
        g.objectTable || '#' || g.objectIdName || ':' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
@@ -122,7 +122,7 @@ select o.objectTable || '#' || rbac.findIdNameByObjectUuid(o.objectTable, o.uuid
              select g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
                     u.name as userName, o.objecttable, r.objectuuid, r.roletype,
                     rbac.findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
-                 from rbac.grants as g
+                 from rbac.grant as g
                           join rbac.role as r on r.uuid = g.descendantUuid
                           join rbac.object o on o.uuid = r.objectuuid
                           left outer join rbac.subject u on u.uuid = g.ascendantuuid
@@ -141,28 +141,28 @@ grant all privileges on rbac.role_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME
 -- ----------------------------------------------------------------------------
 
 /**
-    Instead of insert trigger function for rbac.grants_rv.
+    Instead of insert trigger function for rbac.grant_rv.
  */
 create or replace function rbac.insert_grant_tf()
     returns trigger
     language plpgsql as $$
 declare
-    newGrant rbac.grants_rv;
+    newGrant rbac.grant_rv;
 begin
     call rbac.grantRoleToSubject(rbac.assumedRoleUuid(), new.grantedRoleUuid, new.subjectUuid, new.assumed);
     select grv.*
-        from rbac.grants_rv grv
+        from rbac.grant_rv grv
         where grv.subjectUuid=new.subjectUuid and grv.grantedRoleUuid=new.grantedRoleUuid
         into newGrant;
     return newGrant;
 end; $$;
 
 /*
-    Creates an instead of insert trigger for the rbac.grants_rv view.
+    Creates an instead of insert trigger for the rbac.grant_rv view.
  */
 create trigger insert_grant_tg
     instead of insert
-    on rbac.grants_rv
+    on rbac.grant_rv
     for each row
 execute function rbac.insert_grant_tf();
 --/
@@ -173,7 +173,7 @@ execute function rbac.insert_grant_tf();
 -- ----------------------------------------------------------------------------
 
 /**
-    Instead of delete trigger function for rbac.grants_rv.
+    Instead of delete trigger function for rbac.grant_rv.
 
     Checks if the current subject or assumed role have the permission to revoke the grant.
  */
@@ -186,11 +186,11 @@ begin
 end; $$;
 
 /*
-    Creates an instead of delete trigger for the rbac.grants_rv view.
+    Creates an instead of delete trigger for the rbac.grant_rv view.
  */
 create trigger delete_grant_tg
     instead of delete
-    on rbac.grants_rv
+    on rbac.grant_rv
     for each row
 execute function rbac.delete_grant_tf();
 --/
@@ -210,7 +210,7 @@ select distinct *
     from (
              select usersInRolesOfcurrentSubject.*
                  from rbac.subject as usersInRolesOfcurrentSubject
-                          join rbac.grants as g on g.ascendantuuid = usersInRolesOfcurrentSubject.uuid
+                          join rbac.grant as g on g.ascendantuuid = usersInRolesOfcurrentSubject.uuid
                           join rbac.role_ev as r on r.uuid = g.descendantuuid
              union
              select users.*
@@ -235,7 +235,7 @@ create or replace view rbac.subject_rv as
         from (
             select usersInRolesOfcurrentSubject.*
                 from rbac.subject as usersInRolesOfcurrentSubject
-                 join rbac.grants as g on g.ascendantuuid = usersInRolesOfcurrentSubject.uuid
+                 join rbac.grant as g on g.ascendantuuid = usersInRolesOfcurrentSubject.uuid
                  join rbac.role_rv as r on r.uuid = g.descendantuuid
             union
             select users.*
@@ -329,7 +329,7 @@ select r.uuid as roleuuid, p.uuid as permissionUuid,
        (r.objecttable || ':' || r.objectidname || ':' ||  r.roletype) as roleName, p.op,
        o.objecttable, r.objectidname, o.uuid as objectuuid
     from rbac.role_rv r
-    join rbac.grants g on g.ascendantuuid = r.uuid
+    join rbac.grant g on g.ascendantuuid = r.uuid
     join rbac.permission p on p.uuid = g.descendantuuid
     join rbac.object o on o.uuid = p.objectuuid;
 grant all privileges on rbac.own_granted_permissions_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
@@ -369,7 +369,7 @@ begin
                   rbac.findIdNameByObjectUuid(po.objectTable, po.uuid) as permissionObjectIdName,
                   po.uuid as permissionObjectUuid
               from rbac.queryPermissionsGrantedToSubjectId( targetSubjectUuid) as p
-              join rbac.grants as g on g.descendantUuid = p.uuid
+              join rbac.grant as g on g.descendantUuid = p.uuid
               join rbac.object as po on po.uuid = p.objectUuid
               join rbac.role_rv as r on r.uuid = g.ascendantUuid
               join rbac.object as ro on ro.uuid = r.objectUuid

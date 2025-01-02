@@ -112,7 +112,7 @@ class RolesGrantsAndPermissionsGenerator {
                     begin
                     
                         if ${updateConditions} then
-                            delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
+                            delete from rbac.grant g where g.grantedbytriggerof = OLD.uuid;
                             call ${rawTableQualifiedName}_build_rbac_system(NEW);
                         end if;
                     end; $$;

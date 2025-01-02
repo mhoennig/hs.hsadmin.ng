@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(schema = "rbac", name = "grants_rv")
+@Table(schema = "rbac", name = "grant_rv")
 @IdClass(RbacGrantId.class)
 @Getter
 @Setter

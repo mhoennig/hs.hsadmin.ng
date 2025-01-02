@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
 import lombok.*;
-import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
@@ -22,7 +21,6 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 @Setter
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
-@FieldNameConstants
 @DisplayAs("RbacPerson")
 public class HsOfficePersonRbacEntity extends HsOfficePerson<HsOfficePersonRbacEntity> {
 

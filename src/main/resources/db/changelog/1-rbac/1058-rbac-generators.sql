@@ -193,19 +193,19 @@ begin
             with accessible_uuids as (
                      with recursive
                           recursive_grants as
-                              (select distinct rbac.grants.descendantuuid,
-                                               rbac.grants.ascendantuuid,
+                              (select distinct rbac.grant.descendantuuid,
+                                               rbac.grant.ascendantuuid,
                                                1 as level,
                                                true
-                                   from rbac.grants
-                                   where rbac.grants.assumed
-                                     and (rbac.grants.ascendantuuid = any (rbac.currentSubjectOrAssumedRolesUuids()))
+                                   from rbac.grant
+                                   where rbac.grant.assumed
+                                     and (rbac.grant.ascendantuuid = any (rbac.currentSubjectOrAssumedRolesUuids()))
                                union all
                                select distinct g.descendantuuid,
                                                g.ascendantuuid,
                                                grants.level + 1 as level,
                                                base.assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
-                                   from rbac.grants g
+                                   from rbac.grant g
                                             join recursive_grants grants on grants.descendantuuid = g.ascendantuuid
                                    where g.assumed),
                           grant_count AS (

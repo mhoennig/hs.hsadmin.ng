@@ -20,7 +20,7 @@ select no, to_char("count", '9 999 999 999') as "count", "table"
               from  rbac.reference
           union
           select 5 as no, count(*) as "count", 'grants' as "table"
-              from rbac.grants
+              from rbac.grant
           union
           select 6 as no, count(*) as "count", 'objects' as "table"
               from rbac.object) as totals
