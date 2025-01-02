@@ -3,12 +3,12 @@ package net.hostsharing.hsadminng.rbac.generator;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 
 public class RbacIdentityViewGenerator {
-    private final RbacView rbacDef;
+    private final RbacSpec rbacDef;
     private final String liquibaseTagPrefix;
     private final String simpleEntityVarName;
     private final String rawTableName;
 
-    public RbacIdentityViewGenerator(final RbacView rbacDef, final String liquibaseTagPrefix) {
+    public RbacIdentityViewGenerator(final RbacSpec rbacDef, final String liquibaseTagPrefix) {
         this.rbacDef = rbacDef;
         this.liquibaseTagPrefix = liquibaseTagPrefix;
         this.simpleEntityVarName = rbacDef.getRootEntityAlias().simpleName();

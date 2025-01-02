@@ -38,13 +38,13 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
-    assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s of relation', NEW.holderUuid);
+    assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s of hs_office.relation', NEW.holderUuid);
 
     SELECT * FROM hs_office.person WHERE uuid = NEW.anchorUuid    INTO newAnchorPerson;
-    assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s of relation', NEW.anchorUuid);
+    assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s of hs_office.relation', NEW.anchorUuid);
 
     SELECT * FROM hs_office.contact WHERE uuid = NEW.contactUuid    INTO newContact;
-    assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s of relation', NEW.contactUuid);
+    assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s of hs_office.relation', NEW.contactUuid);
 
 
     perform rbac.defineRoleWithGrants(
@@ -250,5 +250,58 @@ call rbac.generateRbacRestrictedView('hs_office.relation',
     $updates$
         contactUuid = new.contactUuid
     $updates$);
+--//
+
+
+-- ============================================================================
+--changeset RbacRbacSystemRebuildGenerator:hs-office-relation-rbac-rebuild endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- HOWTO: Rebuild RBAC-system for table hs_office.relation after changing its RBAC specification.
+--
+-- begin transaction;
+--  call base.defineContext('re-creating RBAC for table hs_office.relation', null, <<insert executing global admin user here>>);
+--  call hs_office.relation_rebuild_rbac_system();
+-- commit;
+--
+-- How it works:
+-- 1. All grants previously created from the RBAC specification of this table will be deleted.
+--    These grants are identified by `hs_office.relation.grantedByTriggerOf IS NOT NULL`.
+--    User-induced grants (`hs_office.relation.grantedByTriggerOf IS NULL`) are NOT deleted.
+-- 2. New role types will be created, but existing role types which are not specified anymore,
+--    will NOT be deleted!
+-- 3. All newly specified grants will be created.
+--
+-- IMPORTANT:
+-- Make sure not to skip any previously defined role-types or you might break indirect grants!
+-- E.g. If, in an updated version of the RBAC system for a table, you remove the AGENT role type
+-- and now directly grant the TENANT role to the ADMIN role, all external grants to the AGENT role
+-- of this table would be in a dead end.
+
+create or replace procedure hs_office.relation_rebuild_rbac_system()
+    language plpgsql as $$
+DECLARE
+    DECLARE
+    row hs_office.relation;
+    grantsAfter numeric;
+    grantsBefore numeric;
+BEGIN
+    SELECT count(*) INTO grantsBefore FROM rbac.grants;
+
+    FOR row IN SELECT * FROM hs_office.relation LOOP
+            -- first delete all generated grants for this row from the previously defined RBAC system
+            DELETE FROM rbac.grants g
+                   WHERE g.grantedbytriggerof = row.uuid;
+
+            -- then build the grants according to the currently defined RBAC rules
+            CALL hs_office.relation_build_rbac_system(row);
+        END LOOP;
+
+    select count(*) into grantsAfter from rbac.grants;
+
+    -- print how the total count of grants has changed
+    raise notice 'total grant count before -> after: % -> %', grantsBefore, grantsAfter;
+END;
+$$;
 --//
 

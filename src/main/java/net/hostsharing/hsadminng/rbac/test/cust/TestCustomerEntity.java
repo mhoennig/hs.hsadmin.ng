@@ -6,18 +6,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacView;
-import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 
 import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 
 @Entity
 @Table(schema = "rbactest", name = "customer_rv")
@@ -41,7 +41,7 @@ public class TestCustomerEntity implements BaseEntity<TestCustomerEntity> {
     @Column(name = "adminusername")
     private String adminUserName;
 
-    public static RbacView rbac() {
+    public static RbacSpec rbac() {
         return rbacViewFor("customer", TestCustomerEntity.class)
                 .withIdentityView(SQL.projection("prefix"))
                 .withRestrictedViewOrderBy(SQL.expression("reference"))

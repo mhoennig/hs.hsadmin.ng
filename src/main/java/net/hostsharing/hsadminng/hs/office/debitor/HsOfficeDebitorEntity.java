@@ -12,8 +12,8 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacView;
-import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
@@ -40,17 +40,17 @@ import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.CascadeType.REFRESH;
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingCase;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NULLABLE;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.fetchedBySql;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NULLABLE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
@@ -160,7 +160,7 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
         return getTaggedDebitorNumber();
     }
 
-    public static RbacView rbac() {
+    public static RbacSpec rbac() {
         return rbacViewFor("debitor", HsOfficeDebitorEntity.class)
                 .withIdentityView(SQL.query("""
                         SELECT debitor.uuid AS uuid,

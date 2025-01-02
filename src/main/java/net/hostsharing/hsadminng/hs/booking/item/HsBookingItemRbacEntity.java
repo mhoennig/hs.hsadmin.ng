@@ -5,8 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRbacEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacView;
-import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -15,20 +15,20 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.io.IOException;
 
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NULLABLE;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.DELETE;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.INSERT;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.SELECT;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.UPDATE;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.ADMIN;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.AGENT;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.OWNER;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.TENANT;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NULLABLE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.DELETE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 
 @Entity
 @Table(schema = "hs_booking", name = "item_rv")
@@ -41,7 +41,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 })
 public class HsBookingItemRbacEntity extends HsBookingItem {
 
-    public static RbacView rbac() {
+    public static RbacSpec rbac() {
         return rbacViewFor("bookingItem", HsBookingItemRbacEntity.class)
                 .withIdentityView(SQL.projection("caption"))
                 .withRestrictedViewOrderBy(SQL.expression("validity"))

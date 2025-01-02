@@ -4,7 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 
@@ -12,10 +12,10 @@ import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
 import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
@@ -57,7 +57,7 @@ public class HsOfficeBankAccountEntity implements BaseEntity<HsOfficeBankAccount
         return holder;
     }
 
-    public static RbacView rbac() {
+    public static RbacSpec rbac() {
         return rbacViewFor("bankAccount", HsOfficeBankAccountEntity.class)
                 .withIdentityView(SQL.projection("iban"))
                 .withUpdatableColumns("holder", "iban", "bic")

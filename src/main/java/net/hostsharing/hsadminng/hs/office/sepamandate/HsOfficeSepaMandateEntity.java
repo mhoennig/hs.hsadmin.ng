@@ -8,7 +8,7 @@ import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.Type;
@@ -20,16 +20,16 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingCase;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
@@ -100,7 +100,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, BaseEntity<HsOf
         return reference;
     }
 
-    public static RbacView rbac() {
+    public static RbacSpec rbac() {
         return rbacViewFor("sepaMandate", HsOfficeSepaMandateEntity.class)
                 .withIdentityView(query("""
                         select sm.uuid as uuid, ba.iban || '-' || sm.validity as idName

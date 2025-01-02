@@ -8,7 +8,7 @@ public class RbacRoleDescriptorsGenerator {
     private final String simpleEntityVarName;
     private final String rawTableName;
 
-    public RbacRoleDescriptorsGenerator(final RbacView rbacDef, final String liquibaseTagPrefix) {
+    public RbacRoleDescriptorsGenerator(final RbacSpec rbacDef, final String liquibaseTagPrefix) {
         this.liquibaseTagPrefix = liquibaseTagPrefix;
         this.simpleEntityVarName = rbacDef.getRootEntityAlias().simpleName();
         this.rawTableName = rbacDef.getRootEntityAlias().getRawTableNameWithSchema();

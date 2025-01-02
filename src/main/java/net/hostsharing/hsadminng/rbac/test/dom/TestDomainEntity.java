@@ -5,21 +5,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacView;
-import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 import net.hostsharing.hsadminng.rbac.test.pac.TestPackageEntity;
 
 import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 
 @Entity
 @Table(schema = "rbactest", name = "domain_rv")
@@ -44,7 +44,7 @@ public class TestDomainEntity implements BaseEntity<TestDomainEntity> {
 
     private String description;
 
-    public static RbacView rbac() {
+    public static RbacSpec rbac() {
         return rbacViewFor("domain", TestDomainEntity.class)
                 .withIdentityView(SQL.projection("name"))
                 .withUpdatableColumns("version", "packageUuid", "description")

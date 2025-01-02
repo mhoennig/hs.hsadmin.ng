@@ -11,11 +11,11 @@ import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 
 public class RbacViewPostgresGenerator {
 
-    private final RbacView rbacDef;
+    private final RbacSpec rbacDef;
     private final String liqibaseTagPrefix;
     private final StringWriter plPgSql = new StringWriter();
 
-    public RbacViewPostgresGenerator(final RbacView forRbacDef) {
+    public RbacViewPostgresGenerator(final RbacSpec forRbacDef) {
         rbacDef = forRbacDef;
         liqibaseTagPrefix = rbacDef.getRootEntityAlias().getRawTableNameWithSchema().replace("_", "-").replace(".", "-");
         plPgSql.writeLn("""
@@ -31,6 +31,7 @@ public class RbacViewPostgresGenerator {
         new InsertTriggerGenerator(rbacDef, liqibaseTagPrefix).generateTo(plPgSql);
         new RbacIdentityViewGenerator(rbacDef, liqibaseTagPrefix).generateTo(plPgSql);
         new RbacRestrictedViewGenerator(rbacDef, liqibaseTagPrefix).generateTo(plPgSql);
+        new RbacRbacSystemRebuildGenerator(rbacDef, liqibaseTagPrefix).generateTo(plPgSql);
     }
 
     @Override

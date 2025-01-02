@@ -6,11 +6,11 @@ import static net.hostsharing.hsadminng.rbac.generator.StringWriter.indented;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 
 public class RbacRestrictedViewGenerator {
-    private final RbacView rbacDef;
+    private final RbacSpec rbacDef;
     private final String liquibaseTagPrefix;
     private final String rawTableName;
 
-    public RbacRestrictedViewGenerator(final RbacView rbacDef, final String liquibaseTagPrefix) {
+    public RbacRestrictedViewGenerator(final RbacSpec rbacDef, final String liquibaseTagPrefix) {
         this.rbacDef = rbacDef;
         this.liquibaseTagPrefix = liquibaseTagPrefix;
         this.rawTableName = rbacDef.getRootEntityAlias().getRawTableNameWithSchema();

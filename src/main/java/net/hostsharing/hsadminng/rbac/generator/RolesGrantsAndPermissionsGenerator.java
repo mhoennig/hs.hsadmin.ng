@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.rbac.generator;
 
-import net.hostsharing.hsadminng.rbac.generator.RbacView.CaseDef;
-import net.hostsharing.hsadminng.rbac.generator.RbacView.RbacGrantDefinition;
-import net.hostsharing.hsadminng.rbac.generator.RbacView.RbacPermissionDefinition;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.CaseDef;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacGrantDefinition;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacPermissionDefinition;
 
 import java.util.HashSet;
 import java.util.List;
@@ -15,22 +15,22 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 import static net.hostsharing.hsadminng.rbac.generator.PostgresTriggerReference.NEW;
 import static net.hostsharing.hsadminng.rbac.generator.PostgresTriggerReference.OLD;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.INSERT;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacGrantDefinition.GrantType.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacGrantDefinition.GrantType.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
 class RolesGrantsAndPermissionsGenerator {
 
-    private final RbacView rbacDef;
+    private final RbacSpec rbacDef;
     private final Set<RbacGrantDefinition> rbacGrants = new HashSet<>();
     private final String liquibaseTagPrefix;
     private final String simpleEntityName;
     private final String simpleEntityVarName;
     private final String qualifiedRawTableName;
 
-    RolesGrantsAndPermissionsGenerator(final RbacView rbacDef, final String liquibaseTagPrefix) {
+    RolesGrantsAndPermissionsGenerator(final RbacSpec rbacDef, final String liquibaseTagPrefix) {
         this.rbacDef = rbacDef;
         this.rbacGrants.addAll(rbacDef.getGrantDefs().stream()
                 .filter(RbacGrantDefinition::isToCreate)
@@ -95,7 +95,7 @@ class RolesGrantsAndPermissionsGenerator {
     private void generateSimplifiedUpdateTriggerFunction(final StringWriter plPgSql) {
 
         final var updateConditions = updatableEntityAliases()
-                .map(RbacView.EntityAlias::dependsOnColumName)
+                .map(RbacSpec.EntityAlias::dependsOnColumName)
                 .distinct()
                 .map(columnName -> "NEW." + columnName + " is distinct from OLD." + columnName)
                 .collect(joining( "\n    or "));
@@ -166,7 +166,7 @@ class RolesGrantsAndPermissionsGenerator {
 
     private boolean hasAnyUpdatableAndNullableEntityAliases() {
         return updatableEntityAliases()
-                .filter(ea -> ea.nullable() == RbacView.Nullable.NULLABLE)
+                .filter(ea -> ea.nullable() == RbacSpec.Nullable.NULLABLE)
                 .anyMatch(e -> true);
     }
 
@@ -210,7 +210,7 @@ class RolesGrantsAndPermissionsGenerator {
         generateGrants(plPgSql, PERM_TO_ROLE);
     }
 
-    private Stream<RbacView.EntityAlias> referencedEntityAliases() {
+    private Stream<RbacSpec.EntityAlias> referencedEntityAliases() {
         return rbacDef.getEntityAliases().values().stream()
                 .filter(ea -> !rbacDef.isRootEntityAlias(ea))
                 .filter(ea -> ea.dependsOnColum() != null)
@@ -218,7 +218,7 @@ class RolesGrantsAndPermissionsGenerator {
                 .filter(ea -> ea.fetchSql() != null);
     }
 
-    private Stream<RbacView.EntityAlias> updatableEntityAliases() {
+    private Stream<RbacSpec.EntityAlias> updatableEntityAliases() {
         return referencedEntityAliases()
                 .filter(ea -> rbacDef.getUpdatableColumns().contains(ea.dependsOnColum().column));
     }
@@ -234,7 +234,7 @@ class RolesGrantsAndPermissionsGenerator {
                 });
 
         updatableEntityAliases()
-                .map(RbacView.EntityAlias::dependsOnColum)
+                .map(RbacSpec.EntityAlias::dependsOnColum)
                 .map(c -> c.column)
                 .sorted()
                 .distinct()
@@ -250,18 +250,19 @@ class RolesGrantsAndPermissionsGenerator {
 
     private void generateFetchedVars(
             final StringWriter plPgSql,
-            final RbacView.EntityAlias ea,
+            final RbacSpec.EntityAlias ea,
             final PostgresTriggerReference old) {
         plPgSql.writeLn(
                 ea.fetchSql().sql + "    INTO " + entityRefVar(old, ea) + ";",
                 with("columns", ea.aliasName() + ".*"),
                 with("ref", old.name()));
-        if (ea.nullable() == RbacView.Nullable.NOT_NULL) {
+        if (ea.nullable() == RbacSpec.Nullable.NOT_NULL) {
             plPgSql.writeLn(
-                    "assert ${entityRefVar}.uuid is not null, format('${entityRefVar} must not be null for ${REF}.${dependsOnColumn} = %s', ${REF}.${dependsOnColumn});",
+                    "assert ${entityRefVar}.uuid is not null, format('${entityRefVar} must not be null for ${REF}.${dependsOnColumn} = %s of ${rawTable}', ${REF}.${dependsOnColumn});",
                     with("entityRefVar", entityRefVar(old, ea)),
                     with("dependsOnColumn", ea.dependsOnColumName()),
-                    with("ref", old.name()));
+                    with("ref", old.name()),
+                    with("rawTable", qualifiedRawTableName));
             plPgSql.writeLn();
         }
     }
@@ -352,11 +353,11 @@ class RolesGrantsAndPermissionsGenerator {
                 .replace("${perm}", permDef.permission.name());
     }
 
-    private String refVarName(final PostgresTriggerReference ref, final RbacView.EntityAlias entityAlias) {
+    private String refVarName(final PostgresTriggerReference ref, final RbacSpec.EntityAlias entityAlias) {
         return ref.name().toLowerCase() + capitalize(entityAlias.aliasName());
     }
 
-    private String roleRef(final PostgresTriggerReference rootRefVar, final RbacView.RbacRoleDefinition roleDef) {
+    private String roleRef(final PostgresTriggerReference rootRefVar, final RbacSpec.RbacRoleDefinition roleDef) {
         if (roleDef == null) {
             System.out.println("null");
         }
@@ -369,17 +370,17 @@ class RolesGrantsAndPermissionsGenerator {
 
     private String entityRefVar(
             final PostgresTriggerReference rootRefVar,
-            final RbacView.EntityAlias entityAlias) {
+            final RbacSpec.EntityAlias entityAlias) {
         return rbacDef.isRootEntityAlias(entityAlias)
                 ? rootRefVar.name()
                 : rootRefVar.name().toLowerCase() + capitalize(entityAlias.aliasName());
     }
 
-    private void createRolesWithGrantsSql(final StringWriter plPgSql, final RbacView.Role role) {
+    private void createRolesWithGrantsSql(final StringWriter plPgSql, final RbacSpec.Role role) {
 
         final var isToCreate = rbacDef.getRoleDefs().stream()
                 .filter(roleDef -> rbacDef.isRootEntityAlias(roleDef.getEntityAlias()) && roleDef.getRole() == role)
-                .findFirst().map(RbacView.RbacRoleDefinition::isToCreate).orElse(false);
+                .findFirst().map(RbacSpec.RbacRoleDefinition::isToCreate).orElse(false);
         if (!isToCreate) {
             return;
         }
@@ -403,7 +404,7 @@ class RolesGrantsAndPermissionsGenerator {
         plPgSql.writeLn(");");
     }
 
-    private void generateUserGrantsForRole(final StringWriter plPgSql, final RbacView.Role role) {
+    private void generateUserGrantsForRole(final StringWriter plPgSql, final RbacSpec.Role role) {
         final var grantsToUsers = findGrantsToUserForRole(rbacDef.getRootEntityAlias(), role);
         if (!grantsToUsers.isEmpty()) {
             final var arrayElements = grantsToUsers.stream()
@@ -416,13 +417,13 @@ class RolesGrantsAndPermissionsGenerator {
         }
     }
 
-    private void generatePermissionsForRole(final StringWriter plPgSql, final RbacView.Role role) {
+    private void generatePermissionsForRole(final StringWriter plPgSql, final RbacSpec.Role role) {
         final var permissionGrantsForRole = findPermissionsGrantsForRole(rbacDef.getRootEntityAlias(), role);
         if (!permissionGrantsForRole.isEmpty()) {
             final var arrayElements = permissionGrantsForRole.stream()
                     .map(RbacGrantDefinition::getPermDef)
                     .map(RbacPermissionDefinition::getPermission)
-                    .map(RbacView.Permission::name)
+                    .map(RbacSpec.Permission::name)
                     .map(p -> "'" + p + "'")
                     .sorted()
                     .toList();
@@ -432,7 +433,7 @@ class RolesGrantsAndPermissionsGenerator {
         }
     }
 
-    private void generateIncomingSuperRolesForRole(final StringWriter plPgSql, final RbacView.Role role) {
+    private void generateIncomingSuperRolesForRole(final StringWriter plPgSql, final RbacSpec.Role role) {
         final var unconditionalIncomingGrants = findIncomingSuperRolesForRole(rbacDef.getRootEntityAlias(), role).stream()
                 .filter(g -> !g.isConditional())
                 .toList();
@@ -446,7 +447,7 @@ class RolesGrantsAndPermissionsGenerator {
         }
     }
 
-    private void generateOutgoingSubRolesForRole(final StringWriter plPgSql, final RbacView.Role role) {
+    private void generateOutgoingSubRolesForRole(final StringWriter plPgSql, final RbacSpec.Role role) {
         final var unconditionalOutgoingGrants = findOutgoingSuperRolesForRole(rbacDef.getRootEntityAlias(), role).stream()
                 .filter(g -> !g.isConditional())
                 .toList();
@@ -467,8 +468,8 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private Set<RbacGrantDefinition> findPermissionsGrantsForRole(
-            final RbacView.EntityAlias entityAlias,
-            final RbacView.Role role) {
+            final RbacSpec.EntityAlias entityAlias,
+            final RbacSpec.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
         return rbacGrants.stream()
                 .filter(g -> g.grantType() == PERM_TO_ROLE && g.getSuperRoleDef() == roleDef)
@@ -476,8 +477,8 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private Set<RbacGrantDefinition> findGrantsToUserForRole(
-            final RbacView.EntityAlias entityAlias,
-            final RbacView.Role role) {
+            final RbacSpec.EntityAlias entityAlias,
+            final RbacSpec.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
         return rbacGrants.stream()
                 .filter(g -> g.grantType() == ROLE_TO_USER && g.getSubRoleDef() == roleDef)
@@ -485,8 +486,8 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private Set<RbacGrantDefinition> findIncomingSuperRolesForRole(
-            final RbacView.EntityAlias entityAlias,
-            final RbacView.Role role) {
+            final RbacSpec.EntityAlias entityAlias,
+            final RbacSpec.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
         return rbacGrants.stream()
                 .filter(g -> g.grantType() == ROLE_TO_ROLE && g.getSubRoleDef() == roleDef)
@@ -494,8 +495,8 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private Set<RbacGrantDefinition> findOutgoingSuperRolesForRole(
-            final RbacView.EntityAlias entityAlias,
-            final RbacView.Role role) {
+            final RbacSpec.EntityAlias entityAlias,
+            final RbacSpec.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
         return rbacGrants.stream()
                 .filter(g -> g.grantType() == ROLE_TO_ROLE && g.getSuperRoleDef() == roleDef)
@@ -579,7 +580,7 @@ class RolesGrantsAndPermissionsGenerator {
         plPgSql.writeLn();
     }
 
-    private String toPlPgSqlReference(final RbacView.RbacSubjectReference userRef) {
+    private String toPlPgSqlReference(final RbacSpec.RbacSubjectReference userRef) {
         return switch (userRef.role) {
             case CREATOR -> "rbac.currentSubjectUuid()";
             default -> throw new IllegalArgumentException("unknown user role: " + userRef);
@@ -588,7 +589,7 @@ class RolesGrantsAndPermissionsGenerator {
 
     private String toPlPgSqlReference(
             final PostgresTriggerReference triggerRef,
-            final RbacView.RbacRoleDefinition roleDef,
+            final RbacSpec.RbacRoleDefinition roleDef,
             final boolean assumed) {
         final var assumedArg = assumed ? "" : ", rbac.unassumed()";
         return roleDef.descriptorFunctionName() +
@@ -599,7 +600,7 @@ class RolesGrantsAndPermissionsGenerator {
 
     private static String toTriggerReference(
             final PostgresTriggerReference triggerRef,
-            final RbacView.EntityAlias entityAlias) {
+            final RbacSpec.EntityAlias entityAlias) {
         return triggerRef.name().toLowerCase() + capitalize(entityAlias.aliasName());
     }
 }

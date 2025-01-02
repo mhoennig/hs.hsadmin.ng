@@ -37,14 +37,14 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.debitor WHERE uuid = NEW.debitorUuid    INTO newDebitor;
-    assert newDebitor.uuid is not null, format('newDebitor must not be null for NEW.debitorUuid = %s of project', NEW.debitorUuid);
+    assert newDebitor.uuid is not null, format('newDebitor must not be null for NEW.debitorUuid = %s of hs_booking.project', NEW.debitorUuid);
 
     SELECT debitorRel.*
         FROM hs_office.relation debitorRel
         JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
         WHERE debitor.uuid = NEW.debitorUuid
         INTO newDebitorRel;
-    assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s or project', NEW.debitorUuid);
+    assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s of hs_booking.project', NEW.debitorUuid);
 
 
     perform rbac.defineRoleWithGrants(
@@ -202,5 +202,58 @@ call rbac.generateRbacRestrictedView('hs_booking.project',
         version = new.version,
         caption = new.caption
     $updates$);
+--//
+
+
+-- ============================================================================
+--changeset RbacRbacSystemRebuildGenerator:hs-booking-project-rbac-rebuild endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- HOWTO: Rebuild RBAC-system for table hs_booking.project after changing its RBAC specification.
+--
+-- begin transaction;
+--  call base.defineContext('re-creating RBAC for table hs_booking.project', null, <<insert executing global admin user here>>);
+--  call hs_booking.project_rebuild_rbac_system();
+-- commit;
+--
+-- How it works:
+-- 1. All grants previously created from the RBAC specification of this table will be deleted.
+--    These grants are identified by `hs_booking.project.grantedByTriggerOf IS NOT NULL`.
+--    User-induced grants (`hs_booking.project.grantedByTriggerOf IS NULL`) are NOT deleted.
+-- 2. New role types will be created, but existing role types which are not specified anymore,
+--    will NOT be deleted!
+-- 3. All newly specified grants will be created.
+--
+-- IMPORTANT:
+-- Make sure not to skip any previously defined role-types or you might break indirect grants!
+-- E.g. If, in an updated version of the RBAC system for a table, you remove the AGENT role type
+-- and now directly grant the TENANT role to the ADMIN role, all external grants to the AGENT role
+-- of this table would be in a dead end.
+
+create or replace procedure hs_booking.project_rebuild_rbac_system()
+    language plpgsql as $$
+DECLARE
+    DECLARE
+    row hs_booking.project;
+    grantsAfter numeric;
+    grantsBefore numeric;
+BEGIN
+    SELECT count(*) INTO grantsBefore FROM rbac.grants;
+
+    FOR row IN SELECT * FROM hs_booking.project LOOP
+            -- first delete all generated grants for this row from the previously defined RBAC system
+            DELETE FROM rbac.grants g
+                   WHERE g.grantedbytriggerof = row.uuid;
+
+            -- then build the grants according to the currently defined RBAC rules
+            CALL hs_booking.project_build_rbac_system(row);
+        END LOOP;
+
+    select count(*) into grantsAfter from rbac.grants;
+
+    -- print how the total count of grants has changed
+    raise notice 'total grant count before -> after: % -> %', grantsBefore, grantsAfter;
+END;
+$$;
 --//
 

@@ -290,6 +290,32 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         }
     }
 
+    @Nested
+    class RebuildRbacSystem {
+
+        @Test
+        public void rebuildingTheRbacSystemWitSameRbacSpecDoesNotChangeGrantNorRoleCount() {
+            final var grantCountBefore = sql("SELECT COUNT(*) FROM rbac.grants");
+            final var roleCountBefore = sql("SELECT COUNT(*) FROM rbac.role");
+
+            jpaAttempt.transacted(() ->
+                    em.createNativeQuery("CALL rbactest.package_rebuild_rbac_system()")
+            );
+
+            final var grantCountAfter = sql("SELECT COUNT(*) FROM rbac.grants");
+            assertThat(grantCountBefore).as("grant count must not change").isEqualTo(grantCountAfter);
+
+            final var roleCountAfter = sql("SELECT COUNT(*) FROM rbac.role");
+            assertThat(roleCountBefore).as("role count must not change").isEqualTo(roleCountAfter);
+        }
+
+        private Object sql(final String query) {
+            return jpaAttempt.transacted(() ->
+                    em.createNativeQuery(query).getSingleResult()
+            ).assumeSuccessful().returnedValue();
+        }
+    }
+
     private RbacSubjectEntity createNewUserTransacted() {
         return jpaAttempt.transacted(() -> {
             final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";

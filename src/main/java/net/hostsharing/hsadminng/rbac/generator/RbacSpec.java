@@ -22,19 +22,18 @@ import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.max;
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacGrantDefinition.GrantType.PERM_TO_ROLE;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacGrantDefinition.GrantType.ROLE_TO_ROLE;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.Part.AUTO_FETCH;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacGrantDefinition.GrantType.PERM_TO_ROLE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacGrantDefinition.GrantType.ROLE_TO_ROLE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.Part.AUTO_FETCH;
 import static org.apache.commons.collections4.SetUtils.hashSet;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 
 @Getter
-// TODO.refa: rename to RbacDSL
-public class RbacView {
+public class RbacSpec {
 
     public static final String GLOBAL = "rbac.global";
     public static final String OUTPUT_BASEDIR = "src/main/resources/db/changelog";
@@ -90,11 +89,11 @@ public class RbacView {
      * @param <E>
      *     a JPA entity class extending RbacObject
      */
-    public static <E extends BaseEntity<?>> RbacView rbacViewFor(final String alias, final Class<E> entityClass) {
-        return new RbacView(alias, entityClass);
+    public static <E extends BaseEntity<?>> RbacSpec rbacViewFor(final String alias, final Class<E> entityClass) {
+        return new RbacSpec(alias, entityClass);
     }
 
-    RbacView(final String alias, final Class<? extends BaseEntity<?>> entityClass) {
+    RbacSpec(final String alias, final Class<? extends BaseEntity<?>> entityClass) {
         rootEntityAlias = new EntityAlias(alias, entityClass);
         entityAliases.put(alias, rootEntityAlias);
         new RbacSubjectReference(CREATOR);
@@ -110,7 +109,7 @@ public class RbacView {
      * @return
      *  the `this` instance itself to allow chained calls.
      */
-    public RbacView withUpdatableColumns(final String... columnNames) {
+    public RbacSpec withUpdatableColumns(final String... columnNames) {
         Collections.addAll(updatableColumns, columnNames);
         verifyVersionColumnExists();
         return this;
@@ -134,7 +133,7 @@ public class RbacView {
      * @return
      *  the `this` instance itself to allow chained calls.
      */
-    public RbacView withIdentityView(final SQL sqlExpression) {
+    public RbacSpec withIdentityView(final SQL sqlExpression) {
         this.identityViewSqlQuery = sqlExpression;
         return this;
     }
@@ -150,7 +149,7 @@ public class RbacView {
      * @return
      *  the `this` instance itself to allow chained calls.
      */
-    public RbacView withRestrictedViewOrderBy(final SQL orderBySqlExpression) {
+    public RbacSpec withRestrictedViewOrderBy(final SQL orderBySqlExpression) {
         this.orderBySqlExpression = orderBySqlExpression;
         return this;
     }
@@ -166,7 +165,7 @@ public class RbacView {
      * @return
      *  the `this` instance itself to allow chained calls.
      */
-    public RbacView createRole(final Role role, final Consumer<RbacRoleDefinition> with) {
+    public RbacSpec createRole(final Role role, final Consumer<RbacRoleDefinition> with) {
         final RbacRoleDefinition newRoleDef = findRbacRole(rootEntityAlias, role).toCreate();
         with.accept(newRoleDef);
         previousRoleDef = newRoleDef;
@@ -182,7 +181,7 @@ public class RbacView {
      * @return
      *  the `this` instance itself to allow chained calls.
      */
-    public RbacView createSubRole(final Role role) {
+    public RbacSpec createSubRole(final Role role) {
         final RbacRoleDefinition newRoleDef = findRbacRole(rootEntityAlias, role).toCreate();
         findOrCreateGrantDef(newRoleDef, previousRoleDef).toCreate();
         previousRoleDef = newRoleDef;
@@ -202,7 +201,7 @@ public class RbacView {
      * @return
      *  the `this` instance itself to allow chained calls.
      */
-    public RbacView createSubRole(final Role role, final Consumer<RbacRoleDefinition> with) {
+    public RbacSpec createSubRole(final Role role, final Consumer<RbacRoleDefinition> with) {
         final RbacRoleDefinition newRoleDef = findRbacRole(rootEntityAlias, role).toCreate();
         findOrCreateGrantDef(newRoleDef, previousRoleDef).toCreate();
         with.accept(newRoleDef);
@@ -254,7 +253,7 @@ public class RbacView {
                 .orElseGet(() -> new RbacPermissionDefinition(entityAlias, permission, null, true));
     }
 
-    public <EC extends BaseEntity> RbacView declarePlaceholderEntityAliases(final String... aliasNames) {
+    public <EC extends BaseEntity> RbacSpec declarePlaceholderEntityAliases(final String... aliasNames) {
         for (String alias : aliasNames) {
             entityAliases.put(alias, new EntityAlias(alias));
         }
@@ -287,7 +286,7 @@ public class RbacView {
      * @param <EC>
      *     a JPA entity class extending RbacObject
      */
-    public <EC extends BaseEntity<?>> RbacView importRootEntityAliasProxy(
+    public <EC extends BaseEntity<?>> RbacSpec importRootEntityAliasProxy(
             final String aliasName,
             final Class<? extends BaseEntity<?>> entityClass,
             final ColumnValue forCase,
@@ -312,7 +311,7 @@ public class RbacView {
      * @param <EC>
      *     a JPA entity class extending RbacObject
      */
-    public RbacView importSubEntityAlias(
+    public RbacSpec importSubEntityAlias(
             final String aliasName, final Class<? extends BaseEntity<?>> entityClass,
             final SQL fetchSql, final Column dependsOnColum) {
         importEntityAliasImpl(aliasName, entityClass, usingDefaultCase(), fetchSql, dependsOnColum, true, NOT_NULL);
@@ -349,7 +348,7 @@ public class RbacView {
      * @param <EC>
      *     a JPA entity class extending RbacObject
      */
-    public RbacView importEntityAlias(
+    public RbacSpec importEntityAlias(
             final String aliasName, final Class<? extends BaseEntity<?>> entityClass, final ColumnValue usingCase,
             final Column dependsOnColum, final SQL fetchSql, final Nullable nullable) {
         importEntityAliasImpl(aliasName, entityClass, usingCase, fetchSql, dependsOnColum, false, nullable);
@@ -379,12 +378,12 @@ public class RbacView {
         return entityAlias;
     }
 
-    private static RbacView rbacDefinition(final Class<? extends BaseEntity> entityClass)
+    private static RbacSpec rbacDefinition(final Class<? extends BaseEntity> entityClass)
             throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        return (RbacView) entityClass.getMethod("rbac").invoke(null);
+        return (RbacSpec) entityClass.getMethod("rbac").invoke(null);
     }
 
-    private RbacView importAsAlias(final String aliasName, final RbacView importedRbacView, final ColumnValue forCase, final boolean asSubEntity) {
+    private RbacSpec importAsAlias(final String aliasName, final RbacSpec importedRbacView, final ColumnValue forCase, final boolean asSubEntity) {
         final var mapper = new AliasNameMapper(importedRbacView, aliasName,
                 asSubEntity ? entityAliases.keySet() : null);
         copyOf(importedRbacView.getEntityAliases().values()).stream()
@@ -416,7 +415,7 @@ public class RbacView {
         return this;
     }
 
-    public RbacView switchOnColumn(final String discriminatorColumName, final CaseDef... caseDefs) {
+    public RbacSpec switchOnColumn(final String discriminatorColumName, final CaseDef... caseDefs) {
         this.discriminatorColumName = discriminatorColumName;
         allCases.addAll(stream(caseDefs).toList());
 
@@ -511,7 +510,7 @@ public class RbacView {
         new RbacViewPostgresGenerator(this).generateToChangeLog(Path.of(OUTPUT_BASEDIR, baseFileName + ".sql"));
     }
 
-    public RbacView limitDiagramTo(final String... aliasNames) {
+    public RbacSpec limitDiagramTo(final String... aliasNames) {
         this.limitDiagramToAliasNames = Set.of(aliasNames);
         return this;
     }
@@ -542,15 +541,15 @@ public class RbacView {
             this.superRoleDef = findRbacRole(entityAlias, role);
         }
 
-        public RbacView grantRole(final String entityAlias, final Role role) {
+        public RbacSpec grantRole(final String entityAlias, final Role role) {
             findOrCreateGrantDef(findRbacRole(entityAlias, role), superRoleDef).toCreate();
-            return RbacView.this;
+            return RbacSpec.this;
         }
 
-        public RbacView grantPermission(final Permission perm) {
+        public RbacSpec grantPermission(final Permission perm) {
             final var forTable = rootEntityAlias.getRawTableNameWithSchema();
             findOrCreateGrantDef(findRbacPerm(rootEntityAlias, perm, forTable), superRoleDef).toCreate();
-            return RbacView.this;
+            return RbacSpec.this;
         }
 
     }
@@ -698,10 +697,10 @@ public class RbacView {
             this.subRole = role;
         }
 
-        public RbacView wouldBeGrantedTo(final String entityAlias, final Role role) {
+        public RbacSpec wouldBeGrantedTo(final String entityAlias, final Role role) {
             this.superRoleEntity = findEntityAlias(entityAlias);
             this.superRole = role;
-            return RbacView.this;
+            return RbacSpec.this;
         }
     }
 
@@ -733,9 +732,9 @@ public class RbacView {
          * @return
          *  The RbacView specification to which this permission definition belongs.
          */
-        public RbacView grantedTo(final String entityAlias, final Role role) {
+        public RbacSpec grantedTo(final String entityAlias, final Role role) {
             findOrCreateGrantDef(this, findRbacRole(entityAlias, role)).toCreate();
-            return RbacView.this;
+            return RbacSpec.this;
         }
 
         @Override
@@ -1186,12 +1185,12 @@ public class RbacView {
 
     private static class AliasNameMapper {
 
-        private final RbacView importedRbacView;
+        private final RbacSpec importedRbacView;
         private final String outerAliasName;
 
         private final Set<String> outerAliasNames;
 
-        AliasNameMapper(final RbacView importedRbacView, final String outerAliasName, final Set<String> outerAliasNames) {
+        AliasNameMapper(final RbacSpec importedRbacView, final String outerAliasName, final Set<String> outerAliasNames) {
             this.importedRbacView = importedRbacView;
             this.outerAliasName = outerAliasName;
             this.outerAliasNames = (outerAliasNames == null) ? Collections.emptySet() : outerAliasNames;
@@ -1210,19 +1209,19 @@ public class RbacView {
 
     public static class CaseDef extends ColumnValue {
 
-        final Consumer<RbacView> def;
+        final Consumer<RbacSpec> def;
 
-        private CaseDef(final String discriminatorColumnValue, final Consumer<RbacView> def) {
+        private CaseDef(final String discriminatorColumnValue, final Consumer<RbacSpec> def) {
             super(discriminatorColumnValue);
             this.def = def;
         }
 
 
-        public static CaseDef inCaseOf(final String discriminatorColumnValue, final Consumer<RbacView> def) {
+        public static CaseDef inCaseOf(final String discriminatorColumnValue, final Consumer<RbacSpec> def) {
             return new CaseDef(discriminatorColumnValue, def);
         }
 
-        public static CaseDef inOtherCases(final Consumer<RbacView> def) {
+        public static CaseDef inOtherCases(final Consumer<RbacSpec> def) {
             return new CaseDef(null, def);
         }
 
@@ -1281,7 +1280,7 @@ public class RbacView {
                 .filter(c -> stream(c.getDeclaredMethods())
                         .anyMatch(m -> m.getName().equals("rbac") && isStatic(m.getModifiers()))
                 )
-                .map(RbacView::castToSubclassOfBaseEntity)
+                .map(RbacSpec::castToSubclassOfBaseEntity)
                 .collect(Collectors.toSet());
         return rbacEntityClasses;
     }
@@ -1296,6 +1295,6 @@ public class RbacView {
      */
     public static void main(String[] args) throws Exception {
         findRbacEntityClasses("net.hostsharing.hsadminng")
-                .forEach(RbacView::generateRbacView);
+                .forEach(RbacSpec::generateRbacView);
     }
 }

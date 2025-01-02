@@ -7,20 +7,20 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.rbac.generator.PostgresTriggerReference.NEW;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.INSERT;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacGrantDefinition.GrantType.PERM_TO_ROLE;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.ADMIN;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.GUEST;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacGrantDefinition.GrantType.PERM_TO_ROLE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.GUEST;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 
 public class InsertTriggerGenerator {
 
-    private final RbacView rbacDef;
+    private final RbacSpec rbacDef;
     private final String liquibaseTagPrefix;
 
-    public InsertTriggerGenerator(final RbacView rbacDef, final String liqibaseTagPrefix) {
+    public InsertTriggerGenerator(final RbacSpec rbacDef, final String liqibaseTagPrefix) {
         this.rbacDef = rbacDef;
         this.liquibaseTagPrefix = liqibaseTagPrefix;
     }
@@ -203,8 +203,8 @@ public class InsertTriggerGenerator {
         plPgSql.chopEmptyLines();
     }
 
-    private void generateInsertPermissionChecksForSingleGrant(final StringWriter plPgSql, final RbacView.RbacGrantDefinition g) {
-        final RbacView.EntityAlias superRoleEntityAlias = g.getSuperRoleDef().getEntityAlias();
+    private void generateInsertPermissionChecksForSingleGrant(final StringWriter plPgSql, final RbacSpec.RbacGrantDefinition g) {
+        final RbacSpec.EntityAlias superRoleEntityAlias = g.getSuperRoleDef().getEntityAlias();
 
         final var caseCondition = g.isConditional()
                 ? ("NEW.type in (" + toStringList(g.getForCases()) + ") and ")
@@ -275,15 +275,15 @@ public class InsertTriggerGenerator {
                 with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
     }
 
-    private String toStringList(final Set<RbacView.CaseDef> cases) {
+    private String toStringList(final Set<RbacSpec.CaseDef> cases) {
         return cases.stream().map(c -> "'" + c.value + "'").collect(joining(", "));
     }
 
-    private boolean isGrantToADifferentTable(final RbacView.RbacGrantDefinition g) {
+    private boolean isGrantToADifferentTable(final RbacSpec.RbacGrantDefinition g) {
         return !rbacDef.getRootEntityAlias().getRawTableNameWithSchema().equals(g.getSuperRoleDef().getEntityAlias().getRawTableNameWithSchema());
     }
 
-    private Stream<RbacView.RbacGrantDefinition> getInsertGrants() {
+    private Stream<RbacSpec.RbacGrantDefinition> getInsertGrants() {
         return rbacDef.getGrantDefs().stream()
                 .filter(g -> g.grantType() == PERM_TO_ROLE)
                 .filter(g -> g.getPermDef().toCreate && g.getPermDef().getPermission() == INSERT);
@@ -298,14 +298,14 @@ public class InsertTriggerGenerator {
                  g.getSuperRoleDef().getEntityAlias().isGlobal() && g.getSuperRoleDef().getRole() == GUEST);
     }
 
-    private Optional<RbacView.RbacGrantDefinition> getOptionalInsertGrant() {
+    private Optional<RbacSpec.RbacGrantDefinition> getOptionalInsertGrant() {
         return getInsertGrants()
                 .reduce(singleton());
     }
 
-    private Optional<RbacView.RbacRoleDefinition> getOptionalInsertSuperRole() {
+    private Optional<RbacSpec.RbacRoleDefinition> getOptionalInsertSuperRole() {
         return getInsertGrants()
-                .map(RbacView.RbacGrantDefinition::getSuperRoleDef)
+                .map(RbacSpec.RbacGrantDefinition::getSuperRoleDef)
                 .reduce(singleton());
     }
 
@@ -319,12 +319,12 @@ public class InsertTriggerGenerator {
         };
     }
 
-    private static String toVar(final RbacView.RbacRoleDefinition roleDef) {
+    private static String toVar(final RbacSpec.RbacRoleDefinition roleDef) {
         return uncapitalize(roleDef.getEntityAlias().simpleName()) + capitalize(roleDef.getRole().name());
     }
 
 
-    private String toRoleDescriptor(final RbacView.RbacRoleDefinition roleDef, final String ref) {
+    private String toRoleDescriptor(final RbacSpec.RbacRoleDefinition roleDef, final String ref) {
         final var functionName = roleDef.descriptorFunctionName();
         if (roleDef.getEntityAlias().isGlobal()) {
             return functionName + "()";

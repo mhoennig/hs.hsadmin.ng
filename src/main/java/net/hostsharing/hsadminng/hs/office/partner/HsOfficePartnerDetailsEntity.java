@@ -3,8 +3,8 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacView;
-import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 
@@ -13,10 +13,10 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
@@ -67,7 +67,7 @@ public class HsOfficePartnerDetailsEntity implements BaseEntity<HsOfficePartnerD
     }
 
 
-    public static RbacView rbac() {
+    public static RbacSpec rbac() {
         return rbacViewFor("partnerDetails", HsOfficePartnerDetailsEntity.class)
                 .withIdentityView(SQL.query("""
                         SELECT partnerDetails.uuid as uuid, partner_iv.idName as idName

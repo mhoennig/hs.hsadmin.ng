@@ -36,7 +36,7 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM rbactest.customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
-    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s of package', NEW.customerUuid);
+    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s of rbactest.package', NEW.customerUuid);
 
 
     perform rbac.defineRoleWithGrants(
@@ -102,10 +102,10 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM rbactest.customer WHERE uuid = OLD.customerUuid    INTO oldCustomer;
-    assert oldCustomer.uuid is not null, format('oldCustomer must not be null for OLD.customerUuid = %s of package', OLD.customerUuid);
+    assert oldCustomer.uuid is not null, format('oldCustomer must not be null for OLD.customerUuid = %s of rbactest.package', OLD.customerUuid);
 
     SELECT * FROM rbactest.customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
-    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s of package', NEW.customerUuid);
+    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s of rbactest.package', NEW.customerUuid);
 
 
     if NEW.customerUuid <> OLD.customerUuid then
@@ -241,5 +241,58 @@ call rbac.generateRbacRestrictedView('rbactest.package',
         customerUuid = new.customerUuid,
         description = new.description
     $updates$);
+--//
+
+
+-- ============================================================================
+--changeset RbacRbacSystemRebuildGenerator:rbactest-package-rbac-rebuild endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- HOWTO: Rebuild RBAC-system for table rbactest.package after changing its RBAC specification.
+--
+-- begin transaction;
+--  call base.defineContext('re-creating RBAC for table rbactest.package', null, <<insert executing global admin user here>>);
+--  call rbactest.package_rebuild_rbac_system();
+-- commit;
+--
+-- How it works:
+-- 1. All grants previously created from the RBAC specification of this table will be deleted.
+--    These grants are identified by `rbactest.package.grantedByTriggerOf IS NOT NULL`.
+--    User-induced grants (`rbactest.package.grantedByTriggerOf IS NULL`) are NOT deleted.
+-- 2. New role types will be created, but existing role types which are not specified anymore,
+--    will NOT be deleted!
+-- 3. All newly specified grants will be created.
+--
+-- IMPORTANT:
+-- Make sure not to skip any previously defined role-types or you might break indirect grants!
+-- E.g. If, in an updated version of the RBAC system for a table, you remove the AGENT role type
+-- and now directly grant the TENANT role to the ADMIN role, all external grants to the AGENT role
+-- of this table would be in a dead end.
+
+create or replace procedure rbactest.package_rebuild_rbac_system()
+    language plpgsql as $$
+DECLARE
+    DECLARE
+    row rbactest.package;
+    grantsAfter numeric;
+    grantsBefore numeric;
+BEGIN
+    SELECT count(*) INTO grantsBefore FROM rbac.grants;
+
+    FOR row IN SELECT * FROM rbactest.package LOOP
+            -- first delete all generated grants for this row from the previously defined RBAC system
+            DELETE FROM rbac.grants g
+                   WHERE g.grantedbytriggerof = row.uuid;
+
+            -- then build the grants according to the currently defined RBAC rules
+            CALL rbactest.package_build_rbac_system(row);
+        END LOOP;
+
+    select count(*) into grantsAfter from rbac.grants;
+
+    -- print how the total count of grants has changed
+    raise notice 'total grant count before -> after: % -> %', grantsBefore, grantsAfter;
+END;
+$$;
 --//
 

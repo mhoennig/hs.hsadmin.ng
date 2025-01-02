@@ -37,10 +37,10 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
-    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s of partner', NEW.partnerRelUuid);
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s of hs_office.partner', NEW.partnerRelUuid);
 
     SELECT * FROM hs_office.partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
-    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s of partner', NEW.detailsUuid);
+    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s of hs_office.partner', NEW.detailsUuid);
 
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hs_office.relation_OWNER(newPartnerRel));
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hs_office.relation_TENANT(newPartnerRel));
@@ -96,16 +96,16 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.relation WHERE uuid = OLD.partnerRelUuid    INTO oldPartnerRel;
-    assert oldPartnerRel.uuid is not null, format('oldPartnerRel must not be null for OLD.partnerRelUuid = %s of partner', OLD.partnerRelUuid);
+    assert oldPartnerRel.uuid is not null, format('oldPartnerRel must not be null for OLD.partnerRelUuid = %s of hs_office.partner', OLD.partnerRelUuid);
 
     SELECT * FROM hs_office.relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
-    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s of partner', NEW.partnerRelUuid);
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s of hs_office.partner', NEW.partnerRelUuid);
 
     SELECT * FROM hs_office.partner_details WHERE uuid = OLD.detailsUuid    INTO oldPartnerDetails;
-    assert oldPartnerDetails.uuid is not null, format('oldPartnerDetails must not be null for OLD.detailsUuid = %s of partner', OLD.detailsUuid);
+    assert oldPartnerDetails.uuid is not null, format('oldPartnerDetails must not be null for OLD.detailsUuid = %s of hs_office.partner', OLD.detailsUuid);
 
     SELECT * FROM hs_office.partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
-    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s of partner', NEW.detailsUuid);
+    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s of hs_office.partner', NEW.detailsUuid);
 
 
     if NEW.partnerRelUuid <> OLD.partnerRelUuid then
@@ -251,5 +251,58 @@ call rbac.generateRbacRestrictedView('hs_office.partner',
     $updates$
         partnerRelUuid = new.partnerRelUuid
     $updates$);
+--//
+
+
+-- ============================================================================
+--changeset RbacRbacSystemRebuildGenerator:hs-office-partner-rbac-rebuild endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- HOWTO: Rebuild RBAC-system for table hs_office.partner after changing its RBAC specification.
+--
+-- begin transaction;
+--  call base.defineContext('re-creating RBAC for table hs_office.partner', null, <<insert executing global admin user here>>);
+--  call hs_office.partner_rebuild_rbac_system();
+-- commit;
+--
+-- How it works:
+-- 1. All grants previously created from the RBAC specification of this table will be deleted.
+--    These grants are identified by `hs_office.partner.grantedByTriggerOf IS NOT NULL`.
+--    User-induced grants (`hs_office.partner.grantedByTriggerOf IS NULL`) are NOT deleted.
+-- 2. New role types will be created, but existing role types which are not specified anymore,
+--    will NOT be deleted!
+-- 3. All newly specified grants will be created.
+--
+-- IMPORTANT:
+-- Make sure not to skip any previously defined role-types or you might break indirect grants!
+-- E.g. If, in an updated version of the RBAC system for a table, you remove the AGENT role type
+-- and now directly grant the TENANT role to the ADMIN role, all external grants to the AGENT role
+-- of this table would be in a dead end.
+
+create or replace procedure hs_office.partner_rebuild_rbac_system()
+    language plpgsql as $$
+DECLARE
+    DECLARE
+    row hs_office.partner;
+    grantsAfter numeric;
+    grantsBefore numeric;
+BEGIN
+    SELECT count(*) INTO grantsBefore FROM rbac.grants;
+
+    FOR row IN SELECT * FROM hs_office.partner LOOP
+            -- first delete all generated grants for this row from the previously defined RBAC system
+            DELETE FROM rbac.grants g
+                   WHERE g.grantedbytriggerof = row.uuid;
+
+            -- then build the grants according to the currently defined RBAC rules
+            CALL hs_office.partner_build_rbac_system(row);
+        END LOOP;
+
+    select count(*) into grantsAfter from rbac.grants;
+
+    -- print how the total count of grants has changed
+    raise notice 'total grant count before -> after: % -> %', grantsBefore, grantsAfter;
+END;
+$$;
 --//
 

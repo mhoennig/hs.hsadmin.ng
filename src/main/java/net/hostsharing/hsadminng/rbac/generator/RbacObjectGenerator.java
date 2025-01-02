@@ -7,7 +7,7 @@ public class RbacObjectGenerator {
     private final String liquibaseTagPrefix;
     private final String rawTableName;
 
-    public RbacObjectGenerator(final RbacView rbacDef, final String liquibaseTagPrefix) {
+    public RbacObjectGenerator(final RbacSpec rbacDef, final String liquibaseTagPrefix) {
         this.liquibaseTagPrefix = liquibaseTagPrefix;
         this.rawTableName = rbacDef.getRootEntityAlias().getRawTableNameWithSchema();
     }
