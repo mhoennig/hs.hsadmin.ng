@@ -31,5 +31,8 @@ contact_id;	bp_id;	salut;	first_name;	last_name;	title;	firma;	co;	street;	zipco
 90590;	542;	Herr;	Inhaber R.;	Wiese;	;	Das Perfekte Haus;	Client-ID 515217;	Essen, Kastanienallee 81;	30127;	Hannover;	Germany;	;	;	;	;	515217@kkemail.example.org;	billing
 90629;	132;	;	Ragnar;	Richter;	;	;	;	;	;	;	;	;	;	;	;	mail@ragnar-richter..example.org;	contractual,subscriber:members-announce,subscriber:members-discussion,subscriber:generalversammlung
 90677;	132;	;	Eike;	Henning;	;	;	;	;	;	;	;	;	;	;	;	hostsharing@eike-henning..example.org;	operation,subscriber:operations-announce,subscriber:operations-discussion
+
+# deliberately duplicate person with different contact-data
 90698;	132;	;	Jan;	Henning;	;	;	;	;	;	;	;	;	01577 12345678;	;	;	mail@jan-henning.example.org;	operation
+90699;	132;	;	Jan;	Henning;	;	;	;	;	;	;	;	;	01577 12345678;	;	;	lists@jan-henning.example.org;	subscriber:operations-announce
 

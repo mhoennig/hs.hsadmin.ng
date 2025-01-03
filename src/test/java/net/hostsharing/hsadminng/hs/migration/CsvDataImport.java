@@ -171,7 +171,9 @@ public class CsvDataImport extends ContextBasedTest {
 
     public <T extends BaseEntity> T persistViaEM(final Integer id, final T entity) {
         //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
-        em.persist(entity);
+        if (!em.contains(entity)) {
+            em.persist(entity);
+        }
         // uncomment for debugging purposes
         // try {
         //     em.flush(); // makes it slow, but produces better error messages

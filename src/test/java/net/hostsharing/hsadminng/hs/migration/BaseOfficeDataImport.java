@@ -80,6 +80,8 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         -1, HsOfficePersonType.LEGAL_PERSON
     );
 
+    static Map<String, HsOfficePersonRealEntity> distinctPersons = new WriteOnceMap<>();
+
     static Map<Integer, HsOfficeContactRealEntity> contacts = new WriteOnceMap<>();
     static Map<Integer, HsOfficePersonRealEntity> persons = new WriteOnceMap<>();
     static Map<Integer, HsOfficePartnerEntity> partners = new WriteOnceMap<>();
@@ -225,7 +227,8 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                    90590=contact(caption='Herr Inhaber R. Wiese, Das Perfekte Haus', emailAddresses='{ "main": "515217@kkemail.example.org"}'),
                    90629=contact(caption='Ragnar Richter', emailAddresses='{ "main": "mail@ragnar-richter..example.org"}'),
                    90677=contact(caption='Eike Henning', emailAddresses='{ "main": "hostsharing@eike-henning..example.org"}'),
-                   90698=contact(caption='Jan Henning', emailAddresses='{ "main": "mail@jan-henning.example.org"}')
+                   90698=contact(caption='Jan Henning', emailAddresses='{ "main": "mail@jan-henning.example.org"}'),
+                   90699=contact(caption='Jan Henning', emailAddresses='{"main": "lists@jan-henning.example.org"}')
                 }
                 """);
         assertThat(toJsonFormattedString(persons)).isEqualToIgnoringWhitespace("""
@@ -247,7 +250,8 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                    90590=person(personType='??', tradeName='Das Perfekte Haus', salutation='Herr', familyName='Wiese', givenName='Inhaber R.'),
                    90629=person(personType='NP', familyName='Richter', givenName='Ragnar'),
                    90677=person(personType='NP', familyName='Henning', givenName='Eike'),
-                   90698=person(personType='NP', familyName='Henning', givenName='Jan')
+                   90698=person(personType='NP', familyName='Henning', givenName='Jan'),
+                   90699=person(personType='NP', familyName='Henning', givenName='Jan')
                 }
                 """);
         assertThat(toJsonFormattedString(debitors)).isEqualToIgnoringWhitespace("""
@@ -349,7 +353,8 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                    2000071=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='operations-discussion', holder='NP Henning, Eike', contact='Eike Henning'),
                    2000072=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='operations-announce', holder='NP Henning, Eike', contact='Eike Henning'),
                    2000073=rel(anchor='?? Ragnar IT-Beratung', type='OPERATIONS_ALERT', holder='NP Henning, Jan', contact='Jan Henning'),
-                   2000074=rel(anchor='?? Ragnar IT-Beratung', type='OPERATIONS', holder='NP Henning, Jan', contact='Jan Henning')
+                   2000074=rel(anchor='?? Ragnar IT-Beratung', type='OPERATIONS', holder='NP Henning, Jan', contact='Jan Henning'),
+                   2000075=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='operations-announce', holder='NP Henning, Jan', contact='Jan Henning')
                 }
                 """);
     }
@@ -633,8 +638,6 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             persons.forEach(this::persist);
-            relations.forEach((id, rel) -> this.persist(id, rel.getAnchor()));
-            relations.forEach((id, rel) -> this.persist(id, rel.getHolder()));
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -993,7 +996,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
 
                     final var partnerPerson = partner.getPartnerRel().getHolder();
                     if (containsPartnerRel(rec)) {
-                        addPerson(partnerPerson, rec);
+                        partner.getPartnerRel().setHolder(addPerson(partnerPerson, rec));
                     }
 
                     HsOfficePersonRealEntity contactPerson = partnerPerson;
@@ -1044,8 +1047,16 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                     verifyContainsOnlyKnownRoles(rec.getString("roles"));
                 });
 
+        distinctAnchorAndHolderPersons();
         assertNoMissingContractualRelations();
         useHostsharingAsPartnerAnchor();
+    }
+
+    private void distinctAnchorAndHolderPersons() {
+        relations.values().forEach(rel -> {
+            rel.setAnchor(distinctPerson(rel.getAnchor()));
+            rel.setHolder(distinctPerson(rel.getHolder()));
+        });
     }
 
     private static void assertNoMissingContractualRelations() {
@@ -1107,13 +1118,34 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         person.setTradeName(contactRecord.getString("firma"));
         person.setPersonType(determinePersonType(contactRecord));
 
-        persons.put(contactRecord.getInteger("contact_id"), person);
+        persons.put(contactRecord.getInteger("contact_id"), distinctPerson(person));
         return person;
+    }
+
+    // Makes sure, that for identical person-data always the same HsOfficePersonRealEntity is used.
+    // Such can come from multiple legacy contacts with different contact data for the same person in different confexts.
+    private HsOfficePersonRealEntity distinctPerson(final HsOfficePersonRealEntity person) {
+        if (person == null) {
+            return null;
+        }
+
+        final var personKey = (
+                person.getPersonType() + "|" +
+                person.getSalutation() + "|" +
+                person.getTradeName() + "|" +
+                person.getTitle() + "|" +
+                person.getGivenName() + "|" +
+                person.getFamilyName()
+        ).toLowerCase();
+
+        if ( !distinctPersons.containsKey(personKey) ) {
+            distinctPersons.put(personKey, person);
+        }
+        return distinctPersons.get(personKey);
     }
 
     private static HsOfficePersonType determinePersonType(final Record contactRecord) {
         String roles = contactRecord.getString("roles");
-        String country = contactRecord.getString("country");
         String familyName = contactRecord.getString("last_name");
         String givenName = contactRecord.getString("first_name");
         String tradeName = contactRecord.getString("firma");
