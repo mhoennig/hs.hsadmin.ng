@@ -88,9 +88,9 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
             (
                 SELECT DISTINCT partner.uuid
                 FROM hs_office.partner_rv partner
-                JOIN hs_office.relation_rv dRel
+                JOIN hs_office.relation dRel
                     ON dRel.uuid = debitorreluuid AND dRel.type = 'DEBITOR'
-                JOIN hs_office.relation_rv pRel
+                JOIN hs_office.relation pRel
                     ON pRel.uuid = partner.partnerRelUuid AND pRel.type = 'PARTNER'
                 WHERE pRel.holderUuid = dRel.anchorUuid
             )

@@ -100,8 +100,8 @@ do language plpgsql $$
         call hs_office.relation_create_test_data('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
 
         call hs_office.relation_create_test_data('Fourth eG', 'PARTNER', 'Hostsharing eG', 'fourth contact');
-        call hs_office.relation_create_test_data('Fouler', 'REPRESENTATIVE', 'Third OHG', 'third contact');
-        call hs_office.relation_create_test_data('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
+        call hs_office.relation_create_test_data('Fouler', 'REPRESENTATIVE', 'Fourth eG', 'fourth contact');
+        call hs_office.relation_create_test_data('Fourth eG', 'DEBITOR', 'Fourth eG', 'fourth contact');
 
         call hs_office.relation_create_test_data('Smith', 'PARTNER', 'Hostsharing eG', 'sixth contact');
         call hs_office.relation_create_test_data('Smith', 'DEBITOR', 'Smith', 'third contact');

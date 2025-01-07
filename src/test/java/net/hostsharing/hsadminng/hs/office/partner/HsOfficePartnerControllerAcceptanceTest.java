@@ -94,7 +94,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
-            final var givenPerson = personRealRepo.findPersonByOptionalNameLike("Third").stream().findFirst().orElseThrow();
+            final var givenPerson = personRealRepo.findPersonByOptionalNameLike("Winkler").stream().findFirst().orElseThrow();
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").stream().findFirst().orElseThrow();
 
             final var location = RestAssured // @formatter:off
@@ -129,7 +129,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "partnerNumber": "P-20002",
                             "partnerRel": {
                                 "anchor": { "tradeName": "Hostsharing eG" },
-                                "holder": { "tradeName": "Third OHG" },
+                                "holder": { "familyName": "Winkler" },
                                 "type": "PARTNER",
                                 "mark": null,
                                 "contact": { "caption": "fourth contact" }
@@ -315,7 +315,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20011);
-            final var givenPartnerRel = givenSomeTemporaryPartnerRel("Third OHG", "third contact");
+            final var givenPartnerRel = givenSomeTemporaryPartnerRel("Winkler", "third contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -345,7 +345,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         "partnerNumber": "P-20011",
                         "partnerRel": {
                             "anchor": { "tradeName": "Hostsharing eG" },
-                            "holder": { "tradeName": "Third OHG" },
+                            "holder": { "familyName": "Winkler" },
                             "type": "PARTNER",
                             "contact": { "caption": "third contact" }
                         },
@@ -366,7 +366,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(partner -> {
                         assertThat(partner.getPartnerNumber()).isEqualTo(givenPartner.getPartnerNumber());
-                        assertThat(partner.getPartnerRel().getHolder().getTradeName()).isEqualTo("Third OHG");
+                        assertThat(partner.getPartnerRel().getHolder().getFamilyName()).isEqualTo("Winkler");
                         assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("third contact");
                         assertThat(partner.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Aurich");
                         assertThat(partner.getDetails().getRegistrationNumber()).isEqualTo("222222");
@@ -382,7 +382,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20011);
-            final var givenPartnerRel = givenSomeTemporaryPartnerRel("Third OHG", "third contact");
+            final var givenPartnerRel = givenSomeTemporaryPartnerRel("Winkler", "third contact");
 
             RestAssured // @formatter:off
                     .given()
@@ -404,7 +404,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             context.define("superuser-alex@hostsharing.net");
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(partner -> {
-                        assertThat(partner.getPartnerRel().getHolder().getTradeName()).isEqualTo("Third OHG");
+                        assertThat(partner.getPartnerRel().getHolder().getFamilyName()).isEqualTo("Winkler");
                         assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("third contact");
                         return true;
                     });

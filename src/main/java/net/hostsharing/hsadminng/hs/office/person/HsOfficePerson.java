@@ -9,6 +9,7 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
+import net.hostsharing.hsadminng.rbac.role.WithRoleId;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +31,7 @@ import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 @SuperBuilder(toBuilder = true)
 @FieldNameConstants
 @DisplayAs("Person")
-public class HsOfficePerson<T extends HsOfficePerson<?> & BaseEntity<?>> implements BaseEntity<T>, Stringifyable {
+public class HsOfficePerson<T extends HsOfficePerson<?> & BaseEntity<?>> implements BaseEntity<T>, Stringifyable, WithRoleId {
 
     private static Stringify<HsOfficePerson> toString = stringify(HsOfficePerson.class, "person")
             .withProp(Fields.personType, HsOfficePerson::getPersonType)

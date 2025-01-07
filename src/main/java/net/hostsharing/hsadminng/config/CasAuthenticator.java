@@ -45,12 +45,12 @@ public class CasAuthenticator implements Authenticator {
     private String casValidation(final HttpServletRequest httpRequest)
             throws SAXException, IOException, ParserConfigurationException {
 
-        System.err.println("CasAuthenticator.casValidation using CAS-server: " + casServerUrl);
-
         final var ticket = httpRequest.getHeader("Authorization");
         final var url = casServerUrl + "/p3/serviceValidate" +
                 "?service=" + serviceUrl +
                 "&ticket=" + ticket;
+
+        System.err.println("CasAuthenticator.casValidation using URL: " + url);
 
         final var response = restTemplate.getForObject(url, String.class);
 

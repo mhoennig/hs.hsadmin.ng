@@ -29,8 +29,24 @@ create table if not exists hs_office.relation
 );
 --//
 
--- TODO.impl: unique constraint, to prevent using the same person multiple times as a partner, or better:
---          ( anchorUuid,  holderUuid, type)
+
+-- ============================================================================
+--changeset michael.hoennig:hs-office-relation-unique-constraints endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+CREATE UNIQUE INDEX unique_relation_with_mark
+    ON hs_office.relation (type, anchorUuid, holderUuid, contactUuid, mark)
+    WHERE mark IS NOT NULL;
+
+CREATE UNIQUE INDEX unique_relation_without_mark
+    ON hs_office.relation (type, anchorUuid, holderUuid, contactUuid)
+    WHERE mark IS NULL;
+
+CREATE UNIQUE INDEX unique_partner_relation
+    ON hs_office.relation (type, anchorUuid, holderUuid)
+    WHERE mark IS NULL AND type = 'PARTNER';
+
+--//
 
 
 -- ============================================================================

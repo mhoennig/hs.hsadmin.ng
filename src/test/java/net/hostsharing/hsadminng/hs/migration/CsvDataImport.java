@@ -170,19 +170,18 @@ public class CsvDataImport extends ContextBasedTest {
     }
 
     public <T extends BaseEntity> T persistViaEM(final Integer id, final T entity) {
-        //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
-        if (!em.contains(entity)) {
-            em.persist(entity);
+        if (em.contains(entity)) {
+            return entity;
         }
-        // uncomment for debugging purposes
-        // try {
-        //     em.flush(); // makes it slow, but produces better error messages
-        //     System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
-        //     return entity;
-        // } catch (final Exception exc) {
-        //     throw exc; // for breakpoints
-        // }
-        return entity;
+        try {
+            em.persist(entity);
+            em.flush(); // makes it a bit slower, but produces better error messages
+            System.out.println("persisted #" + id + " as " + entity.getUuid());
+            return entity;
+        } catch (final Exception exc) {
+            System.err.println("persist failed for #" + id + " as " + entity);
+            throw exc; // for breakpoints
+        }
     }
 
     @SneakyThrows

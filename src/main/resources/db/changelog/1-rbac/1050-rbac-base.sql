@@ -251,7 +251,7 @@ begin
         execute sql into uuid;
     exception
         when others then
-            raise exception 'function %_uuid_by_id_name(''%'') failed: %, SQLSTATE: %. If it could not be found, add identity view support to %\nSQL:%',
+            raise exception 'function %_uuid_by_id_name(''%'') failed: %, SQLSTATE: %. If the function itself could not be found, add identity view support to %\nSQL:%',
                 objectTable, objectIdName, SQLERRM, SQLSTATE, objectTable, sql;
     end;
     if uuid is null then
@@ -275,7 +275,7 @@ begin
         execute sql into idName;
     exception
         when others then
-            raise exception 'function %_id_name_by_uuid(''%'') failed: %, SQLSTATE: %. If it could not be found, add identity view support to %',
+            raise exception 'function %_id_name_by_uuid(''%'') failed: %, SQLSTATE: %. If the function itself could not be found, add identity view support to %',
                 objectTable, objectUuid, SQLERRM, SQLSTATE, objectTable;
     end;
     return idName;

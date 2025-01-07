@@ -13,10 +13,16 @@ if [ "$1" == "--trace" ]; then
   }
   function doCurl() {
     set -x
-    curl --fail-with-body \
-        --header "Authorization: $HSADMINNG_CAS_TICKET" \
-        --header "assumed-roles: $HSADMINNG_CAS_ASSUME" \
-        "$@"
+    if [ -z "$HSADMINNG_CAS_ASSUME" ]; then
+      curl --fail-with-body \
+           --header "Authorization: $HSADMINNG_CAS_TICKET" \
+           "$@"
+    else
+      curl --fail-with-body \
+           --header "Authorization: $HSADMINNG_CAS_TICKET" \
+           --header "assumed-roles: $HSADMINNG_CAS_ASSUME" \
+           "$@"
+    fi
     set +x
   }
   shift

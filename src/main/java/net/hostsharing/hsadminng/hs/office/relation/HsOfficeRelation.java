@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
+import net.hostsharing.hsadminng.rbac.role.WithRoleId;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 
@@ -22,7 +23,7 @@ import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 @Setter
 @SuperBuilder(toBuilder = true)
 @FieldNameConstants
-public class HsOfficeRelation implements BaseEntity<HsOfficeRelation>, Stringifyable {
+public class HsOfficeRelation implements BaseEntity<HsOfficeRelation>, Stringifyable, WithRoleId {
 
     private static Stringify<HsOfficeRelation> toString = stringify(HsOfficeRelation.class, "rel")
             .withProp(Fields.anchor, HsOfficeRelation::getAnchor)

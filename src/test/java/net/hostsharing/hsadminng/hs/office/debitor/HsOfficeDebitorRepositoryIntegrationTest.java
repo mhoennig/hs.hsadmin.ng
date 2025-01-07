@@ -33,6 +33,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.hostsharing.hsadminng.rbac.role.RbacRoleType.ADMIN;
 import static net.hostsharing.hsadminng.rbac.test.EntityList.one;
 import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
@@ -85,7 +86,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var count = debitorRepo.count();
             final var givenPartner = partnerRepo.findPartnerByPartnerNumber(10001).orElseThrow();
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
-            final var givenContact = one(contactRealRepo.findContactByOptionalCaptionLike("first contact"));
+            final var givenContact = one(contactRealRepo.findContactByOptionalCaptionLike("eleventh contact"));
 
             // when
             final var result = attempt(em, () -> {
@@ -119,7 +120,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // given
             context("superuser-alex@hostsharing.net");
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
-            final var givenContact = one(contactRealRepo.findContactByOptionalCaptionLike("first contact"));
+            final var givenContact = one(contactRealRepo.findContactByOptionalCaptionLike("eleventh contact"));
 
             // when
             final var result = attempt(em, () -> {
@@ -335,10 +336,11 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // given
             context("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth", "fif");
+            final var originalDebitorRel = givenDebitor.getDebitorRel();
 
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
+                    givenDebitor.getDebitorRel().roleId(ADMIN), true);
             final var givenNewPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First"));
             final var givenNewBillingPerson = one(personRepo.findPersonByOptionalNameLike("Firby"));
             final var givenNewContact = one(contactRealRepo.findContactByOptionalCaptionLike("sixth contact"));
@@ -371,10 +373,10 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // ... partner role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
+                    originalDebitorRel.roleId(ADMIN));
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office.relation#FirstGmbH-with-DEBITOR-FirbySusan:AGENT", true);
+                    result.returnedValue().getDebitorRel().roleId(ADMIN), true);
 
             // ... contact role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
@@ -397,10 +399,10 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         public void globalAdmin_canUpdateNullRefundBankAccountToNotNullBankAccountForArbitraryDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", null, "fig");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "tenth contact", null, "fig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
+                    givenDebitor.getDebitorRel().roleId(ADMIN), true);
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
             final var givenNewBankAccount = one(bankAccountRepo.findByOptionalHolderLike("first"));
 
@@ -564,7 +566,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
+                context("superuser-alex@hostsharing.net", givenDebitor.getDebitorRel().roleId(ADMIN));
                 assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent();
 
                 debitorRepo.deleteByUuid(givenDebitor.getUuid());

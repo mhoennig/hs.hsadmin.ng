@@ -31,6 +31,7 @@ import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGr
 import static net.hostsharing.hsadminng.rbac.role.RawRbacObjectEntity.objectDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.mapper.Array.from;
+import static net.hostsharing.hsadminng.rbac.role.RbacRoleType.ADMIN;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,7 +77,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // given
             context("superuser-alex@hostsharing.net");
             final var count = partnerRepo.count();
-            final var partnerRel = givenSomeTemporaryHostsharingPartnerRel("First GmbH", "first contact");
+            final var partnerRel = givenSomeTemporaryHostsharingPartnerRel("Winkler", "first contact");
 
             // when
             final var result = attempt(em, () -> {
@@ -269,7 +270,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                givenPartner.setPartnerRel(givenSomeTemporaryHostsharingPartnerRel("Third OHG", "sixth contact"));
+                givenPartner.setPartnerRel(givenSomeTemporaryHostsharingPartnerRel("Winkler", "sixth contact"));
                 return partnerRepo.save(givenPartner);
             });
 
@@ -281,7 +282,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                     "rbac.global#global:ADMIN");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office.person#ThirdOHG:ADMIN");
+                    givenPartner.getPartnerRel().getHolder().roleId(ADMIN));
             assertThatPartnerIsNotVisibleForUserWithRole(
                     givenPartner,
                     "hs_office.person#ErbenBesslerMelBessler:ADMIN");

@@ -616,7 +616,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("tenth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -644,7 +644,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                     "holder": { "tradeName": "Fourth eG" },
                                     "type": "DEBITOR",
                                     "mark": null,
-                                    "contact": { "caption": "fourth contact" }
+                                    "contact": { "caption": "tenth contact" }
                                 },
                                 "debitorNumber": "D-10004${debitorNumberSuffix}",
                                 "debitorNumberSuffix": "${debitorNumberSuffix}",
@@ -685,7 +685,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .matches(debitor -> {
                             assertThat(debitor.getDebitorRel().getHolder().getTradeName())
                                     .isEqualTo(givenDebitor.getDebitorRel().getHolder().getTradeName());
-                            assertThat(debitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
+                            assertThat(debitor.getDebitorRel().getContact().getCaption()).isEqualTo("tenth contact");
                             assertThat(debitor.getVatId()).isEqualTo("VAT222222");
                             assertThat(debitor.getVatCountryCode()).isEqualTo("AA");
                             assertThat(debitor.isVatBusiness()).isEqualTo(true);
@@ -704,7 +704,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
             RestAssured // @formatter:off
                     .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office.contact#fourthcontact:ADMIN")
+                    .header("assumed-roles", "hs_office.contact#tenthcontact:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -747,11 +747,11 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void contactAdminUser_canNotDeleteRelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
+            assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("tenth contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "contact-admin@fourthcontact.example.com")
+                    .header("current-subject", "contact-admin@tenthcontact.example.com")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
@@ -766,7 +766,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void normalUser_canNotDeleteUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
+            assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("tenth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -786,7 +786,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0).load();
-            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("tenth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
                     .debitorNumberSuffix(nextDebitorSuffix())
                     .billable(true)
