@@ -9,8 +9,12 @@
     </suppress>
     <suppress>
         <notes><![CDATA[
-           Malicious HTTP redirect in JAXB on a REST-endpoint is not that dangerous.
+          file name: logback-core-1.5.12.jar
+          A successful attack requires the user to have write access to a configuration file or environment vars.
         ]]></notes>
-        <cve>CVE-2024-9329</cve>
+        <packageUrl regex="true">^pkg:maven/ch\.qos\.logback/logback-core@.*$</packageUrl>
+        <cpe>cpe:/a:qos:logback</cpe>
+        <cve>CVE-2024-12798</cve>
     </suppress>
+
 </suppressions>

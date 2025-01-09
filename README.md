@@ -109,7 +109,7 @@ Also try for example 'admin@xxx.example.com' or 'unknown@example.org'.
 
 If you want a formatted JSON output, you can pipe the result to `jq` or similar.
 
-And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html.
+And to see the full, currently implemented, API, open http://localhost:8081/actuator/swagger-ui/index.html (uses management-port and thus bypasses authentication).
 
 If you still need to install some of these tools, find some hints in the next chapters. 
 

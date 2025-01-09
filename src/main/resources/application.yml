@@ -9,7 +9,7 @@ management:
         web:
             exposure:
                 # HOWTO: view _clickable_ Spring Actuator (Micrometer) Metrics endpoints: http://localhost:8081/actuator/metric-links
-                include: info, health, metrics, metric-links
+                include: info, health, metrics, metric-links, mappings, openapi, swaggerui
     observations:
         annotations:
             enabled: true
@@ -29,6 +29,10 @@ spring:
         properties:
             hibernate:
                 dialect: net.hostsharing.hsadminng.config.PostgresCustomDialect
+
+# keep this in sync with test/.../application.yml
+springdoc:
+    use-management-port: true
 
 liquibase:
     contexts: dev
