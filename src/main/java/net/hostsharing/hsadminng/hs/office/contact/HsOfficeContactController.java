@@ -131,6 +131,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @SuppressWarnings("unchecked")
     final BiConsumer<HsOfficeContactInsertResource, HsOfficeContactRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+        entity.putPostalAddress(from(resource.getPostalAddress()));
         entity.putEmailAddresses(from(resource.getEmailAddresses()));
         entity.putPhoneNumbers(from(resource.getPhoneNumbers()));
     };
