@@ -43,7 +43,10 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call base.defineContext('creating coopSharesTransaction test-data');
+        call base.defineContext('creating coopSharesTransaction test-data',
+                                null,
+                                'superuser-alex@hostsharing.net',
+                                'rbac.global#global:ADMIN');
         SET CONSTRAINTS ALL DEFERRED;
 
         call hs_office.coopsharetx_create_test_data(10001, '01');

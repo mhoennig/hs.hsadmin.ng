@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
@@ -22,7 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +48,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
     HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
-    HsOfficePartnerRepository partnerRepo;
+    HsOfficePartnerRealRepository partnerRepo;
 
     @Autowired
     HsOfficeContactRealRepository contactRealRepo;
@@ -74,7 +74,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
     @Autowired
     RbacGrantsDiagramService mermaidService;
 
-    @MockBean
+    @MockitoBean
     HttpServletRequest request;
     @Nested
     class CreateDebitor {

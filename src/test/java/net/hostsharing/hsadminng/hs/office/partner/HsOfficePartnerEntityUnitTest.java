@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficePartnerEntityUnitTest {
 
-    private final HsOfficePartnerEntity givenPartner = HsOfficePartnerEntity.builder()
+    private final HsOfficePartnerRbacEntity givenPartner = HsOfficePartnerRbacEntity.builder()
             .partnerNumber(12345)
             .partnerRel(HsOfficeRelationRealEntity.builder()
                     .anchor(HsOfficePersonRealEntity.builder()
@@ -42,7 +42,7 @@ class HsOfficePartnerEntityUnitTest {
 
     @Test
     void definesRbac() {
-        final var rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficePartnerEntity.rbac()).toString();
+        final var rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficePartnerRbacEntity.rbac()).toString();
         assertThat(rbacFlowchart).isEqualTo("""
                 %%{init:{'flowchart':{'htmlLabels':false}}}%%
                 flowchart TB

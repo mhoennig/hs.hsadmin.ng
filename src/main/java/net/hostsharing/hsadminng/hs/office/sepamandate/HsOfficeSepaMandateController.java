@@ -2,11 +2,14 @@ package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
+import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeSepaMandatesApi;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandatePatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateResource;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -29,7 +33,13 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
+
+    @Autowired
+    private HsOfficeDebitorRepository debitorRepo;
+
+    @Autowired
+    private HsOfficeBankAccountRepository bankAccountRepo;
 
     @Autowired
     private HsOfficeSepaMandateRepository sepaMandateRepo;
@@ -137,10 +147,22 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
+        resource.setDebitor(mapper.map(entity.getDebitor(), HsOfficeDebitorResource.class));
         resource.getDebitor().setDebitorNumber(entity.getDebitor().getTaggedDebitorNumber());
+        resource.getDebitor().getPartner().setPartnerNumber(entity.getDebitor().getPartner().getTaggedPartnerNumber());
     };
 
     final BiConsumer<HsOfficeSepaMandateInsertResource, HsOfficeSepaMandateEntity> SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.setValidity(toPostgresDateRange(resource.getValidFrom(), resource.getValidTo()));
+        entity.setDebitor(debitorRepo.findByUuid(resource.getDebitorUuid()).orElseThrow( () ->
+                new ValidationException(
+                        "debitor.uuid='" + resource.getDebitorUuid() + "' not found or not accessible"
+                )
+        ));
+        entity.setBankAccount(bankAccountRepo.findByUuid(resource.getBankAccountUuid()).orElseThrow( () ->
+                new ValidationException(
+                        "bankAccount.uuid='" + resource.getBankAccountUuid() + "' not found or not accessible"
+                )
+        ));
     };
 }

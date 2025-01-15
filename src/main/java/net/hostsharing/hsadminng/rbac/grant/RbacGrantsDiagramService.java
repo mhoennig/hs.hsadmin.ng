@@ -30,7 +30,7 @@ public class RbacGrantsDiagramService {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             writer.write("""
                     ### all grants to %s
-
+                    
                     ```mermaid
                     %s
                     ```
@@ -49,8 +49,18 @@ public class RbacGrantsDiagramService {
         NON_TEST_ENTITIES;
 
         public static final EnumSet<Include> ALL = EnumSet.allOf(Include.class);
-        public static final EnumSet<Include> ALL_TEST_ENTITY_RELATED = EnumSet.of(USERS, DETAILS, NOT_ASSUMED, TEST_ENTITIES, PERMISSIONS);
-        public static final EnumSet<Include> ALL_NON_TEST_ENTITY_RELATED = EnumSet.of(USERS, DETAILS, NOT_ASSUMED, NON_TEST_ENTITIES, PERMISSIONS);
+        public static final EnumSet<Include> ALL_TEST_ENTITY_RELATED = EnumSet.of(
+                USERS,
+                DETAILS,
+                NOT_ASSUMED,
+                TEST_ENTITIES,
+                PERMISSIONS);
+        public static final EnumSet<Include> ALL_NON_TEST_ENTITY_RELATED = EnumSet.of(
+                USERS,
+                DETAILS,
+                NOT_ASSUMED,
+                NON_TEST_ENTITIES,
+                PERMISSIONS);
     }
 
     @Autowired
@@ -66,9 +76,9 @@ public class RbacGrantsDiagramService {
 
     public String allGrantsTocurrentSubject(final EnumSet<Include> includes) {
         final var graph = new LimitedHashSet<RawRbacGrantEntity>();
-        for ( UUID subjectUuid: context.fetchCurrentSubjectOrAssumedRolesUuids() ) {
+        for (UUID subjectUuid : context.fetchCurrentSubjectOrAssumedRolesUuids()) {
             traverseGrantsTo(graph, subjectUuid, includes);
-            }
+        }
         return toMermaidFlowchart(graph, includes);
     }
 
@@ -78,7 +88,7 @@ public class RbacGrantsDiagramService {
             if (!includes.contains(PERMISSIONS) && g.getDescendantIdName().startsWith("perm:")) {
                 return;
             }
-            if ( !g.getDescendantIdName().startsWith("role:rbac.global")) {
+            if (!g.getDescendantIdName().startsWith("role:rbac.global")) {
                 if (!includes.contains(TEST_ENTITIES) && g.getDescendantIdName().contains(":rbactest.")) {
                     return;
                 }
@@ -94,12 +104,17 @@ public class RbacGrantsDiagramService {
     }
 
     public String allGrantsFrom(final UUID targetObject, final String op, final EnumSet<Include> includes) {
-        final var refUuid = (UUID) em.createNativeQuery("SELECT uuid FROM rbac.permission WHERE objectuuid=:targetObject AND op=:op")
+        final var graph = new LimitedHashSet<RawRbacGrantEntity>();
+
+        @SuppressWarnings("unchecked") // List -> List<List<UUID>>
+        final var refUuidLists = (List<List<UUID>>) em.createNativeQuery(
+                        "select uuid from rbac.permission where objectUuid=:targetObject and op=:op",
+                        List.class)
                 .setParameter("targetObject", targetObject)
                 .setParameter("op", op)
-                .getSingleResult();
-        final var graph = new LimitedHashSet<RawRbacGrantEntity>();
-        traverseGrantsFrom(graph, refUuid, includes);
+                .getResultList();
+        refUuidLists.stream().flatMap(Collection::stream)
+                .forEach(refUuid -> traverseGrantsFrom(graph, refUuid, includes));
         return toMermaidFlowchart(graph, includes);
     }
 
@@ -125,20 +140,20 @@ public class RbacGrantsDiagramService {
         final var entities =
                 includes.contains(DETAILS)
                 ? graph.stream()
-                    .flatMap(g -> Stream.of(
-                            new Node(g.getAscendantIdName(), g.getAscendingUuid()),
-                            new Node(g.getDescendantIdName(), g.getDescendantUuid()))
-                    )
-                    .collect(groupingBy(RbacGrantsDiagramService::renderEntityIdName))
-                    .entrySet().stream()
-                    .map(entity -> "subgraph " + cleanId(entity.getKey()) + renderSubgraph(entity.getKey()) + "\n\n    "
-                            + entity.getValue().stream()
-                            .map(n -> renderNode(n.idName(), n.uuid()).replace("\n", "\n    "))
-                            .sorted()
-                            .distinct()
-                            .collect(joining("\n\n    ")))
-                    .collect(joining("\n\nend\n\n"))
-                        + "\n\nend\n\n"
+                .flatMap(g -> Stream.of(
+                        new Node(g.getAscendantIdName(), g.getAscendingUuid()),
+                        new Node(g.getDescendantIdName(), g.getDescendantUuid()))
+                )
+                .collect(groupingBy(RbacGrantsDiagramService::renderEntityIdName))
+                .entrySet().stream()
+                .map(entity -> "subgraph " + cleanId(entity.getKey()) + renderSubgraph(entity.getKey()) + "\n\n    "
+                        + entity.getValue().stream()
+                        .map(n -> renderNode(n.idName(), n.uuid()).replace("\n", "\n    "))
+                        .sorted()
+                        .distinct()
+                        .collect(joining("\n\n    ")))
+                .collect(joining("\n\nend\n\n"))
+                + "\n\nend\n\n"
                 : "";
 
         final var grants = graph.stream()
@@ -193,7 +208,7 @@ public class RbacGrantsDiagramService {
         final var refType = refType(idName);
 
         if (refType.equals("user")) {
-            final var displayName = idName.substring(refType.length()+1);
+            final var displayName = idName.substring(refType.length() + 1);
             return "(" + displayName + "\nref:" + uuid + ")";
         }
         if (refType.equals("role")) {
@@ -215,15 +230,20 @@ public class RbacGrantsDiagramService {
     @NotNull
     private static String cleanId(final String idName) {
         return idName.replaceAll("@.*", "")
-                .replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace(",", "").replace(">", ":").replace("|", "_");
+                .replace("[", "")
+                .replace("]", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace(",", "")
+                .replace(">", ":")
+                .replace("|", "_");
     }
-
 
     static class LimitedHashSet<T> extends HashSet<T> {
 
         @Override
         public boolean add(final T t) {
-            if (size() < GRANT_LIMIT ) {
+            if (size() < GRANT_LIMIT) {
                 return super.add(t);
             } else {
                 return false;

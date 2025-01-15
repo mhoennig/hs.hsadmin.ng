@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.TestWatcher;
 import org.opentest4j.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -76,7 +76,7 @@ public class CsvDataImport extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @MockBean
+    @MockitoBean
     HttpServletRequest request;
 
     static final LinkedHashSet<String> errors = new LinkedHashSet<>();

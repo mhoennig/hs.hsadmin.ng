@@ -8,7 +8,7 @@ import net.hostsharing.hsadminng.hs.booking.item.BookingItemCreatedEventEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.lambda.Reducer;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapperFake;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +42,7 @@ class HsBookingItemCreatedListenerUnitTest {
     private ObjectMapper jsonMapper = new JsonObjectMapperConfiguration().customObjectMapper().build();
 
     @Spy
-    private StandardMapper standardMapper = new StandardMapper(emw);
+    private StrictMapper StrictMapper = new StrictMapper(emw);
 
     @InjectMocks
     private HsBookingItemCreatedListener listener;

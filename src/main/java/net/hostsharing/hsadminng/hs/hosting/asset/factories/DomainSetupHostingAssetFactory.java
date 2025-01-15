@@ -9,7 +9,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.lambda.Reducer;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.mapper.ToStringConverter;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 
@@ -31,8 +31,8 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
             final EntityManagerWrapper emw,
             final HsBookingItemRealEntity newBookingItemRealEntity,
             final HsHostingAssetAutoInsertResource asset,
-            final StandardMapper standardMapper) {
-        super(emw, newBookingItemRealEntity, asset, standardMapper);
+            final StrictMapper StrictMapper) {
+        super(emw, newBookingItemRealEntity, asset, StrictMapper);
     }
 
     @Override

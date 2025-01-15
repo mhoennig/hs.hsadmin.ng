@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.test;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayAs;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +27,7 @@ class MapperUnitTest {
     EntityManagerWrapper em;
 
     @InjectMocks
-    StandardMapper mapper;
+    StrictMapper mapper;
 
     final UUID GIVEN_UUID = UUID.randomUUID();
 

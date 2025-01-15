@@ -4,7 +4,7 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 
 import java.time.LocalDate;
 
-import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
+import static net.hostsharing.hsadminng.hs.office.partner.HsOfficeTestRealPartner.TEST_PARTNER;
 
 public class TestHsMembership {
 

@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.role;
 
 import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacRolesApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ public class RbacRoleController implements RbacRolesApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
     private RbacRoleRepository rbacRoleRepository;

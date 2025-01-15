@@ -90,6 +90,7 @@ components:
                     type: boolean
                 vatReverseCharge:
                     type: boolean
+                # TODO.feat: alternatively the complete refundBankAccount
                 refundBankAccount.uuid:
                     type: string
                     format: uuid

@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
 import io.micrometer.core.annotation.Timed;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePersonsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonInsertResource;
@@ -24,7 +24,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
     private HsOfficePersonRbacRepository personRepo;

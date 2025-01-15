@@ -643,7 +643,6 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             final var givenProject = realProjectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
             final var newBookingItem = HsBookingItemRealEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .project(givenProject)
                     .type(hsBookingItemType)
                     .caption("some test-booking")

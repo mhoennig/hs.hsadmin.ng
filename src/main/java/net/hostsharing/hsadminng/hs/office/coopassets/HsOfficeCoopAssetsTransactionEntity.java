@@ -1,4 +1,3 @@
-
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import lombok.AllArgsConstructor;
@@ -10,11 +9,22 @@ import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
-import org.hibernate.annotations.GenericGenerator;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -57,8 +67,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
             .quotedValues(false);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @Version
@@ -122,13 +131,13 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
         return this;
     }
 
-    public String getTaggedMemberNumber() {
-        return ofNullable(membership).map(HsOfficeMembershipEntity::toShortString).orElse("M-???????");
-    }
-
     @Override
     public String toString() {
         return stringify.apply(this);
+    }
+
+    public String getTaggedMemberNumber() {
+        return ofNullable(membership).map(HsOfficeMembershipEntity::toShortString).orElse("M-???????");
     }
 
     @Override
@@ -141,7 +150,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
 
     public static RbacSpec rbac() {
         return rbacViewFor("coopAssetsTransaction", HsOfficeCoopAssetsTransactionEntity.class)
-                .withIdentityView(RbacSpec.SQL.projection("reference"))
+                .withIdentityView(SQL.projection("reference"))
                 .withUpdatableColumns("comment")
                 .importEntityAlias("membership", HsOfficeMembershipEntity.class, usingDefaultCase(),
                         dependsOnColumn("membershipUuid"),

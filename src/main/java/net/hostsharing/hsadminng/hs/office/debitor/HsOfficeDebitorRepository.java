@@ -19,7 +19,7 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
 
     @Query("""
             SELECT debitor FROM HsOfficeDebitorEntity debitor
-            JOIN HsOfficePartnerEntity partner
+            JOIN HsOfficePartnerRealEntity partner
                     ON partner.partnerRel.holder = debitor.debitorRel.anchor
                         AND partner.partnerRel.type = 'PARTNER' AND debitor.debitorRel.type = 'DEBITOR'
                 WHERE partner.partnerNumber = :partnerNumber
@@ -42,7 +42,7 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
 
     @Query("""
             SELECT debitor FROM HsOfficeDebitorEntity debitor
-                JOIN HsOfficePartnerEntity partner
+                JOIN HsOfficePartnerRealEntity partner
                     ON partner.partnerRel.holder = debitor.debitorRel.anchor
                         AND partner.partnerRel.type = 'PARTNER' AND debitor.debitorRel.type = 'DEBITOR'
                 JOIN HsOfficePersonRealEntity person

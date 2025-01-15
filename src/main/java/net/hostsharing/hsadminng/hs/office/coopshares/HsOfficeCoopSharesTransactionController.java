@@ -1,14 +1,13 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
-import jakarta.persistence.EntityNotFoundException;
-
 import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopSharesApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionResource;
-import net.hostsharing.hsadminng.errors.MultiValidationException;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -25,6 +24,7 @@ import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.CANCELLATION;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.SUBSCRIPTION;
+import static net.hostsharing.hsadminng.hs.validation.UuidResolver.resolve;
 
 @RestController
 public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopSharesApi {
@@ -33,14 +33,16 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
     private HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
 
+    @Autowired
+    private HsOfficeMembershipRepository membershipRepo;
+
     @Override
     @Transactional(readOnly = true)
-
     @Timed("app.office.coopShares.api.getListOfCoopShares")
     public ResponseEntity<List<HsOfficeCoopSharesTransactionResource>> getListOfCoopShares(
             final String currentSubject,
@@ -55,7 +57,10 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
                 fromValueDate,
                 toValueDate);
 
-        final var resources = mapper.mapList(entities, HsOfficeCoopSharesTransactionResource.class);
+        final var resources = mapper.mapList(
+                entities,
+                HsOfficeCoopSharesTransactionResource.class,
+                ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
 
@@ -70,7 +75,10 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         context.define(currentSubject, assumedRoles);
         validate(requestBody);
 
-        final var entityToSave = mapper.map(requestBody, HsOfficeCoopSharesTransactionEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapper.map(
+                requestBody,
+                HsOfficeCoopSharesTransactionEntity.class,
+                RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var saved = coopSharesTransactionRepo.save(entityToSave);
 
@@ -79,7 +87,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
                         .path("/api/hs/office/coopsharestransactions/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
-        final var mapped = mapper.map(saved, HsOfficeCoopSharesTransactionResource.class);
+        final var mapped = mapper.map(saved, HsOfficeCoopSharesTransactionResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -87,15 +95,18 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     @Transactional(readOnly = true)
     @Timed("app.office.coopShares.repo.getSingleCoopShareTransactionByUuid")
     public ResponseEntity<HsOfficeCoopSharesTransactionResource> getSingleCoopShareTransactionByUuid(
-        final String currentSubject, final String assumedRoles, final UUID shareTransactionUuid) {
+            final String currentSubject, final String assumedRoles, final UUID shareTransactionUuid) {
 
-            context.define(currentSubject, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
-            final var result = coopSharesTransactionRepo.findByUuid(shareTransactionUuid);
-            if (result.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(mapper.map(result.get(), HsOfficeCoopSharesTransactionResource.class));
+        final var result = coopSharesTransactionRepo.findByUuid(shareTransactionUuid);
+        if (result.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(mapper.map(
+                result.get(),
+                HsOfficeCoopSharesTransactionResource.class,
+                ENTITY_TO_RESOURCE_POSTMAPPER));
 
     }
 
@@ -137,9 +148,16 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     }
 
     final BiConsumer<HsOfficeCoopSharesTransactionInsertResource, HsOfficeCoopSharesTransactionEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        if ( resource.getRevertedShareTxUuid() != null ) {
-            entity.setRevertedShareTx(coopSharesTransactionRepo.findByUuid(resource.getRevertedShareTxUuid())
-                .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] revertedShareTxUuid %s not found".formatted(resource.getRevertedShareTxUuid()))));
+        entity.setMembership(resolve("membership.uuid", resource.getMembershipUuid(), membershipRepo::findByUuid));
+        if (resource.getRevertedShareTxUuid() != null) {
+            entity.setRevertedShareTx(resolve(
+                    "revertedShareTx.uuid",
+                    resource.getRevertedShareTxUuid(),
+                    coopSharesTransactionRepo::findByUuid));
         }
+    };
+
+    final BiConsumer<HsOfficeCoopSharesTransactionEntity, HsOfficeCoopSharesTransactionResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        resource.setMembershipUuid(entity.getMembership().getUuid());
     };
 }

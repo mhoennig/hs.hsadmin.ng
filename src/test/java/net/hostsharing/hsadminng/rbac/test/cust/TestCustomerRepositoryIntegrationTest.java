@@ -7,13 +7,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +24,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     TestCustomerRepository testCustomerRepository;
 
-    @MockBean
+    @MockitoBean
     HttpServletRequest request;
 
     @Nested
@@ -40,7 +39,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        UUID.randomUUID(), 0, "www", 90001, "customer-admin@www.example.com");
+                        null, 0, "www", 90001, "customer-admin@www.example.com");
                 return testCustomerRepository.save(newCustomer);
             });
 
@@ -59,7 +58,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        UUID.randomUUID(), 0, "www", 90001, "customer-admin@www.example.com");
+                        null, 0, "www", 90001, "customer-admin@www.example.com");
                 return testCustomerRepository.save(newCustomer);
             });
 
@@ -78,7 +77,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        UUID.randomUUID(), 0, "www", 90001, "customer-admin@www.example.com");
+                        null, 0, "www", 90001, "customer-admin@www.example.com");
                 return testCustomerRepository.save(newCustomer);
             });
 

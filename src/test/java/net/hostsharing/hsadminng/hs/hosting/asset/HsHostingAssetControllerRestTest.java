@@ -9,7 +9,7 @@ import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.mapper.Array;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -54,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsHostingAssetController.class)
-@Import({ StandardMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class })
+@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class })
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 public class HsHostingAssetControllerRestTest {
@@ -62,27 +62,27 @@ public class HsHostingAssetControllerRestTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     Context contextMock;
 
     @Autowired
     @SuppressWarnings("unused") // not used in test, but in controller class
-    StandardMapper mapper;
+    StrictMapper mapper;
 
-    @MockBean
+    @MockitoBean
     EntityManagerWrapper em;
 
-    @MockBean
+    @MockitoBean
     EntityManagerFactory emf;
 
-    @MockBean
+    @MockitoBean
     @SuppressWarnings("unused") // bean needs to be present for HsHostingAssetController
     private HsBookingItemRealRepository realBookingItemRepo;
 
-    @MockBean
+    @MockitoBean
     private HsHostingAssetRealRepository realAssetRepo;
 
-    @MockBean
+    @MockitoBean
     private HsHostingAssetRbacRepository rbacAssetRepo;
 
     @TestConfiguration
