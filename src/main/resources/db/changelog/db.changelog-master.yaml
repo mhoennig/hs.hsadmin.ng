@@ -177,3 +177,5 @@ databaseChangeLog:
         file: db/changelog/9-hs-global/9110-integration-kimai.sql
     - include:
         file: db/changelog/9-hs-global/9120-integration-znuny.sql
+    - include:
+        file: db/changelog/9-hs-global/9130-integration-mlmmj.sql
