@@ -180,10 +180,9 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         void globalAdmin_canNotPostNewSepaMandateWhenDebitorUuidIsMissing() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("Third").get(0);
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
@@ -227,12 +226,12 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .post("http://localhost/api/hs/office/sepamandates")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("ERROR: [400] Unable to find BankAccount with uuid 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] bankAccount.uuid='00000000-0000-0000-0000-000000000000' not found or not accessible"));
             // @formatter:on
         }
 
         @Test
-        void globalAdmin_canNotPostNewSepaMandate_ifPersonDoesNotExist() {
+        void globalAdmin_canNotPostNewSepaMandate_ifDebitorDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitorUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
@@ -257,7 +256,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .post("http://localhost/api/hs/office/sepamandates")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("ERROR: [400] Unable to find Debitor with uuid 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] debitor.uuid='00000000-0000-0000-0000-000000000000' not found or not accessible"));
                 // @formatter:on
         }
     }
@@ -529,7 +528,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .orElse(givenDebitor.getPartner().getPartnerRel().getHolder().getFamilyName());
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike(bankAccountHolder).get(0);
             final var newSepaMandate = HsOfficeSepaMandateEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
                     .bankAccount(givenBankAccount)
                     .reference("temp ref CAT Z")

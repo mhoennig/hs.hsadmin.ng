@@ -42,7 +42,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     private Integer port;
 
     @Autowired
-    HsOfficePartnerRepository partnerRepo;
+    HsOfficePartnerRbacRepository partnerRepo;
 
     @Autowired
     HsOfficeRelationRealRepository relationRepo;
@@ -541,12 +541,12 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             return partnerRel;
         }).assertSuccessful().returnedValue();
     }
-    private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler(final Integer partnerNumber) {
+    private HsOfficePartnerRbacEntity givenSomeTemporaryPartnerBessler(final Integer partnerNumber) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var partnerRel = em.merge(givenSomeTemporaryPartnerRel("Erben Bessler", "fourth contact"));
 
-            final var newPartner = HsOfficePartnerEntity.builder()
+            final var newPartner = HsOfficePartnerRbacEntity.builder()
                     .partnerRel(partnerRel)
                     .partnerNumber(partnerNumber)
                     .details(HsOfficePartnerDetailsEntity.builder()
@@ -561,7 +561,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
     @AfterEach
     void cleanup() {
-        cleanupAllNew(HsOfficePartnerEntity.class);
+        cleanupAllNew(HsOfficePartnerRbacEntity.class);
 
         // TODO: should not be necessary anymore, once it's deleted via after delete trigger
         cleanupAllNew(HsOfficeRelationRealEntity.class);

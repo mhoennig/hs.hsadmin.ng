@@ -24,7 +24,7 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
         HsOfficePartnerPatchResource,
-        HsOfficePartnerEntity
+        HsOfficePartnerRbacEntity
         > {
 
     private static final UUID INITIAL_PARTNER_UUID = UUID.randomUUID();
@@ -53,8 +53,8 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficePartnerEntity newInitialEntity() {
-        final var entity = HsOfficePartnerEntity.builder()
+    protected HsOfficePartnerRbacEntity newInitialEntity() {
+        final var entity = HsOfficePartnerRbacEntity.builder()
                 .uuid(INITIAL_PARTNER_UUID)
                 .partnerNumber(12345)
                 .partnerRel(HsOfficeRelationRealEntity.builder()
@@ -72,7 +72,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficePartnerEntityPatcher createPatcher(final HsOfficePartnerEntity partner) {
+    protected HsOfficePartnerEntityPatcher createPatcher(final HsOfficePartnerRbacEntity partner) {
         return new HsOfficePartnerEntityPatcher(em, partner);
     }
 
@@ -83,7 +83,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
                         "partnerRel",
                         HsOfficePartnerPatchResource::setPartnerRelUuid,
                         PATCHED_PARTNER_ROLE_UUID,
-                        HsOfficePartnerEntity::setPartnerRel,
+                        HsOfficePartnerRbacEntity::setPartnerRel,
                         newPartnerRel(PATCHED_PARTNER_ROLE_UUID))
                         .notNullable()
         );

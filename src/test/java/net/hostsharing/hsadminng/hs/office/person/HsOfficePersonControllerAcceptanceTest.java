@@ -331,7 +331,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         return jpaAttempt.transacted(() -> {
             context.define(creatingUser);
             final var newPerson = HsOfficePersonRealEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("Temp " + Context.getCallerMethodNameFromStackFrame(2))
                     .familyName(RandomStringUtils.randomAlphabetic(10) + "@example.org")

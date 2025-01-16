@@ -2,18 +2,18 @@ package net.hostsharing.hsadminng.hs.office.membership;
 
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 
 import java.util.Optional;
 
 public class HsOfficeMembershipEntityPatcher implements EntityPatcher<HsOfficeMembershipPatchResource> {
 
-    private final StandardMapper mapper;
+    private final StrictMapper mapper;
     private final HsOfficeMembershipEntity entity;
 
     public HsOfficeMembershipEntityPatcher(
-            final StandardMapper mapper,
+            final StrictMapper mapper,
             final HsOfficeMembershipEntity entity) {
         this.mapper = mapper;
         this.entity = entity;

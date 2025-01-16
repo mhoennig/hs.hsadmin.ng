@@ -10,7 +10,7 @@ import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
@@ -84,7 +84,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
 
     static Map<Integer, HsOfficeContactRealEntity> contacts = new WriteOnceMap<>();
     static Map<Integer, HsOfficePersonRealEntity> persons = new WriteOnceMap<>();
-    static Map<Integer, HsOfficePartnerEntity> partners = new WriteOnceMap<>();
+    static Map<Integer, HsOfficePartnerRealEntity> partners = new WriteOnceMap<>();
     static Map<Integer, HsOfficeDebitorEntity> debitors = new WriteOnceMap<>();
     static Map<Integer, HsOfficeMembershipEntity> memberships = new WriteOnceMap<>();
 
@@ -743,7 +743,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                             null  // is set during contacts import depending on assigned roles
                     );
 
-                    final var partner = HsOfficePartnerEntity.builder()
+                    final var partner = HsOfficePartnerRealEntity.builder()
                             .partnerNumber(rec.getInteger("member_id"))
                             .details(HsOfficePartnerDetailsEntity.builder().build())
                             .partnerRel(partnerRel)

@@ -81,8 +81,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
     void handleJpaObjectRetrievalFailureExceptionWithDisplayName() {
         // given
         final var givenException = new JpaObjectRetrievalFailureException(
-                new EntityNotFoundException(
-                        "Unable to find net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity with id 12345-123454")
+                new EntityNotFoundException("Unable to find Entity with id 12345-123454")
         );
         final var givenWebRequest = mock(WebRequest.class);
 
@@ -91,7 +90,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] Unable to find Partner with uuid 12345-123454");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] Unable to find Entity with id 12345-123454");
     }
 
     @Test

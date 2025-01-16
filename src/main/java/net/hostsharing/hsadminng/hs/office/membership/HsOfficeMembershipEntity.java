@@ -8,11 +8,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayAs;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
+import net.hostsharing.hsadminng.rbac.role.WithRoleId;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.Type;
@@ -63,7 +64,7 @@ import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayAs("Membership")
-public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEntity>, Stringifyable {
+public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEntity>, Stringifyable, WithRoleId {
 
     public static final String MEMBER_NUMBER_TAG = "M-";
     public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
@@ -84,7 +85,7 @@ public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEn
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partneruuid")
-    private HsOfficePartnerEntity partner;
+    private HsOfficePartnerRealEntity partner;
 
     @Column(name = "membernumbersuffix", length = 2)
     @Pattern(regexp = TWO_DECIMAL_DIGITS)

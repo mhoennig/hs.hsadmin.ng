@@ -6,7 +6,7 @@ import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
@@ -28,6 +28,7 @@ import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
+import static net.hostsharing.hsadminng.rbac.role.RbacRoleType.ADMIN;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +58,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
-    HsOfficePartnerRepository partnerRepo;
+    HsOfficePartnerRbacRepository partnerRepo;
 
     @Autowired
     HsOfficeContactRealRepository contactRealRepo;
@@ -467,7 +468,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("ERROR: [400] Unable to find RealContact by debitorRel.contactUuid: 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] Unable to find debitorRel.contact.uuid: 00000000-0000-0000-0000-000000000000"));
             // @formatter:on
         }
 
@@ -495,7 +496,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("ERROR: [400] Unable to find RealRelation by debitorRelUuid: 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] Unable to find debitorRel.uuid: 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
     }
@@ -695,16 +696,16 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void theContactOwner_canNotPatchARelatedDebitor() {
+        void theContactAdmin_canNotPatchARelatedDebitor() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
 
             // @formatter:on
             RestAssured // @formatter:off
-                    .given()
+                .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office.contact#tenthcontact:ADMIN")
+                    .header("assumed-roles", givenDebitor.getDebitorRel().getContact().roleId(ADMIN) )
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -712,9 +713,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                              }
                         """)
                     .port(port)
-                    .when()
+                .when()
                     .patch("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
-                    .then().log().all().assertThat()
+                .then().log().all().assertThat()
                     .statusCode(403)
                     .body("message", containsString("ERROR: [403] Subject"))
                     .body("message", containsString("is not allowed to update hs_office.debitor uuid "));
@@ -802,7 +803,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .vatReverseCharge(false)
                     .build();
 
-            return debitorRepo.save(newDebitor).load();
+            return debitorRepo.save(newDebitor).reload(em);
         }).assertSuccessful().returnedValue();
     }
 

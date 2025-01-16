@@ -617,6 +617,11 @@ Besides the following *How Tos* you can also find several *How Tos* in the sourc
 grep -r HOWTO src
 ```
 
+also try this (assumed you've sourced .aliases):
+```sh
+howto 
+```
+
 ### How to Configure .pgpass for the Default PostgreSQL Database?
 
 To access the default database schema as used during development, add this line to your `.pgpass` file in your users home directory:

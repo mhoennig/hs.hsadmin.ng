@@ -9,7 +9,7 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.booking.item.BookingItemCreatedAppEvent;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -25,7 +25,7 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
     private ObjectMapper jsonMapper;
 
     @Autowired
-    private StandardMapper standardMapper;
+    private StrictMapper StrictMapper;
 
     @Override
     @SneakyThrows
@@ -44,9 +44,9 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
         final var asset = jsonMapper.readValue(event.getEntity().getAssetJson(), HsHostingAssetAutoInsertResource.class);
         final var factory = switch (newBookingItemRealEntity.getType()) {
             case PRIVATE_CLOUD, CLOUD_SERVER, MANAGED_SERVER ->
-                    forNowNoAutomaticHostingAssetCreationPossible(emw, newBookingItemRealEntity, asset, standardMapper);
-            case MANAGED_WEBSPACE -> new ManagedWebspaceHostingAssetFactory(emw, newBookingItemRealEntity, asset, standardMapper);
-            case DOMAIN_SETUP -> new DomainSetupHostingAssetFactory(emw, newBookingItemRealEntity, asset, standardMapper);
+                    forNowNoAutomaticHostingAssetCreationPossible(emw, newBookingItemRealEntity, asset, StrictMapper);
+            case MANAGED_WEBSPACE -> new ManagedWebspaceHostingAssetFactory(emw, newBookingItemRealEntity, asset, StrictMapper);
+            case DOMAIN_SETUP -> new DomainSetupHostingAssetFactory(emw, newBookingItemRealEntity, asset, StrictMapper);
         };
         if (factory != null) {
             final var statusMessage = factory.createAndPersist();
@@ -62,9 +62,9 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
             final EntityManagerWrapper emw,
             final HsBookingItemRealEntity fromBookingItem,
             final HsHostingAssetAutoInsertResource asset,
-            final StandardMapper standardMapper
+            final StrictMapper StrictMapper
     ) {
-        return new HostingAssetFactory(emw, fromBookingItem, asset, standardMapper) {
+        return new HostingAssetFactory(emw, fromBookingItem, asset, StrictMapper) {
 
             @Override
             protected HsHostingAsset create() {

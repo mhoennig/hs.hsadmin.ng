@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 
 import static net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealTestEntity.TEST_REAL_CONTACT;
-import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
+import static net.hostsharing.hsadminng.hs.office.partner.HsOfficeTestRealPartner.TEST_PARTNER;
 
 @UtilityClass
 public class TestHsOfficeDebitor {

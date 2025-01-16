@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.Arrays;
 
-import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
+import static net.hostsharing.hsadminng.hs.office.partner.HsOfficeTestRealPartner.TEST_PARTNER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeMembershipEntityUnitTest {
@@ -57,7 +57,7 @@ class HsOfficeMembershipEntityUnitTest {
 
     @Test
     void getMemberNumberWithoutPartnerNumberButWithSuffix() {
-        givenMembership.setPartner(HsOfficePartnerEntity.builder().build());
+        givenMembership.setPartner(HsOfficePartnerRealEntity.builder().build());
         final var result = givenMembership.getMemberNumber();
         assertThat(result).isEqualTo(null);
     }

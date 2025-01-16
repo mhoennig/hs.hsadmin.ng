@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartner;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
@@ -16,7 +17,6 @@ import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.JoinFormula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
@@ -75,7 +75,6 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
 
     @Id
     @GeneratedValue
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID uuid;
 
     @Version
@@ -87,16 +86,16 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
         value = """
             (
                 SELECT DISTINCT partner.uuid
-                FROM hs_office.partner_rv partner
+                FROM hs_office.partner partner
                 JOIN hs_office.relation dRel
-                    ON dRel.uuid = debitorreluuid AND dRel.type = 'DEBITOR'
+                    ON dRel.uuid = debitorRelUuid AND dRel.type = 'DEBITOR'
                 JOIN hs_office.relation pRel
                     ON pRel.uuid = partner.partnerRelUuid AND pRel.type = 'PARTNER'
                 WHERE pRel.holderUuid = dRel.anchorUuid
             )
             """)
-    @NotFound(action = NotFoundAction.IGNORE) // TODO.impl: map a simplified raw-PartnerEntity, just for the partner-number
-    private HsOfficePartnerEntity partner;
+    @NotFound(action = NotFoundAction.EXCEPTION) // TODO.impl: map a simplified raw-PartnerEntity, just for the partner-number
+    private HsOfficePartnerRealEntity partner;
 
     @Column(name = "debitornumbersuffix", length = 2)
     @Pattern(regexp = TWO_DECIMAL_DIGITS)
@@ -132,9 +131,7 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
     @Override
     public HsOfficeDebitorEntity load() {
         BaseEntity.super.load();
-        if (partner != null) {
-            partner.load();
-        }
+        partner.load();
         debitorRel.load();
         if (refundBankAccount != null) {
             refundBankAccount.load();
@@ -145,7 +142,7 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
     public String getTaggedDebitorNumber() {
         return ofNullable(partner)
                 .filter(partner -> debitorNumberSuffix != null)
-                .map(HsOfficePartnerEntity::getPartnerNumber)
+                .map(HsOfficePartner::getPartnerNumber)
                 .map(partnerNumber -> DEBITOR_NUMBER_TAG + partnerNumber + debitorNumberSuffix)
                 .orElse(null);
     }

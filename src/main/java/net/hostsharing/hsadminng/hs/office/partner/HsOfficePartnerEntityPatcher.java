@@ -9,10 +9,10 @@ import jakarta.persistence.EntityManager;
 
 class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatchResource> {
     private final EntityManager em;
-    private final HsOfficePartnerEntity entity;
+    private final HsOfficePartnerRbacEntity entity;
     HsOfficePartnerEntityPatcher(
             final EntityManager em,
-            final HsOfficePartnerEntity entity) {
+            final HsOfficePartnerRbacEntity entity) {
         this.em = em;
         this.entity = entity;
     }

@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -48,23 +48,23 @@ class HsBookingItemControllerRestTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     Context contextMock;
 
     @Autowired
     @SuppressWarnings("unused") // not used in test, but in controller class
     StrictMapper mapper;
 
-    @MockBean
+    @MockitoBean
     EntityManagerWrapper em;
 
-    @MockBean
+    @MockitoBean
     EntityManagerFactory emf;
 
-    @MockBean
+    @MockitoBean
     HsBookingProjectRealRepository realProjectRepo;
 
-    @MockBean
+    @MockitoBean
     HsBookingItemRbacRepository rbacBookingItemRepo;
 
     @TestConfiguration

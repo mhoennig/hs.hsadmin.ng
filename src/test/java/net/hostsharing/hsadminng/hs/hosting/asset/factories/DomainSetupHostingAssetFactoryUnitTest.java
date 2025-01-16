@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -59,7 +59,7 @@ class DomainSetupHostingAssetFactoryUnitTest {
     private ObjectMapper jsonMapper = new JsonObjectMapperConfiguration().customObjectMapper().build();
 
     @Spy
-    private StandardMapper standardMapper = new StandardMapper(emw);
+    private StrictMapper StrictMapper = new StrictMapper(emw);
 
     @InjectMocks
     private HsBookingItemCreatedListener listener;

@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 
 import jakarta.validation.ValidationException;
@@ -19,8 +19,8 @@ public class ManagedWebspaceHostingAssetFactory extends HostingAssetFactory {
             final EntityManagerWrapper emw,
             final HsBookingItemRealEntity newBookingItemRealEntity,
             final HsHostingAssetAutoInsertResource asset,
-            final StandardMapper standardMapper) {
-        super(emw, newBookingItemRealEntity, asset, standardMapper);
+            final StrictMapper StrictMapper) {
+        super(emw, newBookingItemRealEntity, asset, StrictMapper);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ManagedWebspaceHostingAssetFactory extends HostingAssetFactory {
                             .map(Enum::name)
                             .orElse(null));
         }
-        final var managedWebspaceHostingAsset = standardMapper.map(asset, HsHostingAssetRealEntity.class);
+        final var managedWebspaceHostingAsset = StrictMapper.map(asset, HsHostingAssetRealEntity.class);
         managedWebspaceHostingAsset.setBookingItem(fromBookingItem);
         emw.createQuery(
                 "SELECT asset FROM HsHostingAssetRealEntity asset WHERE asset.bookingItem.uuid=:bookingItemUuid",

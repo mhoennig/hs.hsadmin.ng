@@ -1,14 +1,14 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RbacSubjectController.class)
-@Import({StandardMapper.class, DisableSecurityConfig.class})
+@Import({StrictMapper.class, DisableSecurityConfig.class})
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
 class RbacSubjectControllerRestTest {
@@ -34,13 +34,13 @@ class RbacSubjectControllerRestTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     Context contextMock;
 
-    @MockBean
+    @MockitoBean
     RbacSubjectRepository rbacSubjectRepository;
 
-    @MockBean
+    @MockitoBean
     EntityManagerWrapper em;
 
 

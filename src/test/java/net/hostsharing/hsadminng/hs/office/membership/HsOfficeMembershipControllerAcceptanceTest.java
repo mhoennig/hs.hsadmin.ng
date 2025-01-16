@@ -5,7 +5,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
@@ -54,7 +54,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
     HsOfficeMembershipRepository membershipRepo;
 
     @Autowired
-    HsOfficePartnerRepository partnerRepo;
+    HsOfficePartnerRealRepository partnerRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -430,7 +430,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike(partnerName).get(0);
             final var newMembership = HsOfficeMembershipEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .partner(givenPartner)
                     .memberNumberSuffix(TEMP_MEMBER_NUMBER_SUFFIX)
                     .validity(Range.closedInfinite(LocalDate.parse("2022-11-01")))

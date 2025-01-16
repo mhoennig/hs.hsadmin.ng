@@ -6,7 +6,7 @@ management:
     endpoints:
         web:
             exposure:
-                include: info, health, metrics, metric-links
+                include: info, health, metrics, metric-links, mappings, openapi, swaggerui
 
 spring:
     sql:

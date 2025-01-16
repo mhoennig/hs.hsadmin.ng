@@ -1,0 +1,86 @@
+#!/usr/bin/python3
+import os
+import sys
+from urllib.parse import urljoin, quote
+
+def path_to_file_uri(path):
+    """
+    Converts a file path to a file URI.
+    Handles absolute and relative paths.
+    """
+    abs_path = os.path.abspath(path)
+    return urljoin("file://", quote(abs_path))
+
+def is_binary_file(filepath, chunk_size=1024):
+    """
+    Prüft, ob eine Datei binär ist, indem sie den Inhalt der Datei auf nicht-druckbare Zeichen untersucht.
+    """
+    try:
+        with open(filepath, "rb") as file:
+            chunk = file.read(chunk_size)
+            if b"\0" in chunk:  # Nullbyte ist ein typisches Zeichen für Binärdateien
+                return True
+        return False
+    except Exception as e:
+        print(f"Fehler beim Prüfen, ob Datei binär ist: {filepath}: {e}")
+        return True
+
+def search_keywords_in_files(keywords):
+    if not keywords:
+        print("Bitte geben Sie mindestens ein Stichwort an.")
+        sys.exit(1)
+
+    # Allowed comment symbols
+    comment_symbols = {"//", "#", ";"}
+
+    for root, dirs, files in os.walk("."):
+        # Ausschließen bestimmter Verzeichnisse
+        dirs[:] = [d for d in dirs if d not in {".git", "build"}]
+
+        for file in files:
+            filepath = os.path.join(root, file)
+
+            # Überspringen von Binärdateien
+            if is_binary_file(filepath):
+                continue
+
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+
+                for line_number, line in enumerate(lines, start=1):
+                    stripped_line = line.lstrip()  # Entfernt führende Leerzeichen
+                    for symbol in comment_symbols:
+                        if stripped_line.startswith(symbol):
+                            # Entfernt das Kommentarzeichen und nachfolgende Leerzeichen
+                            howtoMatch = stripped_line[len(symbol):].lstrip()
+                            if howtoMatch.startswith(("HOWTO ", "HOWTO: ", "How to ")):
+                                if all(keyword in howtoMatch.lower() for keyword in keywords):
+
+                                    # Titelzeile ohne Kommentarzeichen
+                                    print(howtoMatch.rstrip())
+
+                                    # Ausgabe nachfolgender Zeilen mit dem gleichen Kommentar-Präfix
+                                    for subsequent_line in lines[line_number:]:
+                                        subsequent_line = subsequent_line.lstrip()
+                                        if subsequent_line.startswith(symbol):
+                                            # Entfernt Kommentarzeichen aus Folgezeilen
+                                            print("\t" + subsequent_line[len(symbol):].strip())
+                                        else:
+                                            break
+
+                                    # Link mit Zeilennummer
+                                    print(f"--> {path_to_file_uri(filepath)}:{line_number}")
+
+                                    # Abstand zwischen Matches
+                                    print()
+                                    break
+            except Exception as e:
+                print(f"Fehler beim Lesen der Datei {filepath}: {e}")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Verwendung: bin/howto <Stichwort1> <Stichwort2> ...")
+        sys.exit(1)
+
+    search_keywords_in_files([arg.lower() for arg in sys.argv[1:]])

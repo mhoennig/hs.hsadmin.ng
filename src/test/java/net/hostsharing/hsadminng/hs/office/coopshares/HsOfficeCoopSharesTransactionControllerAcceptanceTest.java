@@ -170,7 +170,9 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
 
             final var location = RestAssured // @formatter:off
-                .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
+                .given()
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON).body("""
                        {
                            "membership.uuid": "%s",
                            "transactionType": "SUBSCRIPTION",
@@ -179,15 +181,29 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                            "reference": "temp ref A",
                            "comment": "just some test coop shares transaction"
                          }
-                    """.formatted(givenMembership.getUuid())).port(port).when().post("http://localhost/api/hs/office/coopsharestransactions").then().log().all().assertThat().statusCode(201).contentType(ContentType.JSON).body("uuid", isUuidValid()).body("", lenientlyEquals("""
+                    """.formatted(givenMembership.getUuid()))
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/coopsharestransactions")
+                .then()
+                    .log().all()
+                    .assertThat()
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                    .body("uuid", isUuidValid())
+                    .body("", lenientlyEquals("""
                         {
+                            "membership.uuid": "%s",
                             "transactionType": "SUBSCRIPTION",
                             "shareCount": 8,
                             "valueDate": "2022-10-13",
                             "reference": "temp ref A",
                             "comment": "just some test coop shares transaction"
                         }
-                    """)).header("Location", startsWith("http://localhost")).extract().header("Location");  // @formatter:on
+                        """.formatted(givenMembership.getUuid())))
+                    .header("Location", startsWith("http://localhost"))
+                .extract()
+                    .header("Location");  // @formatter:on
 
             // finally, the new coopSharesTransaction can be accessed under the generated UUID
             final var newShareTxUuid = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
@@ -197,7 +213,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         @Test
         void globalAdmin_canAddCoopSharesReversalTransaction() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
             final var givenTransaction = jpaAttempt.transacted(() -> {
                 // TODO.impl: introduce something like transactedAsSuperuser / transactedAs("...", ...)
@@ -214,46 +230,46 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
 
             final var location = RestAssured // @formatter:off
                 .given()
-                .header("current-subject", "superuser-alex@hostsharing.net")
-                .contentType(ContentType.JSON)
-                .body("""
-                           {
-                               "membership.uuid": "%s",
-                               "transactionType": "REVERSAL",
-                               "shareCount": %s,
-                               "valueDate": "2022-10-30",
-                               "reference": "test reversal ref",
-                               "comment": "some coop shares reversal transaction",
-                               "revertedShareTx.uuid": "%s"
-                           }
-                           """.formatted(
-                    givenMembership.getUuid(),
-                    -givenTransaction.getShareCount(),
-                    givenTransaction.getUuid()))
-                .port(port)
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                       {
+                           "membership.uuid": "%s",
+                           "transactionType": "REVERSAL",
+                           "shareCount": %s,
+                           "valueDate": "2022-10-30",
+                           "reference": "test reversal ref",
+                           "comment": "some coop shares reversal transaction",
+                           "revertedShareTx.uuid": "%s"
+                       }
+                       """.formatted(
+                            givenMembership.getUuid(),
+                            -givenTransaction.getShareCount(),
+                            givenTransaction.getUuid()))
+                    .port(port)
                 .when()
-                .post("http://localhost/api/hs/office/coopsharestransactions")
+                    .post("http://localhost/api/hs/office/coopsharestransactions")
                 .then().log().all().assertThat()
-                .statusCode(201)
-                .contentType(ContentType.JSON)
-                .body("uuid", isUuidValid())
-                .body("", lenientlyEquals("""
-                            {
-                                "transactionType": "REVERSAL",
-                                "shareCount": -13,
-                                "valueDate": "2022-10-30",
-                                "reference": "test reversal ref",
-                                "comment": "some coop shares reversal transaction",
-                                "revertedShareTx": {
-                                    "transactionType": "SUBSCRIPTION",
-                                    "shareCount": 13,
-                                    "valueDate": "2022-10-20",
-                                    "reference": "test ref"
-                                }
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("uuid", isUuidValid())
+                    .body("", lenientlyEquals("""
+                        {
+                            "transactionType": "REVERSAL",
+                            "shareCount": -13,
+                            "valueDate": "2022-10-30",
+                            "reference": "test reversal ref",
+                            "comment": "some coop shares reversal transaction",
+                            "revertedShareTx": {
+                                "transactionType": "SUBSCRIPTION",
+                                "shareCount": 13,
+                                "valueDate": "2022-10-20",
+                                "reference": "test ref"
                             }
-                            """))
-                .header("Location", startsWith("http://localhost"))
-                .extract().header("Location");  // @formatter:on
+                        }
+                        """))
+                    .header("Location", startsWith("http://localhost"))
+                    .extract().header("Location");  // @formatter:on
 
             // finally, the new coopAssetsTransaction can be accessed under the generated UUID
             final var newShareTxUuid = UUID.fromString(
@@ -269,22 +285,34 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
 
             RestAssured // @formatter:off
-                .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
-                    {
-                        "membership.uuid": "%s",
-                        "transactionType": "CANCELLATION",
-                        "shareCount": -80,
-                        "valueDate": "2022-10-13",
-                        "reference": "temp ref X",
-                        "comment": "just some test coop shares transaction"
-                      }
-                     """.formatted(givenMembership.getUuid())).port(port).when().post("http://localhost/api/hs/office/coopsharestransactions").then().log().all().assertThat().statusCode(400).contentType(ContentType.JSON).body("", lenientlyEquals("""
+                .given()
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
                         {
-                             "statusCode": 400,
-                             "statusPhrase": "Bad Request",
-                             "message": "ERROR: [400] coop shares transaction would result in a negative number of shares"
-                         }
-                    """));  // @formatter:on
+                            "membership.uuid": "%s",
+                            "transactionType": "CANCELLATION",
+                            "shareCount": -80,
+                            "valueDate": "2022-10-13",
+                            "reference": "temp ref X",
+                            "comment": "just some test coop shares transaction"
+                          }
+                        """.formatted(givenMembership.getUuid()))
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/coopsharestransactions")
+                .then()
+                    .log().all()
+                    .assertThat()
+                    .statusCode(400)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
+                        {
+                            "statusCode": 400,
+                            "statusPhrase": "Bad Request",
+                            "message": "ERROR: [400] coop shares transaction would result in a negative number of shares"
+                        }
+                        """));  // @formatter:on
         }
     }
 

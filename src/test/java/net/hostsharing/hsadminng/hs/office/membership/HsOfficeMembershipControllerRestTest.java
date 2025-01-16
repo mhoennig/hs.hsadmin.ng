@@ -2,8 +2,10 @@ package net.hostsharing.hsadminng.hs.office.membership;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRbacEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Nested;
@@ -12,7 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -34,11 +36,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeMembershipController.class)
-@Import({StandardMapper.class, DisableSecurityConfig.class})
+@Import({StrictMapper.class, DisableSecurityConfig.class})
 @ActiveProfiles("test")
 public class HsOfficeMembershipControllerRestTest {
 
-    private static final HsOfficePartnerEntity PARTNER_12345 = HsOfficePartnerEntity.builder()
+    private static final HsOfficePartnerRealEntity PARTNER_12345 = HsOfficePartnerRealEntity.builder()
             .partnerNumber(12345)
             .build();
     public static final HsOfficeMembershipEntity MEMBERSHIP_1234501 = HsOfficeMembershipEntity.builder()
@@ -69,16 +71,19 @@ public class HsOfficeMembershipControllerRestTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     Context contextMock;
 
-    @MockBean
+    @MockitoBean
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
 
-    @MockBean
+    @MockitoBean
+    HsOfficePartnerRealRepository partnerRepo;
+
+    @MockitoBean
     HsOfficeMembershipRepository membershipRepo;
 
-    @MockBean
+    @MockitoBean
     EntityManagerWrapper em;
 
     @Nested
@@ -252,7 +257,7 @@ public class HsOfficeMembershipControllerRestTest {
 
             // given
             final var givenPartnerUuid = UUID.randomUUID();
-            when(em.find(HsOfficePartnerEntity.class, givenPartnerUuid)).thenReturn(null);
+            when(em.find(HsOfficePartnerRbacEntity.class, givenPartnerUuid)).thenReturn(null);
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
@@ -275,7 +280,7 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                     .andExpect(jsonPath(
                             "message",
-                            is("ERROR: [400] Unable to find Partner by partner.uuid: " + givenPartnerUuid)));
+                            is("ERROR: [400] partnerUuid " + givenPartnerUuid + " not found")));
         }
 
         @ParameterizedTest

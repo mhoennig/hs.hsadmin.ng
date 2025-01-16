@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
@@ -30,7 +30,7 @@ class HsOfficeDebitorEntityUnitTest {
                 .debitorNumberSuffix("67")
                 .debitorRel(givenDebitorRel)
                 .defaultPrefix("som")
-                .partner(HsOfficePartnerEntity.builder()
+                .partner(HsOfficePartnerRealEntity.builder()
                         .partnerNumber(12345)
                         .build())
                 .build();
@@ -45,7 +45,7 @@ class HsOfficeDebitorEntityUnitTest {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
                 .debitorNumberSuffix("67")
-                .partner(HsOfficePartnerEntity.builder()
+                .partner(HsOfficePartnerRealEntity.builder()
                         .partnerNumber(12345)
                         .build())
                 .build();
@@ -60,7 +60,7 @@ class HsOfficeDebitorEntityUnitTest {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
                 .debitorNumberSuffix("67")
-                .partner(HsOfficePartnerEntity.builder()
+                .partner(HsOfficePartnerRealEntity.builder()
                         .partnerNumber(12345)
                         .build())
                 .build();
@@ -88,7 +88,7 @@ class HsOfficeDebitorEntityUnitTest {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
                 .debitorNumberSuffix("67")
-                .partner(HsOfficePartnerEntity.builder().build())
+                .partner(HsOfficePartnerRealEntity.builder().build())
                 .build();
 
         final var result = given.getTaggedDebitorNumber();
@@ -101,7 +101,7 @@ class HsOfficeDebitorEntityUnitTest {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
                 .debitorNumberSuffix(null)
-                .partner(HsOfficePartnerEntity.builder()
+                .partner(HsOfficePartnerRealEntity.builder()
                         .partnerNumber(12345)
                         .build())
                 .build();

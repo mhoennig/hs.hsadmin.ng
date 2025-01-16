@@ -97,6 +97,7 @@ public class RestResponseEntityExceptionHandler
         return errorResponse(request, HttpStatus.valueOf(statusCode.value()),
                 Optional.ofNullable(response.getBody()).map(Object::toString).orElse(firstMessageLine(exc)));
     }
+
     @Override
     @SuppressWarnings("unchecked,rawtypes")
     protected ResponseEntity handleHttpMessageNotReadable(
@@ -131,7 +132,7 @@ public class RestResponseEntityExceptionHandler
             final HttpStatusCode status,
             final WebRequest request) {
         final var errorList = exc
-                .getAllValidationResults()
+                .getParameterValidationResults()
                 .stream()
                 .map(ParameterValidationResult::getResolvableErrors)
                 .flatMap(Collection::stream)

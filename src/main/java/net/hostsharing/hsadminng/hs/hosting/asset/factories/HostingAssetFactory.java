@@ -6,7 +6,7 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 
 
@@ -16,7 +16,7 @@ abstract class HostingAssetFactory {
     final EntityManagerWrapper emw;
     final HsBookingItemRealEntity fromBookingItem;
     final HsHostingAssetAutoInsertResource asset;
-    final StandardMapper standardMapper;
+    final StrictMapper StrictMapper;
 
     protected abstract HsHostingAsset create();
 

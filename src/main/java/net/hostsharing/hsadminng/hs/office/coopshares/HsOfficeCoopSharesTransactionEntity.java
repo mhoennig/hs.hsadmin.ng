@@ -7,13 +7,23 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
+import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -132,6 +142,7 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, BaseE
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)
 
+                // the membership:ADMIN is not to be confused with the member itself, it's an account manager of the coop
                 .toRole("membership", ADMIN).grantPermission(INSERT)
                 .toRole("membership", ADMIN).grantPermission(UPDATE)
                 .toRole("membership", AGENT).grantPermission(SELECT);

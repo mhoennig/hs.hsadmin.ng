@@ -93,7 +93,8 @@ alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResource
 alias gw-test='. .aliases; ./gradlew test'
 alias gw-check='. .aliases; gw test check -x pitest'
 
-alias cas-curl='bin/cas-curl'
+alias howto=bin/howto
+alias cas-curl=bin/cas-curl
 
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
 alias gw-importOfficeData-in-docker-compose='
@@ -108,3 +109,4 @@ source .environment
 
 alias scenario-reports-upload='./gradlew scenarioTests convertMarkdownToHtml && ssh hsh03-hsngdev@h50.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@h50.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
 alias scenario-reports-open='open https://hsngdev.hs-example.de/scenarios/office'
+

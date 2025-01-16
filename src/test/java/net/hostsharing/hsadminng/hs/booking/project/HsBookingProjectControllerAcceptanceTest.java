@@ -270,7 +270,6 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findByDebitorNumber(debitorNumber).stream().findAny().orElseThrow();
             final var newBookingProject = HsBookingProjectRealEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
                     .caption(caption)
                     .build();

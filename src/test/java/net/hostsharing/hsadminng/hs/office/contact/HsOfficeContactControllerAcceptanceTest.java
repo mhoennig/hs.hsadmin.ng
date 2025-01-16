@@ -374,7 +374,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         return jpaAttempt.transacted(() -> {
             context.define(creatingUser);
             final var newContact = HsOfficeContactRbacEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .caption("Temp from " + Context.getCallerMethodNameFromStackFrame(1) )
                     .postalAddress(Map.ofEntries(
                             entry("name", RandomStringUtils.randomAlphabetic(6) + " " + RandomStringUtils.randomAlphabetic(10)),

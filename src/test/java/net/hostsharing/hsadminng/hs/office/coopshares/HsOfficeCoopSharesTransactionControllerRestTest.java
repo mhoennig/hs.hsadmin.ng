@@ -1,14 +1,15 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -31,15 +32,18 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     Context contextMock;
 
-    @MockBean
+    @MockitoBean
     @SuppressWarnings("unused") // not used in test, but in controller class
-    StandardMapper mapper;
+    StrictMapper mapper;
 
-    @MockBean
+    @MockitoBean
     HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
+
+    @MockitoBean
+    HsOfficeMembershipRepository membershipRepo;
 
     static final String VALID_INSERT_REQUEST_BODY = """
             {

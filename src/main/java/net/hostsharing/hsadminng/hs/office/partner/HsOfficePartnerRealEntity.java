@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.person;
+package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,11 +11,11 @@ import jakarta.persistence.Table;
 
 
 @Entity
-@Table(schema = "hs_office", name = "person")
+@Table(schema = "hs_office", name = "partner")
 @Getter
 @Setter
-@NoArgsConstructor
 @SuperBuilder(toBuilder = true)
-@DisplayAs("RealPerson")
-public class HsOfficePersonRealEntity extends HsOfficePerson<HsOfficePersonRealEntity> {
+@NoArgsConstructor
+@DisplayAs("RealPartner")
+public class HsOfficePartnerRealEntity extends HsOfficePartner<HsOfficePartnerRealEntity> {
 }
