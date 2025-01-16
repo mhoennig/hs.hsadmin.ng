@@ -18,13 +18,14 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasEntry;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -291,6 +292,14 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                                  },
                                 "contact": {
                                    "caption": "Temp Contact",
+                                   "postalAddress": {
+                                        "name": "Herr Test Contact",
+                                        "firm": "Test Contact GmbH",
+                                        "street": "Am Schieferbruch 3",
+                                        "zipcode": "12345",
+                                        "city": "Dachstadt",
+                                        "country": "Germany"
+                                    },
                                    "emailAddresses": {
                                         "main": "test@example.org"
                                    }
@@ -315,6 +324,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .body("holder.givenName", is("Temp"))
                     .body("holder.familyName", is("Person"))
                     .body("contact.caption", is("Temp Contact"))
+                    .body("contact.emailAddresses", is(Map.of("main", "test@example.org")))
+                    .body("contact.postalAddress", hasEntry("name", "Herr Test Contact"))
+                    .body("contact.postalAddress", hasEntry("street", "Am Schieferbruch 3"))
                     .header("Location", startsWith("http://localhost"))
                     .extract().header("Location"); // @formatter:on
 
