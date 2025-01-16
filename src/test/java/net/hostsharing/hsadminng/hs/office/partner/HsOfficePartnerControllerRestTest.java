@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficePartnerController.class)
-@Import({StandardMapper.class, DisableSecurityConfig.class})
+@Import({StrictMapper.class, DisableSecurityConfig.class})
 @ActiveProfiles("test")
 class HsOfficePartnerControllerRestTest {
 
@@ -50,19 +50,19 @@ class HsOfficePartnerControllerRestTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     Context contextMock;
 
-    @MockBean
-    HsOfficePartnerRepository partnerRepo;
+    @MockitoBean
+    HsOfficePartnerRbacRepository partnerRepo;
 
-    @MockBean
+    @MockitoBean
     HsOfficeRelationRealRepository relationRepo;
 
-    @MockBean
+    @MockitoBean
     EntityManagerWrapper em;
 
-    @MockBean
+    @MockitoBean
     EntityManagerFactory emf;
 
     @Mock
@@ -75,7 +75,7 @@ class HsOfficePartnerControllerRestTest {
     HsOfficeContactRbacEntity contactMock;
 
     @Mock
-    HsOfficePartnerEntity partnerMock;
+    HsOfficePartnerRbacEntity partnerMock;
 
     @BeforeEach
     void init() {
@@ -174,7 +174,7 @@ class HsOfficePartnerControllerRestTest {
         @Test
         void respondWithPartner_ifPartnerNumberIsAvailable() throws Exception {
             // given
-            when(partnerRepo.findPartnerByPartnerNumber(12345)).thenReturn(Optional.of(HsOfficePartnerEntity.builder()
+            when(partnerRepo.findPartnerByPartnerNumber(12345)).thenReturn(Optional.of(HsOfficePartnerRbacEntity.builder()
                     .partnerNumber(12345)
                     .build()));
 

@@ -13,7 +13,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.validators.Dns;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContact;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.lambda.Reducer;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapperFake;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +55,7 @@ class ManagedWebspaceHostingAssetFactoryUnitTest {
     private ObjectMapper jsonMapper = new JsonObjectMapperConfiguration().customObjectMapper().build();
 
     @Spy
-    private StandardMapper standardMapper = new StandardMapper(emw);
+    private StrictMapper StrictMapper = new StrictMapper(emw);
 
     @InjectMocks
     private HsBookingItemCreatedListener listener;

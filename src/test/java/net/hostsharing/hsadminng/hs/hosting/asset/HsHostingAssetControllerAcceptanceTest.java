@@ -488,7 +488,6 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var givenAsset = givenSomeTemporaryHostingAsset(() ->
                     HsHostingAssetRealEntity.builder()
-                            .uuid(UUID.randomUUID())
                             .bookingItem(givenSomeNewBookingItem(
                                     "D-1000111 default project",
                                     HsBookingItemType.MANAGED_SERVER,
@@ -571,7 +570,6 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var givenAsset = givenSomeTemporaryHostingAsset(() ->
                     HsHostingAssetRealEntity.builder()
-                            .uuid(UUID.randomUUID())
                             .type(UNIX_USER)
                             .parentAsset(givenRealHostingAsset(MANAGED_WEBSPACE, "fir01"))
                             .identifier("fir01-temp")
@@ -648,7 +646,6 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net");
             final var givenAsset = givenSomeTemporaryHostingAsset(() ->
                     HsHostingAssetRealEntity.builder()
-                            .uuid(UUID.randomUUID())
                             .bookingItem(givenSomeNewBookingItem(
                                     "D-1000111 default project",
                                     HsBookingItemType.MANAGED_SERVER,
@@ -681,7 +678,6 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net");
             final var givenAsset = givenSomeTemporaryHostingAsset(() ->
                     HsHostingAssetRealEntity.builder()
-                            .uuid(UUID.randomUUID())
                             .bookingItem(givenSomeNewBookingItem(
                                     "D-1000111 default project",
                                     HsBookingItemType.MANAGED_SERVER,

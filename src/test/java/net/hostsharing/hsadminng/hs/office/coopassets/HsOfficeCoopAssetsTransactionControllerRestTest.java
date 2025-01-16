@@ -4,7 +4,7 @@ import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
@@ -17,10 +17,10 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -67,7 +67,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     private static final String ORIGIN_MEMBER_NUMBER = "M-1111100";
     public final HsOfficeMembershipEntity ORIGIN_TARGET_MEMBER_ENTITY = HsOfficeMembershipEntity.builder()
             .uuid(ORIGIN_MEMBERSHIP_UUID)
-            .partner(HsOfficePartnerEntity.builder()
+            .partner(HsOfficePartnerRealEntity.builder()
                     .partnerNumber(partnerNumberOf(ORIGIN_MEMBER_NUMBER))
                     .build())
             .memberNumberSuffix(suffixOf(ORIGIN_MEMBER_NUMBER))
@@ -77,7 +77,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     private static final String AVAILABLE_TARGET_MEMBER_NUMBER = "M-1234500";
     public final HsOfficeMembershipEntity AVAILABLE_MEMBER_ENTITY = HsOfficeMembershipEntity.builder()
             .uuid(AVAILABLE_TARGET_MEMBERSHIP_UUID)
-            .partner(HsOfficePartnerEntity.builder()
+            .partner(HsOfficePartnerRealEntity.builder()
                     .partnerNumber(partnerNumberOf(AVAILABLE_TARGET_MEMBER_NUMBER))
                     .build())
             .memberNumberSuffix(suffixOf(AVAILABLE_TARGET_MEMBER_NUMBER))
@@ -499,20 +499,20 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     Context contextMock;
 
     @Autowired
     @SuppressWarnings("unused") // not used in test, but in controller class
     StrictMapper mapper;
 
-    @MockBean
+    @MockitoBean
     EntityManagerWrapper emw; // even if not used in test anymore, it's needed by base-class of StrictMapper
 
-    @MockBean
+    @MockitoBean
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
 
-    @MockBean
+    @MockitoBean
     HsOfficeMembershipRepository membershipRepo;
 
     static final String INSERT_REQUEST_BODY_TEMPLATE = """

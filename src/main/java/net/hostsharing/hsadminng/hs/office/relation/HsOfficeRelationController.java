@@ -9,7 +9,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeRelation
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
     private HsOfficeRelationRbacRepository rbacRelationRepo;

@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
+import net.hostsharing.hsadminng.rbac.role.WithRoleId;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
@@ -37,7 +38,7 @@ import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 @SuperBuilder(toBuilder = true)
 @FieldNameConstants
 @DisplayAs("Contact")
-public class HsOfficeContact implements Stringifyable, BaseEntity<HsOfficeContact> {
+public class HsOfficeContact implements Stringifyable, BaseEntity<HsOfficeContact>, WithRoleId {
 
     private static Stringify<HsOfficeContact> toString = stringify(HsOfficeContact.class, "contact")
             .withProp(Fields.caption, HsOfficeContact::getCaption)

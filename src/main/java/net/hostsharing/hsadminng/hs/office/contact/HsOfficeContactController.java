@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
 import io.micrometer.core.annotation.Timed;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeContactsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactInsertResource;
@@ -28,7 +28,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
     private HsOfficeContactRbacRepository contactRepo;

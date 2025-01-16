@@ -4,7 +4,7 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipStatusResource;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
+import static net.hostsharing.hsadminng.hs.office.partner.HsOfficeTestRealPartner.TEST_PARTNER;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -40,7 +40,7 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
     @Mock
     private EntityManagerWrapper em;
 
-    private StandardMapper mapper = new StandardMapper(em);
+    private StrictMapper mapper = new StrictMapper(em);
 
     @BeforeEach
     void initMocks() {

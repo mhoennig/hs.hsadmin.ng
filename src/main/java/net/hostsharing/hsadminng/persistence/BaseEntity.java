@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.persistence;
 
 import org.hibernate.Hibernate;
 
+import jakarta.persistence.EntityManager;
 import java.util.UUID;
 
 public interface BaseEntity<T extends BaseEntity<?>> {
@@ -15,4 +16,10 @@ public interface BaseEntity<T extends BaseEntity<?>> {
         //noinspection unchecked
         return (T) this;
     };
+
+    default T reload(final EntityManager em) {
+        em.flush();
+        em.refresh(this);
+        return load();
+    }
 }

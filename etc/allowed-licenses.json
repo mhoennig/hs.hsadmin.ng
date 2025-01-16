@@ -5,8 +5,22 @@
         { "moduleLicense": "Apache-2.0" },
         { "moduleLicense": "Apache License 2.0" },
         { "moduleLicense": "Apache License v2.0" },
+        { "moduleLicense": "Apache License Version 2.0" },
         { "moduleLicense": "Apache License, Version 2.0" },
+        { "moduleLicense": "The Apache License, Version 2.0" },
         { "moduleLicense": "The Apache Software License, Version 2.0" },
+
+        {
+            "moduleLicense": null,
+            "#moduleLicense": "Apache License 2.0, see https://github.com/springdoc/springdoc-openapi/blob/main/LICENSE",
+            "moduleVersion": "2.4.0",
+            "moduleName": "org.springdoc:springdoc-openapi"
+        },
+        {
+            "moduleLicense": null,
+            "moduleVersion": "1.0.0",
+            "moduleName": "org.jspecify:jspecify"
+        },
 
         { "moduleLicense": "BSD License" },
         { "moduleLicense": "BSD-2-Clause" },
@@ -46,14 +60,8 @@
         {
             "moduleLicense": "Public Domain, per Creative Commons CC0",
             "moduleVersion": "2.0.3"
-        },
-
-        {
-            "moduleLicense": null,
-            "#moduleLicense": "Apache License 2.0, see https://github.com/springdoc/springdoc-openapi/blob/main/LICENSE",
-            "moduleVersion": "2.4.0",
-            "moduleName": "org.springdoc:springdoc-openapi"
         }
+
 
     ]
 }

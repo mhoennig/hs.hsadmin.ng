@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.hostsharing.hsadminng.errors.DisplayAs;
+import net.hostsharing.hsadminng.rbac.role.WithRoleId;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 
@@ -24,7 +25,7 @@ import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayAs("BookingDebitor")
-public class HsBookingDebitorEntity implements Stringifyable {
+public class HsBookingDebitorEntity implements Stringifyable, WithRoleId {
 
     public static final String DEBITOR_NUMBER_TAG = "D-";
 

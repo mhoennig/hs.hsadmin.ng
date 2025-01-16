@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.grant;
 
 import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacGrantsApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGrantResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class RbacGrantController implements RbacGrantsApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
     private RbacGrantRepository rbacGrantRepository;

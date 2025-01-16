@@ -6,14 +6,16 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembersh
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipResource;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRbacEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -28,7 +30,10 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
+
+    @Autowired
+    private HsOfficePartnerRealRepository partnerRepo;
 
     @Autowired
     private HsOfficeMembershipRepository membershipRepo;
@@ -47,7 +52,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         final var entities = partnerNumber != null
                 ? membershipRepo.findMembershipsByPartnerNumber(
-                        cropTag(HsOfficePartnerEntity.PARTNER_NUMBER_TAG, partnerNumber))
+                        cropTag(HsOfficePartnerRbacEntity.PARTNER_NUMBER_TAG, partnerNumber))
                 : partnerUuid != null
                     ? membershipRepo.findMembershipsByPartnerUuid(partnerUuid)
                     : membershipRepo.findAll();
@@ -68,7 +73,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         context.define(currentSubject, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsOfficeMembershipEntity.class);
+        final var entityToSave = mapper.map(body, HsOfficeMembershipEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var saved = membershipRepo.save(entityToSave);
 
@@ -164,5 +169,12 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
+        resource.getPartner().setPartnerNumber(entity.getPartner().getTaggedPartnerNumber()); // TODO.refa: use partner mapper?
+    };
+
+    final BiConsumer<HsOfficeMembershipInsertResource, HsOfficeMembershipEntity> SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+        entity.setPartner(partnerRepo.findByUuid(resource.getPartnerUuid())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "ERROR: [400] partnerUuid %s not found".formatted(resource.getPartnerUuid()))));
     };
 }

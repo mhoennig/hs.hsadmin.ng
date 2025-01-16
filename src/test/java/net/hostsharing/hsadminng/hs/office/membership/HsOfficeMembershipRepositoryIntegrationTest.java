@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 
@@ -37,7 +37,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
     HsOfficeMembershipRepository membershipRepo;
 
     @Autowired
-    HsOfficePartnerRepository partnerRepo;
+    HsOfficePartnerRealRepository partnerRepo;
 
     @Autowired
     HsOfficeDebitorRepository debitorRepo;
@@ -54,7 +54,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @MockBean
+    @MockitoBean
     HttpServletRequest request;
 
     @Nested

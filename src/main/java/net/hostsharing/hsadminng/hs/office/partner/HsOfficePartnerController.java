@@ -13,7 +13,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +26,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.EX_PARTNER;
 import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
@@ -38,10 +39,10 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     private Context context;
 
     @Autowired
-    private StandardMapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
-    private HsOfficePartnerRepository partnerRepo;
+    private HsOfficePartnerRbacRepository partnerRepo;
 
     @Autowired
     private HsOfficeRelationRealRepository relationRepo;
@@ -60,7 +61,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
 
-        final var resources = mapper.mapList(entities, HsOfficePartnerResource.class);
+        final var resources = mapper.mapList(entities, HsOfficePartnerResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
 
@@ -83,7 +84,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
                         .path("/api/hs/office/partners/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
-        final var mapped = mapper.map(saved, HsOfficePartnerResource.class);
+        final var mapped = mapper.map(saved, HsOfficePartnerResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -101,7 +102,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result.get(), HsOfficePartnerResource.class));
+        final var mapped = mapper.map(result.get(), HsOfficePartnerResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        return ResponseEntity.ok(mapped);
     }
 
     @Override
@@ -118,7 +120,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result.get(), HsOfficePartnerResource.class));
+        final var mapped = mapper.map(result.get(), HsOfficePartnerResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        return ResponseEntity.ok(mapped);
     }
 
     @Override
@@ -161,20 +164,20 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         final var saved = partnerRepo.save(current);
         optionallyCreateExPartnerRelation(saved, previousPartnerRel);
 
-        final var mapped = mapper.map(saved, HsOfficePartnerResource.class);
+        final var mapped = mapper.map(saved, HsOfficePartnerResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
-    private void optionallyCreateExPartnerRelation(final HsOfficePartnerEntity saved, final HsOfficeRelationRealEntity previousPartnerRel) {
+    private void optionallyCreateExPartnerRelation(final HsOfficePartnerRbacEntity saved, final HsOfficeRelationRealEntity previousPartnerRel) {
         if (!saved.getPartnerRel().getUuid().equals(previousPartnerRel.getUuid())) {
             // TODO.impl: we also need to use the new partner-person as the anchor
             relationRepo.save(previousPartnerRel.toBuilder().uuid(null).type(EX_PARTNER).build());
         }
     }
 
-    private HsOfficePartnerEntity createPartnerEntity(final HsOfficePartnerInsertResource body) {
-        final var entityToSave = new HsOfficePartnerEntity();
-        entityToSave.setPartnerNumber(cropTag(HsOfficePartnerEntity.PARTNER_NUMBER_TAG, body.getPartnerNumber()));
+    private HsOfficePartnerRbacEntity createPartnerEntity(final HsOfficePartnerInsertResource body) {
+        final var entityToSave = new HsOfficePartnerRbacEntity();
+        entityToSave.setPartnerNumber(cropTag(HsOfficePartnerRbacEntity.PARTNER_NUMBER_TAG, body.getPartnerNumber()));
         entityToSave.setPartnerRel(persistPartnerRel(body.getPartnerRel()));
         entityToSave.setDetails(mapper.map(body.getDetails(), HsOfficePartnerDetailsEntity.class));
         return entityToSave;
@@ -197,4 +200,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
                 throw new ReferenceNotFoundException(entityClass, uuid, exc);
         }
     }
+
+    final BiConsumer<HsOfficePartnerRbacEntity, HsOfficePartnerResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        resource.setPartnerNumber(entity.getTaggedPartnerNumber());
+    };
 }

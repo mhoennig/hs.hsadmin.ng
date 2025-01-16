@@ -7,12 +7,12 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL_PERSON;
 
-public class TestHsOfficePartner {
+public class HsOfficeTestRealPartner {
 
-    public static final HsOfficePartnerEntity TEST_PARTNER = hsOfficePartnerWithLegalPerson("Test Ltd.");
+    public static final HsOfficePartnerRealEntity TEST_PARTNER = hsOfficePartnerWithLegalPerson("Test Ltd.");
 
-    static public HsOfficePartnerEntity hsOfficePartnerWithLegalPerson(final String tradeName) {
-        return HsOfficePartnerEntity.builder()
+    static public HsOfficePartnerRealEntity hsOfficePartnerWithLegalPerson(final String tradeName) {
+        return HsOfficePartnerRealEntity.builder()
                 .partnerNumber(10001)
                 .partnerRel(
                         HsOfficeRelationRealEntity.builder()

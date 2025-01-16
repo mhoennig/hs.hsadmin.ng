@@ -89,7 +89,7 @@ public abstract class HsHostingAsset implements Stringifyable, BaseEntity<HsHost
     @JoinColumn(name = "alarmcontactuuid")
     private HsOfficeContactRealEntity alarmContact;
 
-    @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "parentassetuuid", referencedColumnName = "uuid")
     private List<HsHostingAssetRealEntity> subHostingAssets;
 

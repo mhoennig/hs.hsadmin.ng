@@ -6,19 +6,19 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
-import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacObjectRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -27,20 +27,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static net.hostsharing.hsadminng.mapper.Array.from;
 import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.role.RawRbacObjectEntity.objectDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
-import static net.hostsharing.hsadminng.mapper.Array.from;
 import static net.hostsharing.hsadminng.rbac.role.RbacRoleType.ADMIN;
+import static net.hostsharing.hsadminng.rbac.role.RbacRoleType.AGENT;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
-class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
+@Import({ Context.class, JpaAttempt.class })
+class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
-    HsOfficePartnerRepository partnerRepo;
+    HsOfficePartnerRbacRepository partnerRepo;
 
     @Autowired
     HsOfficeRelationRealRepository relationRepo;
@@ -66,7 +67,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @MockBean
+    @MockitoBean
     HttpServletRequest request;
 
     @Nested
@@ -80,18 +81,19 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var partnerRel = givenSomeTemporaryHostsharingPartnerRel("Winkler", "first contact");
 
             // when
-            final var result = attempt(em, () -> {
-                final var newPartner = HsOfficePartnerEntity.builder()
-                        .partnerNumber(20031)
-                        .partnerRel(partnerRel)
-                        .details(HsOfficePartnerDetailsEntity.builder().build())
-                        .build();
-                return partnerRepo.save(newPartner);
-            });
+            final var result = attempt(
+                    em, () -> {
+                        final var newPartner = HsOfficePartnerRbacEntity.builder()
+                                .partnerNumber(20031)
+                                .partnerRel(partnerRel)
+                                .details(HsOfficePartnerDetailsEntity.builder().build())
+                                .build();
+                        return partnerRepo.save(newPartner);
+                    });
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficePartnerEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficePartnerRbacEntity::getUuid).isNotNull();
             assertThatPartnerIsPersisted(result.returnedValue());
             assertThat(partnerRepo.count()).isEqualTo(count + 1);
         }
@@ -108,26 +110,27 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                     .toList();
 
             // when
-            attempt(em, () -> {
-                final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
-                final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
-                final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
+            attempt(
+                    em, () -> {
+                        final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
+                        final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
+                        final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
 
-                final var newRelation = HsOfficeRelationRealEntity.builder()
-                        .holder(givenPartnerPerson)
-                        .type(HsOfficeRelationType.PARTNER)
-                        .anchor(givenMandantPerson)
-                        .contact(givenContact)
-                        .build();
-                relationRepo.save(newRelation);
+                        final var newRelation = HsOfficeRelationRealEntity.builder()
+                                .holder(givenPartnerPerson)
+                                .type(HsOfficeRelationType.PARTNER)
+                                .anchor(givenMandantPerson)
+                                .contact(givenContact)
+                                .build();
+                        relationRepo.save(newRelation);
 
-                final var newPartner = HsOfficePartnerEntity.builder()
-                        .partnerNumber(20032)
-                        .partnerRel(newRelation)
-                        .details(HsOfficePartnerDetailsEntity.builder().build())
-                        .build();
-                return partnerRepo.save(newPartner);
-            }).assertSuccessful();
+                        final var newPartner = HsOfficePartnerRbacEntity.builder()
+                                .partnerNumber(20032)
+                                .partnerRel(newRelation)
+                                .details(HsOfficePartnerDetailsEntity.builder().build())
+                                .build();
+                        return partnerRepo.save(newPartner);
+                    }).assertSuccessful();
 
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(from(
@@ -179,7 +182,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                             null)));
         }
 
-        private void assertThatPartnerIsPersisted(final HsOfficePartnerEntity saved) {
+        private void assertThatPartnerIsPersisted(final HsOfficePartnerRbacEntity saved) {
             final var found = partnerRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
@@ -207,15 +210,32 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
         }
 
         @Test
-        public void normalUser_canViewOnlyRelatedPartners() {
+        public void partnerAgent_canViewOnlyRelatedPartnersWithDetails() {
             // given:
-            context("person-FirstGmbH@example.com");
+            context(
+                    "person-FirstGmbH@example.com",
+                    "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT");
 
             // when:
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
 
             // then:
-            exactlyThesePartnersAreReturned(result, "partner(P-10001: LP First GmbH, first contact)");
+            exactlyThesePartnersAreReturned(result,
+                    "partner(P-10001: LP First GmbH, first contact)+(partnerDetails(Hamburg, RegNo123456789))");
+        }
+
+        @Test
+        public void partnerTenant_canViewRelatedPartnersButWithoutDetails() {
+            // given:
+            context(
+                    "person-FirstGmbH@example.com",
+                    "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:TENANT");
+
+            // when:
+            final var result = partnerRepo.findPartnerByOptionalNameLike(null);
+
+            // then:
+            exactlyThesePartnersAreReturned(result, "partner(P-10001: LP First GmbH, first contact)+null");
         }
     }
 
@@ -223,7 +243,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     class FindByNameLike {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllPartners() {
+        public void globalAdmin_withoutAssumedRole_canViewAllPartnersWithDetails() {
             // given
             context("superuser-alex@hostsharing.net");
 
@@ -231,7 +251,8 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var result = partnerRepo.findPartnerByOptionalNameLike("third contact");
 
             // then
-            exactlyThesePartnersAreReturned(result, "partner(P-10003: IF Third OHG, third contact)");
+            exactlyThesePartnersAreReturned(result,
+                    "partner(P-10003: IF Third OHG, third contact)+(partnerDetails(Hamburg, RegNo123456789))");
         }
     }
 
@@ -289,19 +310,20 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
         }
 
         @Test
-        public void partnerRelationAgent_canUpdateRelatedPartner() {
+        public void partnerRelationAgent_canUpdateRelatedPartnerDetails() {
             // given
             context("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20037, "Erben Bessler", "ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office.person#ErbenBesslerMelBessler:ADMIN");
+                    givenPartner.getPartnerRel().roleId(AGENT));
             assertThatPartnerActuallyInDatabase(givenPartner);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net",
-                        "hs_office.person#ErbenBesslerMelBessler:ADMIN");
+                context(
+                        "superuser-alex@hostsharing.net",
+                        givenPartner.getPartnerRel().roleId(AGENT));
                 givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
             });
@@ -310,37 +332,17 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
         }
 
-        @Test
-        public void partnerRelationTenant_canNotUpdateRelatedPartner() {
-            // given
-            context("superuser-alex@hostsharing.net");
-            final var givenPartner = givenSomeTemporaryHostsharingPartner(20037, "Erben Bessler", "ninth");
-            assertThatPartnerIsVisibleForUserWithRole(
-                    givenPartner,
-                    "hs_office.person#ErbenBesslerMelBessler:ADMIN");
-            assertThatPartnerActuallyInDatabase(givenPartner);
-
-            // when
-            final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net",
-                        "hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT");
-                givenPartner.getDetails().setBirthName("new birthname");
-                return partnerRepo.save(givenPartner);
-            });
-
-            // then
-            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "ERROR: [403] insert into hs_office.partner_details ",
-                    " not allowed for current subjects {hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT}");
-        }
-
-        private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerEntity saved) {
+        private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerRbacEntity saved) {
             final var found = partnerRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().isNotSameAs(saved).extracting(HsOfficePartnerEntity::toString).isEqualTo(saved.toString());
+            assertThat(found).isNotEmpty()
+                    .get()
+                    .isNotSameAs(saved)
+                    .extracting(HsOfficePartnerRbacEntity::toString)
+                    .isEqualTo(saved.toString());
         }
 
         private void assertThatPartnerIsVisibleForUserWithRole(
-                final HsOfficePartnerEntity entity,
+                final HsOfficePartnerRbacEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", assumedRoles);
@@ -349,7 +351,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
         }
 
         private void assertThatPartnerIsNotVisibleForUserWithRole(
-                final HsOfficePartnerEntity entity,
+                final HsOfficePartnerRbacEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", assumedRoles);
@@ -437,7 +439,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                 select currentTask, targetTable, targetOp, targetdelta->>'partnernumber'
                     from base.tx_journal_v
                     where targettable = 'hs_office.partner';
-                    """);
+                """);
 
         // when
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
@@ -451,19 +453,22 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                 "[creating partner test-data , hs_office.partner, INSERT, 10010]");
     }
 
-    private HsOfficePartnerEntity givenSomeTemporaryHostsharingPartner(
+    private HsOfficePartnerRbacEntity givenSomeTemporaryHostsharingPartner(
             final Integer partnerNumber, final String person, final String contact) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var partnerRel = givenSomeTemporaryHostsharingPartnerRel(person, contact);
 
-            final var newPartner = HsOfficePartnerEntity.builder()
+            final var newPartner = HsOfficePartnerRbacEntity.builder()
                     .partnerNumber(partnerNumber)
                     .partnerRel(partnerRel)
                     .details(HsOfficePartnerDetailsEntity.builder().build())
                     .build();
 
-            return partnerRepo.save(newPartner);
+            final var savedPartner = partnerRepo.save(newPartner);
+            em.flush();
+            final var partner = em.find(savedPartner.getClass(), savedPartner.getUuid());
+            return savedPartner;
         }).assertSuccessful().returnedValue();
     }
 
@@ -482,21 +487,23 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
         return partnerRel;
     }
 
-    void exactlyThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerNames) {
+    void exactlyThesePartnersAreReturned(final List<HsOfficePartnerRbacEntity> actualResult, final String... partnerNames) {
         assertThat(actualResult)
-                .extracting(partnerEntity -> partnerEntity.toString())
+                .extracting(partner ->
+                        partner.toString() + "+" +
+                                (partner.getDetails() != null ? ("(" + partner.getDetails() + ")") : "null"))
                 .containsExactlyInAnyOrder(partnerNames);
     }
 
-    void allThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerNames) {
+    void allThesePartnersAreReturned(final List<HsOfficePartnerRbacEntity> actualResult, final String... partnerNames) {
         assertThat(actualResult)
-                .extracting(partnerEntity -> partnerEntity.toString())
+                .extracting(HsOfficePartnerRbacEntity::toString)
                 .contains(partnerNames);
     }
 
     @AfterEach
     void cleanup() {
-        cleanupAllNew(HsOfficePartnerEntity.class);
+        cleanupAllNew(HsOfficePartnerRbacEntity.class);
     }
 
     private String[] distinct(final String[] strings) {
