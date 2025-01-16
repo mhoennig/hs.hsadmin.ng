@@ -132,8 +132,8 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .body("uuid", isUuidValid())
                         .body("caption", is("Temp Contact"))
                         .body("emailAddresses", is(Map.of("main", "test@example.org")))
-                        .body("postalAddress", hasEntry("name", "Herr Test Contact")
-                        .body("postalAddress", hasEntry("street", "Am Schieferbruch 3")
+                        .body("postalAddress", hasEntry("name", "Herr Test Contact"))
+                        .body("postalAddress", hasEntry("street", "Am Schieferbruch 3"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
