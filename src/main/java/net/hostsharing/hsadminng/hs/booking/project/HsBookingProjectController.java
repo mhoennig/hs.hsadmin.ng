@@ -9,6 +9,7 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProj
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProjectResource;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 @RestController
+@Profile("!only-office")
 public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Autowired

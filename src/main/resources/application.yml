@@ -8,17 +8,33 @@ management:
     endpoints:
         web:
             exposure:
-                # HOWTO: view _clickable_ Spring Actuator (Micrometer) Metrics endpoints: http://localhost:8081/actuator/metric-links
-                include: info, health, metrics, metric-links, mappings, openapi, swaggerui
+                # HOWTO: view _clickable_ Spring Actuator (Micrometer) Metrics endpoints:
+                #   http://localhost:8081/actuator/metric-links
+
+                # HOWTO: view all configured endpoints of the running application:
+                #   http://localhost:8081/actuator/mappings
+
+                # HOWTO: view the effective application configuration properties:
+                #   http://localhost:8081/actuator/configprops
+
+                include: info, health, metrics, metric-links, mappings, openapi, swaggerui, configprops, env
+    endpoint:
+        env:
+            # TODO.spec: check this, maybe set to when_authorized?
+            show-values: always
+        configprops:
+            # TODO.spec: check this, maybe set to when_authorized?
+            show-values: always
     observations:
         annotations:
             enabled: true
 
 spring:
+
     datasource:
         driver-class-name: org.postgresql.Driver
         password: password
-        url: jdbc:postgresql://localhost:5432/postgres
+        url: ${HSADMINNG_POSTGRES_JDBC_URL}
         username: postgres
 
     sql:
@@ -30,12 +46,12 @@ spring:
             hibernate:
                 dialect: net.hostsharing.hsadminng.config.PostgresCustomDialect
 
+    liquibase:
+        contexts: ${spring.profiles.active}
+
 # keep this in sync with test/.../application.yml
 springdoc:
     use-management-port: true
-
-liquibase:
-    contexts: dev
 
 hsadminng:
     postgres:
@@ -50,4 +66,3 @@ metrics:
             http:
                 server:
                     requests: true
-

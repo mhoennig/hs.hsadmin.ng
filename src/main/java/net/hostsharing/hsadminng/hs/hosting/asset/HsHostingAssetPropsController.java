@@ -4,6 +4,7 @@ import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetPropsApi;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,6 +13,7 @@ import java.util.Map;
 
 
 @RestController
+@Profile("!only-office")
 public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
 
     @Override

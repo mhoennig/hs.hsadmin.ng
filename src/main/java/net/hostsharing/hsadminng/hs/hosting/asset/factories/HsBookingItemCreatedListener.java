@@ -13,9 +13,11 @@ import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!only-office")
 public class HsBookingItemCreatedListener implements ApplicationListener<BookingItemCreatedAppEvent> {
 
     @Autowired

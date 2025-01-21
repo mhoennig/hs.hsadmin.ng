@@ -5,41 +5,48 @@ For architecture consider the files in the `doc` and `adr` folder.
 
 <!-- generated TOC begin: -->
 - [Setting up the Development Environment](#setting-up-the-development-environment)
-  - [PostgreSQL Server](#postgresql-server)
-  - [Markdown](#markdown)
-    - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
-    - [Render Markdown Embedded Mermaid Diagrams](#render-markdown-embedded-mermaid-diagrams)
-  - [IDE Specific Settings](#ide-specific-settings)
-    - [IntelliJ IDEA](#intellij-idea)
-  - [Other Tools](#other-tools)
+    - [PostgreSQL Server](#postgresql-server)
+    - [Markdown](#markdown)
+        - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
+        - [Render Markdown Embedded Mermaid Diagrams](#render-markdown-embedded-mermaid-diagrams)
+    - [IDE Specific Settings](#ide-specific-settings)
+        - [IntelliJ IDEA](#intellij-idea)
+    - [Other Tools](#other-tools)
 - [Running the SQL files](#running-the-sql-files)
-  - [For RBAC](#for-rbac)
-  - [For Historization](#for-historization)
+    - [For RBAC](#for-rbac)
+    - [For Historization](#for-historization)
 - [Coding Guidelines](#coding-guidelines)
-  - [Directory and Package Structure](#directory-and-package-structure)
-    - [General Directory Structure](#general-directory-structure)
-    - [Source Code Package Structure](#source-code-package-structure)
-  - [Run Tests from Command Line](#run-tests-from-command-line)
-  - [Spotless Code Formatting](#spotless-code-formatting)
-  - [JaCoCo Test Code Coverage Check](#jacoco-test-code-coverage-check)
-  - [PiTest Mutation Testing](#pitest-mutation-testing)
-    - [Remark](#remark)
-  - [OWASP Security Vulnerability Check](#owasp-security-vulnerability-check)
-  - [Dependency-License-Compatibility](#dependency-license-compatibility)
-  - [Dependency Version Upgrade](#dependency-version-upgrade)
+    - [Directory and Package Structure](#directory-and-package-structure)
+        - [General Directory Structure](#general-directory-structure)
+        - [Source Code Package Structure](#source-code-package-structure)
+    - [Run Tests from Command Line](#run-tests-from-command-line)
+    - [Spotless Code Formatting](#spotless-code-formatting)
+    - [JaCoCo Test Code Coverage Check](#jacoco-test-code-coverage-check)
+    - [PiTest Mutation Testing](#pitest-mutation-testing)
+        - [Remark](#remark)
+    - [OWASP Security Vulnerability Check](#owasp-security-vulnerability-check)
+    - [Dependency-License-Compatibility](#dependency-license-compatibility)
+    - [Dependency Version Upgrade](#dependency-version-upgrade)
+- [Biggest Flaws in our Architecture](#biggest-flaws-in-our-architecture)
+    - [The RBAC System is too Complicated](#the-rbac-system-is-too-complicated)
+    - [The Mapper is Error-Prone](#the-mapper-is-error-prone)
+    - [Too Many Business-Rules Implemented in Controllers](#too-many-business-rules-implemented-in-controllers)
 - [How To ...](#how-to-...)
-  - [How to Configure .pgpass for the Default PostgreSQL Database?](#how-to-configure-.pgpass-for-the-default-postgresql-database?)
-  - [How to Run the Tests Against a Local User-Space Podman Daemon?](#how-to-run-the-tests-against-a-local-user-space-podman-daemon?)
-    - [Install and Run Podman](#install-and-run-podman)
-    - [Use the Command Line to Run the Tests Against the Podman Daemon ](#use-the-command-line-to-run-the-tests-against-the-podman-daemon-)
-    - [Use IntelliJ IDEA Run the Tests Against the Podman Daemon](#use-intellij-idea-run-the-tests-against-the-podman-daemon)
-    - [~/.testcontainers.properties](#~/.testcontainers.properties)
-  - [How to Run the Tests Against a Remote Podman or Docker Daemon?](#how-to-run-the-tests-against-a-remote-podman-or-docker-daemon?)
-  - [How to Run the Application on a Different Port?](#how-to-run-the-application-on-a-different-port?)
-  - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
-  - [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
-  - [How to Re-Generate Spring-Controller-Interfaces from OpenAPI specs?](#how-to-re-generate-spring-controller-interfaces-from-openapi-specs?)
-  - [How to Generate Database Table Diagrams?](#how-to-generate-database-table-diagrams?)
+    - [How to Run the Application With Other Profiles, e.g. production](#)
+    - [How to Do a Clean Run of the Application](#how-to-do-a-clean-run-of-the-application)
+    - [How to Configure .pgpass for the Default PostgreSQL Database?](#how-to-configure-.pgpass-for-the-default-postgresql-database?)
+    - [How to Run the Tests Against a Local User-Space Podman Daemon?](#how-to-run-the-tests-against-a-local-user-space-podman-daemon?)
+        - [Install and Run Podman](#install-and-run-podman)
+        - [Use the Command Line to Run the Tests Against the Podman Daemon ](#use-the-command-line-to-run-the-tests-against-the-podman-daemon-)
+        - [Use IntelliJ IDEA Run the Tests Against the Podman Daemon](#use-intellij-idea-run-the-tests-against-the-podman-daemon)
+        - [~/.testcontainers.properties](#~/.testcontainers.properties)
+    - [How to Run the Tests Against a Remote Podman or Docker Daemon?](#how-to-run-the-tests-against-a-remote-podman-or-docker-daemon?)
+    - [How to Run the Application on a Different Port?](#how-to-run-the-application-on-a-different-port?)
+    - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
+    - [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
+    - [How to Re-Generate Spring-Controller-Interfaces from OpenAPI specs?](#how-to-re-generate-spring-controller-interfaces-from-openapi-specs?)
+    - [How to Generate Database Table Diagrams?](#how-to-generate-database-table-diagrams?)
+    - [How to Add (Real) Admin Users](#how-to-add-(real)-admin-users)
 - [Further Documentation](#further-documentation)
 <!-- generated TOC end. -->
 
@@ -51,10 +58,11 @@ Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
 - Docker 20.x (on MacOS you also need *Docker Desktop* or similar) or Podman
-- optionally: PostgreSQL Server 15.5-bookworm 
+- optionally: PostgreSQL Server 15.5-bookworm, if you want to use the database directly, not just via Docker
   (see instructions below to install and run in Docker)
 - The matching Java JDK at will be automatically installed by Gradle toolchain support to `~/.gradle/jdks/`.
 - You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
+- Python 3 is expected in /usr/bin/python3 if you want to run the `howto` tool (see `bin/howto`)
 
 If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
@@ -64,7 +72,12 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
     gw                  # initially downloads the configured Gradle version into the project
 
     gw test             # compiles and runs unit- and integration-tests - takes >10min even on a fast machine
-    gw scenarioTests    # compiles and scenario-tests - takes ~1min on a decent machine
+                        # `gw test` does NOT run import- and scenario-tests.
+                        # Use `gw-test` instead to make sure .tc-environment is sourced.
+    gw scenarioTest     # compiles and scenario-tests - takes ~1min on a decent machine
+                        # Use `gw-test scenarioTest` instead to make sure .tc-environment is sourced.
+                        
+    howto test          # shows more test information about how to run tests
     
     # if the container has not been built yet, run this:
     pg-sql-run          # downloads + runs PostgreSQL in a Docker container on localhost:5432
@@ -72,12 +85,22 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
     # if the container has been built already and you want to keep the data, run this:
     pg-sql-start
 
-Next, compile and run the application without CAS-authentication on `localhost:8080`:
+Next, compile and run the application on `localhost:8080` and the management server on `localhost:8081`:
 
+    # this disables CAS-authentication, for using the REST-API with CAS-authentication, see `bin/cas-curl`.
     export HSADMINNG_CAS_SERVER=
-    gw bootRun
 
-For using the REST-API with CAS-authentication, see `bin/cas-curl`.   
+    # this runs the application with test-data and all modules:
+    gw bootRun --args='--spring.profiles.active=dev,complete,test-data'
+
+The meaning of these profiles is:
+
+- **dev**: the PostgreSQL users are created via Liquibase
+- **complete**: all modules are started
+- **test-data**: some test data inserted 
+
+Running just `gw bootRun` would just run the *office* module, not insert any test-data and
+require the PostgreSQL users created in the database (see env-vars in `.aliases`).
 
 Now we can access the REST API, e.g. using curl:
 
@@ -189,7 +212,7 @@ To generate the TOC (Table of Contents), a little bash script from a
 Given this is in PATH as `md-toc`, use:
 
 ```shell
-md-toc <README.md 2 4 | cut -c5-'
+md-toc <README.md 2 4 | cut -c5-
 ```
 
 To render the Markdown files, especially to watch embedded PlantUML diagrams, you can use one of the following methods:
@@ -427,35 +450,41 @@ Some of these rules are checked with *ArchUnit* unit tests.
 
 ### Run Tests from Command Line
 
-Run all tests which have not yet been passed with the current source code:
+Run all unit-, integration- and acceptance-tests which have not yet been passed with the current source code:
 
 ```shell
-gw test 
+gw test # uses the current environment, especially HSADMINNG_POSTGRES_JDBC_URL
+```
+
+If the referenced database is not empty, the tests might fail.
+
+To explicitly use the Testcontainers-environment, run:
+
+```shell
+gw-test # uses the environment from .tc-environment
 ```
 
 Force running all tests:
 
 ```shell
-gw cleanTest test 
+gw-test --rerun 
 ```
+
+To find more options about running tests, try `howto test`.
 
 
 ### Spotless Code Formatting
 
 Code formatting for Java is checked via *spotless*.
-The formatting style can be checked with this command:
-
-```shell
-gw spotlessCheck
-```
-
-This task is also included in `gw build` and `gw check`.
-
 To apply formatting rules, use:
 
 ```shell
-gw spotlessApply
+gw-spotless
 ```
+
+The gradle task spotlessCheck is also included in `gw build` and `gw check`,
+thus if the formatting is not compliant to the rules, the build is going to fail. 
+
 
 ### JaCoCo Test Code Coverage Check
 
@@ -498,9 +527,8 @@ This task is also executed as part of `gw check`.
 
 #### Remark
 
-In this project, there is little business logic in *Java* code;
-most business code is in *plsql* 
-and *Java* ist mostly used for mapping REST calls to database queries.
+In this project, there is a large amount of code is in *plsql*, especially for RBAC. 
+*Java* ist mostly used for mapping and validating REST calls to database queries.
 This mapping ist mostly done through *Spring* annotations and other implicit code.
 
 Therefore, there are only few unit tests and thus mutation testing has limited value.
@@ -593,7 +621,8 @@ and would not need the `rbac.role` table anymore.
 We would also reduce the depth of the expensive recursive CTE-query.
 
 This has to be explored further.
-For now, we just keep it in mind and  
+For now, we just keep it in mind and FIXME
+
 
 ### The Mapper is Error-Prone
 
@@ -621,6 +650,31 @@ also try this (assumed you've sourced .aliases):
 ```sh
 howto 
 ```
+
+### How to Run the Application With Other Profiles, e.g. production:
+
+Add `--args='--spring.profiles.active=...` with the wanted profile selector:
+
+```sh
+gw bootRun --args='--spring.profiles.active=external-db,only -office,without-test-data'
+```
+
+These profiles mean:
+
+- **external-db**: an external PostgreSQL database is used with the PostgreSQL users already created as specified in the environment
+- **only-office**: only the Office module is started, but neither the Booking nor the Hosting modules
+- **without-test-data**: no test-data is inserted
+
+
+### How to Do a Clean Run of the Application
+
+If you frequently need to run with a fresh database and a clean build, you can use this:
+
+```sh
+export HSADMINNG_CAS_SERVER=
+gw clean && pg-sql-reset && sleep 5 && gw bootRun' 2>&1 | tee log
+```
+
 
 ### How to Configure .pgpass for the Default PostgreSQL Database?
 

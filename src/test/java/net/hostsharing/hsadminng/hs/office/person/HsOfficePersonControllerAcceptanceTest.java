@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,6 +32,7 @@ import static org.hamcrest.Matchers.*;
         classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
 )
 @ActiveProfiles("test")
+@Tag("officeIntegrationTest")
 class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort

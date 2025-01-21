@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.*;
         classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
 )
 @ActiveProfiles("test")
+@Tag("officeIntegrationTest")
 class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     private static final UUID GIVEN_NON_EXISTING_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");

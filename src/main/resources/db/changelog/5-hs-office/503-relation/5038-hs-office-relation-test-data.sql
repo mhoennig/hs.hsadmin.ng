@@ -80,7 +80,7 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-TEST-DATA-GENERATION context:!without-test-data endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$

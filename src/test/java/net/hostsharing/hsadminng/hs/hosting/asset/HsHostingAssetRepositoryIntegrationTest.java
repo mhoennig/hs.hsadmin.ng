@@ -12,6 +12,7 @@ import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -44,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import({ Context.class, JpaAttempt.class })
+@Tag("hostingIntegrationTest")
 class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired

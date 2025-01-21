@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.config;
 
 import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
@@ -14,6 +15,7 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
         classes = { HsadminNgApplication.class, DisableSecurityConfig.class }
 )
 @ActiveProfiles("test")
+@Tag("generalIntegrationTest")
 class CustomActuatorEndpointAcceptanceTest {
 
     @LocalManagementPort

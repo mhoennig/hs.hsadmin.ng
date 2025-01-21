@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +19,7 @@ import static org.hamcrest.Matchers.*;
         classes = {HsadminNgApplication.class, DisableSecurityConfig.class}
 )
 @ActiveProfiles("test")
+@Tag("generalIntegrationTest")
 class RbacRoleControllerAcceptanceTest {
 
     @LocalServerPort

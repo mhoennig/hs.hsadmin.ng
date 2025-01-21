@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.config;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,8 +18,9 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.assertj.core.api.Assertions.assertThat;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = "server.port=0")
+@TestPropertySource(properties = {"server.port=0", "hsadminng.cas.server=http://localhost:8088/cas"})
 @ActiveProfiles("wiremock") // IMPORTANT: To test prod config, do not use test profile!
+@Tag("generalIntegrationTest")
 class CasAuthenticationFilterIntegrationTest {
 
     @Value("${local.server.port}")

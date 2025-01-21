@@ -90,8 +90,37 @@ alias pg-sql-restore='gunzip --stdout | docker exec -i hsadmin-ng-postgres psql 
 alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
 
 alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
-alias gw-test='. .aliases; ./gradlew test'
-alias gw-check='. .aliases; gw test check -x pitest'
+alias gw-check='. .aliases; . .tc-environment; gw test check -x pitest'
+
+# HOWTO: run all 'normal' tests (no scenario+import-tests): `gw-test`
+#   You can also mention specific targets: `gw-test importOfficeData`.
+#   This will always use the environment from `.tc-environment`.
+#
+# HOWTO: re-run tests even if no changed can be detected: `gw-test --rerun`
+#   You can also mention specific targets: `gw-test scenarioTest --rerun`.
+#   This will always use the environment from `.tc-environment`.
+#
+# HOWTO: run all tests (unit, integration+acceptance, import and scenario): `gw-test --all`
+#   You can also re-run all these tests, which will take ~20min: `gw-test --all --rerun`
+#   This will always use the environment from `.tc-environment`.
+#
+function _gwTest() {
+  . .aliases;
+  . .tc-environment;
+  if [ "$1" == "--all" ]; then
+    shift # to remove the --all from $@
+    # delierately in separate gradlew-calls to avoid Testcontains-PostgreSQL problem spillover
+    ./gradlew unitTest "$@" &&
+        ./gradlew officeIntegrationTest bookingIntegrationTest hostingIntegrationTest "$@" &&
+        ./gradlew scenarioTest "$@" &&
+        ./gradlew importOfficeData importHostingAssets "$@";
+  elif [ $# -eq 0 ] || [[ $1 == -* ]]; then
+    ./gradlew test "$@";
+  else
+    ./gradlew "$@";
+  fi
+}
+alias gw-test=_gwTest
 
 alias howto=bin/howto
 alias cas-curl=bin/cas-curl
@@ -107,6 +136,6 @@ if [ ! -f .environment ]; then
 fi
 source .environment
 
-alias scenario-reports-upload='./gradlew scenarioTests convertMarkdownToHtml && ssh hsh03-hsngdev@h50.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@h50.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
+alias scenario-reports-upload='./gradlew scenarioTest convertMarkdownToHtml && ssh hsh03-hsngdev@h50.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@h50.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
 alias scenario-reports-open='open https://hsngdev.hs-example.de/scenarios/office'
 

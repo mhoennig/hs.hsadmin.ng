@@ -17,6 +17,7 @@ import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -42,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class, RbacGrantsDiagramService.class })
+@Tag("officeIntegrationTest")
 class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired

@@ -1,10 +1,13 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
 
+import org.springframework.context.annotation.Profile;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Profile("!only-office")
 public interface HsBookingItemRepository<E extends HsBookingItem> {
 
     Optional<E> findByUuid(final UUID bookingItemUuid);

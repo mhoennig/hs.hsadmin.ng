@@ -1,11 +1,13 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import io.micrometer.core.annotation.Timed;
+import org.springframework.context.annotation.Profile;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Profile("!only-office")
 public interface HsHostingAssetRepository<E extends HsHostingAsset> {
 
     @Timed("app.hosting.assets.repo.findByUuid")

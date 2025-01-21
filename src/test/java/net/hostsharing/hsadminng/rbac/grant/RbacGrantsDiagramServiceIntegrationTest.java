@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService.Include;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class, RbacGrantsDiagramService.class})
+@Tag("generalIntegrationTest")
 class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired

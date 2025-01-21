@@ -83,7 +83,8 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
 
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // TODO.impl: version conflict with SpringDoc, check later and re-enable if fixed
+    // developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     annotationProcessor 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
@@ -179,7 +180,9 @@ openapiProcessor {
     }
 }
 sourceSets.main.java.srcDir 'build/generated/sources/openapi'
+
 abstract class ProcessSpring extends DefaultTask {}
+
 tasks.register('processSpring', ProcessSpring)
 ['processSpringRoot',
  'processSpringRbac',
@@ -253,18 +256,20 @@ licenseReport {
 }
 project.tasks.check.dependsOn(checkLicense)
 
-// JaCoCo Test Code Coverage
-jacoco {
-    toolVersion = "0.8.10"
-}
+// HOWTO: run all tests except import- and scenario-tests: gw test
 test {
     finalizedBy jacocoTestReport // generate report after tests
     excludes = [
             'net.hostsharing.hsadminng.**.generated.**',
     ]
     useJUnitPlatform {
-        excludeTags 'importOfficeData', 'importHostingData', 'scenarioTest'
+        excludeTags 'importOfficeData', 'importHostingAssets', 'scenarioTest'
     }
+}
+
+// JaCoCo Test Code Coverage for unit-tests
+jacoco {
+    toolVersion = "0.8.10"
 }
 jacocoTestReport {
     dependsOn test
@@ -330,6 +335,67 @@ jacocoTestCoverageVerification {
     }
 }
 
+// HOWTO: run all unit-tests which don't need a database: gw unitTest
+tasks.register('unitTest', Test) {
+    useJUnitPlatform {
+        excludeTags 'importOfficeData', 'importHostingAssets', 'scenarioTest', 'generalIntegrationTest',
+                'officeIntegrationTest', 'bookingIntegrationTest', 'hostingIntegrationTest'
+    }
+
+    group 'verification'
+    description 'runs all unit-tests which do not need a database'
+
+    mustRunAfter spotlessJava
+}
+
+// HOWTO: run all integration tests which are not specific to a module, like base, rbac, config etc.
+tasks.register('generalIntegrationTest', Test) {
+    useJUnitPlatform {
+        includeTags 'generalIntegrationTest'
+    }
+
+    group 'verification'
+    description 'runs integration tests which are not specific to a module, like base, rbac, config etc.'
+
+    mustRunAfter spotlessJava
+}
+
+// HOWTO: run all integration tests of the office module: gw officeIntegrationTest
+tasks.register('officeIntegrationTest', Test) {
+    useJUnitPlatform {
+        includeTags 'officeIntegrationTest'
+    }
+
+    group 'verification'
+    description 'runs integration tests of the office module'
+
+    mustRunAfter spotlessJava
+}
+
+// HOWTO: run all integration tests of the booking module: gw bookingIntegrationTest
+tasks.register('bookingIntegrationTest', Test) {
+    useJUnitPlatform {
+        includeTags 'bookingIntegrationTest'
+    }
+
+    group 'verification'
+    description 'runs integration tests of the office module'
+
+    mustRunAfter spotlessJava
+}
+
+// HOWTO: run all integration tests of the hosting module: gw hostingIntegrationTest
+tasks.register('hostingIntegrationTest', Test) {
+    useJUnitPlatform {
+        includeTags 'hostingIntegrationTest'
+    }
+
+    group 'verification'
+    description 'runs integration tests of the office module'
+
+    mustRunAfter spotlessJava
+}
+
 tasks.register('importOfficeData', Test) {
     useJUnitPlatform {
         includeTags 'importOfficeData'
@@ -352,7 +418,7 @@ tasks.register('importHostingAssets', Test) {
     mustRunAfter spotlessJava
 }
 
-tasks.register('scenarioTests', Test) {
+tasks.register('scenarioTest', Test) {
     useJUnitPlatform {
         includeTags 'scenarioTest'
     }
@@ -373,7 +439,7 @@ pitest {
     ]
 
     targetTests = ['net.hostsharing.hsadminng.**.*UnitTest', 'net.hostsharing.hsadminng.**.*RestTest']
-    excludedTestClasses = ['**AcceptanceTest*', '**IntegrationTest*']
+    excludedTestClasses = ['**AcceptanceTest*', '**IntegrationTest*', '**ImportOfficeData', '**ImportHostingAssets']
 
     pitestVersion = '1.17.0'
     junit5PluginVersion = '1.1.0'
@@ -452,7 +518,7 @@ tasks.register('convertMarkdownToHtml') {
         }
     }
 }
-convertMarkdownToHtml.dependsOn scenarioTests
+convertMarkdownToHtml.dependsOn scenarioTest
 
 // shortcut for compiling all files
 tasks.register('compile') {

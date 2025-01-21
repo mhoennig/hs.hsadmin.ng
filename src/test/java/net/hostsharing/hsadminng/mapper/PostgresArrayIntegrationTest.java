@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.mapper;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
+@Tag("generalIntegrationTest")
 class PostgresArrayIntegrationTest {
 
     @Autowired

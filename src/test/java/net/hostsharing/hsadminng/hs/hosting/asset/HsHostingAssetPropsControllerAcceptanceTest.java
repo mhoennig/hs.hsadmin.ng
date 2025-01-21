@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -16,6 +17,7 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
         classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
 )
 @ActiveProfiles("test")
+@Tag("hostingIntegrationTest")
 class HsHostingAssetPropsControllerAcceptanceTest {
 
     @LocalServerPort

@@ -1,11 +1,13 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
 import io.micrometer.core.annotation.Timed;
+import org.springframework.context.annotation.Profile;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Profile("!only-office")
 public interface HsBookingProjectRepository<E extends HsBookingProject> {
 
     @Timed("app.booking.projects.repo.findByUuid")

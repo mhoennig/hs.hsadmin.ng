@@ -29,6 +29,7 @@ databaseChangeLog:
         file: db/changelog/0-base/030-historization.sql
     - include:
         file: db/changelog/0-base/090-log-slow-queries-extensions.sql
+
     - include:
         file: db/changelog/1-rbac/1000-rbac-schema.sql
     - include:
@@ -49,26 +50,38 @@ databaseChangeLog:
         file: db/changelog/1-rbac/1059-rbac-statistics.sql
     - include:
         file: db/changelog/1-rbac/1080-rbac-global.sql
+
     - include:
         file: db/changelog/2-rbactest/200-rbactest-schema.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/201-rbactest-customer/2010-rbactest-customer.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/201-rbactest-customer/2018-rbactest-customer-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/202-rbactest-package/2020-rbactest-package.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/202-rbactest-package/2028-rbactest-package-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/203-rbactest-domain/2030-rbactest-domain.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/2-rbactest/203-rbactest-domain/2038-rbactest-domain-test-data.sql
+        context: "!without-test-data"
+
     - include:
         file: db/changelog/5-hs-office/500-hs-office-schema.sql
     - include:
@@ -79,18 +92,21 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/501-contact/5016-hs-office-contact-migration.sql
     - include:
         file: db/changelog/5-hs-office/501-contact/5018-hs-office-contact-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/502-person/5020-hs-office-person.sql
     - include:
         file: db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql
     - include:
         file: db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/503-relation/5030-hs-office-relation.sql
     - include:
         file: db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql
     - include:
         file: db/changelog/5-hs-office/503-relation/5038-hs-office-relation-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/504-partner/5040-hs-office-partner.sql
     - include:
@@ -101,18 +117,21 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/504-partner/5046-hs-office-partner-migration.sql
     - include:
         file: db/changelog/5-hs-office/504-partner/5048-hs-office-partner-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/505-bankaccount/5050-hs-office-bankaccount.sql
     - include:
         file: db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql
     - include:
           file: db/changelog/5-hs-office/505-bankaccount/5058-hs-office-bankaccount-test-data.sql
+          context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/506-debitor/5060-hs-office-debitor.sql
     - include:
         file: db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql
     - include:
         file: db/changelog/5-hs-office/506-debitor/5068-hs-office-debitor-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/507-sepamandate/5070-hs-office-sepamandate.sql
     - include:
@@ -121,12 +140,14 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/507-sepamandate/5076-hs-office-sepamandate-migration.sql
     - include:
         file: db/changelog/5-hs-office/507-sepamandate/5078-hs-office-sepamandate-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/510-membership/5100-hs-office-membership.sql
     - include:
         file: db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql
     - include:
         file: db/changelog/5-hs-office/510-membership/5108-hs-office-membership-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/511-coopshares/5110-hs-office-coopshares.sql
     - include:
@@ -135,6 +156,7 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/511-coopshares/5116-hs-office-coopshares-migration.sql
     - include:
         file: db/changelog/5-hs-office/511-coopshares/5118-hs-office-coopshares-test-data.sql
+        context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql
     - include:
@@ -143,34 +165,53 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/512-coopassets/5126-hs-office-coopassets-migration.sql
     - include:
         file: db/changelog/5-hs-office/512-coopassets/5128-hs-office-coopassets-test-data.sql
+        context: "!without-test-data"
+
     - include:
         file: db/changelog/6-hs-booking/600-hs-booking-schema.sql
+        context: "!only-office"
     - include:
         file: db/changelog/6-hs-booking/610-booking-debitor/6100-hs-booking-debitor.sql
+        context: "!only-office"
     - include:
         file: db/changelog/6-hs-booking/620-booking-project/6200-hs-booking-project.sql
+        context: "!only-office"
     - include:
         file: db/changelog/6-hs-booking/620-booking-project/6203-hs-booking-project-rbac.sql
+        context: "!only-office"
     - include:
         file: db/changelog/6-hs-booking/620-booking-project/6208-hs-booking-project-test-data.sql
+        context: "!only-office and !without-test-data"
     - include:
         file: db/changelog/6-hs-booking/630-booking-item/6300-hs-booking-item.sql
+        context: "!only-office"
     - include:
         file: db/changelog/6-hs-booking/630-booking-item/6303-hs-booking-item-rbac.sql
+        context: "!only-office"
     - include:
         file: db/changelog/6-hs-booking/630-booking-item/6308-hs-booking-item-test-data.sql
+        context: "!only-office and !without-test-data"
+
     - include:
         file: db/changelog/7-hs-hosting/700-hs-hosting-schema.sql
+        context: "!only-office"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7010-hs-hosting-asset.sql
+        context: "!only-office"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7013-hs-hosting-asset-rbac.sql
+        context: "!only-office"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7016-hs-hosting-asset-migration.sql
+        context: "!only-office"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7018-hs-hosting-asset-test-data.sql
+        context: "!only-office and !without-test-data"
+
     - include:
         file: db/changelog/9-hs-global/9000-statistics.sql
+        context: "!only-office"
+
     - include:
         file: db/changelog/9-hs-global/9100-hs-integration-schema.sql
     - include:

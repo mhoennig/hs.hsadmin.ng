@@ -67,7 +67,7 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:test-customer-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:test-customer-TEST-DATA-GENERATION context:!without-test-data endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestClassOrder;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -49,6 +50,7 @@ import static org.hamcrest.Matchers.matchesRegex;
 @ActiveProfiles("test")
 @Transactional
 @TestClassOrder(ClassOrderer.OrderAnnotation.class) // fail early on fetching problems
+@Tag("bookingIntegrationTest")
 class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort

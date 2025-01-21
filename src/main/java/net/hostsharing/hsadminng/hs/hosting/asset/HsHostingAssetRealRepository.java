@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import io.micrometer.core.annotation.Timed;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Profile("!only-office")
 public interface HsHostingAssetRealRepository extends HsHostingAssetRepository<HsHostingAssetRealEntity>, Repository<HsHostingAssetRealEntity, UUID> {
 
     @Timed("app.hostingAsset.repo.findByUuid.real")

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 
 /*
  * This 'test' includes the complete legacy 'office' data import.
@@ -51,6 +52,7 @@ import org.springframework.test.annotation.DirtiesContext;
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
         "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
 })
+@ActiveProfiles("without-test-data")
 @DirtiesContext
 @Import({ Context.class, JpaAttempt.class })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

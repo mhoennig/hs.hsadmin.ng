@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.startsWith;
 )
 @ActiveProfiles("test")
 @Transactional
+@Tag("officeIntegrationTest")
 class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort

@@ -1,12 +1,14 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
 import io.micrometer.core.annotation.Timed;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Profile("!only-office")
 public interface HsBookingProjectRealRepository extends HsBookingProjectRepository<HsBookingProjectRealEntity>,
         Repository<HsBookingProjectRealEntity, UUID> {
 

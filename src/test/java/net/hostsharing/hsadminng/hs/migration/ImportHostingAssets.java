@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.io.Reader;
 import java.net.IDN;
@@ -121,6 +122,7 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 })
 @DirtiesContext
 @Import({ Context.class, JpaAttempt.class })
+@ActiveProfiles("without-test-data")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)
 public class ImportHostingAssets extends BaseOfficeDataImport {

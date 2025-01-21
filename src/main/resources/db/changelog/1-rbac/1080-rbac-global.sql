@@ -170,7 +170,7 @@ commit;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-ADMIN-USERS context:dev,tc endDelimiter:--//
+--changeset michael.hoennig:rbac-global-ADMIN-USERS context:!without-test-data endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Create two users and assign both to the administrators' role.
@@ -192,7 +192,7 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-TEST context:dev,tc runAlways:true endDelimiter:--//
+--changeset michael.hoennig:rbac-global-TEST context:!without-test-data runAlways:true endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*

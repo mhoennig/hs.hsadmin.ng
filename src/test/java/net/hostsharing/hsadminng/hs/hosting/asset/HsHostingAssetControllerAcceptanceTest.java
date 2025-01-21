@@ -19,6 +19,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestClassOrder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,7 @@ import static org.hamcrest.Matchers.matchesRegex;
 )
 @ActiveProfiles("test")
 @TestClassOrder(ClassOrderer.OrderAnnotation.class) // fail early on fetching problems
+@Tag("hostingIntegrationTest")
 class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort

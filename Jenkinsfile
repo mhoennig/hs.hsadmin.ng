@@ -35,9 +35,24 @@ pipeline {
 
         stage ('Tests') {
             parallel {
-                stage('Unit-/Integration/Acceptance-Tests') {
+                stage('Unit-Tests') {
                     steps {
-                        sh './gradlew check --no-daemon -x pitest -x dependencyCheckAnalyze -x importOfficeData -x importHostingAssets'
+                        sh './gradlew unitTest  --no-daemon'
+                    }
+                }
+                stage('General-Tests') {
+                    steps {
+                        sh './gradlew generalTest --no-daemon'
+                    }
+                }
+                stage('Office-Tests') {
+                    steps {
+                        sh './gradlew officeIntegrationTest --no-daemon'
+                    }
+                }
+                stage('Booking+Hosting-Tests') {
+                    steps {
+                        sh './gradlew bookingIntegrationTest hostingIntegrationTest --no-daemon'
                     }
                 }
                 stage('Import-Tests') {
@@ -47,7 +62,7 @@ pipeline {
                 }
                 stage ('Scenario-Tests') {
                     steps {
-                        sh './gradlew scenarioTests --no-daemon'
+                        sh './gradlew scenarioTest --no-daemon'
                     }
                 }
             }

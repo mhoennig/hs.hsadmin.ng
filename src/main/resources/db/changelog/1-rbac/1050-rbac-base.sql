@@ -870,7 +870,7 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-PGSQL-ROLES context:dev,tc endDelimiter:--//
+--changeset michael.hoennig:rbac-base-PGSQL-ROLES context:!external-db endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do $$

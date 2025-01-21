@@ -15,6 +15,7 @@ import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 @RestController
+@Profile("!only-office")
 public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Autowired

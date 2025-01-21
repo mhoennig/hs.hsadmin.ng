@@ -13,6 +13,7 @@ import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +38,7 @@ import static org.hamcrest.Matchers.*;
 )
 @ActiveProfiles("test")
 @Transactional(readOnly = true, propagation = Propagation.NEVER)
+@Tag("generalIntegrationTest")
 class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     @LocalServerPort

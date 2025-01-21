@@ -11,6 +11,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelati
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +34,7 @@ import static org.hamcrest.Matchers.hasEntry;
 )
 @ActiveProfiles("test")
 @Transactional
+@Tag("officeIntegrationTest")
 class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     public static final UUID GIVEN_NON_EXISTING_HOLDER_PERSON_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
