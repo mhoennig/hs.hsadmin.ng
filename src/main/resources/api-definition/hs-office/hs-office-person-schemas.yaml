@@ -9,6 +9,7 @@ components:
                 - UNKNOWN_PERSON
                 - NATURAL_PERSON
                 - LEGAL_PERSON
+                - ORGANIZATIONAL_UNIT
                 - INCORPORATED_FIRM
                 - UNINCORPORATED_FIRM
                 - PUBLIC_INSTITUTION

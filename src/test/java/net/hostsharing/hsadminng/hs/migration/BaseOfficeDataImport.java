@@ -197,37 +197,37 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
 
         assertThat(toJsonFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
-                   100=partner(P-10003: ?? Michael Mellis, Herr Michael Mellis, Michael Mellis),
-                   120=partner(P-10020: LP JM GmbH, Herr Philip Meyer-Contract, JM GmbH),
-                   122=partner(P-11022: ?? Test PS, Petra Schmidt, Test PS),
-                   132=partner(P-10152: ?? Ragnar IT-Beratung, Herr Ragnar Richter, Ragnar IT-Beratung),
+                   100=partner(P-10003: ?? Michael Mellis, Michael Mellis, Herr Michael Mellis),
+                   120=partner(P-10020: LP JM GmbH, JM GmbH, Herr Philip Meyer-Contract),
+                   122=partner(P-11022: ?? Test PS, Test PS, Petra Schmidt),
+                   132=partner(P-10152: ?? Ragnar IT-Beratung, Ragnar IT-Beratung, Herr Ragnar Richter),
                    190=partner(P-19090: NP Camus, Cecilia, Frau Cecilia Camus),
                    199=partner(P-19999: null null, null),
-                   213=partner(P-10000: LP Hostsharing e.G., Firma Hostmaster Hostsharing, Hostsharing e.G.),
-                   541=partner(P-11018: ?? Wasserwerk Südholstein, Frau Christiane Milberg, Wasserwerk Südholstein),
-                   542=partner(P-11019: ?? Das Perfekte Haus, Herr Richard Wiese, Das Perfekte Haus)
+                   213=partner(P-10000: LP Hostsharing e.G., Hostsharing e.G., Hostmaster Hostsharing),
+                   541=partner(P-11018: ?? Wasserwerk Südholstein, Wasserwerk Südholstein, Frau Christiane Milberg),
+                   542=partner(P-11019: ?? Das Perfekte Haus, Das Perfekte Haus, Herr Richard Wiese)
                 }
                 """);
         assertThat(toJsonFormattedString(contacts)).isEqualToIgnoringWhitespace("""
                 {
-                   100=contact(caption='Herr Michael Mellis, Michael Mellis', emailAddresses='{ "main": "michael@Mellis.example.org"}'),
-                   1200=contact(caption='JM e.K.', emailAddresses='{ "main": "jm-ex-partner@example.org"}'),
-                   1201=contact(caption='Frau Dr. Jenny Meyer-Billing, JM GmbH', emailAddresses='{ "main": "jm-billing@example.org"}'),
-                   1202=contact(caption='Herr Andrew Meyer-Operation, JM GmbH', emailAddresses='{ "main": "am-operation@example.org"}'),
-                   1203=contact(caption='Herr Philip Meyer-Contract, JM GmbH', emailAddresses='{ "main": "pm-partner@example.org"}'),
-                   1204=contact(caption='Frau Tammy Meyer-VIP, JM GmbH', emailAddresses='{ "main": "tm-vip@example.org"}'),
-                   1301=contact(caption='Petra Schmidt, Test PS', emailAddresses='{ "main": "ps@example.com"}'),
-                   132=contact(caption='Herr Ragnar Richter, Ragnar IT-Beratung', emailAddresses='{ "main": "hostsharing@ragnar-richter.de"}'),
-                   1401=contact(caption='Frau Frauke Fanninga', emailAddresses='{ "main": "ff@example.org"}'),
-                   1501=contact(caption='Frau Cecilia Camus', emailAddresses='{ "main": "cc@example.org"}'),
-                   212=contact(caption='Firma Hostmaster Hostsharing, Hostsharing e.G.', emailAddresses='{ "main": "hostmaster@hostsharing.net"}'),
-                   90436=contact(caption='Frau Christiane Milberg, Wasserwerk Südholstein', emailAddresses='{ "main": "rechnung@ww-sholst.example.org"}'),
-                   90437=contact(caption='Herr Richard Wiese, Das Perfekte Haus', emailAddresses='{ "main": "admin@das-perfekte-haus.example.org"}'),
-                   90438=contact(caption='Herr Karim Metzger, Wasswerwerk Südholstein', emailAddresses='{ "main": "karim.metzger@ww-sholst.example.org"}'),
-                   90590=contact(caption='Herr Inhaber R. Wiese, Das Perfekte Haus', emailAddresses='{ "main": "515217@kkemail.example.org"}'),
-                   90629=contact(caption='Ragnar Richter', emailAddresses='{ "main": "mail@ragnar-richter..example.org"}'),
-                   90677=contact(caption='Eike Henning', emailAddresses='{ "main": "hostsharing@eike-henning..example.org"}'),
-                   90698=contact(caption='Jan Henning', emailAddresses='{ "main": "mail@jan-henning.example.org"}'),
+                   100=contact(caption='Michael Mellis, Herr Michael Mellis', emailAddresses='{"main": "michael@Mellis.example.org"}'),
+                   1200=contact(caption='JM e.K.', emailAddresses='{"main": "jm-ex-partner@example.org"}'),
+                   1201=contact(caption='JM GmbH, Frau Dr. Jenny Meyer-Billing', emailAddresses='{"main": "jm-billing@example.org"}'),
+                   1202=contact(caption='JM GmbH, Herr Andrew Meyer-Operation', emailAddresses='{"main": "am-operation@example.org"}'),
+                   1203=contact(caption='JM GmbH, Herr Philip Meyer-Contract', emailAddresses='{"main": "pm-partner@example.org"}'),
+                   1204=contact(caption='JM GmbH, Frau Tammy Meyer-VIP', emailAddresses='{"main": "tm-vip@example.org"}'),
+                   1301=contact(caption='Test PS, Petra Schmidt', emailAddresses='{"main": "ps@example.com"}'),
+                   132=contact(caption='Ragnar IT-Beratung, Herr Ragnar Richter', emailAddresses='{"main": "hostsharing@ragnar-richter.de"}'),
+                   1401=contact(caption='Frau Frauke Fanninga', emailAddresses='{"main": "ff@example.org"}'),
+                   1501=contact(caption='Frau Cecilia Camus', emailAddresses='{"main": "cc@example.org"}'),
+                   212=contact(caption='Hostsharing e.G., Hostmaster Hostsharing', emailAddresses='{"main": "hostmaster@hostsharing.net"}'),
+                   90436=contact(caption='Wasserwerk Südholstein, Frau Christiane Milberg', emailAddresses='{"main": "rechnung@ww-sholst.example.org"}'),
+                   90437=contact(caption='Das Perfekte Haus, Herr Richard Wiese', emailAddresses='{"main": "admin@das-perfekte-haus.example.org"}'),
+                   90438=contact(caption='Wasswerwerk Südholstein, Herr Karim Metzger', emailAddresses='{"main": "karim.metzger@ww-sholst.example.org"}'),
+                   90590=contact(caption='Das Perfekte Haus, Herr Inhaber R. Wiese', emailAddresses='{"main": "515217@kkemail.example.org"}'),
+                   90629=contact(caption='Ragnar Richter', emailAddresses='{"main": "mail@ragnar-richter..example.org"}'),
+                   90677=contact(caption='Eike Henning', emailAddresses='{"main": "hostsharing@eike-henning..example.org"}'),
+                   90698=contact(caption='Jan Henning', emailAddresses='{"main": "mail@jan-henning.example.org"}'),
                    90699=contact(caption='Jan Henning', emailAddresses='{"main": "lists@jan-henning.example.org"}')
                 }
                 """);
@@ -279,71 +279,71 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                 """);
         assertThat(toJsonFormattedString(relations)).isEqualToIgnoringWhitespace("""
                 {
-                   2000000=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000001=rel(anchor='?? Michael Mellis', type='DEBITOR', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000002=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Ragnar IT-Beratung', contact='Herr Ragnar Richter, Ragnar IT-Beratung'),
-                   2000003=rel(anchor='?? Ragnar IT-Beratung', type='DEBITOR', holder='?? Ragnar IT-Beratung', contact='Herr Ragnar Richter, Ragnar IT-Beratung'),
-                   2000004=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='LP Hostsharing e.G.', contact='Firma Hostmaster Hostsharing, Hostsharing e.G.'),
-                   2000005=rel(anchor='LP Hostsharing e.G.', type='DEBITOR', holder='LP Hostsharing e.G.', contact='Firma Hostmaster Hostsharing, Hostsharing e.G.'),
-                   2000006=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Wasserwerk Südholstein', contact='Frau Christiane Milberg, Wasserwerk Südholstein'),
-                   2000007=rel(anchor='?? Wasserwerk Südholstein', type='DEBITOR', holder='?? Wasserwerk Südholstein', contact='Frau Christiane Milberg, Wasserwerk Südholstein'),
-                   2000008=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000009=rel(anchor='?? Das Perfekte Haus', type='DEBITOR', holder='?? Das Perfekte Haus', contact='Herr Inhaber R. Wiese, Das Perfekte Haus'),
-                   2000010=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract, JM GmbH'),
-                   2000011=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing, JM GmbH'),
-                   2000012=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Test PS', contact='Petra Schmidt, Test PS'),
-                   2000013=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt, Test PS'),
+                   2000000=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000001=rel(anchor='?? Michael Mellis', type='DEBITOR', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000002=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Ragnar IT-Beratung', contact='Ragnar IT-Beratung, Herr Ragnar Richter'),
+                   2000003=rel(anchor='?? Ragnar IT-Beratung', type='DEBITOR', holder='?? Ragnar IT-Beratung', contact='Ragnar IT-Beratung, Herr Ragnar Richter'),
+                   2000004=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='LP Hostsharing e.G.', contact='Hostsharing e.G., Hostmaster Hostsharing'),
+                   2000005=rel(anchor='LP Hostsharing e.G.', type='DEBITOR', holder='LP Hostsharing e.G.', contact='Hostsharing e.G., Hostmaster Hostsharing'),
+                   2000006=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Wasserwerk Südholstein', contact='Wasserwerk Südholstein, Frau Christiane Milberg'),
+                   2000007=rel(anchor='?? Wasserwerk Südholstein', type='DEBITOR', holder='?? Wasserwerk Südholstein', contact='Wasserwerk Südholstein, Frau Christiane Milberg'),
+                   2000008=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000009=rel(anchor='?? Das Perfekte Haus', type='DEBITOR', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Inhaber R. Wiese'),
+                   2000010=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='LP JM GmbH', contact='JM GmbH, Herr Philip Meyer-Contract'),
+                   2000011=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='JM GmbH, Frau Dr. Jenny Meyer-Billing'),
+                   2000012=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Test PS', contact='Test PS, Petra Schmidt'),
+                   2000013=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Test PS, Petra Schmidt'),
                    2000014=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus'),
                    2000015=rel(anchor='NP Camus, Cecilia', type='DEBITOR', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus'),
                    2000016=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='null null, null'),
                    2000017=rel(anchor='null null, null', type='DEBITOR'),
-                   2000018=rel(anchor='LP Hostsharing e.G.', type='OPERATIONS_ALERT', holder='LP Hostsharing e.G.', contact='Firma Hostmaster Hostsharing, Hostsharing e.G.'),
-                   2000019=rel(anchor='LP Hostsharing e.G.', type='OPERATIONS', holder='LP Hostsharing e.G.', contact='Firma Hostmaster Hostsharing, Hostsharing e.G.'),
-                   2000020=rel(anchor='LP Hostsharing e.G.', type='REPRESENTATIVE', holder='LP Hostsharing e.G.', contact='Firma Hostmaster Hostsharing, Hostsharing e.G.'),
-                   2000021=rel(anchor='?? Michael Mellis', type='OPERATIONS_ALERT', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000022=rel(anchor='?? Michael Mellis', type='OPERATIONS', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000023=rel(anchor='?? Michael Mellis', type='REPRESENTATIVE', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000024=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='operations-discussion', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000025=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='operations-announce', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000026=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='generalversammlung', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000027=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='members-announce', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000028=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='members-discussion', holder='?? Michael Mellis', contact='Herr Michael Mellis, Michael Mellis'),
-                   2000029=rel(anchor='?? Ragnar IT-Beratung', type='OPERATIONS_ALERT', holder='?? Ragnar IT-Beratung', contact='Herr Ragnar Richter, Ragnar IT-Beratung'),
-                   2000030=rel(anchor='?? Ragnar IT-Beratung', type='OPERATIONS', holder='?? Ragnar IT-Beratung', contact='Herr Ragnar Richter, Ragnar IT-Beratung'),
-                   2000031=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='operations-discussion', holder='?? Ragnar IT-Beratung', contact='Herr Ragnar Richter, Ragnar IT-Beratung'),
-                   2000032=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='operations-announce', holder='?? Ragnar IT-Beratung', contact='Herr Ragnar Richter, Ragnar IT-Beratung'),
+                   2000018=rel(anchor='LP Hostsharing e.G.', type='OPERATIONS_ALERT', holder='LP Hostsharing e.G.', contact='Hostsharing e.G., Hostmaster Hostsharing'),
+                   2000019=rel(anchor='LP Hostsharing e.G.', type='OPERATIONS', holder='LP Hostsharing e.G.', contact='Hostsharing e.G., Hostmaster Hostsharing'),
+                   2000020=rel(anchor='LP Hostsharing e.G.', type='REPRESENTATIVE', holder='LP Hostsharing e.G.', contact='Hostsharing e.G., Hostmaster Hostsharing'),
+                   2000021=rel(anchor='?? Michael Mellis', type='OPERATIONS_ALERT', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000022=rel(anchor='?? Michael Mellis', type='OPERATIONS', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000023=rel(anchor='?? Michael Mellis', type='REPRESENTATIVE', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000024=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='operations-discussion', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000025=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='operations-announce', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000026=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='generalversammlung', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000027=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='members-announce', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000028=rel(anchor='?? Michael Mellis', type='SUBSCRIBER', mark='members-discussion', holder='?? Michael Mellis', contact='Michael Mellis, Herr Michael Mellis'),
+                   2000029=rel(anchor='?? Ragnar IT-Beratung', type='OPERATIONS_ALERT', holder='?? Ragnar IT-Beratung', contact='Ragnar IT-Beratung, Herr Ragnar Richter'),
+                   2000030=rel(anchor='?? Ragnar IT-Beratung', type='OPERATIONS', holder='?? Ragnar IT-Beratung', contact='Ragnar IT-Beratung, Herr Ragnar Richter'),
+                   2000031=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='operations-discussion', holder='?? Ragnar IT-Beratung', contact='Ragnar IT-Beratung, Herr Ragnar Richter'),
+                   2000032=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='operations-announce', holder='?? Ragnar IT-Beratung', contact='Ragnar IT-Beratung, Herr Ragnar Richter'),
                    2000033=rel(anchor='LP JM GmbH', type='EX_PARTNER', holder='LP JM e.K.', contact='JM e.K.'),
-                   2000034=rel(anchor='LP JM GmbH', type='OPERATIONS_ALERT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation, JM GmbH'),
-                   2000035=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation, JM GmbH'),
-                   2000036=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation, JM GmbH'),
-                   2000037=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation, JM GmbH'),
-                   2000038=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract, JM GmbH'),
-                   2000039=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract, JM GmbH'),
-                   2000040=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract, JM GmbH'),
-                   2000041=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Frau Tammy Meyer-VIP, JM GmbH'),
-                   2000042=rel(anchor='?? Test PS', type='OPERATIONS_ALERT', holder='?? Test PS', contact='Petra Schmidt, Test PS'),
-                   2000043=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Petra Schmidt, Test PS'),
-                   2000044=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Petra Schmidt, Test PS'),
+                   2000034=rel(anchor='LP JM GmbH', type='OPERATIONS_ALERT', holder='LP JM GmbH', contact='JM GmbH, Herr Andrew Meyer-Operation'),
+                   2000035=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='JM GmbH, Herr Andrew Meyer-Operation'),
+                   2000036=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='JM GmbH, Herr Andrew Meyer-Operation'),
+                   2000037=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='JM GmbH, Herr Andrew Meyer-Operation'),
+                   2000038=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='JM GmbH, Herr Philip Meyer-Contract'),
+                   2000039=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='JM GmbH, Herr Philip Meyer-Contract'),
+                   2000040=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='JM GmbH, Herr Philip Meyer-Contract'),
+                   2000041=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='JM GmbH, Frau Tammy Meyer-VIP'),
+                   2000042=rel(anchor='?? Test PS', type='OPERATIONS_ALERT', holder='?? Test PS', contact='Test PS, Petra Schmidt'),
+                   2000043=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Test PS, Petra Schmidt'),
+                   2000044=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Test PS, Petra Schmidt'),
                    2000045=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga'),
                    2000046=rel(anchor='NP Camus, Cecilia', type='OPERATIONS_ALERT', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus'),
                    2000047=rel(anchor='NP Camus, Cecilia', type='OPERATIONS', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus'),
                    2000048=rel(anchor='NP Camus, Cecilia', type='REPRESENTATIVE', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus'),
-                   2000049=rel(anchor='?? Wasserwerk Südholstein', type='REPRESENTATIVE', holder='?? Wasserwerk Südholstein', contact='Frau Christiane Milberg, Wasserwerk Südholstein'),
-                   2000050=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='generalversammlung', holder='?? Wasserwerk Südholstein', contact='Frau Christiane Milberg, Wasserwerk Südholstein'),
-                   2000051=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='members-announce', holder='?? Wasserwerk Südholstein', contact='Frau Christiane Milberg, Wasserwerk Südholstein'),
-                   2000052=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='members-discussion', holder='?? Wasserwerk Südholstein', contact='Frau Christiane Milberg, Wasserwerk Südholstein'),
-                   2000053=rel(anchor='?? Das Perfekte Haus', type='OPERATIONS_ALERT', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000054=rel(anchor='?? Das Perfekte Haus', type='OPERATIONS', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000055=rel(anchor='?? Das Perfekte Haus', type='REPRESENTATIVE', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000056=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='operations-discussion', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000057=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='operations-announce', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000058=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='generalversammlung', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000059=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='members-announce', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000060=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='members-discussion', holder='?? Das Perfekte Haus', contact='Herr Richard Wiese, Das Perfekte Haus'),
-                   2000061=rel(anchor='?? Wasserwerk Südholstein', type='OPERATIONS_ALERT', holder='?? Wasswerwerk Südholstein', contact='Herr Karim Metzger, Wasswerwerk Südholstein'),
-                   2000062=rel(anchor='?? Wasserwerk Südholstein', type='OPERATIONS', holder='?? Wasswerwerk Südholstein', contact='Herr Karim Metzger, Wasswerwerk Südholstein'),
-                   2000063=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='operations-discussion', holder='?? Wasswerwerk Südholstein', contact='Herr Karim Metzger, Wasswerwerk Südholstein'),
-                   2000064=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='operations-announce', holder='?? Wasswerwerk Südholstein', contact='Herr Karim Metzger, Wasswerwerk Südholstein'),
+                   2000049=rel(anchor='?? Wasserwerk Südholstein', type='REPRESENTATIVE', holder='?? Wasserwerk Südholstein', contact='Wasserwerk Südholstein, Frau Christiane Milberg'),
+                   2000050=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='generalversammlung', holder='?? Wasserwerk Südholstein', contact='Wasserwerk Südholstein, Frau Christiane Milberg'),
+                   2000051=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='members-announce', holder='?? Wasserwerk Südholstein', contact='Wasserwerk Südholstein, Frau Christiane Milberg'),
+                   2000052=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='members-discussion', holder='?? Wasserwerk Südholstein', contact='Wasserwerk Südholstein, Frau Christiane Milberg'),
+                   2000053=rel(anchor='?? Das Perfekte Haus', type='OPERATIONS_ALERT', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000054=rel(anchor='?? Das Perfekte Haus', type='OPERATIONS', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000055=rel(anchor='?? Das Perfekte Haus', type='REPRESENTATIVE', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000056=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='operations-discussion', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000057=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='operations-announce', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000058=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='generalversammlung', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000059=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='members-announce', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000060=rel(anchor='?? Das Perfekte Haus', type='SUBSCRIBER', mark='members-discussion', holder='?? Das Perfekte Haus', contact='Das Perfekte Haus, Herr Richard Wiese'),
+                   2000061=rel(anchor='?? Wasserwerk Südholstein', type='OPERATIONS_ALERT', holder='?? Wasswerwerk Südholstein', contact='Wasswerwerk Südholstein, Herr Karim Metzger'),
+                   2000062=rel(anchor='?? Wasserwerk Südholstein', type='OPERATIONS', holder='?? Wasswerwerk Südholstein', contact='Wasswerwerk Südholstein, Herr Karim Metzger'),
+                   2000063=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='operations-discussion', holder='?? Wasswerwerk Südholstein', contact='Wasswerwerk Südholstein, Herr Karim Metzger'),
+                   2000064=rel(anchor='?? Wasserwerk Südholstein', type='SUBSCRIBER', mark='operations-announce', holder='?? Wasswerwerk Südholstein', contact='Wasswerwerk Südholstein, Herr Karim Metzger'),
                    2000065=rel(anchor='?? Ragnar IT-Beratung', type='REPRESENTATIVE', holder='NP Richter, Ragnar', contact='Ragnar Richter'),
                    2000066=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='generalversammlung', holder='NP Richter, Ragnar', contact='Ragnar Richter'),
                    2000067=rel(anchor='?? Ragnar IT-Beratung', type='SUBSCRIBER', mark='members-announce', holder='NP Richter, Ragnar', contact='Ragnar Richter'),
@@ -1223,11 +1223,12 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
     private HsOfficeContactRealEntity initContact(final HsOfficeContactRealEntity contact, final Record contactRecord) {
 
         contact.setCaption(toCaption(
+                contactRecord.getString("firma"),
                 contactRecord.getString("salut"),
                 contactRecord.getString("title"),
                 contactRecord.getString("first_name"),
-                contactRecord.getString("last_name"),
-                contactRecord.getString("firma")));
+                contactRecord.getString("last_name")
+        ));
         contact.putEmailAddresses(Map.of("main", contactRecord.getString("email")));
         contact.putPostalAddress(toAddress(contactRecord));
         contact.putPhoneNumbers(toPhoneNumbers(contactRecord));
@@ -1269,27 +1270,28 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
     }
 
     private String toCaption(
+            final String firm,
             final String salut,
             final String title,
-            final String firstname,
-            final String lastname,
-            final String firm) {
+            final String firstName,
+            final String lastName) {
         final var result = new StringBuilder();
-        if (isNotBlank(salut))
+        if (isNotBlank(salut) && !salut.equals("Firma"))
             result.append((isBlank(result) ? "" : " ") + salut);
         if (isNotBlank(title))
             result.append((isBlank(result) ? "" : " ") + title);
-        if (isNotBlank(firstname))
-            result.append((isBlank(result) ? "" : " ") + firstname);
-        if (isNotBlank(lastname))
-            result.append((isBlank(result) ? "" : " ") + lastname);
+        if (isNotBlank(firstName))
+            result.append((isBlank(result) ? "" : " ") + firstName);
+        if (isNotBlank(lastName))
+            result.append((isBlank(result) ? "" : " ") + lastName);
+
         if (isNotBlank(firm)) {
-            result.append((isBlank(result) ? "" : ", ") + firm);
+            return isBlank(result) ? firm : firm + ", " + result;
         }
         return result.toString();
     }
 
-    private String toName(final String salut, final String title, final String firstname, final String lastname) {
-        return toCaption(salut, title, firstname, lastname, null);
+    private String toName(final String salut, final String title, final String firstName, final String lastName) {
+        return toCaption(null, salut, title, firstName, lastName);
     }
 }

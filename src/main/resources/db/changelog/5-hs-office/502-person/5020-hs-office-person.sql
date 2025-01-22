@@ -8,6 +8,7 @@ CREATE TYPE hs_office.PersonType AS ENUM (
     '??',   -- unknown
     'NP',   -- natural person
     'LP',   -- legal person
+    'OU',   -- organizational unit
     'IF',   -- incorporated firm
     'UF',   -- unincorporated firm
     'PI');  -- public institution

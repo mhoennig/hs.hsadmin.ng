@@ -4,6 +4,7 @@ public enum HsOfficePersonType {
     UNKNOWN_PERSON_TYPE("??"),
     NATURAL_PERSON("NP"), // a human being
     LEGAL_PERSON("LP"), // incorporated legal entity like A/S, GmbH, e.K., eG, e.V.
+    ORGANIZATIONAL_UNIT("OU"), // groups of persons within an organization, e.g. "Admin-Team", "Buchhaltung"
     INCORPORATED_FIRM("IF"), // registered business partnership like OHG, Partnerschaftsgesellschaft
     UNINCORPORATED_FIRM("UF"), // unregistered partnership, association etc. like GbR, ARGE, community of heirs
     PUBLIC_INSTITUTION("PI"); // entities under public law like government entities, KdöR, AöR

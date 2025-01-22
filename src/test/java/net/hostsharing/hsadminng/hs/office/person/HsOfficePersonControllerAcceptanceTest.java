@@ -85,9 +85,8 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "personType": "NATURAL_PERSON",
-                                   "familyName": "Tester",
-                                   "givenName": "Temp Testi"
+                                   "personType": "ORGANIZATIONAL_UNIT",
+                                   "tradeName": "Admin-Team"
                                  }
                             """)
                         .port(port)
@@ -97,9 +96,8 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("personType", is("NATURAL_PERSON"))
-                        .body("familyName", is("Tester"))
-                        .body("givenName", is("Temp Testi"))
+                        .body("personType", is("ORGANIZATIONAL_UNIT"))
+                        .body("tradeName", is("Admin-Team"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 

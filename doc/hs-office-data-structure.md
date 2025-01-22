@@ -50,6 +50,7 @@ classDiagram
             UNKNOWN: nur für Import
             NATURAL_PERSON: natürliche Person
             LEGAL_PERSON: z.B. GmbH, e.K., eG, e.V.
+            ORGANIZATIONAL_UNIT: z.B. "Admin-Team", "Buchhaltung"
             INCORORATED_FIRM: z.B. OHG, Partnerschaftsgesellschaft
             UNINCORPORATED_FIRM: z.B. GbR, ARGE, Erbengemeinschaft
             PUBLIC_INSTITUTION: KdöR, AöR [ohne Registergericht/Registernummer]
