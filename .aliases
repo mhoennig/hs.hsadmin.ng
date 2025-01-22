@@ -104,21 +104,32 @@ alias gw-check='. .aliases; . .tc-environment; gw test check -x pitest'
 #   You can also re-run all these tests, which will take ~20min: `gw-test --all --rerun`
 #   This will always use the environment from `.tc-environment`.
 #
+function _gwTest1() {
+    echo
+    printf -- '=%0.s' {1..80}; echo
+    echo "RUNNING gw $@"
+    printf -- '-%0.s' {1..80}; echo
+    ./gradlew "$@"
+    printf -- '-%0.s' {1..80}; echo
+    echo "DONE gw $@"
+}
 function _gwTest() {
   . .aliases;
   . .tc-environment;
+  rm /tmp/gwTest.tmp
   if [ "$1" == "--all" ]; then
     shift # to remove the --all from $@
     # delierately in separate gradlew-calls to avoid Testcontains-PostgreSQL problem spillover
-    ./gradlew unitTest "$@" &&
-        ./gradlew officeIntegrationTest bookingIntegrationTest hostingIntegrationTest "$@" &&
-        ./gradlew scenarioTest "$@" &&
-        ./gradlew importOfficeData importHostingAssets "$@";
+    time (_gwTest1 unitTest "$@" &&
+        _gwTest1 officeIntegrationTest bookingIntegrationTest hostingIntegrationTest "$@" &&
+        _gwTest1 scenarioTest "$@" &&
+        _gwTest1 importOfficeData importHostingAssets "$@");
   elif [ $# -eq 0 ] || [[ $1 == -* ]]; then
-    ./gradlew test "$@";
+    time _gwTest1 test "$@";
   else
-    ./gradlew "$@";
+    time _gwTest1 "$@";
   fi
+  printf -- '=%0.s' {1..80}; echo
 }
 alias gw-test=_gwTest
 

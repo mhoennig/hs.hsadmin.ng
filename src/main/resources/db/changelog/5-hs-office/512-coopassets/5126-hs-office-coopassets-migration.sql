@@ -4,13 +4,13 @@
 --  Once we don't need the external remote views anymore, create revert changesets.
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-coopassets-MIGRATION-mapping endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-MIGRATION-legacy-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE hs_office.coopassettx_legacy_id
 (
-    uuid            uuid NOT NULL REFERENCES hs_office.coopassettx(uuid),
-    member_asset_id  integer NOT NULL
+    uuid            uuid PRIMARY KEY NOT NULL REFERENCES hs_office.coopassettx(uuid),
+    member_asset_id  integer UNIQUE NOT NULL
 );
 --//
 

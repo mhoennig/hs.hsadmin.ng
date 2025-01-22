@@ -4,13 +4,13 @@
 --  Once we don't need the external remote views anymore, create revert changesets.
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-contact-MIGRATION-mapping endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-MIGRATION-legacy-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE hs_office.contact_legacy_id
 (
-    uuid        uuid NOT NULL REFERENCES hs_office.contact(uuid),
-    contact_id  integer NOT NULL
+    uuid        uuid PRIMARY KEY NOT NULL REFERENCES hs_office.contact(uuid),
+    contact_id  integer UNIQUE NOT NULL
 );
 --//
 

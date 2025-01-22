@@ -89,6 +89,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeSepaMandateEntity::getUuid).isNotNull();
             assertThatSepaMandateIsPersisted(result.returnedValue());
             assertThat(sepaMandateRepo.count()).isEqualTo(count + 1);
+            assertHasLegacyId(result.returnedValue(), "sepa_mandate_id");
         }
 
         @Test

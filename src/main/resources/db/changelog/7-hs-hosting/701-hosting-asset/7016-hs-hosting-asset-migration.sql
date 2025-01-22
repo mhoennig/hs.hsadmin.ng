@@ -4,13 +4,13 @@
 --  Once we don't need the external remote views anymore, create revert changesets.
 
 -- ============================================================================
---changeset hs-hosting-asset-MIGRATION-mapping:1 endDelimiter:--//
+--changeset hs-hosting-asset-MIGRATION-legacy-mapping:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE hs_hosting.asset_legacy_id
 (
-    uuid            uuid NOT NULL REFERENCES hs_hosting.asset(uuid),
-    legacy_id       integer NOT NULL
+    uuid            uuid PRIMARY KEY NOT NULL REFERENCES hs_hosting.asset(uuid),
+    legacy_id       integer NOT NULL -- not unique because we sometimes create multiple asset types for the same legacy asset
 );
 --//
 

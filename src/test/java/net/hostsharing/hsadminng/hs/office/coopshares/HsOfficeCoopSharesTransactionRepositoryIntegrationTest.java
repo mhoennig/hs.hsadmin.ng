@@ -82,6 +82,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeCoopSharesTransactionEntity::getUuid).isNotNull();
             assertThatCoopSharesTransactionIsPersisted(result.returnedValue());
             assertThat(coopSharesTransactionRepo.count()).isEqualTo(count + 1);
+            assertHasLegacyId(result.returnedValue(), "member_share_id");
         }
 
         @Test

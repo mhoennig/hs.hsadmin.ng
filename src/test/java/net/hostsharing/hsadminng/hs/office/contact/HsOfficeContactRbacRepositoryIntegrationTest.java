@@ -1,10 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
-import net.hostsharing.hsadminng.mapper.Array;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -29,7 +29,7 @@ import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@Import({ Context.class, JpaAttempt.class })
 @Tag("officeIntegrationTest")
 class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -62,8 +62,9 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
 
-            final var result = attempt(em, () -> toCleanup(contactRepo.save(
-                    hsOfficeContact("a new contact", "contact-admin@www.example.com"))));
+            final var result = attempt(
+                    em, () -> toCleanup(contactRepo.save(
+                            hsOfficeContact("a new contact", "contact-admin@www.example.com"))));
 
             // then
             result.assertSuccessful();
@@ -79,14 +80,16 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
             final var count = contactRepo.count();
 
             // when
-            final var result = attempt(em, () -> toCleanup(contactRepo.save(
-                    hsOfficeContact("another new contact", "another-new-contact@example.com"))));
+            final var result = attempt(
+                    em, () -> toCleanup(contactRepo.save(
+                            hsOfficeContact("another new contact", "another-new-contact@example.com"))));
 
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeContactRbacEntity::getUuid).isNotNull();
             assertThatContactIsPersisted(result.returnedValue());
             assertThat(contactRepo.count()).isEqualTo(count + 1);
+            assertHasLegacyId(result.returnedValue(), "contact_id");
         }
 
         @Test
@@ -97,8 +100,9 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            attempt(em, () -> toCleanup(contactRepo.save(
-                    hsOfficeContact("another new contact", "another-new-contact@example.com")))
+            attempt(
+                    em, () -> toCleanup(contactRepo.save(
+                            hsOfficeContact("another new contact", "another-new-contact@example.com")))
             ).assumeSuccessful();
 
             // then
@@ -300,10 +304,11 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
     private HsOfficeContactRbacEntity givenSomeTemporaryContact(final String createdByUser) {
         final var random = RandomStringUtils.randomAlphabetic(12);
-        return givenSomeTemporaryContact(createdByUser, () ->
-                hsOfficeContact(
-                        "some temporary contact #" + random,
-                        "some-temporary-contact" + random + "@example.com"));
+        return givenSomeTemporaryContact(
+                createdByUser, () ->
+                        hsOfficeContact(
+                                "some temporary contact #" + random,
+                                "some-temporary-contact" + random + "@example.com"));
     }
 
     void exactlyTheseContactsAreReturned(final List<HsOfficeContactRbacEntity> actualResult, final String... contactCaptions) {

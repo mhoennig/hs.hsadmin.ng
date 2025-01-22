@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.context;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -9,6 +10,7 @@ import org.springframework.context.annotation.Import;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Table;
 import java.sql.Timestamp;
 
 @Import(RbacGrantsDiagramService.class)
@@ -59,7 +61,6 @@ public abstract class ContextBasedTest {
                 """).executeUpdate();
     }
 
-
     protected void historicalContext(final Timestamp txTimestamp) {
         // set local cannot be used with query parameters
         em.createNativeQuery("""
@@ -70,4 +71,14 @@ public abstract class ContextBasedTest {
                 """).executeUpdate();
     }
 
+    protected void assertHasLegacyId(final BaseEntity<?> entity, final String legacyIdColumnName) {
+        final var table = entity.getClass().getAnnotation(Table.class);
+        final var legacyIdTable = table.schema() + "." + table.name().replace("_rv", "") + "_legacy_id";
+
+        em.createNativeQuery("SELECT " + legacyIdColumnName +
+                        " FROM " + legacyIdTable +
+                        " WHERE uuid = '" + entity.getUuid() + "'", Long.class)
+                .getSingleResult(); // fails if there is 0 or more than 1 result
+        // that the legacyId is unique is checked by a DB constraint, if applicable
+    }
 }

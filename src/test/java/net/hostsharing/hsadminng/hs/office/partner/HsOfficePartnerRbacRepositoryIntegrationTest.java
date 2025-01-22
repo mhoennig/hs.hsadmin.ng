@@ -98,6 +98,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficePartnerRbacEntity::getUuid).isNotNull();
             assertThatPartnerIsPersisted(result.returnedValue());
             assertThat(partnerRepo.count()).isEqualTo(count + 1);
+            assertHasLegacyId(result.returnedValue(), "bp_id");
         }
 
         @Test
