@@ -72,8 +72,8 @@ class HashGeneratorUnitTest {
 
     @Test
     void generatesMySqlNativePasswordHash() {
-        final var hash = HashGenerator.using(MYSQL_NATIVE).hash("Test1234");
-        assertThat(hash).isEqualTo("*14F1A8C42F8B6D4662BB3ED290FD37BF135FE45C");
+        final var hash = HashGenerator.using(MYSQL_NATIVE).hash("t8L7FULt"); // results in line+branch-coverage
+        assertThat(hash).isEqualTo("*F1E107E5C47E0939C7BC941DDE59EDBBDA1F7E39");
     }
 
     @Test

@@ -57,6 +57,35 @@ class HsEMailAddressHostingAssetValidatorUnitTest {
     }
 
     @Test
+    void preprocessEntityWithInitializedIdentifier() {
+        // given
+        final var givenEntity = validEntityBuilder().identifier("some-local-part@example.org").build();
+        assertThat(givenEntity.getParentAsset().getIdentifier()).as("preconditon failed").isEqualTo("example.org|MBOX");
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+
+        // when
+        validator.preprocessEntity(givenEntity);
+
+        // then
+        assertThat(givenEntity.getIdentifier()).isEqualTo("some-local-part@example.org");
+    }
+
+    @Test
+    void preprocessEntityWithUninitializedIdentifier() {
+        // given
+        final var givenEntity = validEntityBuilder().identifier(null).build();
+        assertThat(givenEntity.getParentAsset().getIdentifier()).as("preconditon failed").isEqualTo("example.org|MBOX");
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+
+        // when
+        validator.preprocessEntity(givenEntity);
+
+        // then
+        assertThat(givenEntity.getIdentifier())
+                .isEqualTo(givenEntity.getDirectValue("local-part", String.class) + "@example.org");
+    }
+
+    @Test
     void acceptsValidEntity() {
         // given
         final var emailAddressHostingAssetEntity = validEntityBuilder().build();

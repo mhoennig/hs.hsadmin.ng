@@ -523,7 +523,7 @@ Classes to be scanned, tests to be executed and thresholds are configured in [bu
 A report is generated under [build/reports/pitest/index.html](./build/reports/pitest/index.html).
 A link to the report is also printed after the `pitest` run.
 
-This task is also executed as part of `gw check`.
+<!-- TODO.test: This task is also executed as part of `gw check`. -->
 
 #### Remark
 
@@ -562,7 +562,7 @@ In case of suppression, a note must be added to explain why it does not apply to
 
 See also: https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/index.html.
 
-### Dependency-License-Compatibility
+### How to Check Dependency-License-Compatibility
 
 The `gw check` phase depends on a dependency-license-compatibility check.
 If any dependency violates the configured [list of allowed licenses](etc/allowed-licenses.json), the build will fail.
@@ -592,7 +592,7 @@ The generated license can be found here: [index.html](build/reports/dependency-l
 
 More information can be found on the [project's website](https://github.com/jk1/Gradle-License-Report).
 
-### Dependency Version Upgrade
+### How to Upgrade Versions of Dependencies
 
 Dependency versions can be automatically upgraded to the latest available version:
 
