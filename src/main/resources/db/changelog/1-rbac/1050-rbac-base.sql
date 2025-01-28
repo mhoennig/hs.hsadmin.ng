@@ -870,18 +870,23 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-PGSQL-ROLES context:!external-db endDelimiter:--//
+--changeset michael.hoennig:rbac-base-PGSQL-ROLES runOnChange:true validCheckSum:ANY context:!external-db endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do $$
     begin
         if '${HSADMINNG_POSTGRES_ADMIN_USERNAME}'='admin' then
-            create role admin;
+            if not exists (select from pg_catalog.pg_roles where rolname = 'admin') then
+                create role admin;
+            end if;
             grant all privileges on all tables in schema public to admin;
         end if;
 
         if '${HSADMINNG_POSTGRES_RESTRICTED_USERNAME}'='restricted' then
-            create role restricted;
+            if not exists (select from pg_catalog.pg_roles where rolname = 'restricted') then
+                create role restricted;
+            end if;
+
             grant all privileges on all tables in schema public to restricted;
         end if;
     end $$;

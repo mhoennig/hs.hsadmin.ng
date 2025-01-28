@@ -3,7 +3,7 @@
 
 -- ============================================================================
 -- NUMERIC-HASH-FUNCTIONS
---changeset michael.hoennig:hash endDelimiter:--//
+--changeset michael.hoennig:hash runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do $$

@@ -620,8 +620,8 @@ This way we would get rid of all explicit grants within the same DB-row
 and would not need the `rbac.role` table anymore.
 We would also reduce the depth of the expensive recursive CTE-query.
 
-This has to be explored further.
-For now, we just keep it in mind and FIXME
+This has to be explored further.  For now, we just keep it in mind and avoid roles+grants
+which would not fit into a simplified system with a fixed role-type-system.
 
 
 ### The Mapper is Error-Prone

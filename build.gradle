@@ -335,7 +335,7 @@ jacocoTestCoverageVerification {
     }
 }
 
-// HOWTO: run all unit-tests which don't need a database: gw unitTest
+// HOWTO: run all unit-tests which don't need a database: gw-test unitTest
 tasks.register('unitTest', Test) {
     useJUnitPlatform {
         excludeTags 'importOfficeData', 'importHostingAssets', 'scenarioTest', 'generalIntegrationTest',
@@ -360,7 +360,7 @@ tasks.register('generalIntegrationTest', Test) {
     mustRunAfter spotlessJava
 }
 
-// HOWTO: run all integration tests of the office module: gw officeIntegrationTest
+// HOWTO: run all integration tests of the office module: gw-test officeIntegrationTest
 tasks.register('officeIntegrationTest', Test) {
     useJUnitPlatform {
         includeTags 'officeIntegrationTest'
@@ -372,26 +372,26 @@ tasks.register('officeIntegrationTest', Test) {
     mustRunAfter spotlessJava
 }
 
-// HOWTO: run all integration tests of the booking module: gw bookingIntegrationTest
+// HOWTO: run all integration tests of the booking module: gw-test bookingIntegrationTest
 tasks.register('bookingIntegrationTest', Test) {
     useJUnitPlatform {
         includeTags 'bookingIntegrationTest'
     }
 
     group 'verification'
-    description 'runs integration tests of the office module'
+    description 'runs integration tests of the booking module'
 
     mustRunAfter spotlessJava
 }
 
-// HOWTO: run all integration tests of the hosting module: gw hostingIntegrationTest
+// HOWTO: run all integration tests of the hosting module: gw-test hostingIntegrationTest
 tasks.register('hostingIntegrationTest', Test) {
     useJUnitPlatform {
         includeTags 'hostingIntegrationTest'
     }
 
     group 'verification'
-    description 'runs integration tests of the office module'
+    description 'runs integration tests of the hosting module'
 
     mustRunAfter spotlessJava
 }
