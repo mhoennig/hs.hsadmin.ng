@@ -20,7 +20,7 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO restricted;
 --
 
 -- Dumped from database version 15.5 (Debian 15.5-1.pgdg120+1)
--- Dumped by pg_dump version 15.5 (Debian 15.5-1.pgdg120+1)
+-- Dumped by pg_dump version 16.6 (Ubuntu 16.6-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -8477,7 +8477,7 @@ CREATE VIEW base.tx_journal_v AS
   ORDER BY txc.txtimestamp;
 
 
-ALTER TABLE base.tx_journal_v OWNER TO postgres;
+ALTER VIEW base.tx_journal_v OWNER TO postgres;
 
 --
 -- Name: partner_legacy_id; Type: TABLE; Schema: hs_office; Owner: postgres
@@ -8588,7 +8588,7 @@ UNION
      JOIN hs_office.person per ON ((per.uuid = relation.holderuuid)));
 
 
-ALTER TABLE hs_integration.contact OWNER TO postgres;
+ALTER VIEW hs_integration.contact OWNER TO postgres;
 
 --
 -- Name: subscription; Type: VIEW; Schema: hs_integration; Owner: postgres
@@ -8602,7 +8602,7 @@ CREATE VIEW hs_integration.subscription AS
   ORDER BY relation.mark, (contact.emailaddresses ->> 'main'::text);
 
 
-ALTER TABLE hs_integration.subscription OWNER TO postgres;
+ALTER VIEW hs_integration.subscription OWNER TO postgres;
 
 --
 -- Name: ticket_customer_company; Type: VIEW; Schema: hs_integration; Owner: postgres
@@ -8621,7 +8621,7 @@ CREATE VIEW hs_integration.ticket_customer_company AS
   ORDER BY (partner.partnernumber)::text;
 
 
-ALTER TABLE hs_integration.ticket_customer_company OWNER TO postgres;
+ALTER VIEW hs_integration.ticket_customer_company OWNER TO postgres;
 
 --
 -- Name: ticket_customer_user; Type: VIEW; Schema: hs_integration; Owner: postgres
@@ -8660,7 +8660,7 @@ CREATE VIEW hs_integration.ticket_customer_user AS
   GROUP BY c.contact_uuid;
 
 
-ALTER TABLE hs_integration.ticket_customer_user OWNER TO postgres;
+ALTER VIEW hs_integration.ticket_customer_user OWNER TO postgres;
 
 --
 -- Name: time_customer; Type: VIEW; Schema: hs_integration; Owner: postgres
@@ -8675,7 +8675,7 @@ CREATE VIEW hs_integration.time_customer AS
      JOIN hs_office.debitor debitor ON (((debitor.debitorreluuid = drel.uuid) AND (debitor.debitornumbersuffix = '00'::bpchar))));
 
 
-ALTER TABLE hs_integration.time_customer OWNER TO postgres;
+ALTER VIEW hs_integration.time_customer OWNER TO postgres;
 
 --
 -- Name: bankaccount_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -8687,7 +8687,7 @@ CREATE VIEW hs_office.bankaccount_iv AS
    FROM hs_office.bankaccount target;
 
 
-ALTER TABLE hs_office.bankaccount_iv OWNER TO postgres;
+ALTER VIEW hs_office.bankaccount_iv OWNER TO postgres;
 
 --
 -- Name: grant; Type: TABLE; Schema: rbac; Owner: postgres
@@ -8766,7 +8766,7 @@ CREATE VIEW hs_office.bankaccount_rv AS
   ORDER BY target.iban;
 
 
-ALTER TABLE hs_office.bankaccount_rv OWNER TO postgres;
+ALTER VIEW hs_office.bankaccount_rv OWNER TO postgres;
 
 --
 -- Name: contact_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -8778,7 +8778,7 @@ CREATE VIEW hs_office.contact_iv AS
    FROM hs_office.contact target;
 
 
-ALTER TABLE hs_office.contact_iv OWNER TO postgres;
+ALTER VIEW hs_office.contact_iv OWNER TO postgres;
 
 --
 -- Name: contact_legacy_id; Type: TABLE; Schema: hs_office; Owner: postgres
@@ -8805,7 +8805,7 @@ CREATE SEQUENCE hs_office.contact_legacy_id_seq
     CACHE 1;
 
 
-ALTER TABLE hs_office.contact_legacy_id_seq OWNER TO postgres;
+ALTER SEQUENCE hs_office.contact_legacy_id_seq OWNER TO postgres;
 
 --
 -- Name: contact_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: postgres
@@ -8862,7 +8862,7 @@ CREATE VIEW hs_office.contact_rv AS
   ORDER BY target.caption;
 
 
-ALTER TABLE hs_office.contact_rv OWNER TO postgres;
+ALTER VIEW hs_office.contact_rv OWNER TO postgres;
 
 --
 -- Name: coopassettx_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -8874,7 +8874,7 @@ CREATE VIEW hs_office.coopassettx_iv AS
    FROM hs_office.coopassettx target;
 
 
-ALTER TABLE hs_office.coopassettx_iv OWNER TO postgres;
+ALTER VIEW hs_office.coopassettx_iv OWNER TO postgres;
 
 --
 -- Name: coopassettx_legacy_id; Type: TABLE; Schema: hs_office; Owner: postgres
@@ -8901,7 +8901,7 @@ CREATE SEQUENCE hs_office.coopassettx_legacy_id_seq
     CACHE 1;
 
 
-ALTER TABLE hs_office.coopassettx_legacy_id_seq OWNER TO postgres;
+ALTER SEQUENCE hs_office.coopassettx_legacy_id_seq OWNER TO postgres;
 
 --
 -- Name: coopassettx_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: postgres
@@ -8962,7 +8962,7 @@ CREATE VIEW hs_office.coopassettx_rv AS
   ORDER BY target.reference;
 
 
-ALTER TABLE hs_office.coopassettx_rv OWNER TO postgres;
+ALTER VIEW hs_office.coopassettx_rv OWNER TO postgres;
 
 --
 -- Name: coopsharetx_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -8974,7 +8974,7 @@ CREATE VIEW hs_office.coopsharetx_iv AS
    FROM hs_office.coopsharetx target;
 
 
-ALTER TABLE hs_office.coopsharetx_iv OWNER TO postgres;
+ALTER VIEW hs_office.coopsharetx_iv OWNER TO postgres;
 
 --
 -- Name: coopsharetx_legacy_id; Type: TABLE; Schema: hs_office; Owner: postgres
@@ -9001,7 +9001,7 @@ CREATE SEQUENCE hs_office.coopsharetx_legacy_id_seq
     CACHE 1;
 
 
-ALTER TABLE hs_office.coopsharetx_legacy_id_seq OWNER TO postgres;
+ALTER SEQUENCE hs_office.coopsharetx_legacy_id_seq OWNER TO postgres;
 
 --
 -- Name: coopsharetx_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: postgres
@@ -9061,7 +9061,7 @@ CREATE VIEW hs_office.coopsharetx_rv AS
   ORDER BY target.reference;
 
 
-ALTER TABLE hs_office.coopsharetx_rv OWNER TO postgres;
+ALTER VIEW hs_office.coopsharetx_rv OWNER TO postgres;
 
 --
 -- Name: debitor_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9077,7 +9077,7 @@ CREATE VIEW hs_office.debitor_iv AS
    FROM hs_office.debitor debitor;
 
 
-ALTER TABLE hs_office.debitor_iv OWNER TO postgres;
+ALTER VIEW hs_office.debitor_iv OWNER TO postgres;
 
 --
 -- Name: debitor_rv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9132,7 +9132,7 @@ CREATE VIEW hs_office.debitor_rv AS
   ORDER BY target.defaultprefix;
 
 
-ALTER TABLE hs_office.debitor_rv OWNER TO postgres;
+ALTER VIEW hs_office.debitor_rv OWNER TO postgres;
 
 --
 -- Name: membership_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9145,7 +9145,7 @@ CREATE VIEW hs_office.membership_iv AS
      JOIN hs_office.partner p ON ((p.uuid = m.partneruuid)));
 
 
-ALTER TABLE hs_office.membership_iv OWNER TO postgres;
+ALTER VIEW hs_office.membership_iv OWNER TO postgres;
 
 --
 -- Name: membership_rv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9196,7 +9196,7 @@ CREATE VIEW hs_office.membership_rv AS
   ORDER BY target.validity;
 
 
-ALTER TABLE hs_office.membership_rv OWNER TO postgres;
+ALTER VIEW hs_office.membership_rv OWNER TO postgres;
 
 --
 -- Name: partner_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9208,7 +9208,7 @@ CREATE VIEW hs_office.partner_iv AS
    FROM hs_office.partner target;
 
 
-ALTER TABLE hs_office.partner_iv OWNER TO postgres;
+ALTER VIEW hs_office.partner_iv OWNER TO postgres;
 
 --
 -- Name: partner_details_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9222,7 +9222,7 @@ CREATE VIEW hs_office.partner_details_iv AS
      JOIN hs_office.partner_iv partner_iv ON ((partner_iv.uuid = partner.uuid)));
 
 
-ALTER TABLE hs_office.partner_details_iv OWNER TO postgres;
+ALTER VIEW hs_office.partner_details_iv OWNER TO postgres;
 
 --
 -- Name: partner_details_rv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9274,7 +9274,7 @@ CREATE VIEW hs_office.partner_details_rv AS
   ORDER BY target.uuid;
 
 
-ALTER TABLE hs_office.partner_details_rv OWNER TO postgres;
+ALTER VIEW hs_office.partner_details_rv OWNER TO postgres;
 
 --
 -- Name: partner_legacy_id_seq; Type: SEQUENCE; Schema: hs_office; Owner: postgres
@@ -9289,7 +9289,7 @@ CREATE SEQUENCE hs_office.partner_legacy_id_seq
     CACHE 1;
 
 
-ALTER TABLE hs_office.partner_legacy_id_seq OWNER TO postgres;
+ALTER SEQUENCE hs_office.partner_legacy_id_seq OWNER TO postgres;
 
 --
 -- Name: partner_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: postgres
@@ -9345,7 +9345,7 @@ CREATE VIEW hs_office.partner_rv AS
   ORDER BY ('P-'::text || target.partnernumber);
 
 
-ALTER TABLE hs_office.partner_rv OWNER TO postgres;
+ALTER VIEW hs_office.partner_rv OWNER TO postgres;
 
 --
 -- Name: person_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9357,7 +9357,7 @@ CREATE VIEW hs_office.person_iv AS
    FROM hs_office.person target;
 
 
-ALTER TABLE hs_office.person_iv OWNER TO postgres;
+ALTER VIEW hs_office.person_iv OWNER TO postgres;
 
 --
 -- Name: person_rv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9409,7 +9409,7 @@ CREATE VIEW hs_office.person_rv AS
   ORDER BY (concat(target.tradename, target.familyname, target.givenname));
 
 
-ALTER TABLE hs_office.person_rv OWNER TO postgres;
+ALTER VIEW hs_office.person_rv OWNER TO postgres;
 
 --
 -- Name: relation_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9425,7 +9425,7 @@ CREATE VIEW hs_office.relation_iv AS
    FROM hs_office.relation target;
 
 
-ALTER TABLE hs_office.relation_iv OWNER TO postgres;
+ALTER VIEW hs_office.relation_iv OWNER TO postgres;
 
 --
 -- Name: relation_rv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9478,7 +9478,7 @@ CREATE VIEW hs_office.relation_rv AS
           WHERE (p.uuid = target.holderuuid));
 
 
-ALTER TABLE hs_office.relation_rv OWNER TO postgres;
+ALTER VIEW hs_office.relation_rv OWNER TO postgres;
 
 --
 -- Name: sepamandate_iv; Type: VIEW; Schema: hs_office; Owner: postgres
@@ -9491,7 +9491,7 @@ CREATE VIEW hs_office.sepamandate_iv AS
      JOIN hs_office.bankaccount ba ON ((ba.uuid = sm.bankaccountuuid)));
 
 
-ALTER TABLE hs_office.sepamandate_iv OWNER TO postgres;
+ALTER VIEW hs_office.sepamandate_iv OWNER TO postgres;
 
 --
 -- Name: sepamandate_legacy_id; Type: TABLE; Schema: hs_office; Owner: postgres
@@ -9518,7 +9518,7 @@ CREATE SEQUENCE hs_office.sepamandate_legacy_id_seq
     CACHE 1;
 
 
-ALTER TABLE hs_office.sepamandate_legacy_id_seq OWNER TO postgres;
+ALTER SEQUENCE hs_office.sepamandate_legacy_id_seq OWNER TO postgres;
 
 --
 -- Name: sepamandate_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: postgres
@@ -9576,7 +9576,7 @@ CREATE VIEW hs_office.sepamandate_rv AS
   ORDER BY target.validity;
 
 
-ALTER TABLE hs_office.sepamandate_rv OWNER TO postgres;
+ALTER VIEW hs_office.sepamandate_rv OWNER TO postgres;
 
 --
 -- Name: databasechangelog; Type: TABLE; Schema: public; Owner: postgres
@@ -9638,7 +9638,7 @@ CREATE VIEW rbac.global_iv AS
    FROM rbac.global target;
 
 
-ALTER TABLE rbac.global_iv OWNER TO postgres;
+ALTER VIEW rbac.global_iv OWNER TO postgres;
 
 --
 -- Name: role; Type: TABLE; Schema: rbac; Owner: postgres
@@ -9701,7 +9701,7 @@ CREATE VIEW rbac.grant_ev AS
   ORDER BY x.ascendingidname, x.descendingidname;
 
 
-ALTER TABLE rbac.grant_ev OWNER TO postgres;
+ALTER VIEW rbac.grant_ev OWNER TO postgres;
 
 --
 -- Name: grant_rv; Type: VIEW; Schema: rbac; Owner: postgres
@@ -9738,7 +9738,7 @@ CREATE VIEW rbac.grant_rv AS
   ORDER BY (((((g.objecttable)::text || '#'::text) || (g.objectidname)::text) || ':'::text) || g.roletype);
 
 
-ALTER TABLE rbac.grant_rv OWNER TO postgres;
+ALTER VIEW rbac.grant_rv OWNER TO postgres;
 
 --
 -- Name: object_serialid_seq; Type: SEQUENCE; Schema: rbac; Owner: postgres
@@ -9753,7 +9753,7 @@ CREATE SEQUENCE rbac.object_serialid_seq
     CACHE 1;
 
 
-ALTER TABLE rbac.object_serialid_seq OWNER TO postgres;
+ALTER SEQUENCE rbac.object_serialid_seq OWNER TO postgres;
 
 --
 -- Name: object_serialid_seq; Type: SEQUENCE OWNED BY; Schema: rbac; Owner: postgres
@@ -9783,7 +9783,7 @@ CREATE VIEW rbac.role_rv AS
   ORDER BY (((((unordered.objecttable)::text || '#'::text) || (unordered.objectidname)::text) || ':'::text) || unordered.roletype);
 
 
-ALTER TABLE rbac.role_rv OWNER TO postgres;
+ALTER VIEW rbac.role_rv OWNER TO postgres;
 
 --
 -- Name: own_granted_permissions_rv; Type: VIEW; Schema: rbac; Owner: postgres
@@ -9803,7 +9803,7 @@ CREATE VIEW rbac.own_granted_permissions_rv AS
      JOIN rbac.object o ON ((o.uuid = p.objectuuid)));
 
 
-ALTER TABLE rbac.own_granted_permissions_rv OWNER TO postgres;
+ALTER VIEW rbac.own_granted_permissions_rv OWNER TO postgres;
 
 --
 -- Name: role_ev; Type: VIEW; Schema: rbac; Owner: postgres
@@ -9826,7 +9826,7 @@ CREATE VIEW rbac.role_ev AS
   ORDER BY (((((unordered.objecttable)::text || '#'::text) || (unordered.objectidname)::text) || ':'::text) || unordered.roletype);
 
 
-ALTER TABLE rbac.role_ev OWNER TO postgres;
+ALTER VIEW rbac.role_ev OWNER TO postgres;
 
 --
 -- Name: statistics_v; Type: VIEW; Schema: rbac; Owner: postgres
@@ -9868,7 +9868,7 @@ CREATE VIEW rbac.statistics_v AS
   ORDER BY totals.no;
 
 
-ALTER TABLE rbac.statistics_v OWNER TO postgres;
+ALTER VIEW rbac.statistics_v OWNER TO postgres;
 
 --
 -- Name: subject_ev; Type: VIEW; Schema: rbac; Owner: postgres
@@ -9889,7 +9889,7 @@ CREATE VIEW rbac.subject_ev AS
   ORDER BY unordered.name;
 
 
-ALTER TABLE rbac.subject_ev OWNER TO postgres;
+ALTER VIEW rbac.subject_ev OWNER TO postgres;
 
 --
 -- Name: subject_rv; Type: VIEW; Schema: rbac; Owner: postgres
@@ -9911,7 +9911,7 @@ CREATE VIEW rbac.subject_rv AS
   ORDER BY unordered.name;
 
 
-ALTER TABLE rbac.subject_rv OWNER TO postgres;
+ALTER VIEW rbac.subject_rv OWNER TO postgres;
 
 --
 -- Name: customer_iv; Type: VIEW; Schema: rbactest; Owner: postgres
@@ -9923,7 +9923,7 @@ CREATE VIEW rbactest.customer_iv AS
    FROM rbactest.customer target;
 
 
-ALTER TABLE rbactest.customer_iv OWNER TO postgres;
+ALTER VIEW rbactest.customer_iv OWNER TO postgres;
 
 --
 -- Name: customer_rv; Type: VIEW; Schema: rbactest; Owner: postgres
@@ -9972,7 +9972,7 @@ CREATE VIEW rbactest.customer_rv AS
   ORDER BY target.reference;
 
 
-ALTER TABLE rbactest.customer_rv OWNER TO postgres;
+ALTER VIEW rbactest.customer_rv OWNER TO postgres;
 
 --
 -- Name: domain_iv; Type: VIEW; Schema: rbactest; Owner: postgres
@@ -9984,7 +9984,7 @@ CREATE VIEW rbactest.domain_iv AS
    FROM rbactest.domain target;
 
 
-ALTER TABLE rbactest.domain_iv OWNER TO postgres;
+ALTER VIEW rbactest.domain_iv OWNER TO postgres;
 
 --
 -- Name: domain_rv; Type: VIEW; Schema: rbactest; Owner: postgres
@@ -10032,7 +10032,7 @@ CREATE VIEW rbactest.domain_rv AS
   ORDER BY target.name;
 
 
-ALTER TABLE rbactest.domain_rv OWNER TO postgres;
+ALTER VIEW rbactest.domain_rv OWNER TO postgres;
 
 --
 -- Name: package_iv; Type: VIEW; Schema: rbactest; Owner: postgres
@@ -10044,7 +10044,7 @@ CREATE VIEW rbactest.package_iv AS
    FROM rbactest.package target;
 
 
-ALTER TABLE rbactest.package_iv OWNER TO postgres;
+ALTER VIEW rbactest.package_iv OWNER TO postgres;
 
 --
 -- Name: package_rv; Type: VIEW; Schema: rbactest; Owner: postgres
@@ -10093,7 +10093,7 @@ CREATE VIEW rbactest.package_rv AS
   ORDER BY target.name;
 
 
-ALTER TABLE rbactest.package_rv OWNER TO postgres;
+ALTER VIEW rbactest.package_rv OWNER TO postgres;
 
 --
 -- Name: contact_legacy_id contact_id; Type: DEFAULT; Schema: hs_office; Owner: postgres
@@ -12239,7 +12239,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('table-columns-function', 'michael.hoennig', 'db/changelog/0-base/007-table-columns.sql', '2025-01-27 15:34:15.169893', 8, 'EXECUTED', '9:bb868191fbe9c3ba4ac1f8bdc6a75f8c', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('RAISE-FUNCTIONS', 'michael.hoennig', 'db/changelog/0-base/008-raise-functions.sql', '2025-01-27 15:34:15.20423', 9, 'EXECUTED', '9:3ceaffba52919b6bfc90a902a944a616', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('ASSERT-FUNCTIONS', 'michael.hoennig', 'db/changelog/0-base/008-raise-functions.sql', '2025-01-27 15:34:15.229573', 10, 'EXECUTED', '9:a0ed7624c59909966e06875f59cfeccb', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hash', 'michael.hoennig', 'db/changelog/0-base/009-check-environment.sql', '2025-01-27 15:34:15.243118', 11, 'EXECUTED', '9:96dd61dd12110d7d9973565ee6bd7230', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('context-DEFINE', 'michael.hoennig', 'db/changelog/0-base/010-context.sql', '2025-01-27 15:34:15.267304', 12, 'EXECUTED', '9:a8d195345229a2cd835f398b086ee21c', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('context-CURRENT-TASK', 'michael.hoennig', 'db/changelog/0-base/010-context.sql', '2025-01-27 15:34:15.283419', 13, 'EXECUTED', '9:4919efeac14bf86c57bed35de501a2b2', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('context-CURRENT-REQUEST', 'michael.hoennig', 'db/changelog/0-base/010-context.sql', '2025-01-27 15:34:15.306228', 14, 'EXECUTED', '9:d1c3bcc3a5b3468daa69e8ed0b324ea5', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12272,7 +12271,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-27 15:34:15.904223', 41, 'EXECUTED', '9:458e3f137c8fdeb9862e5d0e95b0094f', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-QUERY-GRANTED-PERMISSIONS', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-27 15:34:15.920227', 42, 'EXECUTED', '9:05bcbf6d56c95c400042f100c38637f0', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-QUERY-SUBJECTS-WITH-PERMISSION-FOR-OBJECT', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-27 15:34:15.934367', 43, 'EXECUTED', '9:ebd6a7182547ddcdb9217838c53e7d68', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-PGSQL-ROLES', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-27 15:34:15.94921', 44, 'EXECUTED', '9:0bbb758c0cecff303ca3ad6a3a64c4a8', 'sql', '', NULL, '4.29.2', '!external-db', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-user-grant-GRANT-ROLE-TO-USER', 'michael.hoennig', 'db/changelog/1-rbac/1051-rbac-subject-grant.sql', '2025-01-27 15:34:15.973936', 45, 'EXECUTED', '9:7d0785b50901582050221d58ab11b1e2', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-user-grant-REVOKE-ROLE-FROM-USER', 'michael.hoennig', 'db/changelog/1-rbac/1051-rbac-subject-grant.sql', '2025-01-27 15:34:15.992179', 46, 'EXECUTED', '9:ce6e0a7157afbfdb482a432e2b6e3f43', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-user-grant-REVOKE-PERMISSION-FROM-ROLE', 'michael.hoennig', 'db/changelog/1-rbac/1051-rbac-subject-grant.sql', '2025-01-27 15:34:16.005262', 47, 'EXECUTED', '9:cab4dd9c2a2b8a2a746dfbf1f17946cb', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12310,7 +12308,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-ADMIN-ROLE', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.519765', 79, 'EXECUTED', '9:b8ce7d33d7b7469614010953ee05ab83', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-GUEST-ROLE', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.531131', 80, 'EXECUTED', '9:f5f124a1d50c7b3b9816b554fbd12d11', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-ADMIN-USERS', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.550896', 81, 'EXECUTED', '9:defcefd72b25de449be69d3e3df7134b', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-TEST', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.559083', 82, 'EXECUTED', '9:8e3fd77650d35f24e56b99ae54ba77f1', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-SCHEMA', 'michael.hoennig', 'db/changelog/2-rbactest/200-rbactest-schema.sql', '2025-01-27 15:34:16.567832', 83, 'EXECUTED', '9:d3ac51d27712286855b340c8a8966231', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('test-customer-MAIN-TABLE', 'michael.hoennig', 'db/changelog/2-rbactest/201-rbactest-customer/2010-rbactest-customer.sql', '2025-01-27 15:34:16.601918', 84, 'EXECUTED', '9:c99c30902fec715c651b38cb2208aab4', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-01-27 15:34:16.614128', 85, 'EXECUTED', '9:fc4c1dd970025e35cb8f01ad15e979f9', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
@@ -12515,6 +12512,10 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-kimai', 'timotheus.pokorra', 'db/changelog/9-hs-global/9110-integration-kimai.sql', '2025-01-27 15:34:20.362135', 284, 'EXECUTED', '9:56e481a555f86b471b74aaceacc4b520', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-znuny', 'timotheus.pokorra', 'db/changelog/9-hs-global/9120-integration-znuny.sql', '2025-01-27 15:34:20.413436', 285, 'EXECUTED', '9:48685a4882797575f8bb8c83d5fc9380', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-znuny', 'timotheus.pokorra', 'db/changelog/9-hs-global/9130-integration-mlmmj.sql', '2025-01-27 15:34:20.432305', 286, 'EXECUTED', '9:df6c8a724cfdd0c0aa013ba996655ed1', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hash', 'michael.hoennig', 'db/changelog/0-base/009-check-environment.sql', '2025-01-29 16:04:51.601962', 287, 'RERAN', '9:034a82679cf5cf1be4b9729c55621158', 'sql', '', NULL, '4.29.2', NULL, NULL, '8163091421');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-PGSQL-ROLES', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-29 16:04:51.636353', 288, 'RERAN', '9:a50fd61a191459e25fb01f5fc079f3e7', 'sql', '', NULL, '4.29.2', '!external-db', NULL, '8163091421');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-TEST', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-29 16:04:51.686383', 289, 'RERAN', '9:8e3fd77650d35f24e56b99ae54ba77f1', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '8163091421');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-mlmmj', 'timotheus.pokorra', 'db/changelog/9-hs-global/9130-integration-mlmmj.sql', '2025-01-29 16:04:51.747314', 290, 'EXECUTED', '9:df6c8a724cfdd0c0aa013ba996655ed1', 'sql', '', NULL, '4.29.2', NULL, NULL, '8163091421');
 
 
 --
@@ -17063,6 +17064,7 @@ GRANT ALL ON TABLE hs_office.sepamandate_rv TO restricted;
 --
 
 GRANT ALL ON TABLE public.databasechangelog TO restricted;
+GRANT ALL ON TABLE public.databasechangelog TO admin;
 
 
 --
@@ -17070,6 +17072,7 @@ GRANT ALL ON TABLE public.databasechangelog TO restricted;
 --
 
 GRANT ALL ON TABLE public.databasechangeloglock TO restricted;
+GRANT ALL ON TABLE public.databasechangeloglock TO admin;
 
 
 --

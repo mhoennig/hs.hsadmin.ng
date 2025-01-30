@@ -2,7 +2,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset timotheus.pokorra:hs-global-integration-mlmmj endDelimiter:--//
+--changeset michael.hoennig:hs-global-liquibase-migration-test endDelimiter:--//
 CREATE OR REPLACE VIEW hs_integration.subscription AS
   SELECT DISTINCT
     relation.mark as subscription,

@@ -1,5 +1,6 @@
 --liquibase formatted sql
 
+-- FIXME: check if we really need the restricted user
 
 -- ============================================================================
 -- NUMERIC-HASH-FUNCTIONS
