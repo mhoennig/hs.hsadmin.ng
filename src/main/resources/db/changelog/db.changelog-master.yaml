@@ -213,6 +213,10 @@ databaseChangeLog:
         context: "!only-office"
 
     - include:
+          file: db/changelog/9-hs-global/9800-cleanup.sql
+          context: "without-test-data"
+
+    - include:
         file: db/changelog/9-hs-global/9100-hs-integration-schema.sql
     - include:
         file: db/changelog/9-hs-global/9110-integration-kimai.sql

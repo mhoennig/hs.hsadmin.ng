@@ -6,6 +6,7 @@
           <entry key="HSADMINNG_MIGRATION_DATA_PATH" value="migration" />
           <entry key="HSADMINNG_POSTGRES_ADMIN_USERNAME" value="admin" />
           <entry key="HSADMINNG_POSTGRES_RESTRICTED_USERNAME" value="restricted" />
+          <entry key="HSADMINNG_SUPERUSER" value="import-superuser@hostsharing.net" />
         </map>
       </option>
       <option name="executionName" />

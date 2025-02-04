@@ -115,11 +115,18 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
 
     @Test
     @Order(1)
-    void verifyInitialDatabase() {
-        // SQL DELETE for thousands of records takes too long, so we make sure, we only start with initial or test data
-        final var contactCount = (Integer) em.createNativeQuery("select count(*) from hs_office.contact", Integer.class)
-                .getSingleResult();
-        assertThat(contactCount).isLessThan(20);
+    void verifyInitialDatabaseHasNoTestData() {
+        assertThat((Integer) em.createNativeQuery(
+                        "select count(*) from hs_office.contact",
+                        Integer.class)
+                .getSingleResult()).isEqualTo(0);
+        assertThat((Integer) em.createNativeQuery(
+                        """
+                        SELECT count(*) FROM information_schema.tables
+                                 WHERE table_schema = 'rbactest' AND table_name = 'customer'
+                        """,
+                        Integer.class)
+                .getSingleResult()).isEqualTo(0);
     }
 
     @Test
@@ -624,15 +631,13 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
     void persistOfficeEntities() {
 
         System.out.println("PERSISTING office data to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        deleteTestDataFromHsOfficeTables();
-        resetHsOfficeSequences();
-        deleteFromTestTables();
-        deleteFromCommonTables();
+        makeSureThatTheImportAdminUserExists();
 
+        assertEmptyTable("hs_office.contact");
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             contacts.forEach(this::persist);
-           updateLegacyIds(contacts, "hs_office.contact_legacy_id", "contact_id");
+            updateLegacyIds(contacts, "hs_office.contact_legacy_id", "contact_id");
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -646,6 +651,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         }).assertSuccessful();
 
         System.out.println("persisting " + partners.size() + " partners");
+        assertEmptyTable("hs_office.partner");
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             partners.forEach((id, partner) -> {
@@ -696,6 +702,12 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
             updateLegacyIds(coopAssets, "hs_office.coopassettx_legacy_id", "member_asset_id");
         }).assertSuccessful();
 
+    }
+    private void assertEmptyTable(final String qualifiedTableName) {
+        assertThat((Integer) em.createNativeQuery(
+                        "select count(*) from " + qualifiedTableName,
+                        Integer.class)
+                .getSingleResult()).describedAs("expected empty " + qualifiedTableName).isEqualTo(0);
     }
 
     @Test
@@ -883,7 +895,6 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                     coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);
                 });
 
-
         coopAssets.entrySet().forEach(entry -> {
             final var legacyId = entry.getKey();
             final var assetTransaction = entry.getValue();
@@ -896,7 +907,9 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         });
     }
 
-    private static void connectToRelatedRevertedAssetTx(final int legacyId, final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
+    private static void connectToRelatedRevertedAssetTx(
+            final int legacyId,
+            final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
         final var negativeValue = assetTransaction.getAssetValue().negate();
         final var revertedAssetTx = coopAssets.values().stream().filter(a ->
                         a.getTransactionType() != HsOfficeCoopAssetsTransactionType.REVERSAL &&
@@ -909,11 +922,14 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         //revertedAssetTx.setAssetReversalTx(assetTransaction);
     }
 
-    private static void connectToRelatedAdoptionAssetTx(final int legacyId, final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
+    private static void connectToRelatedAdoptionAssetTx(
+            final int legacyId,
+            final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
         final var negativeValue = assetTransaction.getAssetValue().negate();
         final var adoptionAssetTx = coopAssets.values().stream().filter(a ->
                         a.getTransactionType() == HsOfficeCoopAssetsTransactionType.ADOPTION &&
-                                (!a.getValueDate().equals(LocalDate.of( 2014 , 12 , 31)) || a.getComment().contains(Integer.toString(assetTransaction.getMembership().getMemberNumber()/100))) &&
+                                (!a.getValueDate().equals(LocalDate.of(2014, 12, 31)) || a.getComment()
+                                        .contains(Integer.toString(assetTransaction.getMembership().getMemberNumber() / 100))) &&
                                 a.getMembership() != assetTransaction.getMembership() &&
                                 a.getValueDate().equals(assetTransaction.getValueDate()) &&
                                 a.getAssetValue().equals(negativeValue))
@@ -1131,14 +1147,14 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
 
         final var personKey = (
                 person.getPersonType() + "|" +
-                person.getSalutation() + "|" +
-                person.getTradeName() + "|" +
-                person.getTitle() + "|" +
-                person.getGivenName() + "|" +
-                person.getFamilyName()
+                        person.getSalutation() + "|" +
+                        person.getTradeName() + "|" +
+                        person.getTitle() + "|" +
+                        person.getGivenName() + "|" +
+                        person.getFamilyName()
         ).toLowerCase();
 
-        if ( !distinctPersons.containsKey(personKey) ) {
+        if (!distinctPersons.containsKey(personKey)) {
             distinctPersons.put(personKey, person);
         }
         return distinctPersons.get(personKey);
@@ -1164,24 +1180,24 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
             if (endsWithWord(tradeName, "OHG", "GbR", "KG", "UG", "PartGmbB", "mbB")) {
                 return HsOfficePersonType.INCORPORATED_FIRM; // Personengesellschaft. Gesellschafter haften persönlich.
             } else if (containsWord(tradeName, "e.K.", "e.G.", "eG", "gGmbH", "GmbH", "mbH", "AG", "e.V.", "eV", "e.V")
-                || tradeName.toLowerCase().contains("haftungsbeschränkt")
-                || tradeName.toLowerCase().contains("stiftung")
-                || tradeName.toLowerCase().contains("stichting")
-                || tradeName.toLowerCase().contains("foundation")
-                || tradeName.toLowerCase().contains("schule")
-                || tradeName.toLowerCase().contains("verein")
-                || tradeName.toLowerCase().contains("gewerkschaft")
-                || tradeName.toLowerCase().contains("gesellschaft")
-                || tradeName.toLowerCase().contains("kirche")
-                || tradeName.toLowerCase().contains("fraktion")
-                || tradeName.toLowerCase().contains("landkreis")
-                || tradeName.toLowerCase().contains("behörde")
-                || tradeName.toLowerCase().contains("bundesamt")
-                || tradeName.toLowerCase().contains("bezirksamt")
-                ) {
+                    || tradeName.toLowerCase().contains("haftungsbeschränkt")
+                    || tradeName.toLowerCase().contains("stiftung")
+                    || tradeName.toLowerCase().contains("stichting")
+                    || tradeName.toLowerCase().contains("foundation")
+                    || tradeName.toLowerCase().contains("schule")
+                    || tradeName.toLowerCase().contains("verein")
+                    || tradeName.toLowerCase().contains("gewerkschaft")
+                    || tradeName.toLowerCase().contains("gesellschaft")
+                    || tradeName.toLowerCase().contains("kirche")
+                    || tradeName.toLowerCase().contains("fraktion")
+                    || tradeName.toLowerCase().contains("landkreis")
+                    || tradeName.toLowerCase().contains("behörde")
+                    || tradeName.toLowerCase().contains("bundesamt")
+                    || tradeName.toLowerCase().contains("bezirksamt")
+            ) {
                 return HsOfficePersonType.LEGAL_PERSON; // Haftungsbeschränkt
             } else if (roles.contains("contractual") && !roles.contains("partner") &&
-                   !familyName.isBlank() && !givenName.isBlank()) {
+                    !familyName.isBlank() && !givenName.isBlank()) {
                 // REPRESENTATIVES are always natural persons
                 return HsOfficePersonType.NATURAL_PERSON;
             } else {
@@ -1203,9 +1219,9 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         final var lowerCaseValue = value.toLowerCase();
         for (String ending : endings) {
             if (lowerCaseValue.equals(ending.toLowerCase()) ||
-                lowerCaseValue.startsWith(ending.toLowerCase() + " ") ||
-                lowerCaseValue.contains(" " + ending.toLowerCase() + " ") ||
-                lowerCaseValue.endsWith(" " + ending.toLowerCase())) {
+                    lowerCaseValue.startsWith(ending.toLowerCase() + " ") ||
+                    lowerCaseValue.contains(" " + ending.toLowerCase() + " ") ||
+                    lowerCaseValue.endsWith(" " + ending.toLowerCase())) {
                 return true;
             }
         }

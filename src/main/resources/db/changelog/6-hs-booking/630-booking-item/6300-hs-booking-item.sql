@@ -25,7 +25,7 @@ create table if not exists hs_booking.item
     caption             varchar(80) not null,
     resources           jsonb not null,
 
-    constraint booking_item_has_project_or_parent_asset
+    constraint booking_item_has_project_or_parent_item
         check (projectUuid is not null or parentItemUuid is not null)
 );
 --//

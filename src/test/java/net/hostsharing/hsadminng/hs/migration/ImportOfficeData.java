@@ -4,10 +4,13 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.io.File;
 
 /*
  * This 'test' includes the complete legacy 'office' data import.
@@ -50,7 +53,8 @@ import org.springframework.test.context.ActiveProfiles;
         "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///importOfficeDataTC}",
         "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
-        "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
+        "hsadminng.superuser=${HSADMINNG_SUPERUSER:import-superuser@hostsharing.net}",
+        "spring.liquibase.contexts=only-office,without-test-data"
 })
 @ActiveProfiles("without-test-data")
 @DirtiesContext
@@ -58,4 +62,13 @@ import org.springframework.test.context.ActiveProfiles;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)
 public class ImportOfficeData extends BaseOfficeDataImport {
+
+    @Value("${spring.datasource.url}")
+    private String jdbcUrl;
+
+    @Test
+    @Order(9999)
+    public void dumpOfficeData() {
+        PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-only-office-schema-with-import-test-data.sql"));
+    }
 }

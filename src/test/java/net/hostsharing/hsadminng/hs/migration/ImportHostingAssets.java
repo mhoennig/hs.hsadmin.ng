@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
+import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
@@ -27,12 +28,14 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.io.Reader;
 import java.net.IDN;
@@ -44,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -76,56 +80,23 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
 
-/*
- * This 'test' includes the complete legacy 'office' data import.
- *
- * There is no code in 'main' because the import is not needed a normal runtime.
- * There is some test data in Java resources to verify the data conversion.
- * For a real import a main method will be added later
- * which reads CSV files from the file system.
- *
- * When run on a Hostsharing database, it needs the following settings (hsh99_... just examples).
- *
- * In a real Hostsharing environment, these are created via (the old) hsadmin:
-
-    CREATE USER hsh99_admin WITH PASSWORD 'password';
-    CREATE DATABASE hsh99_hsadminng  ENCODING 'UTF8' TEMPLATE template0;
-    REVOKE ALL ON DATABASE hsh99_hsadminng FROM public; -- why does hsadmin do that?
-    ALTER DATABASE hsh99_hsadminng OWNER TO hsh99_admin;
-
-    CREATE USER hsh99_restricted WITH PASSWORD 'password';
-
-    \c hsh99_hsadminng
-
-    GRANT ALL PRIVILEGES ON SCHEMA public to hsh99_admin;
-
- * Additionally, we need these settings (because the Hostsharing DB-Admin has no CREATE right):
-
-    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-    -- maybe something like that is needed for the 2nd user
-    -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to hsh99_restricted;
-
- * Then copy the file .tc-environment to a file named .environment (excluded from git) and fill in your specific values.
-
- * To finally import the office data, run:
- *
- *   gw-importHostingAssets # comes from .aliases file and uses .environment
- */
 @Tag("importHostingAssets")
 @DataJpaTest(properties = {
         "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///importHostingAssetsTC}",
         "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
-        "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
+        "hsadminng.superuser=${HSADMINNG_SUPERUSER:import-superuser@hostsharing.net}",
+        "spring.liquibase.enabled=false" // @Sql should go first, Liquibase will be initialized programmatically
 })
 @DirtiesContext
-@Import({ Context.class, JpaAttempt.class })
-@ActiveProfiles("without-test-data")
+@Import({ Context.class, JpaAttempt.class, LiquibaseConfig.class })
+@ActiveProfiles({ "without-test-data", "liquibase-migration", "hosting-asset-import" })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)
-public class ImportHostingAssets extends BaseOfficeDataImport {
+@Sql(value = "/db/released-only-office-schema-with-import-test-data.sql", executionPhase = BEFORE_TEST_CLASS) // release-schema
+public class ImportHostingAssets extends CsvDataImport {
 
     private static final Set<String> NOBODY_SUBSTITUTES = Set.of("nomail", "bounce");
 
@@ -156,15 +127,50 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
     final ObjectMapper jsonMapper = new ObjectMapper();
 
+    @Autowired
+    HsBookingDebitorRepository debitorRepo;
+
+    @Autowired
+    LiquibaseMigration liquibase;
+
+    @Test
+    @Order(11000)
+    void liquibaseMigrationForBookingAndHosting() {
+        liquibase.assertReferenceStatusAfterRestore(286, "hs-booking-SCHEMA");
+        makeSureThatTheImportAdminUserExists();
+        liquibase.runWithContexts("migration", "without-test-data");
+        liquibase.assertThatCurrentMigrationsGotApplied(331, "hs-booking-SCHEMA");
+    }
+
+    record PartnerLegacyIdMapping(UUID uuid, Integer bp_id){}
+    record DebitorRecord(UUID uuid, Integer version, String defaultPrefix){}
+
     @Test
     @Order(11010)
     void createBookingProjects() {
-        debitors.forEach((id, debitor) -> {
-            bookingProjects.put(id, HsBookingProjectRealEntity.builder()
-                    .caption(debitor.getDefaultPrefix() + " default project")
-                    .debitor(em.find(HsBookingDebitorEntity.class, debitor.getUuid()))
-                    .build());
-        });
+
+        final var partnerLegacyIdMappings = em.createNativeQuery(
+                """
+                        select debitor.uuid, pid.bp_id
+                            from hs_office.debitor debitor
+                            join hs_office.relation debitorRel on debitor.debitorReluUid=debitorRel.uuid
+                            join hs_office.relation partnerRel on partnerRel.holderUuid=debitorRel.anchorUuid
+                            join hs_office.partner partner on partner.partnerReluUid=partnerRel.uuid
+                            join hs_office.partner_legacy_id pid on partner.uuid=pid.uuid
+                        """, PartnerLegacyIdMapping.class).getResultList();
+        //noinspection unchecked
+        final var debitorUuidToLegacyBpIdMap = ((List<PartnerLegacyIdMapping>) partnerLegacyIdMappings).stream()
+                .collect(toMap(row -> row.uuid, row -> row.bp_id));
+        final var debitors = em.createNativeQuery("SELECT debitor.uuid, debitor.version, debitor.defaultPrefix FROM hs_office.debitor debitor", DebitorRecord.class).getResultList();
+        //noinspection unchecked
+        ((List<DebitorRecord>)debitors).forEach(debitor -> {
+                    bookingProjects.put(
+                            debitorUuidToLegacyBpIdMap.get(debitor.uuid), HsBookingProjectRealEntity.builder()
+                                    .version(debitor.version)
+                                    .caption(debitor.defaultPrefix + " default project")
+                                    .debitor(em.find(HsBookingDebitorEntity.class, debitor.uuid))
+                                    .build());
+                });
     }
 
     @Test
@@ -501,11 +507,11 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     @SneakyThrows
     void importZonenfiles() {
         final var resolver = new PathMatchingResourcePatternResolver();
-            final var resources = resolver.getResources("/" + MIGRATION_DATA_PATH + "/hosting/zonefiles/*.json");
-            for (var resource : resources) {
-                System.out.println("Processing zonenfile: " + resource);
-                importZonefiles(vmName(resource.getFilename()), resourceAsString(resource));
-            }
+        final var resources = resolver.getResources("/" + MIGRATION_DATA_PATH + "/hosting/zonefiles/*.json");
+        for (var resource : resources) {
+            System.out.println("Processing zonenfile: " + resource);
+            importZonefiles(vmName(resource.getFilename()), resourceAsString(resource));
+        }
     }
 
     @Test
@@ -667,7 +673,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     void validateDbUserAssets() {
         validateHostingAssets(dbUserAssets);
     }
-    
+
     @Test
     @Order(18032)
     void validateDbAssets() {
@@ -713,10 +719,10 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     void validateHostingAssets(final Map<Integer, HsHostingAssetRealEntity> assets) {
         assets.forEach((id, ha) -> {
             logError(() ->
-                new HostingAssetEntitySaveProcessor(em, ha)
-                        .preprocessEntity()
-                        .validateEntity()
-                        .prepareForSave()
+                    new HostingAssetEntitySaveProcessor(em, ha)
+                            .preprocessEntity()
+                            .validateEntity()
+                            .prepareForSave()
             );
         });
     }
@@ -728,9 +734,12 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
         if (isImportingControlledTestData()) {
             expectError("zonedata dom_owner of mellis.de is old00 but expected to be mim00");
             expectError("\nexpected: \"vm1068\"\n but was: \"vm1093\"");
-            expectError("['EMAIL_ADDRESS:webmaster@hamburg-west.l-u-g.org.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\.+_-]*)?$, ^([a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+)?@[a-zA-Z0-9.-]+$, ^nobody$, ^/dev/null$] but 'raoul.lottmann@example.com peter.lottmann@example.com' does not match any]");
-            expectError("['EMAIL_ADDRESS:abuse@mellis.de.config.target' length is expected to be at min 1 but length of [[]] is 0]");
-            expectError("['EMAIL_ADDRESS:abuse@ist-im-netz.de.config.target' length is expected to be at min 1 but length of [[]] is 0]");
+            expectError(
+                    "['EMAIL_ADDRESS:webmaster@hamburg-west.l-u-g.org.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\.+_-]*)?$, ^([a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+)?@[a-zA-Z0-9.-]+$, ^nobody$, ^/dev/null$] but 'raoul.lottmann@example.com peter.lottmann@example.com' does not match any]");
+            expectError(
+                    "['EMAIL_ADDRESS:abuse@mellis.de.config.target' length is expected to be at min 1 but length of [[]] is 0]");
+            expectError(
+                    "['EMAIL_ADDRESS:abuse@ist-im-netz.de.config.target' length is expected to be at min 1 but length of [[]] is 0]");
         }
         this.assertNoErrors();
     }
@@ -738,7 +747,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     // --------------------------------------------------------------------------------------------
 
     @Test
-    @Order(19000)
+    @Order(19100)
     @Commit
     void persistBookingProjects() {
 
@@ -751,7 +760,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     }
 
     @Test
-    @Order(19010)
+    @Order(19110)
     @Commit
     void persistBookingItems() {
 
@@ -1037,15 +1046,15 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     void verifyMariaDbLegacyIds() {
         assumeThatWeAreImportingControlledTestData();
         assertThat(fetchHosingAssetLegacyIds(MARIADB_DATABASE)).isEqualTo("""
-                1786
-               1805
-               4908
-               4941
-               4942
-               7520
-               7521
-               7604
-               """.trim());
+                 1786
+                1805
+                4908
+                4941
+                4942
+                7520
+                7521
+                7604
+                """.trim());
         assertThat(missingHostingAsstLegacyIds(MARIADB_DATABASE)).isEmpty();
     }
 
@@ -1070,13 +1079,14 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
         assumeThatWeAreImportingControlledTestData();
 
         final var haCount = jpaAttempt.transacted(() -> {
-                    context(rbacSuperuser, "hs_booking.project#D-1000300-mimdefaultproject:AGENT");
-                    return (Integer) em.createNativeQuery("select count(*) from hs_hosting.asset_rv where type='EMAIL_ADDRESS'", Integer.class)
-                            .getSingleResult();
-                }).assertSuccessful().returnedValue();
+            context(rbacSuperuser, "hs_booking.project#D-1000300-mimdefaultproject:AGENT");
+            return (Integer) em.createNativeQuery(
+                            "select count(*) from hs_hosting.asset_rv where type='EMAIL_ADDRESS'",
+                            Integer.class)
+                    .getSingleResult();
+        }).assertSuccessful().returnedValue();
         assertThat(haCount).isEqualTo(68);
     }
-
 
     // ============================================================================================
 
@@ -1262,14 +1272,14 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                         managedWebspace.setParentAsset(parentAsset);
 
                         if (parentAsset.getRelatedProject() != managedWebspace.getRelatedProject()
-                                && managedWebspace.getRelatedProject().getDebitor().getDebitorNumber() == 10000_00 ) {
+                                && managedWebspace.getRelatedProject().getDebitor().getDebitorNumber() == 10000_00) {
                             assertThat(managedWebspace.getIdentifier()).startsWith("xyz");
                             final var hshDebitor = managedWebspace.getBookingItem().getProject().getDebitor();
                             final var newProject = HsBookingProjectRealEntity.builder()
                                     .debitor(hshDebitor)
                                     .caption(parentAsset.getIdentifier() + " Monitor")
                                     .build();
-                            bookingProjects.put(Collections.max(bookingProjects.keySet())+1, newProject);
+                            bookingProjects.put(Collections.max(bookingProjects.keySet()) + 1, newProject);
                             managedWebspace.getBookingItem().setProject(newProject);
                         } else {
                             managedWebspace.getBookingItem().setParentItem(parentAsset.getBookingItem());
@@ -1624,20 +1634,25 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                                     entry("includes", options.contains("includes")),
                                     entry("letsencrypt", options.contains("letsencrypt")),
                                     entry("multiviews", options.contains("multiviews")),
-                                    entry("subdomains", withDefault(rec.getString("valid_subdomain_names"), "*")
-                                            .split(",")),
-                                    entry("fcgi-php-bin", withDefault(
-                                            rec.getString("fcgi_php_bin"),
-                                            httpDomainSetupValidator.getProperty("fcgi-php-bin").defaultValue())),
-                                    entry("passenger-nodejs", withDefault(
-                                            rec.getString("passenger_nodejs"),
-                                            httpDomainSetupValidator.getProperty("passenger-nodejs").defaultValue())),
-                                    entry("passenger-python", withDefault(
-                                            rec.getString("passenger_python"),
-                                            httpDomainSetupValidator.getProperty("passenger-python").defaultValue())),
-                                    entry("passenger-ruby", withDefault(
-                                            rec.getString("passenger_ruby"),
-                                            httpDomainSetupValidator.getProperty("passenger-ruby").defaultValue()))
+                                    entry(
+                                            "subdomains", withDefault(rec.getString("valid_subdomain_names"), "*")
+                                                    .split(",")),
+                                    entry(
+                                            "fcgi-php-bin", withDefault(
+                                                    rec.getString("fcgi_php_bin"),
+                                                    httpDomainSetupValidator.getProperty("fcgi-php-bin").defaultValue())),
+                                    entry(
+                                            "passenger-nodejs", withDefault(
+                                                    rec.getString("passenger_nodejs"),
+                                                    httpDomainSetupValidator.getProperty("passenger-nodejs").defaultValue())),
+                                    entry(
+                                            "passenger-python", withDefault(
+                                                    rec.getString("passenger_python"),
+                                                    httpDomainSetupValidator.getProperty("passenger-python").defaultValue())),
+                                    entry(
+                                            "passenger-ruby", withDefault(
+                                                    rec.getString("passenger_ruby"),
+                                                    httpDomainSetupValidator.getProperty("passenger-ruby").defaultValue()))
                             ))
                             .build();
                     domainHttpSetupAssets.put(domain_id, domainHttpSetupAsset);
@@ -1744,9 +1759,10 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                     logError(() -> assertThat(vmName).isEqualTo(domUser.getParentAsset().getParentAsset().getIdentifier()));
 
                     //noinspection unchecked
-                    zoneData.put("user-RR", ((ArrayList<ArrayList<Object>>) zoneData.get("user-RR")).stream()
-                            .map(userRR -> userRR.stream().map(Object::toString).collect(joining(" ")))
-                            .toArray(String[]::new)
+                    zoneData.put(
+                            "user-RR", ((ArrayList<ArrayList<Object>>) zoneData.get("user-RR")).stream()
+                                    .map(userRR -> userRR.stream().map(Object::toString).collect(joining(" ")))
+                                    .toArray(String[]::new)
                     );
                     domainDnsSetupAsset.getConfig().putAll(zoneData);
                 } else {
@@ -1897,13 +1913,13 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     private String fetchHosingAssetLegacyIds(final HsHostingAssetType type) {
         //noinspection unchecked
         return ((List<List<?>>) em.createNativeQuery(
-                    """
-                     SELECT li.* FROM hs_hosting.asset_legacy_id li
-                     JOIN hs_hosting.asset ha ON ha.uuid=li.uuid
-                     WHERE CAST(ha.type AS text)=:type
-                     ORDER BY legacy_id
-                    """,
-                    List.class)
+                        """
+                                 select li.* from hs_hosting.asset_legacy_id li
+                                 join hs_hosting.asset ha on ha.uuid=li.uuid
+                                 where cast(ha.type as text)=:type
+                                 order by legacy_id
+                                """,
+                        List.class)
                 .setParameter("type", type.name())
                 .getResultList()
         ).stream().map(row -> row.get(1).toString()).collect(joining("\n"));
@@ -1912,13 +1928,13 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     private String missingHostingAsstLegacyIds(final HsHostingAssetType type) {
         //noinspection unchecked
         return ((List<List<?>>) em.createNativeQuery(
-                    """
-                    SELECT ha.uuid, ha.type, ha.identifier FROM hs_hosting.asset ha
-                             JOIN hs_hosting.asset_legacy_id li ON li.uuid=ha.uuid
-                             WHERE li.legacy_id is null AND CAST(ha.type AS text)=:type
-                             ORDER BY li.legacy_id
-                    """,
-                    List.class)
+                        """
+                                select ha.uuid, ha.type, ha.identifier from hs_hosting.asset ha
+                                         join hs_hosting.asset_legacy_id li on li.uuid=ha.uuid
+                                         where li.legacy_id is null and cast(ha.type as text)=:type
+                                         order by li.legacy_id
+                                """,
+                        List.class)
                 .setParameter("type", type.name())
                 .getResultList()).stream()
                 .map(row -> row.stream().map(Object::toString).collect(joining(", ")))

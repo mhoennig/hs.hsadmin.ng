@@ -248,63 +248,22 @@ public class CsvDataImport extends ContextBasedTest {
         return json;
     }
 
-    protected void deleteTestDataFromHsOfficeTables() {
+    protected void makeSureThatTheImportAdminUserExists() {
         jpaAttempt.transacted(() -> {
-            context(rbacSuperuser);
-            // TODO.perf: could we instead skip creating test-data based on an env var?
-            em.createNativeQuery("delete from hs_hosting.asset where true").executeUpdate();
-            em.createNativeQuery("delete from hs_hosting.asset_ex where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking.item where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking.item_ex where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking.project where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking.project_ex where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopassettx where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopassettx_legacy_id where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopsharetx where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopsharetx_legacy_id where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.membership where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.sepamandate where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.sepamandate_legacy_id where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.debitor where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.bankaccount where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.partner where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.partner_details where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.relation where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.contact where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.person where true").executeUpdate();
-        }).assertSuccessful();
-    }
-
-    protected void resetHsOfficeSequences() {
-        jpaAttempt.transacted(() -> {
-            context(rbacSuperuser);
-            em.createNativeQuery("alter sequence hs_office.contact_legacy_id_seq restart with 1000000000;").executeUpdate();
-            em.createNativeQuery("alter sequence hs_office.coopassettx_legacy_id_seq restart with 1000000000;")
-                    .executeUpdate();
-            em.createNativeQuery("alter sequence public.hs_office.coopsharetx_legacy_id_seq restart with 1000000000;")
-                    .executeUpdate();
-            em.createNativeQuery("alter sequence public.hs_office.partner_legacy_id_seq restart with 1000000000;")
-                    .executeUpdate();
-            em.createNativeQuery("alter sequence public.hs_office.sepamandate_legacy_id_seq restart with 1000000000;")
-                    .executeUpdate();
-        });
-    }
-
-    protected void deleteFromTestTables() {
-        jpaAttempt.transacted(() -> {
-            context(rbacSuperuser);
-            em.createNativeQuery("delete from rbactest.domain where true").executeUpdate();
-            em.createNativeQuery("delete from rbactest.package where true").executeUpdate();
-            em.createNativeQuery("delete from rbactest.customer where true").executeUpdate();
-        }).assertSuccessful();
-    }
-
-    protected void deleteFromCommonTables() {
-        jpaAttempt.transacted(() -> {
-            context(rbacSuperuser);
-            em.createNativeQuery("delete from rbac.subject_rv where name not like 'superuser-%'").executeUpdate();
-            em.createNativeQuery("delete from base.tx_journal where true").executeUpdate();
-            em.createNativeQuery("delete from base.tx_context where true").executeUpdate();
+            context(null);
+            em.createNativeQuery("""
+                do language plpgsql $$
+                    declare
+                        admins uuid;
+                    begin
+                        if not exists (select 1 from rbac.subject where name = '${rbacSuperuser}') then
+                            admins = rbac.findRoleId(rbac.global_ADMIN());
+                            call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('${rbacSuperuser}'));
+                        end if;
+                    end;
+                $$;
+                """.replace("${rbacSuperuser}", rbacSuperuser))
+                .executeUpdate();
         }).assertSuccessful();
     }
 
