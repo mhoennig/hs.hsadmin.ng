@@ -1,4 +1,4 @@
-# For using the alias gw-importOfficeData or gw-importHostingAssets,
+# For using the alias gw-importHostingAssets,
 # copy the file .tc-environment to .environment (ignored by git)
 # and amend them according to your external DB.
 
@@ -71,7 +71,6 @@ function importLegacyData() {
         ./gradlew $target --rerun
     fi
 }
-alias gw-importOfficeData='importLegacyData importOfficeData'
 alias gw-importHostingAssets='importLegacyData importHostingAssets'
 
 alias podman-start='systemctl --user enable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
@@ -92,8 +91,8 @@ alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
 alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
 alias gw-check='. .aliases; . .tc-environment; gw test check -x pitest'
 
-# HOWTO: run all 'normal' tests (no scenario+import-tests): `gw-test`
-#   You can also mention specific targets: `gw-test importOfficeData`.
+# HOWTO: run all 'normal' tests (by default without scenario+import-tests): `gw-test`
+#   You can also mention specific targets: `gw-test importHostingAssets`, in that case only these tests are executed.
 #   This will always use the environment from `.tc-environment`.
 #
 # HOWTO: re-run tests even if no changed can be detected: `gw-test --rerun`
@@ -123,7 +122,7 @@ function _gwTest() {
     time (_gwTest1 unitTest "$@" &&
         _gwTest1 officeIntegrationTest bookingIntegrationTest hostingIntegrationTest "$@" &&
         _gwTest1 scenarioTest "$@" &&
-        _gwTest1 importOfficeData importHostingAssets "$@");
+        _gwTest1 importHostingAssets "$@");
   elif [ $# -eq 0 ] || [[ $1 == -* ]]; then
     time _gwTest1 test "$@";
   else
@@ -137,7 +136,7 @@ alias howto=bin/howto
 alias cas-curl=bin/cas-curl
 
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
-alias gw-importOfficeData-in-docker-compose='
+alias gw-importHostingAssets-in-docker-compose='
         docker-compose -f etc/docker-compose.yml down &&
         docker-compose -f etc/docker-compose.yml up -d && sleep 10 &&
         time gw-importHostingAssets'

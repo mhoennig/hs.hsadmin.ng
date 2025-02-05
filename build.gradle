@@ -263,7 +263,7 @@ test {
             'net.hostsharing.hsadminng.**.generated.**',
     ]
     useJUnitPlatform {
-        excludeTags 'importOfficeData', 'importHostingAssets', 'scenarioTest'
+        excludeTags 'importHostingAssets', 'scenarioTest'
     }
 }
 
@@ -338,7 +338,7 @@ jacocoTestCoverageVerification {
 // HOWTO: run all unit-tests which don't need a database: gw-test unitTest
 tasks.register('unitTest', Test) {
     useJUnitPlatform {
-        excludeTags 'importOfficeData', 'importHostingAssets', 'scenarioTest', 'generalIntegrationTest',
+        excludeTags 'importHostingAssets', 'scenarioTest', 'generalIntegrationTest',
                 'officeIntegrationTest', 'bookingIntegrationTest', 'hostingIntegrationTest'
     }
 
@@ -396,17 +396,6 @@ tasks.register('hostingIntegrationTest', Test) {
     mustRunAfter spotlessJava
 }
 
-tasks.register('importOfficeData', Test) {
-    useJUnitPlatform {
-        includeTags 'importOfficeData'
-    }
-
-    group 'verification'
-    description 'run the import jobs as tests'
-
-    mustRunAfter spotlessJava
-}
-
 tasks.register('importHostingAssets', Test) {
     useJUnitPlatform {
         includeTags 'importHostingAssets'
@@ -439,7 +428,7 @@ pitest {
     ]
 
     targetTests = ['net.hostsharing.hsadminng.**.*UnitTest', 'net.hostsharing.hsadminng.**.*RestTest']
-    excludedTestClasses = ['**AcceptanceTest*', '**IntegrationTest*', '**ImportOfficeData', '**ImportHostingAssets']
+    excludedTestClasses = ['**AcceptanceTest*', '**IntegrationTest*', '**ImportHostingAssets']
 
     pitestVersion = '1.17.0'
     junit5PluginVersion = '1.1.0'

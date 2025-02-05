@@ -55,9 +55,9 @@ pipeline {
                         sh './gradlew bookingIntegrationTest hostingIntegrationTest --no-daemon'
                     }
                 }
-                stage('Import-Tests') {
+                stage('Test-Imports') {
                     steps {
-                        sh './gradlew importOfficeData importHostingAssets --no-daemon'
+                        sh './gradlew importHostingAssets --no-daemon'
                     }
                 }
                 stage ('Scenario-Tests') {
