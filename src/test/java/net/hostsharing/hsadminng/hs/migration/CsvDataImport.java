@@ -4,6 +4,8 @@ import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import lombok.SneakyThrows;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProject;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
@@ -155,37 +157,78 @@ public class CsvDataImport extends ContextBasedTest {
         return record;
     }
 
-    public <T extends BaseEntity> T persist(final Integer id, final T entity) {
-        try {
-            if (entity instanceof HsHostingAsset ha) {
-                //noinspection unchecked
-                return (T) persistViaSql(id, ha);
-            }
-            return persistViaEM(id, entity);
-        } catch (Exception exc) {
-            errors.add("failed to persist #" + entity.hashCode() + ": " + entity);
-            errors.add(exc.toString());
-        }
-        return entity;
-    }
+    @SneakyThrows
+    public void persistViaSql(final Integer id, final HsBookingProject entity) {
+        entity.setUuid(UUID.randomUUID());
 
-    public <T extends BaseEntity> T persistViaEM(final Integer id, final T entity) {
-        if (em.contains(entity)) {
-            return entity;
-        }
-        try {
-            em.persist(entity);
-            em.flush(); // makes it a bit slower, but produces better error messages
-            System.out.println("persisted #" + id + " as " + entity.getUuid());
-            return entity;
-        } catch (final Exception exc) {
-            System.err.println("persist failed for #" + id + " as " + entity);
-            throw exc; // for breakpoints
-        }
+        final var query = em.createNativeQuery("""
+                         insert into hs_booking.project(
+                                    uuid,
+                                    version,
+                                    debitorUuid,
+                                    caption)
+                        values (
+                                    :uuid,
+                                    :version,
+                                    :debitorUuid,
+                                    :caption)
+                        """)
+                .setParameter("uuid", entity.getUuid())
+                .setParameter("version", entity.getVersion())
+                .setParameter("debitorUuid", entity.getDebitor().getUuid())
+                .setParameter("caption", entity.getCaption());
+
+        final var count = query.executeUpdate();
+        logError(() -> {
+            assertThat(count).describedAs("persisting BookingProject #" + id + " failed: " + entity).isEqualTo(1);
+        });
     }
 
     @SneakyThrows
-    public BaseEntity<HsHostingAsset> persistViaSql(final Integer id, final HsHostingAsset entity) {
+    public void persistViaSql(final Integer id, final HsBookingItem entity) {
+        if (entity.getUuid() != null) {
+            return;
+        }
+
+        entity.setUuid(UUID.randomUUID());
+
+        final var query = em.createNativeQuery("""
+                         insert into hs_booking.item(
+                                    uuid,
+                                    version,
+                                    type,
+                                    projectUuid,
+                                    parentItemUuid,
+                                    validity,
+                                    caption,
+                                    resources)
+                        values (
+                                    :uuid,
+                                    :version,
+                                    :type,
+                                    :projectUuid,
+                                    :parentItemUuid,
+                                    :validity,
+                                    :caption,
+                                    cast(:resources as jsonb))
+                        """)
+                .setParameter("uuid", entity.getUuid())
+                .setParameter("version", entity.getVersion())
+                .setParameter("projectUuid", ofNullable(entity.getProject()).map(BaseEntity::getUuid).orElse(null))
+                .setParameter("type", entity.getType().name())
+                .setParameter("parentItemUuid", ofNullable(entity.getParentItem()).map(BaseEntity::getUuid).orElse(null))
+                .setParameter("validity", entity.getValidity())
+                .setParameter("caption", entity.getCaption())
+                .setParameter("resources", entity.getResources().toString().replace("\t", "\\t"));
+
+        final var count = query.executeUpdate();
+        logError(() -> {
+            assertThat(count).describedAs("persisting BookingItem #" + id + " failed: " + entity).isEqualTo(1);
+        });
+    }
+
+    @SneakyThrows
+    public HsHostingAsset persistViaSql(final Integer id, final HsHostingAsset entity) {
         if (entity.getUuid() == null) {
             entity.setUuid(UUID.randomUUID());
         }
@@ -229,7 +272,7 @@ public class CsvDataImport extends ContextBasedTest {
 
         final var count = query.executeUpdate();
         logError(() -> {
-            assertThat(count).isEqualTo(1);
+            assertThat(count).describedAs("persisting HostingAsset #" + id + " failed: " + entity).isEqualTo(1);
         });
         return entity;
     }

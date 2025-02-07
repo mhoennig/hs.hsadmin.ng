@@ -142,12 +142,12 @@ public class ImportHostingAssets extends CsvDataImport {
         liquibase.assertThatCurrentMigrationsGotApplied(331, "hs-booking-SCHEMA");
     }
 
-    record PartnerLegacyIdMapping(UUID uuid, Integer bp_id){}
-    record DebitorRecord(UUID uuid, Integer version, String defaultPrefix){}
-
     @Test
     @Order(11010)
     void createBookingProjects() {
+
+        record PartnerLegacyIdMapping(UUID uuid, Integer bp_id){}
+        record DebitorRecord(UUID uuid, Integer version, String defaultPrefix){}
 
         final var partnerLegacyIdMappings = em.createNativeQuery(
                 """
@@ -755,7 +755,7 @@ public class ImportHostingAssets extends CsvDataImport {
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            bookingProjects.forEach(this::persist);
+            bookingProjects.forEach(this::persistViaSql);
         }).assertSuccessful();
     }
 
@@ -1115,7 +1115,7 @@ public class ImportHostingAssets extends CsvDataImport {
         if (bi.getParentItem() != null) {
             persistRecursively(key, HsBookingItemEntityValidatorRegistry.validated(em, bi.getParentItem()));
         }
-        persist(key, HsBookingItemEntityValidatorRegistry.validated(em, bi));
+        persistViaSql(key, HsBookingItemEntityValidatorRegistry.validated(em, bi));
     }
 
     private void persistHostingAssets(final Map<Integer, HsHostingAssetRealEntity> assets) {
@@ -1139,7 +1139,7 @@ public class ImportHostingAssets extends CsvDataImport {
                                                             "'EMAIL_ADDRESS:.*\\.config\\.target' .*"
                                                     )
                                                     .prepareForSave()
-                                                    .saveUsing(entity -> persist(entry.getKey(), entity))
+                                                    .saveUsing(entity -> persistViaSql(entry.getKey(), entity))
                                                     .validateContext()
                                     ));
                         }
