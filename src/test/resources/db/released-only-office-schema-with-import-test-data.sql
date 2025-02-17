@@ -8,9 +8,21 @@
 -- because the database is already created by Testcontainers.
 --
 
-CREATE ROLE postgres;
-CREATE ROLE admin;
-CREATE ROLE restricted;
+DO
+'
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE  rolname = $$postgres$$) THEN
+            CREATE ROLE postgres;
+        END IF;
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE  rolname = $$admin$$) THEN
+            CREATE ROLE admin;
+        END IF;
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE  rolname = $$restricted$$) THEN
+            CREATE ROLE restricted;
+        END IF;
+    END
+';
+
 
 --
 -- PostgreSQL database dump
@@ -37,7 +49,7 @@ SET row_security = off;
 CREATE SCHEMA base;
 
 
-ALTER SCHEMA base OWNER TO test;
+ALTER SCHEMA base OWNER TO admin;
 
 --
 -- Name: hs_integration; Type: SCHEMA; Schema: -; Owner: test
@@ -46,7 +58,7 @@ ALTER SCHEMA base OWNER TO test;
 CREATE SCHEMA hs_integration;
 
 
-ALTER SCHEMA hs_integration OWNER TO test;
+ALTER SCHEMA hs_integration OWNER TO admin;
 
 --
 -- Name: hs_office; Type: SCHEMA; Schema: -; Owner: test
@@ -55,7 +67,7 @@ ALTER SCHEMA hs_integration OWNER TO test;
 CREATE SCHEMA hs_office;
 
 
-ALTER SCHEMA hs_office OWNER TO test;
+ALTER SCHEMA hs_office OWNER TO admin;
 
 --
 -- Name: rbac; Type: SCHEMA; Schema: -; Owner: test
@@ -64,7 +76,7 @@ ALTER SCHEMA hs_office OWNER TO test;
 CREATE SCHEMA rbac;
 
 
-ALTER SCHEMA rbac OWNER TO test;
+ALTER SCHEMA rbac OWNER TO admin;
 
 --
 -- Name: rbactest; Type: SCHEMA; Schema: -; Owner: test
@@ -73,7 +85,7 @@ ALTER SCHEMA rbac OWNER TO test;
 CREATE SCHEMA rbactest;
 
 
-ALTER SCHEMA rbactest OWNER TO test;
+ALTER SCHEMA rbactest OWNER TO admin;
 
 --
 -- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
@@ -101,7 +113,7 @@ CREATE TYPE base.tx_operation AS ENUM (
 );
 
 
-ALTER TYPE base.tx_operation OWNER TO test;
+ALTER TYPE base.tx_operation OWNER TO admin;
 
 --
 -- Name: coopassetstransactiontype; Type: TYPE; Schema: hs_office; Owner: test
@@ -119,7 +131,7 @@ CREATE TYPE hs_office.coopassetstransactiontype AS ENUM (
 );
 
 
-ALTER TYPE hs_office.coopassetstransactiontype OWNER TO test;
+ALTER TYPE hs_office.coopassetstransactiontype OWNER TO admin;
 
 --
 -- Name: coopsharestransactiontype; Type: TYPE; Schema: hs_office; Owner: test
@@ -132,7 +144,7 @@ CREATE TYPE hs_office.coopsharestransactiontype AS ENUM (
 );
 
 
-ALTER TYPE hs_office.coopsharestransactiontype OWNER TO test;
+ALTER TYPE hs_office.coopsharestransactiontype OWNER TO admin;
 
 --
 -- Name: hsofficemembershipstatus; Type: TYPE; Schema: hs_office; Owner: test
@@ -150,7 +162,7 @@ CREATE TYPE hs_office.hsofficemembershipstatus AS ENUM (
 );
 
 
-ALTER TYPE hs_office.hsofficemembershipstatus OWNER TO test;
+ALTER TYPE hs_office.hsofficemembershipstatus OWNER TO admin;
 
 --
 -- Name: persontype; Type: TYPE; Schema: hs_office; Owner: test
@@ -167,7 +179,7 @@ CREATE TYPE hs_office.persontype AS ENUM (
 );
 
 
-ALTER TYPE hs_office.persontype OWNER TO test;
+ALTER TYPE hs_office.persontype OWNER TO admin;
 
 --
 -- Name: relationtype; Type: TYPE; Schema: hs_office; Owner: test
@@ -186,7 +198,7 @@ CREATE TYPE hs_office.relationtype AS ENUM (
 );
 
 
-ALTER TYPE hs_office.relationtype OWNER TO test;
+ALTER TYPE hs_office.relationtype OWNER TO admin;
 
 --
 -- Name: rbacop; Type: DOMAIN; Schema: rbac; Owner: test
@@ -196,7 +208,7 @@ CREATE DOMAIN rbac.rbacop AS character varying(6)
 	CONSTRAINT rbacop_check CHECK ((((VALUE)::text = 'DELETE'::text) OR ((VALUE)::text = 'UPDATE'::text) OR ((VALUE)::text = 'SELECT'::text) OR ((VALUE)::text = 'INSERT'::text) OR ((VALUE)::text = 'ASSUME'::text)));
 
 
-ALTER DOMAIN rbac.rbacop OWNER TO test;
+ALTER DOMAIN rbac.rbacop OWNER TO admin;
 
 --
 -- Name: referencetype; Type: TYPE; Schema: rbac; Owner: test
@@ -209,7 +221,7 @@ CREATE TYPE rbac.referencetype AS ENUM (
 );
 
 
-ALTER TYPE rbac.referencetype OWNER TO test;
+ALTER TYPE rbac.referencetype OWNER TO admin;
 
 --
 -- Name: roletype; Type: TYPE; Schema: rbac; Owner: test
@@ -225,7 +237,7 @@ CREATE TYPE rbac.roletype AS ENUM (
 );
 
 
-ALTER TYPE rbac.roletype OWNER TO test;
+ALTER TYPE rbac.roletype OWNER TO admin;
 
 --
 -- Name: roledescriptor; Type: TYPE; Schema: rbac; Owner: test
@@ -239,7 +251,7 @@ CREATE TYPE rbac.roledescriptor AS (
 );
 
 
-ALTER TYPE rbac.roledescriptor OWNER TO test;
+ALTER TYPE rbac.roledescriptor OWNER TO admin;
 
 --
 -- Name: CAST (character varying AS hs_office.coopassetstransactiontype); Type: CAST; Schema: -; Owner: -
@@ -289,7 +301,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.asserttrue(expectedtrue boolean, msg text) OWNER TO test;
+ALTER FUNCTION base.asserttrue(expectedtrue boolean, msg text) OWNER TO admin;
 
 --
 -- Name: assumedroles(); Type: FUNCTION; Schema: base; Owner: test
@@ -303,7 +315,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.assumedroles() OWNER TO test;
+ALTER FUNCTION base.assumedroles() OWNER TO admin;
 
 --
 -- Name: biginthash(text); Type: FUNCTION; Schema: base; Owner: test
@@ -316,7 +328,7 @@ select (''x''||substr(md5($1),1,16))::bit(64)::bigint;
 ';
 
 
-ALTER FUNCTION base.biginthash(text) OWNER TO test;
+ALTER FUNCTION base.biginthash(text) OWNER TO admin;
 
 --
 -- Name: cleanidentifier(character varying); Type: FUNCTION; Schema: base; Owner: test
@@ -333,7 +345,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.cleanidentifier(rawidentifier character varying) OWNER TO test;
+ALTER FUNCTION base.cleanidentifier(rawidentifier character varying) OWNER TO admin;
 
 --
 -- Name: combine_table_schema_and_name(name, name); Type: FUNCTION; Schema: base; Owner: test
@@ -354,7 +366,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.combine_table_schema_and_name(tableschema name, tablename name) OWNER TO test;
+ALTER FUNCTION base.combine_table_schema_and_name(tableschema name, tablename name) OWNER TO admin;
 
 --
 -- Name: contextdefined(character varying, text, character varying, character varying); Type: PROCEDURE; Schema: base; Owner: test
@@ -382,7 +394,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE base.contextdefined(IN currenttask character varying, IN currentrequest text, IN currentsubject character varying, IN assumedroles character varying) OWNER TO test;
+ALTER PROCEDURE base.contextdefined(IN currenttask character varying, IN currentrequest text, IN currentsubject character varying, IN assumedroles character varying) OWNER TO admin;
 
 --
 -- Name: create_journal(character varying); Type: PROCEDURE; Schema: base; Owner: test
@@ -404,7 +416,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE base.create_journal(IN targettable character varying) OWNER TO test;
+ALTER PROCEDURE base.create_journal(IN targettable character varying) OWNER TO admin;
 
 --
 -- Name: currentrequest(); Type: FUNCTION; Schema: base; Owner: test
@@ -426,7 +438,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.currentrequest() OWNER TO test;
+ALTER FUNCTION base.currentrequest() OWNER TO admin;
 
 --
 -- Name: currentsubject(); Type: FUNCTION; Schema: base; Owner: test
@@ -448,7 +460,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.currentsubject() OWNER TO test;
+ALTER FUNCTION base.currentsubject() OWNER TO admin;
 
 --
 -- Name: currentsubjects(); Type: FUNCTION; Schema: base; Owner: test
@@ -469,7 +481,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.currentsubjects() OWNER TO test;
+ALTER FUNCTION base.currentsubjects() OWNER TO admin;
 
 --
 -- Name: currenttask(); Type: FUNCTION; Schema: base; Owner: test
@@ -494,7 +506,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.currenttask() OWNER TO test;
+ALTER FUNCTION base.currenttask() OWNER TO admin;
 
 --
 -- Name: definecontext(character varying, text, character varying, text); Type: PROCEDURE; Schema: base; Owner: test
@@ -524,7 +536,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE base.definecontext(IN currenttask character varying, IN currentrequest text, IN currentsubject character varying, IN assumedroles text) OWNER TO test;
+ALTER PROCEDURE base.definecontext(IN currenttask character varying, IN currentrequest text, IN currentsubject character varying, IN assumedroles text) OWNER TO admin;
 
 --
 -- Name: hasassumedrole(); Type: FUNCTION; Schema: base; Owner: test
@@ -538,7 +550,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.hasassumedrole() OWNER TO test;
+ALTER FUNCTION base.hasassumedrole() OWNER TO admin;
 
 --
 -- Name: inttovarchar(integer, integer); Type: FUNCTION; Schema: base; Owner: test
@@ -559,7 +571,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.inttovarchar(i integer, len integer) OWNER TO test;
+ALTER FUNCTION base.inttovarchar(i integer, len integer) OWNER TO admin;
 
 --
 -- Name: jsonb_changes_delta(jsonb, jsonb); Type: FUNCTION; Schema: base; Owner: test
@@ -596,7 +608,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.jsonb_changes_delta(oldjson jsonb, newjson jsonb) OWNER TO test;
+ALTER FUNCTION base.jsonb_changes_delta(oldjson jsonb, newjson jsonb) OWNER TO admin;
 
 --
 -- Name: lastrowcount(); Type: FUNCTION; Schema: base; Owner: test
@@ -613,7 +625,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.lastrowcount() OWNER TO test;
+ALTER FUNCTION base.lastrowcount() OWNER TO admin;
 
 --
 -- Name: pureidentifier(character varying); Type: FUNCTION; Schema: base; Owner: test
@@ -633,7 +645,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.pureidentifier(rawidentifier character varying) OWNER TO test;
+ALTER FUNCTION base.pureidentifier(rawidentifier character varying) OWNER TO admin;
 
 --
 -- Name: raiseexception(text); Type: FUNCTION; Schema: base; Owner: test
@@ -647,7 +659,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.raiseexception(msg text) OWNER TO test;
+ALTER FUNCTION base.raiseexception(msg text) OWNER TO admin;
 
 --
 -- Name: randominrange(integer, integer); Type: FUNCTION; Schema: base; Owner: test
@@ -661,7 +673,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.randominrange(min integer, max integer) OWNER TO test;
+ALTER FUNCTION base.randominrange(min integer, max integer) OWNER TO admin;
 
 --
 -- Name: tablecolumnnames(text); Type: FUNCTION; Schema: base; Owner: test
@@ -695,7 +707,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.tablecolumnnames(oftablename text) OWNER TO test;
+ALTER FUNCTION base.tablecolumnnames(oftablename text) OWNER TO admin;
 
 --
 -- Name: tx_create_historicization(character varying); Type: PROCEDURE; Schema: base; Owner: test
@@ -766,7 +778,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE base.tx_create_historicization(IN basetable character varying) OWNER TO test;
+ALTER PROCEDURE base.tx_create_historicization(IN basetable character varying) OWNER TO admin;
 
 --
 -- Name: tx_historicize_tf(); Type: FUNCTION; Schema: base; Owner: test
@@ -818,7 +830,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.tx_historicize_tf() OWNER TO test;
+ALTER FUNCTION base.tx_historicize_tf() OWNER TO admin;
 
 --
 -- Name: tx_history_txid(); Type: FUNCTION; Schema: base; Owner: test
@@ -856,7 +868,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.tx_history_txid() OWNER TO test;
+ALTER FUNCTION base.tx_history_txid() OWNER TO admin;
 
 --
 -- Name: tx_journal_trigger(); Type: FUNCTION; Schema: base; Owner: test
@@ -902,7 +914,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION base.tx_journal_trigger() OWNER TO test;
+ALTER FUNCTION base.tx_journal_trigger() OWNER TO admin;
 
 SET default_tablespace = '';
 
@@ -921,7 +933,7 @@ CREATE TABLE hs_office.bankaccount (
 );
 
 
-ALTER TABLE hs_office.bankaccount OWNER TO test;
+ALTER TABLE hs_office.bankaccount OWNER TO admin;
 
 --
 -- Name: bankaccount_admin(hs_office.bankaccount, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -935,7 +947,7 @@ CREATE FUNCTION hs_office.bankaccount_admin(entity hs_office.bankaccount, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_admin(entity hs_office.bankaccount, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_admin(entity hs_office.bankaccount, assumed boolean) OWNER TO admin;
 
 --
 -- Name: bankaccount_agent(hs_office.bankaccount, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -949,7 +961,7 @@ CREATE FUNCTION hs_office.bankaccount_agent(entity hs_office.bankaccount, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_agent(entity hs_office.bankaccount, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_agent(entity hs_office.bankaccount, assumed boolean) OWNER TO admin;
 
 --
 -- Name: bankaccount_build_rbac_system(hs_office.bankaccount); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -987,7 +999,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.bankaccount_build_rbac_system(IN new hs_office.bankaccount) OWNER TO test;
+ALTER PROCEDURE hs_office.bankaccount_build_rbac_system(IN new hs_office.bankaccount) OWNER TO admin;
 
 --
 -- Name: bankaccount_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1002,7 +1014,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: bankaccount_create_test_data(character varying, character varying, character varying); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1025,7 +1037,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.bankaccount_create_test_data(IN givenholder character varying, IN giveniban character varying, IN givenbic character varying) OWNER TO test;
+ALTER PROCEDURE hs_office.bankaccount_create_test_data(IN givenholder character varying, IN giveniban character varying, IN givenbic character varying) OWNER TO admin;
 
 --
 -- Name: bankaccount_guest(hs_office.bankaccount, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1039,7 +1051,7 @@ CREATE FUNCTION hs_office.bankaccount_guest(entity hs_office.bankaccount, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_guest(entity hs_office.bankaccount, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_guest(entity hs_office.bankaccount, assumed boolean) OWNER TO admin;
 
 --
 -- Name: bankaccount_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1052,7 +1064,7 @@ CREATE FUNCTION hs_office.bankaccount_id_name_by_uuid(givenuuid uuid) RETURNS ch
         ';
 
 
-ALTER FUNCTION hs_office.bankaccount_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: bankaccount_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1070,7 +1082,7 @@ CREATE FUNCTION hs_office.bankaccount_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: bankaccount_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1090,7 +1102,7 @@ CREATE FUNCTION hs_office.bankaccount_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: bankaccount_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1114,7 +1126,7 @@ CREATE FUNCTION hs_office.bankaccount_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: bankaccount_owner(hs_office.bankaccount, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1128,7 +1140,7 @@ CREATE FUNCTION hs_office.bankaccount_owner(entity hs_office.bankaccount, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_owner(entity hs_office.bankaccount, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_owner(entity hs_office.bankaccount, assumed boolean) OWNER TO admin;
 
 --
 -- Name: bankaccount_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1162,7 +1174,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.bankaccount_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.bankaccount_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: bankaccount_referrer(hs_office.bankaccount); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1176,7 +1188,7 @@ CREATE FUNCTION hs_office.bankaccount_referrer(entity hs_office.bankaccount) RET
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_referrer(entity hs_office.bankaccount) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_referrer(entity hs_office.bankaccount) OWNER TO admin;
 
 --
 -- Name: bankaccount_tenant(hs_office.bankaccount, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1190,7 +1202,7 @@ CREATE FUNCTION hs_office.bankaccount_tenant(entity hs_office.bankaccount, assum
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_tenant(entity hs_office.bankaccount, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_tenant(entity hs_office.bankaccount, assumed boolean) OWNER TO admin;
 
 --
 -- Name: bankaccount_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1207,7 +1219,7 @@ CREATE FUNCTION hs_office.bankaccount_uuid_by_id_name(givenidname character vary
         end; ';
 
 
-ALTER FUNCTION hs_office.bankaccount_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.bankaccount_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: contact; Type: TABLE; Schema: hs_office; Owner: test
@@ -1223,7 +1235,7 @@ CREATE TABLE hs_office.contact (
 );
 
 
-ALTER TABLE hs_office.contact OWNER TO test;
+ALTER TABLE hs_office.contact OWNER TO admin;
 
 --
 -- Name: contact_admin(hs_office.contact, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1237,7 +1249,7 @@ CREATE FUNCTION hs_office.contact_admin(entity hs_office.contact, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_admin(entity hs_office.contact, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.contact_admin(entity hs_office.contact, assumed boolean) OWNER TO admin;
 
 --
 -- Name: contact_agent(hs_office.contact, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1251,7 +1263,7 @@ CREATE FUNCTION hs_office.contact_agent(entity hs_office.contact, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_agent(entity hs_office.contact, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.contact_agent(entity hs_office.contact, assumed boolean) OWNER TO admin;
 
 --
 -- Name: contact_build_rbac_system(hs_office.contact); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1289,7 +1301,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.contact_build_rbac_system(IN new hs_office.contact) OWNER TO test;
+ALTER PROCEDURE hs_office.contact_build_rbac_system(IN new hs_office.contact) OWNER TO admin;
 
 --
 -- Name: contact_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1304,7 +1316,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.contact_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.contact_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: contact_create_test_data(character varying); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1339,7 +1351,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.contact_create_test_data(IN contcaption character varying) OWNER TO test;
+ALTER PROCEDURE hs_office.contact_create_test_data(IN contcaption character varying) OWNER TO admin;
 
 --
 -- Name: contact_create_test_data(integer, integer); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1357,7 +1369,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.contact_create_test_data(IN startcount integer, IN endcount integer) OWNER TO test;
+ALTER PROCEDURE hs_office.contact_create_test_data(IN startcount integer, IN endcount integer) OWNER TO admin;
 
 --
 -- Name: contact_delete_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1378,7 +1390,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.contact_delete_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.contact_delete_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: contact_guest(hs_office.contact, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1392,7 +1404,7 @@ CREATE FUNCTION hs_office.contact_guest(entity hs_office.contact, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_guest(entity hs_office.contact, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.contact_guest(entity hs_office.contact, assumed boolean) OWNER TO admin;
 
 --
 -- Name: contact_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1405,7 +1417,7 @@ CREATE FUNCTION hs_office.contact_id_name_by_uuid(givenuuid uuid) RETURNS charac
         ';
 
 
-ALTER FUNCTION hs_office.contact_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.contact_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: contact_insert_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1426,7 +1438,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.contact_insert_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.contact_insert_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: contact_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1444,7 +1456,7 @@ CREATE FUNCTION hs_office.contact_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.contact_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: contact_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1464,7 +1476,7 @@ CREATE FUNCTION hs_office.contact_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.contact_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.contact_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: contact_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1489,7 +1501,7 @@ CREATE FUNCTION hs_office.contact_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.contact_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.contact_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: contact_owner(hs_office.contact, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1503,7 +1515,7 @@ CREATE FUNCTION hs_office.contact_owner(entity hs_office.contact, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_owner(entity hs_office.contact, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.contact_owner(entity hs_office.contact, assumed boolean) OWNER TO admin;
 
 --
 -- Name: contact_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1537,7 +1549,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.contact_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.contact_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: contact_referrer(hs_office.contact); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1551,7 +1563,7 @@ CREATE FUNCTION hs_office.contact_referrer(entity hs_office.contact) RETURNS rba
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_referrer(entity hs_office.contact) OWNER TO test;
+ALTER FUNCTION hs_office.contact_referrer(entity hs_office.contact) OWNER TO admin;
 
 --
 -- Name: contact_tenant(hs_office.contact, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1565,7 +1577,7 @@ CREATE FUNCTION hs_office.contact_tenant(entity hs_office.contact, assumed boole
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_tenant(entity hs_office.contact, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.contact_tenant(entity hs_office.contact, assumed boolean) OWNER TO admin;
 
 --
 -- Name: contact_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1582,7 +1594,7 @@ CREATE FUNCTION hs_office.contact_uuid_by_id_name(givenidname character varying)
         end; ';
 
 
-ALTER FUNCTION hs_office.contact_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.contact_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: coopassetstx_check_positive_total(uuid, numeric); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1607,7 +1619,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopassetstx_check_positive_total(formembershipuuid uuid, newassetvalue numeric) OWNER TO test;
+ALTER FUNCTION hs_office.coopassetstx_check_positive_total(formembershipuuid uuid, newassetvalue numeric) OWNER TO admin;
 
 --
 -- Name: coopassettx; Type: TABLE; Schema: hs_office; Owner: test
@@ -1628,7 +1640,7 @@ CREATE TABLE hs_office.coopassettx (
 );
 
 
-ALTER TABLE hs_office.coopassettx OWNER TO test;
+ALTER TABLE hs_office.coopassettx OWNER TO admin;
 
 --
 -- Name: coopassettx_admin(hs_office.coopassettx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1642,7 +1654,7 @@ CREATE FUNCTION hs_office.coopassettx_admin(entity hs_office.coopassettx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_admin(entity hs_office.coopassettx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_admin(entity hs_office.coopassettx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopassettx_agent(hs_office.coopassettx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1656,7 +1668,7 @@ CREATE FUNCTION hs_office.coopassettx_agent(entity hs_office.coopassettx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_agent(entity hs_office.coopassettx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_agent(entity hs_office.coopassettx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopassettx_build_rbac_system(hs_office.coopassettx); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1682,7 +1694,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.coopassettx_build_rbac_system(IN new hs_office.coopassettx) OWNER TO test;
+ALTER PROCEDURE hs_office.coopassettx_build_rbac_system(IN new hs_office.coopassettx) OWNER TO admin;
 
 --
 -- Name: coopassettx_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1697,7 +1709,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_create_test_data(numeric, character); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1735,7 +1747,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.coopassettx_create_test_data(IN givenpartnernumber numeric, IN givenmembernumbersuffix character) OWNER TO test;
+ALTER PROCEDURE hs_office.coopassettx_create_test_data(IN givenpartnernumber numeric, IN givenmembernumbersuffix character) OWNER TO admin;
 
 --
 -- Name: coopassettx_delete_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1756,7 +1768,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_delete_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_delete_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_grants_insert_to_membership_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1775,7 +1787,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_grants_insert_to_membership_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_grants_insert_to_membership_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_guest(hs_office.coopassettx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1789,7 +1801,7 @@ CREATE FUNCTION hs_office.coopassettx_guest(entity hs_office.coopassettx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_guest(entity hs_office.coopassettx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_guest(entity hs_office.coopassettx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopassettx_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1802,7 +1814,7 @@ CREATE FUNCTION hs_office.coopassettx_id_name_by_uuid(givenuuid uuid) RETURNS ch
         ';
 
 
-ALTER FUNCTION hs_office.coopassettx_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: coopassettx_insert_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1823,7 +1835,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_insert_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_insert_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1845,7 +1857,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1863,7 +1875,7 @@ CREATE FUNCTION hs_office.coopassettx_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1883,7 +1895,7 @@ CREATE FUNCTION hs_office.coopassettx_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1905,7 +1917,7 @@ CREATE FUNCTION hs_office.coopassettx_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: coopassettx_owner(hs_office.coopassettx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1919,7 +1931,7 @@ CREATE FUNCTION hs_office.coopassettx_owner(entity hs_office.coopassettx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_owner(entity hs_office.coopassettx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_owner(entity hs_office.coopassettx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopassettx_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -1953,7 +1965,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.coopassettx_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.coopassettx_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: coopassettx_referrer(hs_office.coopassettx); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1967,7 +1979,7 @@ CREATE FUNCTION hs_office.coopassettx_referrer(entity hs_office.coopassettx) RET
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_referrer(entity hs_office.coopassettx) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_referrer(entity hs_office.coopassettx) OWNER TO admin;
 
 --
 -- Name: coopassettx_tenant(hs_office.coopassettx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1981,7 +1993,7 @@ CREATE FUNCTION hs_office.coopassettx_tenant(entity hs_office.coopassettx, assum
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_tenant(entity hs_office.coopassettx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_tenant(entity hs_office.coopassettx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopassettx_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -1998,7 +2010,7 @@ CREATE FUNCTION hs_office.coopassettx_uuid_by_id_name(givenidname character vary
         end; ';
 
 
-ALTER FUNCTION hs_office.coopassettx_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.coopassettx_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: coopsharestx_check_positive_total(uuid, integer); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2023,7 +2035,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopsharestx_check_positive_total(formembershipuuid uuid, newsharecount integer) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharestx_check_positive_total(formembershipuuid uuid, newsharecount integer) OWNER TO admin;
 
 --
 -- Name: coopsharetx; Type: TABLE; Schema: hs_office; Owner: test
@@ -2044,7 +2056,7 @@ CREATE TABLE hs_office.coopsharetx (
 );
 
 
-ALTER TABLE hs_office.coopsharetx OWNER TO test;
+ALTER TABLE hs_office.coopsharetx OWNER TO admin;
 
 --
 -- Name: coopsharetx_admin(hs_office.coopsharetx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2058,7 +2070,7 @@ CREATE FUNCTION hs_office.coopsharetx_admin(entity hs_office.coopsharetx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_admin(entity hs_office.coopsharetx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_admin(entity hs_office.coopsharetx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopsharetx_agent(hs_office.coopsharetx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2072,7 +2084,7 @@ CREATE FUNCTION hs_office.coopsharetx_agent(entity hs_office.coopsharetx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_agent(entity hs_office.coopsharetx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_agent(entity hs_office.coopsharetx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopsharetx_build_rbac_system(hs_office.coopsharetx); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2098,7 +2110,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.coopsharetx_build_rbac_system(IN new hs_office.coopsharetx) OWNER TO test;
+ALTER PROCEDURE hs_office.coopsharetx_build_rbac_system(IN new hs_office.coopsharetx) OWNER TO admin;
 
 --
 -- Name: coopsharetx_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2113,7 +2125,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_create_test_data(numeric, character); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2145,7 +2157,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.coopsharetx_create_test_data(IN givenpartnernumber numeric, IN givenmembernumbersuffix character) OWNER TO test;
+ALTER PROCEDURE hs_office.coopsharetx_create_test_data(IN givenpartnernumber numeric, IN givenmembernumbersuffix character) OWNER TO admin;
 
 --
 -- Name: coopsharetx_delete_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2166,7 +2178,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_delete_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_delete_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_grants_insert_to_membership_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2185,7 +2197,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_grants_insert_to_membership_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_grants_insert_to_membership_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_guest(hs_office.coopsharetx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2199,7 +2211,7 @@ CREATE FUNCTION hs_office.coopsharetx_guest(entity hs_office.coopsharetx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_guest(entity hs_office.coopsharetx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_guest(entity hs_office.coopsharetx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopsharetx_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2212,7 +2224,7 @@ CREATE FUNCTION hs_office.coopsharetx_id_name_by_uuid(givenuuid uuid) RETURNS ch
         ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: coopsharetx_insert_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2233,7 +2245,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_insert_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_insert_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2255,7 +2267,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2273,7 +2285,7 @@ CREATE FUNCTION hs_office.coopsharetx_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2293,7 +2305,7 @@ CREATE FUNCTION hs_office.coopsharetx_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2315,7 +2327,7 @@ CREATE FUNCTION hs_office.coopsharetx_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: coopsharetx_owner(hs_office.coopsharetx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2329,7 +2341,7 @@ CREATE FUNCTION hs_office.coopsharetx_owner(entity hs_office.coopsharetx, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_owner(entity hs_office.coopsharetx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_owner(entity hs_office.coopsharetx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopsharetx_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2363,7 +2375,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.coopsharetx_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.coopsharetx_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: coopsharetx_referrer(hs_office.coopsharetx); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2377,7 +2389,7 @@ CREATE FUNCTION hs_office.coopsharetx_referrer(entity hs_office.coopsharetx) RET
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_referrer(entity hs_office.coopsharetx) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_referrer(entity hs_office.coopsharetx) OWNER TO admin;
 
 --
 -- Name: coopsharetx_tenant(hs_office.coopsharetx, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2391,7 +2403,7 @@ CREATE FUNCTION hs_office.coopsharetx_tenant(entity hs_office.coopsharetx, assum
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_tenant(entity hs_office.coopsharetx, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_tenant(entity hs_office.coopsharetx, assumed boolean) OWNER TO admin;
 
 --
 -- Name: coopsharetx_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2408,7 +2420,7 @@ CREATE FUNCTION hs_office.coopsharetx_uuid_by_id_name(givenidname character vary
         end; ';
 
 
-ALTER FUNCTION hs_office.coopsharetx_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.coopsharetx_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: debitor; Type: TABLE; Schema: hs_office; Owner: test
@@ -2431,7 +2443,7 @@ CREATE TABLE hs_office.debitor (
 );
 
 
-ALTER TABLE hs_office.debitor OWNER TO test;
+ALTER TABLE hs_office.debitor OWNER TO admin;
 
 --
 -- Name: debitor_admin(hs_office.debitor, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2445,7 +2457,7 @@ CREATE FUNCTION hs_office.debitor_admin(entity hs_office.debitor, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_admin(entity hs_office.debitor, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_admin(entity hs_office.debitor, assumed boolean) OWNER TO admin;
 
 --
 -- Name: debitor_agent(hs_office.debitor, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2459,7 +2471,7 @@ CREATE FUNCTION hs_office.debitor_agent(entity hs_office.debitor, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_agent(entity hs_office.debitor, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_agent(entity hs_office.debitor, assumed boolean) OWNER TO admin;
 
 --
 -- Name: debitor_build_rbac_system(hs_office.debitor); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2505,7 +2517,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.debitor_build_rbac_system(IN new hs_office.debitor) OWNER TO test;
+ALTER PROCEDURE hs_office.debitor_build_rbac_system(IN new hs_office.debitor) OWNER TO admin;
 
 --
 -- Name: debitor_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2520,7 +2532,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.debitor_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: debitor_create_test_data(numeric, character varying, character varying, character varying); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2557,7 +2569,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.debitor_create_test_data(IN withdebitornumbersuffix numeric, IN forpartnerpersonname character varying, IN forbillingcontactcaption character varying, IN withdefaultprefix character varying) OWNER TO test;
+ALTER PROCEDURE hs_office.debitor_create_test_data(IN withdebitornumbersuffix numeric, IN forpartnerpersonname character varying, IN forbillingcontactcaption character varying, IN withdefaultprefix character varying) OWNER TO admin;
 
 --
 -- Name: debitor_delete_dependents_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2579,7 +2591,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.debitor_delete_dependents_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_delete_dependents_tf() OWNER TO admin;
 
 --
 -- Name: debitor_grants_insert_to_global_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2598,7 +2610,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.debitor_grants_insert_to_global_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_grants_insert_to_global_tf() OWNER TO admin;
 
 --
 -- Name: debitor_guest(hs_office.debitor, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2612,7 +2624,7 @@ CREATE FUNCTION hs_office.debitor_guest(entity hs_office.debitor, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_guest(entity hs_office.debitor, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_guest(entity hs_office.debitor, assumed boolean) OWNER TO admin;
 
 --
 -- Name: debitor_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2625,7 +2637,7 @@ CREATE FUNCTION hs_office.debitor_id_name_by_uuid(givenuuid uuid) RETURNS charac
         ';
 
 
-ALTER FUNCTION hs_office.debitor_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: debitor_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2647,7 +2659,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.debitor_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: debitor_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2665,7 +2677,7 @@ CREATE FUNCTION hs_office.debitor_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: debitor_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2685,7 +2697,7 @@ CREATE FUNCTION hs_office.debitor_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.debitor_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: debitor_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2714,7 +2726,7 @@ CREATE FUNCTION hs_office.debitor_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.debitor_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: debitor_owner(hs_office.debitor, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2728,7 +2740,7 @@ CREATE FUNCTION hs_office.debitor_owner(entity hs_office.debitor, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_owner(entity hs_office.debitor, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_owner(entity hs_office.debitor, assumed boolean) OWNER TO admin;
 
 --
 -- Name: debitor_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2762,7 +2774,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.debitor_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.debitor_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: debitor_referrer(hs_office.debitor); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2776,7 +2788,7 @@ CREATE FUNCTION hs_office.debitor_referrer(entity hs_office.debitor) RETURNS rba
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_referrer(entity hs_office.debitor) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_referrer(entity hs_office.debitor) OWNER TO admin;
 
 --
 -- Name: debitor_tenant(hs_office.debitor, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2790,7 +2802,7 @@ CREATE FUNCTION hs_office.debitor_tenant(entity hs_office.debitor, assumed boole
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_tenant(entity hs_office.debitor, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_tenant(entity hs_office.debitor, assumed boolean) OWNER TO admin;
 
 --
 -- Name: debitor_update_rbac_system(hs_office.debitor, hs_office.debitor); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2809,7 +2821,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.debitor_update_rbac_system(IN old hs_office.debitor, IN new hs_office.debitor) OWNER TO test;
+ALTER PROCEDURE hs_office.debitor_update_rbac_system(IN old hs_office.debitor, IN new hs_office.debitor) OWNER TO admin;
 
 --
 -- Name: debitor_update_rbac_system_after_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2824,7 +2836,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.debitor_update_rbac_system_after_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.debitor_update_rbac_system_after_update_tf() OWNER TO admin;
 
 --
 -- Name: debitor_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2841,7 +2853,7 @@ CREATE FUNCTION hs_office.debitor_uuid_by_id_name(givenidname character varying)
         end; ';
 
 
-ALTER FUNCTION hs_office.debitor_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.debitor_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: membership; Type: TABLE; Schema: hs_office; Owner: test
@@ -2859,7 +2871,7 @@ CREATE TABLE hs_office.membership (
 );
 
 
-ALTER TABLE hs_office.membership OWNER TO test;
+ALTER TABLE hs_office.membership OWNER TO admin;
 
 --
 -- Name: membership_admin(hs_office.membership, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2873,7 +2885,7 @@ CREATE FUNCTION hs_office.membership_admin(entity hs_office.membership, assumed 
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_admin(entity hs_office.membership, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.membership_admin(entity hs_office.membership, assumed boolean) OWNER TO admin;
 
 --
 -- Name: membership_agent(hs_office.membership, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2887,7 +2899,7 @@ CREATE FUNCTION hs_office.membership_agent(entity hs_office.membership, assumed 
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_agent(entity hs_office.membership, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.membership_agent(entity hs_office.membership, assumed boolean) OWNER TO admin;
 
 --
 -- Name: membership_build_rbac_system(hs_office.membership); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2937,7 +2949,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.membership_build_rbac_system(IN new hs_office.membership) OWNER TO test;
+ALTER PROCEDURE hs_office.membership_build_rbac_system(IN new hs_office.membership) OWNER TO admin;
 
 --
 -- Name: membership_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2952,7 +2964,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.membership_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.membership_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: membership_create_test_data(numeric, character); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -2975,7 +2987,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.membership_create_test_data(IN forpartnernumber numeric, IN newmembernumbersuffix character) OWNER TO test;
+ALTER PROCEDURE hs_office.membership_create_test_data(IN forpartnernumber numeric, IN newmembernumbersuffix character) OWNER TO admin;
 
 --
 -- Name: membership_grants_insert_to_global_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -2994,7 +3006,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.membership_grants_insert_to_global_tf() OWNER TO test;
+ALTER FUNCTION hs_office.membership_grants_insert_to_global_tf() OWNER TO admin;
 
 --
 -- Name: membership_guest(hs_office.membership, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3008,7 +3020,7 @@ CREATE FUNCTION hs_office.membership_guest(entity hs_office.membership, assumed 
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_guest(entity hs_office.membership, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.membership_guest(entity hs_office.membership, assumed boolean) OWNER TO admin;
 
 --
 -- Name: membership_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3021,7 +3033,7 @@ CREATE FUNCTION hs_office.membership_id_name_by_uuid(givenuuid uuid) RETURNS cha
         ';
 
 
-ALTER FUNCTION hs_office.membership_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.membership_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: membership_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3043,7 +3055,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.membership_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.membership_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: membership_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3061,7 +3073,7 @@ CREATE FUNCTION hs_office.membership_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.membership_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: membership_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3081,7 +3093,7 @@ CREATE FUNCTION hs_office.membership_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.membership_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.membership_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: membership_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3105,7 +3117,7 @@ CREATE FUNCTION hs_office.membership_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.membership_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.membership_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: membership_owner(hs_office.membership, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3119,7 +3131,7 @@ CREATE FUNCTION hs_office.membership_owner(entity hs_office.membership, assumed 
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_owner(entity hs_office.membership, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.membership_owner(entity hs_office.membership, assumed boolean) OWNER TO admin;
 
 --
 -- Name: membership_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -3153,7 +3165,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.membership_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.membership_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: membership_referrer(hs_office.membership); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3167,7 +3179,7 @@ CREATE FUNCTION hs_office.membership_referrer(entity hs_office.membership) RETUR
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_referrer(entity hs_office.membership) OWNER TO test;
+ALTER FUNCTION hs_office.membership_referrer(entity hs_office.membership) OWNER TO admin;
 
 --
 -- Name: membership_tenant(hs_office.membership, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3181,7 +3193,7 @@ CREATE FUNCTION hs_office.membership_tenant(entity hs_office.membership, assumed
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_tenant(entity hs_office.membership, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.membership_tenant(entity hs_office.membership, assumed boolean) OWNER TO admin;
 
 --
 -- Name: membership_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3198,7 +3210,7 @@ CREATE FUNCTION hs_office.membership_uuid_by_id_name(givenidname character varyi
         end; ';
 
 
-ALTER FUNCTION hs_office.membership_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.membership_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: partner; Type: TABLE; Schema: hs_office; Owner: test
@@ -3213,7 +3225,7 @@ CREATE TABLE hs_office.partner (
 );
 
 
-ALTER TABLE hs_office.partner OWNER TO test;
+ALTER TABLE hs_office.partner OWNER TO admin;
 
 --
 -- Name: partner_admin(hs_office.partner, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3227,7 +3239,7 @@ CREATE FUNCTION hs_office.partner_admin(entity hs_office.partner, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_admin(entity hs_office.partner, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_admin(entity hs_office.partner, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_agent(hs_office.partner, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3241,7 +3253,7 @@ CREATE FUNCTION hs_office.partner_agent(entity hs_office.partner, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_agent(entity hs_office.partner, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_agent(entity hs_office.partner, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_build_rbac_system(hs_office.partner); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -3275,7 +3287,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.partner_build_rbac_system(IN new hs_office.partner) OWNER TO test;
+ALTER PROCEDURE hs_office.partner_build_rbac_system(IN new hs_office.partner) OWNER TO admin;
 
 --
 -- Name: partner_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3290,7 +3302,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: partner_create_test_data(character varying, numeric, character varying, character varying); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -3349,7 +3361,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.partner_create_test_data(IN mandanttradename character varying, IN newpartnernumber numeric, IN partnerpersonname character varying, IN contactcaption character varying) OWNER TO test;
+ALTER PROCEDURE hs_office.partner_create_test_data(IN mandanttradename character varying, IN newpartnernumber numeric, IN partnerpersonname character varying, IN contactcaption character varying) OWNER TO admin;
 
 --
 -- Name: partner_delete_dependents_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3377,7 +3389,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_delete_dependents_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_delete_dependents_tf() OWNER TO admin;
 
 --
 -- Name: partner_delete_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3398,7 +3410,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_delete_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_delete_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: partner_details; Type: TABLE; Schema: hs_office; Owner: test
@@ -3416,7 +3428,7 @@ CREATE TABLE hs_office.partner_details (
 );
 
 
-ALTER TABLE hs_office.partner_details OWNER TO test;
+ALTER TABLE hs_office.partner_details OWNER TO admin;
 
 --
 -- Name: partner_details_admin(hs_office.partner_details, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3430,7 +3442,7 @@ CREATE FUNCTION hs_office.partner_details_admin(entity hs_office.partner_details
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_admin(entity hs_office.partner_details, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_admin(entity hs_office.partner_details, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_details_agent(hs_office.partner_details, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3444,7 +3456,7 @@ CREATE FUNCTION hs_office.partner_details_agent(entity hs_office.partner_details
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_agent(entity hs_office.partner_details, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_agent(entity hs_office.partner_details, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_details_build_rbac_system(hs_office.partner_details); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -3463,7 +3475,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.partner_details_build_rbac_system(IN new hs_office.partner_details) OWNER TO test;
+ALTER PROCEDURE hs_office.partner_details_build_rbac_system(IN new hs_office.partner_details) OWNER TO admin;
 
 --
 -- Name: partner_details_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3478,7 +3490,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: partner_details_grants_insert_to_global_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3497,7 +3509,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_grants_insert_to_global_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_grants_insert_to_global_tf() OWNER TO admin;
 
 --
 -- Name: partner_details_guest(hs_office.partner_details, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3511,7 +3523,7 @@ CREATE FUNCTION hs_office.partner_details_guest(entity hs_office.partner_details
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_guest(entity hs_office.partner_details, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_guest(entity hs_office.partner_details, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_details_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3524,7 +3536,7 @@ CREATE FUNCTION hs_office.partner_details_id_name_by_uuid(givenuuid uuid) RETURN
         ';
 
 
-ALTER FUNCTION hs_office.partner_details_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: partner_details_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3546,7 +3558,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: partner_details_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3564,7 +3576,7 @@ CREATE FUNCTION hs_office.partner_details_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: partner_details_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3584,7 +3596,7 @@ CREATE FUNCTION hs_office.partner_details_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: partner_details_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3611,7 +3623,7 @@ CREATE FUNCTION hs_office.partner_details_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: partner_details_owner(hs_office.partner_details, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3625,7 +3637,7 @@ CREATE FUNCTION hs_office.partner_details_owner(entity hs_office.partner_details
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_owner(entity hs_office.partner_details, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_owner(entity hs_office.partner_details, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_details_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -3659,7 +3671,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.partner_details_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.partner_details_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: partner_details_referrer(hs_office.partner_details); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3673,7 +3685,7 @@ CREATE FUNCTION hs_office.partner_details_referrer(entity hs_office.partner_deta
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_referrer(entity hs_office.partner_details) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_referrer(entity hs_office.partner_details) OWNER TO admin;
 
 --
 -- Name: partner_details_tenant(hs_office.partner_details, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3687,7 +3699,7 @@ CREATE FUNCTION hs_office.partner_details_tenant(entity hs_office.partner_detail
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_tenant(entity hs_office.partner_details, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_tenant(entity hs_office.partner_details, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_details_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3704,7 +3716,7 @@ CREATE FUNCTION hs_office.partner_details_uuid_by_id_name(givenidname character 
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_details_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.partner_details_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: partner_grants_insert_to_global_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3723,7 +3735,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_grants_insert_to_global_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_grants_insert_to_global_tf() OWNER TO admin;
 
 --
 -- Name: partner_guest(hs_office.partner, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3737,7 +3749,7 @@ CREATE FUNCTION hs_office.partner_guest(entity hs_office.partner, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_guest(entity hs_office.partner, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_guest(entity hs_office.partner, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3750,7 +3762,7 @@ CREATE FUNCTION hs_office.partner_id_name_by_uuid(givenuuid uuid) RETURNS charac
         ';
 
 
-ALTER FUNCTION hs_office.partner_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.partner_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: partner_insert_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3771,7 +3783,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_insert_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_insert_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: partner_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3793,7 +3805,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: partner_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3811,7 +3823,7 @@ CREATE FUNCTION hs_office.partner_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: partner_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3831,7 +3843,7 @@ CREATE FUNCTION hs_office.partner_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.partner_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: partner_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3853,7 +3865,7 @@ CREATE FUNCTION hs_office.partner_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.partner_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: partner_owner(hs_office.partner, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3867,7 +3879,7 @@ CREATE FUNCTION hs_office.partner_owner(entity hs_office.partner, assumed boolea
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_owner(entity hs_office.partner, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_owner(entity hs_office.partner, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -3901,7 +3913,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.partner_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.partner_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: partner_referrer(hs_office.partner); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3915,7 +3927,7 @@ CREATE FUNCTION hs_office.partner_referrer(entity hs_office.partner) RETURNS rba
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_referrer(entity hs_office.partner) OWNER TO test;
+ALTER FUNCTION hs_office.partner_referrer(entity hs_office.partner) OWNER TO admin;
 
 --
 -- Name: partner_tenant(hs_office.partner, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -3929,7 +3941,7 @@ CREATE FUNCTION hs_office.partner_tenant(entity hs_office.partner, assumed boole
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_tenant(entity hs_office.partner, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.partner_tenant(entity hs_office.partner, assumed boolean) OWNER TO admin;
 
 --
 -- Name: partner_update_rbac_system(hs_office.partner, hs_office.partner); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -3987,7 +3999,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.partner_update_rbac_system(IN old hs_office.partner, IN new hs_office.partner) OWNER TO test;
+ALTER PROCEDURE hs_office.partner_update_rbac_system(IN old hs_office.partner, IN new hs_office.partner) OWNER TO admin;
 
 --
 -- Name: partner_update_rbac_system_after_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4002,7 +4014,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.partner_update_rbac_system_after_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.partner_update_rbac_system_after_update_tf() OWNER TO admin;
 
 --
 -- Name: partner_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4019,7 +4031,7 @@ CREATE FUNCTION hs_office.partner_uuid_by_id_name(givenidname character varying)
         end; ';
 
 
-ALTER FUNCTION hs_office.partner_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.partner_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: person; Type: TABLE; Schema: hs_office; Owner: test
@@ -4037,7 +4049,7 @@ CREATE TABLE hs_office.person (
 );
 
 
-ALTER TABLE hs_office.person OWNER TO test;
+ALTER TABLE hs_office.person OWNER TO admin;
 
 --
 -- Name: person_admin(hs_office.person, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4051,7 +4063,7 @@ CREATE FUNCTION hs_office.person_admin(entity hs_office.person, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION hs_office.person_admin(entity hs_office.person, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.person_admin(entity hs_office.person, assumed boolean) OWNER TO admin;
 
 --
 -- Name: person_agent(hs_office.person, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4065,7 +4077,7 @@ CREATE FUNCTION hs_office.person_agent(entity hs_office.person, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION hs_office.person_agent(entity hs_office.person, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.person_agent(entity hs_office.person, assumed boolean) OWNER TO admin;
 
 --
 -- Name: person_build_rbac_system(hs_office.person); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4103,7 +4115,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.person_build_rbac_system(IN new hs_office.person) OWNER TO test;
+ALTER PROCEDURE hs_office.person_build_rbac_system(IN new hs_office.person) OWNER TO admin;
 
 --
 -- Name: person_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4118,7 +4130,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.person_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.person_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: person_create_test_data(hs_office.persontype, character varying, character varying, character varying); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4144,7 +4156,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.person_create_test_data(IN newpersontype hs_office.persontype, IN newtradename character varying, IN newfamilyname character varying, IN newgivenname character varying) OWNER TO test;
+ALTER PROCEDURE hs_office.person_create_test_data(IN newpersontype hs_office.persontype, IN newtradename character varying, IN newfamilyname character varying, IN newgivenname character varying) OWNER TO admin;
 
 --
 -- Name: person_guest(hs_office.person, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4158,7 +4170,7 @@ CREATE FUNCTION hs_office.person_guest(entity hs_office.person, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION hs_office.person_guest(entity hs_office.person, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.person_guest(entity hs_office.person, assumed boolean) OWNER TO admin;
 
 --
 -- Name: person_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4171,7 +4183,7 @@ CREATE FUNCTION hs_office.person_id_name_by_uuid(givenuuid uuid) RETURNS charact
         ';
 
 
-ALTER FUNCTION hs_office.person_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.person_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: person_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4189,7 +4201,7 @@ CREATE FUNCTION hs_office.person_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.person_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.person_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: person_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4209,7 +4221,7 @@ CREATE FUNCTION hs_office.person_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.person_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.person_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: person_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4236,7 +4248,7 @@ CREATE FUNCTION hs_office.person_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.person_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.person_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: person_owner(hs_office.person, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4250,7 +4262,7 @@ CREATE FUNCTION hs_office.person_owner(entity hs_office.person, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION hs_office.person_owner(entity hs_office.person, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.person_owner(entity hs_office.person, assumed boolean) OWNER TO admin;
 
 --
 -- Name: person_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4284,7 +4296,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.person_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.person_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: person_referrer(hs_office.person); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4298,7 +4310,7 @@ CREATE FUNCTION hs_office.person_referrer(entity hs_office.person) RETURNS rbac.
         end; ';
 
 
-ALTER FUNCTION hs_office.person_referrer(entity hs_office.person) OWNER TO test;
+ALTER FUNCTION hs_office.person_referrer(entity hs_office.person) OWNER TO admin;
 
 --
 -- Name: person_tenant(hs_office.person, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4312,7 +4324,7 @@ CREATE FUNCTION hs_office.person_tenant(entity hs_office.person, assumed boolean
         end; ';
 
 
-ALTER FUNCTION hs_office.person_tenant(entity hs_office.person, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.person_tenant(entity hs_office.person, assumed boolean) OWNER TO admin;
 
 --
 -- Name: person_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4329,7 +4341,7 @@ CREATE FUNCTION hs_office.person_uuid_by_id_name(givenidname character varying) 
         end; ';
 
 
-ALTER FUNCTION hs_office.person_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.person_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: relation; Type: TABLE; Schema: hs_office; Owner: test
@@ -4346,7 +4358,7 @@ CREATE TABLE hs_office.relation (
 );
 
 
-ALTER TABLE hs_office.relation OWNER TO test;
+ALTER TABLE hs_office.relation OWNER TO admin;
 
 --
 -- Name: relation_admin(hs_office.relation, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4360,7 +4372,7 @@ CREATE FUNCTION hs_office.relation_admin(entity hs_office.relation, assumed bool
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_admin(entity hs_office.relation, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.relation_admin(entity hs_office.relation, assumed boolean) OWNER TO admin;
 
 --
 -- Name: relation_agent(hs_office.relation, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4374,7 +4386,7 @@ CREATE FUNCTION hs_office.relation_agent(entity hs_office.relation, assumed bool
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_agent(entity hs_office.relation, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.relation_agent(entity hs_office.relation, assumed boolean) OWNER TO admin;
 
 --
 -- Name: relation_build_rbac_system(hs_office.relation); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4445,7 +4457,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.relation_build_rbac_system(IN new hs_office.relation) OWNER TO test;
+ALTER PROCEDURE hs_office.relation_build_rbac_system(IN new hs_office.relation) OWNER TO admin;
 
 --
 -- Name: relation_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4460,7 +4472,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.relation_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.relation_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: relation_create_test_data(integer, integer); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4484,7 +4496,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.relation_create_test_data(IN startcount integer, IN endcount integer) OWNER TO test;
+ALTER PROCEDURE hs_office.relation_create_test_data(IN startcount integer, IN endcount integer) OWNER TO admin;
 
 --
 -- Name: relation_create_test_data(character varying, hs_office.relationtype, character varying, character varying, character varying); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4533,7 +4545,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.relation_create_test_data(IN holderpersonname character varying, IN relationtype hs_office.relationtype, IN anchorpersonname character varying, IN contactcaption character varying, IN mark character varying) OWNER TO test;
+ALTER PROCEDURE hs_office.relation_create_test_data(IN holderpersonname character varying, IN relationtype hs_office.relationtype, IN anchorpersonname character varying, IN contactcaption character varying, IN mark character varying) OWNER TO admin;
 
 --
 -- Name: relation_grants_insert_to_person_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4552,7 +4564,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.relation_grants_insert_to_person_tf() OWNER TO test;
+ALTER FUNCTION hs_office.relation_grants_insert_to_person_tf() OWNER TO admin;
 
 --
 -- Name: relation_guest(hs_office.relation, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4566,7 +4578,7 @@ CREATE FUNCTION hs_office.relation_guest(entity hs_office.relation, assumed bool
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_guest(entity hs_office.relation, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.relation_guest(entity hs_office.relation, assumed boolean) OWNER TO admin;
 
 --
 -- Name: relation_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4579,7 +4591,7 @@ CREATE FUNCTION hs_office.relation_id_name_by_uuid(givenuuid uuid) RETURNS chara
         ';
 
 
-ALTER FUNCTION hs_office.relation_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.relation_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: relation_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4601,7 +4613,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.relation_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.relation_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: relation_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4619,7 +4631,7 @@ CREATE FUNCTION hs_office.relation_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.relation_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: relation_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4639,7 +4651,7 @@ CREATE FUNCTION hs_office.relation_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.relation_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.relation_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: relation_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4661,7 +4673,7 @@ CREATE FUNCTION hs_office.relation_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.relation_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.relation_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: relation_owner(hs_office.relation, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4675,7 +4687,7 @@ CREATE FUNCTION hs_office.relation_owner(entity hs_office.relation, assumed bool
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_owner(entity hs_office.relation, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.relation_owner(entity hs_office.relation, assumed boolean) OWNER TO admin;
 
 --
 -- Name: relation_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4709,7 +4721,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.relation_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.relation_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: relation_referrer(hs_office.relation); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4723,7 +4735,7 @@ CREATE FUNCTION hs_office.relation_referrer(entity hs_office.relation) RETURNS r
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_referrer(entity hs_office.relation) OWNER TO test;
+ALTER FUNCTION hs_office.relation_referrer(entity hs_office.relation) OWNER TO admin;
 
 --
 -- Name: relation_tenant(hs_office.relation, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4737,7 +4749,7 @@ CREATE FUNCTION hs_office.relation_tenant(entity hs_office.relation, assumed boo
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_tenant(entity hs_office.relation, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.relation_tenant(entity hs_office.relation, assumed boolean) OWNER TO admin;
 
 --
 -- Name: relation_update_rbac_system(hs_office.relation, hs_office.relation); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4755,7 +4767,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.relation_update_rbac_system(IN old hs_office.relation, IN new hs_office.relation) OWNER TO test;
+ALTER PROCEDURE hs_office.relation_update_rbac_system(IN old hs_office.relation, IN new hs_office.relation) OWNER TO admin;
 
 --
 -- Name: relation_update_rbac_system_after_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4770,7 +4782,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.relation_update_rbac_system_after_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.relation_update_rbac_system_after_update_tf() OWNER TO admin;
 
 --
 -- Name: relation_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4787,7 +4799,7 @@ CREATE FUNCTION hs_office.relation_uuid_by_id_name(givenidname character varying
         end; ';
 
 
-ALTER FUNCTION hs_office.relation_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.relation_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: sepamandate; Type: TABLE; Schema: hs_office; Owner: test
@@ -4804,7 +4816,7 @@ CREATE TABLE hs_office.sepamandate (
 );
 
 
-ALTER TABLE hs_office.sepamandate OWNER TO test;
+ALTER TABLE hs_office.sepamandate OWNER TO admin;
 
 --
 -- Name: sepamandate_admin(hs_office.sepamandate, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4818,7 +4830,7 @@ CREATE FUNCTION hs_office.sepamandate_admin(entity hs_office.sepamandate, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_admin(entity hs_office.sepamandate, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_admin(entity hs_office.sepamandate, assumed boolean) OWNER TO admin;
 
 --
 -- Name: sepamandate_agent(hs_office.sepamandate, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4832,7 +4844,7 @@ CREATE FUNCTION hs_office.sepamandate_agent(entity hs_office.sepamandate, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_agent(entity hs_office.sepamandate, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_agent(entity hs_office.sepamandate, assumed boolean) OWNER TO admin;
 
 --
 -- Name: sepamandate_build_rbac_system(hs_office.sepamandate); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4895,7 +4907,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.sepamandate_build_rbac_system(IN new hs_office.sepamandate) OWNER TO test;
+ALTER PROCEDURE hs_office.sepamandate_build_rbac_system(IN new hs_office.sepamandate) OWNER TO admin;
 
 --
 -- Name: sepamandate_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4910,7 +4922,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_create_test_data(numeric, character, character varying, character varying); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -4941,7 +4953,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE hs_office.sepamandate_create_test_data(IN forpartnernumber numeric, IN fordebitorsuffix character, IN foriban character varying, IN withreference character varying) OWNER TO test;
+ALTER PROCEDURE hs_office.sepamandate_create_test_data(IN forpartnernumber numeric, IN fordebitorsuffix character, IN foriban character varying, IN withreference character varying) OWNER TO admin;
 
 --
 -- Name: sepamandate_delete_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4962,7 +4974,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_delete_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_delete_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_grants_insert_to_relation_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4981,7 +4993,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_grants_insert_to_relation_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_grants_insert_to_relation_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_guest(hs_office.sepamandate, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -4995,7 +5007,7 @@ CREATE FUNCTION hs_office.sepamandate_guest(entity hs_office.sepamandate, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_guest(entity hs_office.sepamandate, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_guest(entity hs_office.sepamandate, assumed boolean) OWNER TO admin;
 
 --
 -- Name: sepamandate_id_name_by_uuid(uuid); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5008,7 +5020,7 @@ CREATE FUNCTION hs_office.sepamandate_id_name_by_uuid(givenuuid uuid) RETURNS ch
         ';
 
 
-ALTER FUNCTION hs_office.sepamandate_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: sepamandate_insert_legacy_id_mapping_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5029,7 +5041,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_insert_legacy_id_mapping_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_insert_legacy_id_mapping_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_insert_permission_check_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5057,7 +5069,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_instead_of_delete_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5075,7 +5087,7 @@ CREATE FUNCTION hs_office.sepamandate_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_instead_of_insert_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5095,7 +5107,7 @@ CREATE FUNCTION hs_office.sepamandate_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_instead_of_update_tf(); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5119,7 +5131,7 @@ CREATE FUNCTION hs_office.sepamandate_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: sepamandate_owner(hs_office.sepamandate, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5133,7 +5145,7 @@ CREATE FUNCTION hs_office.sepamandate_owner(entity hs_office.sepamandate, assume
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_owner(entity hs_office.sepamandate, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_owner(entity hs_office.sepamandate, assumed boolean) OWNER TO admin;
 
 --
 -- Name: sepamandate_rebuild_rbac_system(); Type: PROCEDURE; Schema: hs_office; Owner: test
@@ -5167,7 +5179,7 @@ END;
 ';
 
 
-ALTER PROCEDURE hs_office.sepamandate_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE hs_office.sepamandate_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: sepamandate_referrer(hs_office.sepamandate); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5181,7 +5193,7 @@ CREATE FUNCTION hs_office.sepamandate_referrer(entity hs_office.sepamandate) RET
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_referrer(entity hs_office.sepamandate) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_referrer(entity hs_office.sepamandate) OWNER TO admin;
 
 --
 -- Name: sepamandate_tenant(hs_office.sepamandate, boolean); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5195,7 +5207,7 @@ CREATE FUNCTION hs_office.sepamandate_tenant(entity hs_office.sepamandate, assum
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_tenant(entity hs_office.sepamandate, assumed boolean) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_tenant(entity hs_office.sepamandate, assumed boolean) OWNER TO admin;
 
 --
 -- Name: sepamandate_uuid_by_id_name(character varying); Type: FUNCTION; Schema: hs_office; Owner: test
@@ -5212,7 +5224,7 @@ CREATE FUNCTION hs_office.sepamandate_uuid_by_id_name(givenidname character vary
         end; ';
 
 
-ALTER FUNCTION hs_office.sepamandate_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION hs_office.sepamandate_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: validate_transaction_type(); Type: FUNCTION; Schema: public; Owner: test
@@ -5247,7 +5259,7 @@ END;
 ';
 
 
-ALTER FUNCTION public.validate_transaction_type() OWNER TO test;
+ALTER FUNCTION public.validate_transaction_type() OWNER TO admin;
 
 --
 -- Name: assertreferencetype(character varying, uuid, rbac.referencetype); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5271,7 +5283,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.assertreferencetype(argument character varying, referenceid uuid, expectedtype rbac.referencetype) OWNER TO test;
+ALTER FUNCTION rbac.assertreferencetype(argument character varying, referenceid uuid, expectedtype rbac.referencetype) OWNER TO admin;
 
 --
 -- Name: assumed(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5284,7 +5296,7 @@ CREATE FUNCTION rbac.assumed() RETURNS boolean
 ';
 
 
-ALTER FUNCTION rbac.assumed() OWNER TO test;
+ALTER FUNCTION rbac.assumed() OWNER TO admin;
 
 --
 -- Name: assumedroleuuid(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5306,7 +5318,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.assumedroleuuid() OWNER TO test;
+ALTER FUNCTION rbac.assumedroleuuid() OWNER TO admin;
 
 --
 -- Name: checkrevokerolefromsubjectpreconditions(uuid, uuid, uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -5339,7 +5351,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.checkrevokerolefromsubjectpreconditions(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.checkrevokerolefromsubjectpreconditions(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid) OWNER TO admin;
 
 --
 -- Name: create_subject(character varying); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5363,7 +5375,7 @@ end;
 ';
 
 
-ALTER FUNCTION rbac.create_subject(subjectname character varying) OWNER TO test;
+ALTER FUNCTION rbac.create_subject(subjectname character varying) OWNER TO admin;
 
 --
 -- Name: create_subject(uuid, character varying); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5385,7 +5397,7 @@ end;
 ';
 
 
-ALTER FUNCTION rbac.create_subject(refuuid uuid, subjectname character varying) OWNER TO test;
+ALTER FUNCTION rbac.create_subject(refuuid uuid, subjectname character varying) OWNER TO admin;
 
 --
 -- Name: createpermission(uuid, rbac.rbacop, text); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5428,7 +5440,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.createpermission(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO test;
+ALTER FUNCTION rbac.createpermission(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO admin;
 
 --
 -- Name: createrole(rbac.roledescriptor); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5452,7 +5464,7 @@ end;
 ';
 
 
-ALTER FUNCTION rbac.createrole(roledescriptor rbac.roledescriptor) OWNER TO test;
+ALTER FUNCTION rbac.createrole(roledescriptor rbac.roledescriptor) OWNER TO admin;
 
 --
 -- Name: currentsubjectorassumedrolesuuids(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5483,7 +5495,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.currentsubjectorassumedrolesuuids() OWNER TO test;
+ALTER FUNCTION rbac.currentsubjectorassumedrolesuuids() OWNER TO admin;
 
 --
 -- Name: currentsubjectuuid(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5514,7 +5526,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.currentsubjectuuid() OWNER TO test;
+ALTER FUNCTION rbac.currentsubjectuuid() OWNER TO admin;
 
 --
 -- Name: currenttriggerobjectuuid(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5536,7 +5548,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.currenttriggerobjectuuid() OWNER TO test;
+ALTER FUNCTION rbac.currenttriggerobjectuuid() OWNER TO admin;
 
 --
 -- Name: definerolewithgrants(rbac.roledescriptor, rbac.rbacop[], rbac.roledescriptor[], rbac.roledescriptor[], uuid[], rbac.roledescriptor); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5593,7 +5605,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.definerolewithgrants(roledescriptor rbac.roledescriptor, permissions rbac.rbacop[], incomingsuperroles rbac.roledescriptor[], outgoingsubroles rbac.roledescriptor[], subjectuuids uuid[], grantedbyrole rbac.roledescriptor) OWNER TO test;
+ALTER FUNCTION rbac.definerolewithgrants(roledescriptor rbac.roledescriptor, permissions rbac.rbacop[], incomingsuperroles rbac.roledescriptor[], outgoingsubroles rbac.roledescriptor[], subjectuuids uuid[], grantedbyrole rbac.roledescriptor) OWNER TO admin;
 
 --
 -- Name: delete_grant_tf(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5608,7 +5620,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.delete_grant_tf() OWNER TO test;
+ALTER FUNCTION rbac.delete_grant_tf() OWNER TO admin;
 
 --
 -- Name: delete_grants_of_role_tf(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5627,7 +5639,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.delete_grants_of_role_tf() OWNER TO test;
+ALTER FUNCTION rbac.delete_grants_of_role_tf() OWNER TO admin;
 
 --
 -- Name: delete_related_rbac_rules_tf(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5646,7 +5658,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.delete_related_rbac_rules_tf() OWNER TO test;
+ALTER FUNCTION rbac.delete_related_rbac_rules_tf() OWNER TO admin;
 
 --
 -- Name: delete_roles_of_object_tf(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5666,7 +5678,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.delete_roles_of_object_tf() OWNER TO test;
+ALTER FUNCTION rbac.delete_roles_of_object_tf() OWNER TO admin;
 
 --
 -- Name: delete_subject_tf(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5684,7 +5696,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.delete_subject_tf() OWNER TO test;
+ALTER FUNCTION rbac.delete_subject_tf() OWNER TO admin;
 
 --
 -- Name: deleterole(uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -5700,7 +5712,7 @@ end;
 ';
 
 
-ALTER PROCEDURE rbac.deleterole(IN roleuuid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.deleterole(IN roleuuid uuid) OWNER TO admin;
 
 --
 -- Name: determinecurrentsubjectorassumedrolesuuids(uuid, text); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5765,7 +5777,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.determinecurrentsubjectorassumedrolesuuids(currentsubjectorassumedrolesuuids uuid, assumedroles text) OWNER TO test;
+ALTER FUNCTION rbac.determinecurrentsubjectorassumedrolesuuids(currentsubjectorassumedrolesuuids uuid, assumedroles text) OWNER TO admin;
 
 --
 -- Name: determinecurrentsubjectuuid(character varying); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5789,7 +5801,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.determinecurrentsubjectuuid(currentsubject character varying) OWNER TO test;
+ALTER FUNCTION rbac.determinecurrentsubjectuuid(currentsubject character varying) OWNER TO admin;
 
 --
 -- Name: entertriggerforobjectuuid(uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -5809,7 +5821,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.entertriggerforobjectuuid(IN currentobjectuuid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.entertriggerforobjectuuid(IN currentobjectuuid uuid) OWNER TO admin;
 
 --
 -- Name: find_subject_id(character varying); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5822,7 +5834,7 @@ select uuid from rbac.subject where name = subjectName
 ';
 
 
-ALTER FUNCTION rbac.find_subject_id(subjectname character varying) OWNER TO test;
+ALTER FUNCTION rbac.find_subject_id(subjectname character varying) OWNER TO admin;
 
 --
 -- Name: findeffectivepermissionid(uuid, rbac.rbacop, text); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5839,7 +5851,7 @@ select uuid
 ';
 
 
-ALTER FUNCTION rbac.findeffectivepermissionid(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO test;
+ALTER FUNCTION rbac.findeffectivepermissionid(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO admin;
 
 --
 -- Name: reference; Type: TABLE; Schema: rbac; Owner: test
@@ -5851,7 +5863,7 @@ CREATE TABLE rbac.reference (
 );
 
 
-ALTER TABLE rbac.reference OWNER TO test;
+ALTER TABLE rbac.reference OWNER TO admin;
 
 --
 -- Name: findgrantees(uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5875,7 +5887,7 @@ select ref.*
 ';
 
 
-ALTER FUNCTION rbac.findgrantees(grantedid uuid) OWNER TO test;
+ALTER FUNCTION rbac.findgrantees(grantedid uuid) OWNER TO admin;
 
 --
 -- Name: findidnamebyobjectuuid(character varying, uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5901,7 +5913,7 @@ begin
 end ; ';
 
 
-ALTER FUNCTION rbac.findidnamebyobjectuuid(objecttable character varying, objectuuid uuid) OWNER TO test;
+ALTER FUNCTION rbac.findidnamebyobjectuuid(objecttable character varying, objectuuid uuid) OWNER TO admin;
 
 --
 -- Name: findobjectuuidbyidname(character varying, character varying); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5932,7 +5944,7 @@ begin
 end ; ';
 
 
-ALTER FUNCTION rbac.findobjectuuidbyidname(objecttable character varying, objectidname character varying) OWNER TO test;
+ALTER FUNCTION rbac.findobjectuuidbyidname(objecttable character varying, objectidname character varying) OWNER TO admin;
 
 --
 -- Name: findpermissionid(uuid, rbac.rbacop, text); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5949,7 +5961,7 @@ select uuid
 ';
 
 
-ALTER FUNCTION rbac.findpermissionid(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO test;
+ALTER FUNCTION rbac.findpermissionid(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO admin;
 
 --
 -- Name: findroleid(character varying); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5982,7 +5994,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.findroleid(roleidname character varying) OWNER TO test;
+ALTER FUNCTION rbac.findroleid(roleidname character varying) OWNER TO admin;
 
 --
 -- Name: findroleid(rbac.roledescriptor); Type: FUNCTION; Schema: rbac; Owner: test
@@ -5995,7 +6007,7 @@ select uuid from rbac.role where objectUuid = roleDescriptor.objectUuid and role
 ';
 
 
-ALTER FUNCTION rbac.findroleid(roledescriptor rbac.roledescriptor) OWNER TO test;
+ALTER FUNCTION rbac.findroleid(roledescriptor rbac.roledescriptor) OWNER TO admin;
 
 --
 -- Name: generaterbacidentityviewfromprojection(text, text); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6017,7 +6029,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.generaterbacidentityviewfromprojection(IN targettable text, IN sqlprojection text) OWNER TO test;
+ALTER PROCEDURE rbac.generaterbacidentityviewfromprojection(IN targettable text, IN sqlprojection text) OWNER TO admin;
 
 --
 -- Name: generaterbacidentityviewfromquery(text, text); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6065,7 +6077,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.generaterbacidentityviewfromquery(IN targettable text, IN sqlquery text) OWNER TO test;
+ALTER PROCEDURE rbac.generaterbacidentityviewfromquery(IN targettable text, IN sqlquery text) OWNER TO admin;
 
 --
 -- Name: generaterbacrestrictedview(text, text, text, text); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6210,7 +6222,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.generaterbacrestrictedview(IN targettable text, IN orderby text, IN columnupdates text, IN columnnames text) OWNER TO test;
+ALTER PROCEDURE rbac.generaterbacrestrictedview(IN targettable text, IN orderby text, IN columnupdates text, IN columnnames text) OWNER TO admin;
 
 --
 -- Name: generaterbacroledescriptors(text); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6277,7 +6289,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.generaterbacroledescriptors(IN targettable text) OWNER TO test;
+ALTER PROCEDURE rbac.generaterbacroledescriptors(IN targettable text) OWNER TO admin;
 
 --
 -- Name: generaterelatedrbacobject(character varying); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6323,7 +6335,7 @@ end;
 ';
 
 
-ALTER PROCEDURE rbac.generaterelatedrbacobject(IN targettable character varying) OWNER TO test;
+ALTER PROCEDURE rbac.generaterelatedrbacobject(IN targettable character varying) OWNER TO admin;
 
 --
 -- Name: getpermissionid(uuid, rbac.rbacop, text); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6346,7 +6358,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.getpermissionid(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO test;
+ALTER FUNCTION rbac.getpermissionid(forobjectuuid uuid, forop rbac.rbacop, foroptablename text) OWNER TO admin;
 
 --
 -- Name: getroleid(rbac.roledescriptor); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6369,7 +6381,7 @@ end;
 ';
 
 
-ALTER FUNCTION rbac.getroleid(roledescriptor rbac.roledescriptor) OWNER TO test;
+ALTER FUNCTION rbac.getroleid(roledescriptor rbac.roledescriptor) OWNER TO admin;
 
 --
 -- Name: global_admin(boolean); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6382,7 +6394,7 @@ select ''rbac.global'', (select uuid from rbac.object where objectTable = ''rbac
 ';
 
 
-ALTER FUNCTION rbac.global_admin(assumed boolean) OWNER TO test;
+ALTER FUNCTION rbac.global_admin(assumed boolean) OWNER TO admin;
 
 --
 -- Name: global_id_name_by_uuid(uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6395,7 +6407,7 @@ select idName from rbac.global_iv iv where iv.uuid = global_id_name_by_uuid.uuid
 ';
 
 
-ALTER FUNCTION rbac.global_id_name_by_uuid(uuid uuid) OWNER TO test;
+ALTER FUNCTION rbac.global_id_name_by_uuid(uuid uuid) OWNER TO admin;
 
 --
 -- Name: global_uuid_by_id_name(character varying); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6408,7 +6420,7 @@ select uuid from rbac.global_iv iv where iv.idName = global_uuid_by_id_name.idNa
 ';
 
 
-ALTER FUNCTION rbac.global_uuid_by_id_name(idname character varying) OWNER TO test;
+ALTER FUNCTION rbac.global_uuid_by_id_name(idname character varying) OWNER TO admin;
 
 --
 -- Name: globalglobalguest(boolean); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6421,7 +6433,7 @@ select ''rbac.global'', (select uuid from rbac.object where objectTable = ''rbac
 ';
 
 
-ALTER FUNCTION rbac.globalglobalguest(assumed boolean) OWNER TO test;
+ALTER FUNCTION rbac.globalglobalguest(assumed boolean) OWNER TO admin;
 
 --
 -- Name: grantedpermissions(uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6438,7 +6450,7 @@ CREATE FUNCTION rbac.grantedpermissions(targetsubjectuuid uuid) RETURNS TABLE(ro
 ';
 
 
-ALTER FUNCTION rbac.grantedpermissions(targetsubjectuuid uuid) OWNER TO test;
+ALTER FUNCTION rbac.grantedpermissions(targetsubjectuuid uuid) OWNER TO admin;
 
 --
 -- Name: grantedpermissionsraw(uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6480,7 +6492,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.grantedpermissionsraw(targetsubjectuuid uuid) OWNER TO test;
+ALTER FUNCTION rbac.grantedpermissionsraw(targetsubjectuuid uuid) OWNER TO admin;
 
 --
 -- Name: grantpermissiontorole(uuid, uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6501,7 +6513,7 @@ end;
 ';
 
 
-ALTER PROCEDURE rbac.grantpermissiontorole(IN permissionuuid uuid, IN roleuuid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.grantpermissiontorole(IN permissionuuid uuid, IN roleuuid uuid) OWNER TO admin;
 
 --
 -- Name: grantpermissiontorole(uuid, rbac.roledescriptor); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6516,7 +6528,7 @@ end;
 ';
 
 
-ALTER PROCEDURE rbac.grantpermissiontorole(IN permissionuuid uuid, IN roledesc rbac.roledescriptor) OWNER TO test;
+ALTER PROCEDURE rbac.grantpermissiontorole(IN permissionuuid uuid, IN roledesc rbac.roledescriptor) OWNER TO admin;
 
 --
 -- Name: grantroletorole(uuid, uuid, boolean); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6540,7 +6552,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.grantroletorole(IN subroleid uuid, IN superroleid uuid, IN doassume boolean) OWNER TO test;
+ALTER PROCEDURE rbac.grantroletorole(IN subroleid uuid, IN superroleid uuid, IN doassume boolean) OWNER TO admin;
 
 --
 -- Name: grantroletorole(rbac.roledescriptor, rbac.roledescriptor, boolean); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6575,7 +6587,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.grantroletorole(IN subrole rbac.roledescriptor, IN superrole rbac.roledescriptor, IN doassume boolean) OWNER TO test;
+ALTER PROCEDURE rbac.grantroletorole(IN subrole rbac.roledescriptor, IN superrole rbac.roledescriptor, IN doassume boolean) OWNER TO admin;
 
 --
 -- Name: grantroletosubject(uuid, uuid, uuid, boolean); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6617,7 +6629,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.grantroletosubject(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid, IN doassume boolean) OWNER TO test;
+ALTER PROCEDURE rbac.grantroletosubject(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid, IN doassume boolean) OWNER TO admin;
 
 --
 -- Name: grantroletosubjectunchecked(uuid, uuid, uuid, boolean); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6639,7 +6651,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.grantroletosubjectunchecked(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid, IN doassume boolean) OWNER TO test;
+ALTER PROCEDURE rbac.grantroletosubjectunchecked(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid, IN doassume boolean) OWNER TO admin;
 
 --
 -- Name: hasglobaladminrole(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6661,7 +6673,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.hasglobaladminrole() OWNER TO test;
+ALTER FUNCTION rbac.hasglobaladminrole() OWNER TO admin;
 
 --
 -- Name: hasglobalpermission(rbac.rbacop); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6676,7 +6688,7 @@ select (select uuid from rbac.global) in
 ';
 
 
-ALTER FUNCTION rbac.hasglobalpermission(op rbac.rbacop) OWNER TO test;
+ALTER FUNCTION rbac.hasglobalpermission(op rbac.rbacop) OWNER TO admin;
 
 --
 -- Name: hasglobalrolegranted(uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6696,7 +6708,7 @@ select exists(
 ';
 
 
-ALTER FUNCTION rbac.hasglobalrolegranted(forascendantuuid uuid) OWNER TO test;
+ALTER FUNCTION rbac.hasglobalrolegranted(forascendantuuid uuid) OWNER TO admin;
 
 --
 -- Name: hasinsertpermission(uuid, text); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6714,7 +6726,7 @@ end;
 ';
 
 
-ALTER FUNCTION rbac.hasinsertpermission(objectuuid uuid, tablename text) OWNER TO test;
+ALTER FUNCTION rbac.hasinsertpermission(objectuuid uuid, tablename text) OWNER TO admin;
 
 --
 -- Name: insert_grant_tf(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6735,7 +6747,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.insert_grant_tf() OWNER TO test;
+ALTER FUNCTION rbac.insert_grant_tf() OWNER TO admin;
 
 --
 -- Name: insert_related_object(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6769,7 +6781,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.insert_related_object() OWNER TO test;
+ALTER FUNCTION rbac.insert_related_object() OWNER TO admin;
 
 --
 -- Name: insert_subject_tf(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6795,7 +6807,7 @@ end;
 ';
 
 
-ALTER FUNCTION rbac.insert_subject_tf() OWNER TO test;
+ALTER FUNCTION rbac.insert_subject_tf() OWNER TO admin;
 
 --
 -- Name: isglobaladmin(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6809,7 +6821,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbac.isglobaladmin() OWNER TO test;
+ALTER FUNCTION rbac.isglobaladmin() OWNER TO admin;
 
 --
 -- Name: isgranted(uuid[], uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6835,7 +6847,7 @@ select exists (
 ';
 
 
-ALTER FUNCTION rbac.isgranted(granteeids uuid[], grantedid uuid) OWNER TO test;
+ALTER FUNCTION rbac.isgranted(granteeids uuid[], grantedid uuid) OWNER TO admin;
 
 --
 -- Name: isgranted(uuid, uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6848,7 +6860,7 @@ select * from rbac.isGranted(array[granteeId], grantedId);
 ';
 
 
-ALTER FUNCTION rbac.isgranted(granteeid uuid, grantedid uuid) OWNER TO test;
+ALTER FUNCTION rbac.isgranted(granteeid uuid, grantedid uuid) OWNER TO admin;
 
 --
 -- Name: ispermissiongrantedtosubject(uuid, uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6874,7 +6886,7 @@ select exists(
 ';
 
 
-ALTER FUNCTION rbac.ispermissiongrantedtosubject(permissionid uuid, subjectid uuid) OWNER TO test;
+ALTER FUNCTION rbac.ispermissiongrantedtosubject(permissionid uuid, subjectid uuid) OWNER TO admin;
 
 --
 -- Name: leavetriggerforobjectuuid(uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -6894,7 +6906,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.leavetriggerforobjectuuid(IN currentobjectuuid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.leavetriggerforobjectuuid(IN currentobjectuuid uuid) OWNER TO admin;
 
 --
 -- Name: queryaccessibleobjectuuidsofsubjectids(rbac.rbacop, character varying, uuid[], integer); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6941,7 +6953,7 @@ end;
 ';
 
 
-ALTER FUNCTION rbac.queryaccessibleobjectuuidsofsubjectids(requiredop rbac.rbacop, forobjecttable character varying, subjectids uuid[], maxobjects integer) OWNER TO test;
+ALTER FUNCTION rbac.queryaccessibleobjectuuidsofsubjectids(requiredop rbac.rbacop, forobjecttable character varying, subjectids uuid[], maxobjects integer) OWNER TO admin;
 
 --
 -- Name: subject; Type: TABLE; Schema: rbac; Owner: test
@@ -6953,7 +6965,7 @@ CREATE TABLE rbac.subject (
 );
 
 
-ALTER TABLE rbac.subject OWNER TO test;
+ALTER TABLE rbac.subject OWNER TO admin;
 
 --
 -- Name: queryallrbacsubjectswithpermissionsfor(uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -6981,7 +6993,7 @@ select *
 ';
 
 
-ALTER FUNCTION rbac.queryallrbacsubjectswithpermissionsfor(objectid uuid) OWNER TO test;
+ALTER FUNCTION rbac.queryallrbacsubjectswithpermissionsfor(objectid uuid) OWNER TO admin;
 
 --
 -- Name: permission; Type: TABLE; Schema: rbac; Owner: test
@@ -6995,7 +7007,7 @@ CREATE TABLE rbac.permission (
 );
 
 
-ALTER TABLE rbac.permission OWNER TO test;
+ALTER TABLE rbac.permission OWNER TO admin;
 
 --
 -- Name: querypermissionsgrantedtosubjectid(uuid); Type: FUNCTION; Schema: rbac; Owner: test
@@ -7022,7 +7034,7 @@ select perm.*
 ';
 
 
-ALTER FUNCTION rbac.querypermissionsgrantedtosubjectid(subjectid uuid) OWNER TO test;
+ALTER FUNCTION rbac.querypermissionsgrantedtosubjectid(subjectid uuid) OWNER TO admin;
 
 --
 -- Name: raiseduplicaterolegrantexception(uuid, uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -7042,7 +7054,7 @@ end;
 ';
 
 
-ALTER PROCEDURE rbac.raiseduplicaterolegrantexception(IN subroleid uuid, IN superroleid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.raiseduplicaterolegrantexception(IN subroleid uuid, IN superroleid uuid) OWNER TO admin;
 
 --
 -- Name: revokepermissionfromrole(uuid, uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -7058,7 +7070,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.revokepermissionfromrole(IN permissionuuid uuid, IN superroleuuid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.revokepermissionfromrole(IN permissionuuid uuid, IN superroleuuid uuid) OWNER TO admin;
 
 --
 -- Name: revokepermissionfromrole(uuid, rbac.roledescriptor); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -7094,7 +7106,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.revokepermissionfromrole(IN permissionid uuid, IN superrole rbac.roledescriptor) OWNER TO test;
+ALTER PROCEDURE rbac.revokepermissionfromrole(IN permissionid uuid, IN superrole rbac.roledescriptor) OWNER TO admin;
 
 --
 -- Name: revokerolefromrole(rbac.roledescriptor, rbac.roledescriptor); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -7122,7 +7134,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.revokerolefromrole(IN subrole rbac.roledescriptor, IN superrole rbac.roledescriptor) OWNER TO test;
+ALTER PROCEDURE rbac.revokerolefromrole(IN subrole rbac.roledescriptor, IN superrole rbac.roledescriptor) OWNER TO admin;
 
 --
 -- Name: revokerolefromsubject(uuid, uuid, uuid); Type: PROCEDURE; Schema: rbac; Owner: test
@@ -7141,7 +7153,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbac.revokerolefromsubject(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid) OWNER TO test;
+ALTER PROCEDURE rbac.revokerolefromsubject(IN grantedbyroleuuid uuid, IN grantedroleuuid uuid, IN subjectuuid uuid) OWNER TO admin;
 
 --
 -- Name: roledescriptorof(character varying, uuid, rbac.roletype, boolean); Type: FUNCTION; Schema: rbac; Owner: test
@@ -7154,7 +7166,7 @@ CREATE FUNCTION rbac.roledescriptorof(objecttable character varying, objectuuid 
 ';
 
 
-ALTER FUNCTION rbac.roledescriptorof(objecttable character varying, objectuuid uuid, roletype rbac.roletype, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbac.roledescriptorof(objecttable character varying, objectuuid uuid, roletype rbac.roletype, assumed boolean) OWNER TO admin;
 
 --
 -- Name: unassumed(); Type: FUNCTION; Schema: rbac; Owner: test
@@ -7167,7 +7179,7 @@ select false;
 ';
 
 
-ALTER FUNCTION rbac.unassumed() OWNER TO test;
+ALTER FUNCTION rbac.unassumed() OWNER TO admin;
 
 --
 -- Name: customer; Type: TABLE; Schema: rbactest; Owner: test
@@ -7183,7 +7195,7 @@ CREATE TABLE rbactest.customer (
 );
 
 
-ALTER TABLE rbactest.customer OWNER TO test;
+ALTER TABLE rbactest.customer OWNER TO admin;
 
 --
 -- Name: customer_admin(rbactest.customer, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7197,7 +7209,7 @@ CREATE FUNCTION rbactest.customer_admin(entity rbactest.customer, assumed boolea
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_admin(entity rbactest.customer, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.customer_admin(entity rbactest.customer, assumed boolean) OWNER TO admin;
 
 --
 -- Name: customer_agent(rbactest.customer, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7211,7 +7223,7 @@ CREATE FUNCTION rbactest.customer_agent(entity rbactest.customer, assumed boolea
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_agent(entity rbactest.customer, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.customer_agent(entity rbactest.customer, assumed boolean) OWNER TO admin;
 
 --
 -- Name: customer_build_rbac_system(rbactest.customer); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7249,7 +7261,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.customer_build_rbac_system(IN new rbactest.customer) OWNER TO test;
+ALTER PROCEDURE rbactest.customer_build_rbac_system(IN new rbactest.customer) OWNER TO admin;
 
 --
 -- Name: customer_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7264,7 +7276,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.customer_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION rbactest.customer_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: customer_create_test_data(integer); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7278,7 +7290,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.customer_create_test_data(customercount integer) OWNER TO test;
+ALTER FUNCTION rbactest.customer_create_test_data(customercount integer) OWNER TO admin;
 
 --
 -- Name: customer_create_test_data(integer, integer); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7296,7 +7308,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.customer_create_test_data(IN startcount integer, IN endcount integer) OWNER TO test;
+ALTER PROCEDURE rbactest.customer_create_test_data(IN startcount integer, IN endcount integer) OWNER TO admin;
 
 --
 -- Name: customer_create_test_data(integer, character varying); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7329,7 +7341,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.customer_create_test_data(IN custreference integer, IN custprefix character varying) OWNER TO test;
+ALTER PROCEDURE rbactest.customer_create_test_data(IN custreference integer, IN custprefix character varying) OWNER TO admin;
 
 --
 -- Name: customer_grants_insert_to_global_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7348,7 +7360,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.customer_grants_insert_to_global_tf() OWNER TO test;
+ALTER FUNCTION rbactest.customer_grants_insert_to_global_tf() OWNER TO admin;
 
 --
 -- Name: customer_guest(rbactest.customer, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7362,7 +7374,7 @@ CREATE FUNCTION rbactest.customer_guest(entity rbactest.customer, assumed boolea
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_guest(entity rbactest.customer, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.customer_guest(entity rbactest.customer, assumed boolean) OWNER TO admin;
 
 --
 -- Name: customer_id_name_by_uuid(uuid); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7375,7 +7387,7 @@ CREATE FUNCTION rbactest.customer_id_name_by_uuid(givenuuid uuid) RETURNS charac
         ';
 
 
-ALTER FUNCTION rbactest.customer_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION rbactest.customer_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: customer_insert_permission_check_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7397,7 +7409,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.customer_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION rbactest.customer_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: customer_instead_of_delete_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7415,7 +7427,7 @@ CREATE FUNCTION rbactest.customer_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION rbactest.customer_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: customer_instead_of_insert_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7435,7 +7447,7 @@ CREATE FUNCTION rbactest.customer_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION rbactest.customer_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION rbactest.customer_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: customer_instead_of_update_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7459,7 +7471,7 @@ CREATE FUNCTION rbactest.customer_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION rbactest.customer_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION rbactest.customer_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: customer_owner(rbactest.customer, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7473,7 +7485,7 @@ CREATE FUNCTION rbactest.customer_owner(entity rbactest.customer, assumed boolea
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_owner(entity rbactest.customer, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.customer_owner(entity rbactest.customer, assumed boolean) OWNER TO admin;
 
 --
 -- Name: customer_rebuild_rbac_system(); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7507,7 +7519,7 @@ END;
 ';
 
 
-ALTER PROCEDURE rbactest.customer_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE rbactest.customer_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: customer_referrer(rbactest.customer); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7521,7 +7533,7 @@ CREATE FUNCTION rbactest.customer_referrer(entity rbactest.customer) RETURNS rba
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_referrer(entity rbactest.customer) OWNER TO test;
+ALTER FUNCTION rbactest.customer_referrer(entity rbactest.customer) OWNER TO admin;
 
 --
 -- Name: customer_tenant(rbactest.customer, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7535,7 +7547,7 @@ CREATE FUNCTION rbactest.customer_tenant(entity rbactest.customer, assumed boole
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_tenant(entity rbactest.customer, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.customer_tenant(entity rbactest.customer, assumed boolean) OWNER TO admin;
 
 --
 -- Name: customer_uuid_by_id_name(character varying); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7552,7 +7564,7 @@ CREATE FUNCTION rbactest.customer_uuid_by_id_name(givenidname character varying)
         end; ';
 
 
-ALTER FUNCTION rbactest.customer_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION rbactest.customer_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: domain; Type: TABLE; Schema: rbactest; Owner: test
@@ -7566,7 +7578,7 @@ CREATE TABLE rbactest.domain (
 );
 
 
-ALTER TABLE rbactest.domain OWNER TO test;
+ALTER TABLE rbactest.domain OWNER TO admin;
 
 --
 -- Name: domain_admin(rbactest.domain, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7580,7 +7592,7 @@ CREATE FUNCTION rbactest.domain_admin(entity rbactest.domain, assumed boolean DE
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_admin(entity rbactest.domain, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.domain_admin(entity rbactest.domain, assumed boolean) OWNER TO admin;
 
 --
 -- Name: domain_agent(rbactest.domain, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7594,7 +7606,7 @@ CREATE FUNCTION rbactest.domain_agent(entity rbactest.domain, assumed boolean DE
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_agent(entity rbactest.domain, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.domain_agent(entity rbactest.domain, assumed boolean) OWNER TO admin;
 
 --
 -- Name: domain_build_rbac_system(rbactest.domain); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7632,7 +7644,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.domain_build_rbac_system(IN new rbactest.domain) OWNER TO test;
+ALTER PROCEDURE rbactest.domain_build_rbac_system(IN new rbactest.domain) OWNER TO admin;
 
 --
 -- Name: domain_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7647,7 +7659,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.domain_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION rbactest.domain_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: domain_create_test_data(integer); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7672,7 +7684,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.domain_create_test_data(IN domainperpackage integer) OWNER TO test;
+ALTER PROCEDURE rbactest.domain_create_test_data(IN domainperpackage integer) OWNER TO admin;
 
 --
 -- Name: domain_create_test_data(character varying, integer); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7703,7 +7715,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.domain_create_test_data(IN packagename character varying, IN domaincount integer) OWNER TO test;
+ALTER PROCEDURE rbactest.domain_create_test_data(IN packagename character varying, IN domaincount integer) OWNER TO admin;
 
 --
 -- Name: domain_grants_insert_to_package_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7722,7 +7734,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.domain_grants_insert_to_package_tf() OWNER TO test;
+ALTER FUNCTION rbactest.domain_grants_insert_to_package_tf() OWNER TO admin;
 
 --
 -- Name: domain_guest(rbactest.domain, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7736,7 +7748,7 @@ CREATE FUNCTION rbactest.domain_guest(entity rbactest.domain, assumed boolean DE
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_guest(entity rbactest.domain, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.domain_guest(entity rbactest.domain, assumed boolean) OWNER TO admin;
 
 --
 -- Name: domain_id_name_by_uuid(uuid); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7749,7 +7761,7 @@ CREATE FUNCTION rbactest.domain_id_name_by_uuid(givenuuid uuid) RETURNS characte
         ';
 
 
-ALTER FUNCTION rbactest.domain_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION rbactest.domain_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: domain_insert_permission_check_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7771,7 +7783,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.domain_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION rbactest.domain_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: domain_instead_of_delete_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7789,7 +7801,7 @@ CREATE FUNCTION rbactest.domain_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION rbactest.domain_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: domain_instead_of_insert_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7809,7 +7821,7 @@ CREATE FUNCTION rbactest.domain_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION rbactest.domain_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION rbactest.domain_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: domain_instead_of_update_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7833,7 +7845,7 @@ CREATE FUNCTION rbactest.domain_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION rbactest.domain_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION rbactest.domain_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: domain_owner(rbactest.domain, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7847,7 +7859,7 @@ CREATE FUNCTION rbactest.domain_owner(entity rbactest.domain, assumed boolean DE
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_owner(entity rbactest.domain, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.domain_owner(entity rbactest.domain, assumed boolean) OWNER TO admin;
 
 --
 -- Name: domain_rebuild_rbac_system(); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7881,7 +7893,7 @@ END;
 ';
 
 
-ALTER PROCEDURE rbactest.domain_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE rbactest.domain_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: domain_referrer(rbactest.domain); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7895,7 +7907,7 @@ CREATE FUNCTION rbactest.domain_referrer(entity rbactest.domain) RETURNS rbac.ro
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_referrer(entity rbactest.domain) OWNER TO test;
+ALTER FUNCTION rbactest.domain_referrer(entity rbactest.domain) OWNER TO admin;
 
 --
 -- Name: domain_tenant(rbactest.domain, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7909,7 +7921,7 @@ CREATE FUNCTION rbactest.domain_tenant(entity rbactest.domain, assumed boolean D
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_tenant(entity rbactest.domain, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.domain_tenant(entity rbactest.domain, assumed boolean) OWNER TO admin;
 
 --
 -- Name: domain_update_rbac_system(rbactest.domain, rbactest.domain); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -7950,7 +7962,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.domain_update_rbac_system(IN old rbactest.domain, IN new rbactest.domain) OWNER TO test;
+ALTER PROCEDURE rbactest.domain_update_rbac_system(IN old rbactest.domain, IN new rbactest.domain) OWNER TO admin;
 
 --
 -- Name: domain_update_rbac_system_after_update_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7965,7 +7977,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.domain_update_rbac_system_after_update_tf() OWNER TO test;
+ALTER FUNCTION rbactest.domain_update_rbac_system_after_update_tf() OWNER TO admin;
 
 --
 -- Name: domain_uuid_by_id_name(character varying); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -7982,7 +7994,7 @@ CREATE FUNCTION rbactest.domain_uuid_by_id_name(givenidname character varying) R
         end; ';
 
 
-ALTER FUNCTION rbactest.domain_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION rbactest.domain_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: package; Type: TABLE; Schema: rbactest; Owner: test
@@ -7997,7 +8009,7 @@ CREATE TABLE rbactest.package (
 );
 
 
-ALTER TABLE rbactest.package OWNER TO test;
+ALTER TABLE rbactest.package OWNER TO admin;
 
 --
 -- Name: package_admin(rbactest.package, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8011,7 +8023,7 @@ CREATE FUNCTION rbactest.package_admin(entity rbactest.package, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION rbactest.package_admin(entity rbactest.package, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.package_admin(entity rbactest.package, assumed boolean) OWNER TO admin;
 
 --
 -- Name: package_agent(rbactest.package, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8025,7 +8037,7 @@ CREATE FUNCTION rbactest.package_agent(entity rbactest.package, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION rbactest.package_agent(entity rbactest.package, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.package_agent(entity rbactest.package, assumed boolean) OWNER TO admin;
 
 --
 -- Name: package_build_rbac_system(rbactest.package); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -8067,7 +8079,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.package_build_rbac_system(IN new rbactest.package) OWNER TO test;
+ALTER PROCEDURE rbactest.package_build_rbac_system(IN new rbactest.package) OWNER TO admin;
 
 --
 -- Name: package_build_rbac_system_after_insert_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8082,7 +8094,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.package_build_rbac_system_after_insert_tf() OWNER TO test;
+ALTER FUNCTION rbactest.package_build_rbac_system_after_insert_tf() OWNER TO admin;
 
 --
 -- Name: package_create_test_data(); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -8105,7 +8117,7 @@ end ;
 ';
 
 
-ALTER PROCEDURE rbactest.package_create_test_data() OWNER TO test;
+ALTER PROCEDURE rbactest.package_create_test_data() OWNER TO admin;
 
 --
 -- Name: package_create_test_data(character varying, integer); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -8145,7 +8157,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.package_create_test_data(IN customerprefix character varying, IN paccount integer) OWNER TO test;
+ALTER PROCEDURE rbactest.package_create_test_data(IN customerprefix character varying, IN paccount integer) OWNER TO admin;
 
 --
 -- Name: package_grants_insert_to_customer_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8164,7 +8176,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.package_grants_insert_to_customer_tf() OWNER TO test;
+ALTER FUNCTION rbactest.package_grants_insert_to_customer_tf() OWNER TO admin;
 
 --
 -- Name: package_guest(rbactest.package, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8178,7 +8190,7 @@ CREATE FUNCTION rbactest.package_guest(entity rbactest.package, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION rbactest.package_guest(entity rbactest.package, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.package_guest(entity rbactest.package, assumed boolean) OWNER TO admin;
 
 --
 -- Name: package_id_name_by_uuid(uuid); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8191,7 +8203,7 @@ CREATE FUNCTION rbactest.package_id_name_by_uuid(givenuuid uuid) RETURNS charact
         ';
 
 
-ALTER FUNCTION rbactest.package_id_name_by_uuid(givenuuid uuid) OWNER TO test;
+ALTER FUNCTION rbactest.package_id_name_by_uuid(givenuuid uuid) OWNER TO admin;
 
 --
 -- Name: package_insert_permission_check_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8213,7 +8225,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.package_insert_permission_check_tf() OWNER TO test;
+ALTER FUNCTION rbactest.package_insert_permission_check_tf() OWNER TO admin;
 
 --
 -- Name: package_instead_of_delete_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8231,7 +8243,7 @@ CREATE FUNCTION rbactest.package_instead_of_delete_tf() RETURNS trigger
         end; ';
 
 
-ALTER FUNCTION rbactest.package_instead_of_delete_tf() OWNER TO test;
+ALTER FUNCTION rbactest.package_instead_of_delete_tf() OWNER TO admin;
 
 --
 -- Name: package_instead_of_insert_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8251,7 +8263,7 @@ CREATE FUNCTION rbactest.package_instead_of_insert_tf() RETURNS trigger
     end; ';
 
 
-ALTER FUNCTION rbactest.package_instead_of_insert_tf() OWNER TO test;
+ALTER FUNCTION rbactest.package_instead_of_insert_tf() OWNER TO admin;
 
 --
 -- Name: package_instead_of_update_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8275,7 +8287,7 @@ CREATE FUNCTION rbactest.package_instead_of_update_tf() RETURNS trigger
             end; ';
 
 
-ALTER FUNCTION rbactest.package_instead_of_update_tf() OWNER TO test;
+ALTER FUNCTION rbactest.package_instead_of_update_tf() OWNER TO admin;
 
 --
 -- Name: package_owner(rbactest.package, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8289,7 +8301,7 @@ CREATE FUNCTION rbactest.package_owner(entity rbactest.package, assumed boolean 
         end; ';
 
 
-ALTER FUNCTION rbactest.package_owner(entity rbactest.package, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.package_owner(entity rbactest.package, assumed boolean) OWNER TO admin;
 
 --
 -- Name: package_rebuild_rbac_system(); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -8323,7 +8335,7 @@ END;
 ';
 
 
-ALTER PROCEDURE rbactest.package_rebuild_rbac_system() OWNER TO test;
+ALTER PROCEDURE rbactest.package_rebuild_rbac_system() OWNER TO admin;
 
 --
 -- Name: package_referrer(rbactest.package); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8337,7 +8349,7 @@ CREATE FUNCTION rbactest.package_referrer(entity rbactest.package) RETURNS rbac.
         end; ';
 
 
-ALTER FUNCTION rbactest.package_referrer(entity rbactest.package) OWNER TO test;
+ALTER FUNCTION rbactest.package_referrer(entity rbactest.package) OWNER TO admin;
 
 --
 -- Name: package_tenant(rbactest.package, boolean); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8351,7 +8363,7 @@ CREATE FUNCTION rbactest.package_tenant(entity rbactest.package, assumed boolean
         end; ';
 
 
-ALTER FUNCTION rbactest.package_tenant(entity rbactest.package, assumed boolean) OWNER TO test;
+ALTER FUNCTION rbactest.package_tenant(entity rbactest.package, assumed boolean) OWNER TO admin;
 
 --
 -- Name: package_update_rbac_system(rbactest.package, rbactest.package); Type: PROCEDURE; Schema: rbactest; Owner: test
@@ -8389,7 +8401,7 @@ begin
 end; ';
 
 
-ALTER PROCEDURE rbactest.package_update_rbac_system(IN old rbactest.package, IN new rbactest.package) OWNER TO test;
+ALTER PROCEDURE rbactest.package_update_rbac_system(IN old rbactest.package, IN new rbactest.package) OWNER TO admin;
 
 --
 -- Name: package_update_rbac_system_after_update_tf(); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8404,7 +8416,7 @@ begin
 end; ';
 
 
-ALTER FUNCTION rbactest.package_update_rbac_system_after_update_tf() OWNER TO test;
+ALTER FUNCTION rbactest.package_update_rbac_system_after_update_tf() OWNER TO admin;
 
 --
 -- Name: package_uuid_by_id_name(character varying); Type: FUNCTION; Schema: rbactest; Owner: test
@@ -8421,7 +8433,7 @@ CREATE FUNCTION rbactest.package_uuid_by_id_name(givenidname character varying) 
         end; ';
 
 
-ALTER FUNCTION rbactest.package_uuid_by_id_name(givenidname character varying) OWNER TO test;
+ALTER FUNCTION rbactest.package_uuid_by_id_name(givenidname character varying) OWNER TO admin;
 
 --
 -- Name: tx_context; Type: TABLE; Schema: base; Owner: test
@@ -8437,7 +8449,7 @@ CREATE TABLE base.tx_context (
 );
 
 
-ALTER TABLE base.tx_context OWNER TO test;
+ALTER TABLE base.tx_context OWNER TO admin;
 
 --
 -- Name: tx_journal; Type: TABLE; Schema: base; Owner: test
@@ -8452,7 +8464,7 @@ CREATE TABLE base.tx_journal (
 );
 
 
-ALTER TABLE base.tx_journal OWNER TO test;
+ALTER TABLE base.tx_journal OWNER TO admin;
 
 --
 -- Name: tx_journal_v; Type: VIEW; Schema: base; Owner: test
@@ -8474,7 +8486,7 @@ CREATE VIEW base.tx_journal_v AS
   ORDER BY txc.txtimestamp;
 
 
-ALTER VIEW base.tx_journal_v OWNER TO test;
+ALTER VIEW base.tx_journal_v OWNER TO admin;
 
 --
 -- Name: partner_legacy_id; Type: TABLE; Schema: hs_office; Owner: test
@@ -8486,7 +8498,7 @@ CREATE TABLE hs_office.partner_legacy_id (
 );
 
 
-ALTER TABLE hs_office.partner_legacy_id OWNER TO test;
+ALTER TABLE hs_office.partner_legacy_id OWNER TO admin;
 
 --
 -- Name: contact; Type: VIEW; Schema: hs_integration; Owner: test
@@ -8585,7 +8597,7 @@ UNION
      JOIN hs_office.person per ON ((per.uuid = relation.holderuuid)));
 
 
-ALTER VIEW hs_integration.contact OWNER TO test;
+ALTER VIEW hs_integration.contact OWNER TO admin;
 
 --
 -- Name: subscription; Type: VIEW; Schema: hs_integration; Owner: test
@@ -8599,7 +8611,7 @@ CREATE VIEW hs_integration.subscription AS
   ORDER BY relation.mark, (contact.emailaddresses ->> 'main'::text);
 
 
-ALTER VIEW hs_integration.subscription OWNER TO test;
+ALTER VIEW hs_integration.subscription OWNER TO admin;
 
 --
 -- Name: ticket_customer_company; Type: VIEW; Schema: hs_integration; Owner: test
@@ -8618,7 +8630,7 @@ CREATE VIEW hs_integration.ticket_customer_company AS
   ORDER BY (partner.partnernumber)::text;
 
 
-ALTER VIEW hs_integration.ticket_customer_company OWNER TO test;
+ALTER VIEW hs_integration.ticket_customer_company OWNER TO admin;
 
 --
 -- Name: ticket_customer_user; Type: VIEW; Schema: hs_integration; Owner: test
@@ -8657,7 +8669,7 @@ CREATE VIEW hs_integration.ticket_customer_user AS
   GROUP BY c.contact_uuid;
 
 
-ALTER VIEW hs_integration.ticket_customer_user OWNER TO test;
+ALTER VIEW hs_integration.ticket_customer_user OWNER TO admin;
 
 --
 -- Name: time_customer; Type: VIEW; Schema: hs_integration; Owner: test
@@ -8672,7 +8684,7 @@ CREATE VIEW hs_integration.time_customer AS
      JOIN hs_office.debitor debitor ON (((debitor.debitorreluuid = drel.uuid) AND (debitor.debitornumbersuffix = '00'::bpchar))));
 
 
-ALTER VIEW hs_integration.time_customer OWNER TO test;
+ALTER VIEW hs_integration.time_customer OWNER TO admin;
 
 --
 -- Name: bankaccount_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -8684,7 +8696,7 @@ CREATE VIEW hs_office.bankaccount_iv AS
    FROM hs_office.bankaccount target;
 
 
-ALTER VIEW hs_office.bankaccount_iv OWNER TO test;
+ALTER VIEW hs_office.bankaccount_iv OWNER TO admin;
 
 --
 -- Name: grant; Type: TABLE; Schema: rbac; Owner: test
@@ -8701,7 +8713,7 @@ CREATE TABLE rbac."grant" (
 );
 
 
-ALTER TABLE rbac."grant" OWNER TO test;
+ALTER TABLE rbac."grant" OWNER TO admin;
 
 --
 -- Name: object; Type: TABLE; Schema: rbac; Owner: test
@@ -8714,7 +8726,7 @@ CREATE TABLE rbac.object (
 );
 
 
-ALTER TABLE rbac.object OWNER TO test;
+ALTER TABLE rbac.object OWNER TO admin;
 
 --
 -- Name: bankaccount_rv; Type: VIEW; Schema: hs_office; Owner: test
@@ -8763,7 +8775,7 @@ CREATE VIEW hs_office.bankaccount_rv AS
   ORDER BY target.iban;
 
 
-ALTER VIEW hs_office.bankaccount_rv OWNER TO test;
+ALTER VIEW hs_office.bankaccount_rv OWNER TO admin;
 
 --
 -- Name: contact_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -8775,7 +8787,7 @@ CREATE VIEW hs_office.contact_iv AS
    FROM hs_office.contact target;
 
 
-ALTER VIEW hs_office.contact_iv OWNER TO test;
+ALTER VIEW hs_office.contact_iv OWNER TO admin;
 
 --
 -- Name: contact_legacy_id; Type: TABLE; Schema: hs_office; Owner: test
@@ -8787,7 +8799,7 @@ CREATE TABLE hs_office.contact_legacy_id (
 );
 
 
-ALTER TABLE hs_office.contact_legacy_id OWNER TO test;
+ALTER TABLE hs_office.contact_legacy_id OWNER TO admin;
 
 --
 -- Name: contact_legacy_id_seq; Type: SEQUENCE; Schema: hs_office; Owner: test
@@ -8802,7 +8814,7 @@ CREATE SEQUENCE hs_office.contact_legacy_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE hs_office.contact_legacy_id_seq OWNER TO test;
+ALTER SEQUENCE hs_office.contact_legacy_id_seq OWNER TO admin;
 
 --
 -- Name: contact_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: test
@@ -8859,7 +8871,7 @@ CREATE VIEW hs_office.contact_rv AS
   ORDER BY target.caption;
 
 
-ALTER VIEW hs_office.contact_rv OWNER TO test;
+ALTER VIEW hs_office.contact_rv OWNER TO admin;
 
 --
 -- Name: coopassettx_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -8871,7 +8883,7 @@ CREATE VIEW hs_office.coopassettx_iv AS
    FROM hs_office.coopassettx target;
 
 
-ALTER VIEW hs_office.coopassettx_iv OWNER TO test;
+ALTER VIEW hs_office.coopassettx_iv OWNER TO admin;
 
 --
 -- Name: coopassettx_legacy_id; Type: TABLE; Schema: hs_office; Owner: test
@@ -8883,7 +8895,7 @@ CREATE TABLE hs_office.coopassettx_legacy_id (
 );
 
 
-ALTER TABLE hs_office.coopassettx_legacy_id OWNER TO test;
+ALTER TABLE hs_office.coopassettx_legacy_id OWNER TO admin;
 
 --
 -- Name: coopassettx_legacy_id_seq; Type: SEQUENCE; Schema: hs_office; Owner: test
@@ -8898,7 +8910,7 @@ CREATE SEQUENCE hs_office.coopassettx_legacy_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE hs_office.coopassettx_legacy_id_seq OWNER TO test;
+ALTER SEQUENCE hs_office.coopassettx_legacy_id_seq OWNER TO admin;
 
 --
 -- Name: coopassettx_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: test
@@ -8959,7 +8971,7 @@ CREATE VIEW hs_office.coopassettx_rv AS
   ORDER BY target.reference;
 
 
-ALTER VIEW hs_office.coopassettx_rv OWNER TO test;
+ALTER VIEW hs_office.coopassettx_rv OWNER TO admin;
 
 --
 -- Name: coopsharetx_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -8971,7 +8983,7 @@ CREATE VIEW hs_office.coopsharetx_iv AS
    FROM hs_office.coopsharetx target;
 
 
-ALTER VIEW hs_office.coopsharetx_iv OWNER TO test;
+ALTER VIEW hs_office.coopsharetx_iv OWNER TO admin;
 
 --
 -- Name: coopsharetx_legacy_id; Type: TABLE; Schema: hs_office; Owner: test
@@ -8983,7 +8995,7 @@ CREATE TABLE hs_office.coopsharetx_legacy_id (
 );
 
 
-ALTER TABLE hs_office.coopsharetx_legacy_id OWNER TO test;
+ALTER TABLE hs_office.coopsharetx_legacy_id OWNER TO admin;
 
 --
 -- Name: coopsharetx_legacy_id_seq; Type: SEQUENCE; Schema: hs_office; Owner: test
@@ -8998,7 +9010,7 @@ CREATE SEQUENCE hs_office.coopsharetx_legacy_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE hs_office.coopsharetx_legacy_id_seq OWNER TO test;
+ALTER SEQUENCE hs_office.coopsharetx_legacy_id_seq OWNER TO admin;
 
 --
 -- Name: coopsharetx_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: test
@@ -9058,7 +9070,7 @@ CREATE VIEW hs_office.coopsharetx_rv AS
   ORDER BY target.reference;
 
 
-ALTER VIEW hs_office.coopsharetx_rv OWNER TO test;
+ALTER VIEW hs_office.coopsharetx_rv OWNER TO admin;
 
 --
 -- Name: debitor_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9074,7 +9086,7 @@ CREATE VIEW hs_office.debitor_iv AS
    FROM hs_office.debitor debitor;
 
 
-ALTER VIEW hs_office.debitor_iv OWNER TO test;
+ALTER VIEW hs_office.debitor_iv OWNER TO admin;
 
 --
 -- Name: debitor_rv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9129,7 +9141,7 @@ CREATE VIEW hs_office.debitor_rv AS
   ORDER BY target.defaultprefix;
 
 
-ALTER VIEW hs_office.debitor_rv OWNER TO test;
+ALTER VIEW hs_office.debitor_rv OWNER TO admin;
 
 --
 -- Name: membership_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9142,7 +9154,7 @@ CREATE VIEW hs_office.membership_iv AS
      JOIN hs_office.partner p ON ((p.uuid = m.partneruuid)));
 
 
-ALTER VIEW hs_office.membership_iv OWNER TO test;
+ALTER VIEW hs_office.membership_iv OWNER TO admin;
 
 --
 -- Name: membership_rv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9193,7 +9205,7 @@ CREATE VIEW hs_office.membership_rv AS
   ORDER BY target.validity;
 
 
-ALTER VIEW hs_office.membership_rv OWNER TO test;
+ALTER VIEW hs_office.membership_rv OWNER TO admin;
 
 --
 -- Name: partner_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9205,7 +9217,7 @@ CREATE VIEW hs_office.partner_iv AS
    FROM hs_office.partner target;
 
 
-ALTER VIEW hs_office.partner_iv OWNER TO test;
+ALTER VIEW hs_office.partner_iv OWNER TO admin;
 
 --
 -- Name: partner_details_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9219,7 +9231,7 @@ CREATE VIEW hs_office.partner_details_iv AS
      JOIN hs_office.partner_iv partner_iv ON ((partner_iv.uuid = partner.uuid)));
 
 
-ALTER VIEW hs_office.partner_details_iv OWNER TO test;
+ALTER VIEW hs_office.partner_details_iv OWNER TO admin;
 
 --
 -- Name: partner_details_rv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9271,7 +9283,7 @@ CREATE VIEW hs_office.partner_details_rv AS
   ORDER BY target.uuid;
 
 
-ALTER VIEW hs_office.partner_details_rv OWNER TO test;
+ALTER VIEW hs_office.partner_details_rv OWNER TO admin;
 
 --
 -- Name: partner_legacy_id_seq; Type: SEQUENCE; Schema: hs_office; Owner: test
@@ -9286,7 +9298,7 @@ CREATE SEQUENCE hs_office.partner_legacy_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE hs_office.partner_legacy_id_seq OWNER TO test;
+ALTER SEQUENCE hs_office.partner_legacy_id_seq OWNER TO admin;
 
 --
 -- Name: partner_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: test
@@ -9342,7 +9354,7 @@ CREATE VIEW hs_office.partner_rv AS
   ORDER BY ('P-'::text || target.partnernumber);
 
 
-ALTER VIEW hs_office.partner_rv OWNER TO test;
+ALTER VIEW hs_office.partner_rv OWNER TO admin;
 
 --
 -- Name: person_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9354,7 +9366,7 @@ CREATE VIEW hs_office.person_iv AS
    FROM hs_office.person target;
 
 
-ALTER VIEW hs_office.person_iv OWNER TO test;
+ALTER VIEW hs_office.person_iv OWNER TO admin;
 
 --
 -- Name: person_rv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9406,7 +9418,7 @@ CREATE VIEW hs_office.person_rv AS
   ORDER BY (concat(target.tradename, target.familyname, target.givenname));
 
 
-ALTER VIEW hs_office.person_rv OWNER TO test;
+ALTER VIEW hs_office.person_rv OWNER TO admin;
 
 --
 -- Name: relation_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9422,7 +9434,7 @@ CREATE VIEW hs_office.relation_iv AS
    FROM hs_office.relation target;
 
 
-ALTER VIEW hs_office.relation_iv OWNER TO test;
+ALTER VIEW hs_office.relation_iv OWNER TO admin;
 
 --
 -- Name: relation_rv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9475,7 +9487,7 @@ CREATE VIEW hs_office.relation_rv AS
           WHERE (p.uuid = target.holderuuid));
 
 
-ALTER VIEW hs_office.relation_rv OWNER TO test;
+ALTER VIEW hs_office.relation_rv OWNER TO admin;
 
 --
 -- Name: sepamandate_iv; Type: VIEW; Schema: hs_office; Owner: test
@@ -9488,7 +9500,7 @@ CREATE VIEW hs_office.sepamandate_iv AS
      JOIN hs_office.bankaccount ba ON ((ba.uuid = sm.bankaccountuuid)));
 
 
-ALTER VIEW hs_office.sepamandate_iv OWNER TO test;
+ALTER VIEW hs_office.sepamandate_iv OWNER TO admin;
 
 --
 -- Name: sepamandate_legacy_id; Type: TABLE; Schema: hs_office; Owner: test
@@ -9500,7 +9512,7 @@ CREATE TABLE hs_office.sepamandate_legacy_id (
 );
 
 
-ALTER TABLE hs_office.sepamandate_legacy_id OWNER TO test;
+ALTER TABLE hs_office.sepamandate_legacy_id OWNER TO admin;
 
 --
 -- Name: sepamandate_legacy_id_seq; Type: SEQUENCE; Schema: hs_office; Owner: test
@@ -9515,7 +9527,7 @@ CREATE SEQUENCE hs_office.sepamandate_legacy_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE hs_office.sepamandate_legacy_id_seq OWNER TO test;
+ALTER SEQUENCE hs_office.sepamandate_legacy_id_seq OWNER TO admin;
 
 --
 -- Name: sepamandate_legacy_id_seq; Type: SEQUENCE OWNED BY; Schema: hs_office; Owner: test
@@ -9573,7 +9585,7 @@ CREATE VIEW hs_office.sepamandate_rv AS
   ORDER BY target.validity;
 
 
-ALTER VIEW hs_office.sepamandate_rv OWNER TO test;
+ALTER VIEW hs_office.sepamandate_rv OWNER TO admin;
 
 --
 -- Name: databasechangelog; Type: TABLE; Schema: public; Owner: test
@@ -9597,7 +9609,7 @@ CREATE TABLE public.databasechangelog (
 );
 
 
-ALTER TABLE public.databasechangelog OWNER TO test;
+ALTER TABLE public.databasechangelog OWNER TO admin;
 
 --
 -- Name: databasechangeloglock; Type: TABLE; Schema: public; Owner: test
@@ -9611,7 +9623,7 @@ CREATE TABLE public.databasechangeloglock (
 );
 
 
-ALTER TABLE public.databasechangeloglock OWNER TO test;
+ALTER TABLE public.databasechangeloglock OWNER TO admin;
 
 --
 -- Name: global; Type: TABLE; Schema: rbac; Owner: test
@@ -9623,7 +9635,7 @@ CREATE TABLE rbac.global (
 );
 
 
-ALTER TABLE rbac.global OWNER TO test;
+ALTER TABLE rbac.global OWNER TO admin;
 
 --
 -- Name: global_iv; Type: VIEW; Schema: rbac; Owner: test
@@ -9635,7 +9647,7 @@ CREATE VIEW rbac.global_iv AS
    FROM rbac.global target;
 
 
-ALTER VIEW rbac.global_iv OWNER TO test;
+ALTER VIEW rbac.global_iv OWNER TO admin;
 
 --
 -- Name: role; Type: TABLE; Schema: rbac; Owner: test
@@ -9648,7 +9660,7 @@ CREATE TABLE rbac.role (
 );
 
 
-ALTER TABLE rbac.role OWNER TO test;
+ALTER TABLE rbac.role OWNER TO admin;
 
 --
 -- Name: grant_ev; Type: VIEW; Schema: rbac; Owner: test
@@ -9698,7 +9710,7 @@ CREATE VIEW rbac.grant_ev AS
   ORDER BY x.ascendingidname, x.descendingidname;
 
 
-ALTER VIEW rbac.grant_ev OWNER TO test;
+ALTER VIEW rbac.grant_ev OWNER TO admin;
 
 --
 -- Name: grant_rv; Type: VIEW; Schema: rbac; Owner: test
@@ -9735,7 +9747,7 @@ CREATE VIEW rbac.grant_rv AS
   ORDER BY (((((g.objecttable)::text || '#'::text) || (g.objectidname)::text) || ':'::text) || g.roletype);
 
 
-ALTER VIEW rbac.grant_rv OWNER TO test;
+ALTER VIEW rbac.grant_rv OWNER TO admin;
 
 --
 -- Name: object_serialid_seq; Type: SEQUENCE; Schema: rbac; Owner: test
@@ -9750,7 +9762,7 @@ CREATE SEQUENCE rbac.object_serialid_seq
     CACHE 1;
 
 
-ALTER SEQUENCE rbac.object_serialid_seq OWNER TO test;
+ALTER SEQUENCE rbac.object_serialid_seq OWNER TO admin;
 
 --
 -- Name: object_serialid_seq; Type: SEQUENCE OWNED BY; Schema: rbac; Owner: test
@@ -9780,7 +9792,7 @@ CREATE VIEW rbac.role_rv AS
   ORDER BY (((((unordered.objecttable)::text || '#'::text) || (unordered.objectidname)::text) || ':'::text) || unordered.roletype);
 
 
-ALTER VIEW rbac.role_rv OWNER TO test;
+ALTER VIEW rbac.role_rv OWNER TO admin;
 
 --
 -- Name: own_granted_permissions_rv; Type: VIEW; Schema: rbac; Owner: test
@@ -9800,7 +9812,7 @@ CREATE VIEW rbac.own_granted_permissions_rv AS
      JOIN rbac.object o ON ((o.uuid = p.objectuuid)));
 
 
-ALTER VIEW rbac.own_granted_permissions_rv OWNER TO test;
+ALTER VIEW rbac.own_granted_permissions_rv OWNER TO admin;
 
 --
 -- Name: role_ev; Type: VIEW; Schema: rbac; Owner: test
@@ -9823,7 +9835,7 @@ CREATE VIEW rbac.role_ev AS
   ORDER BY (((((unordered.objecttable)::text || '#'::text) || (unordered.objectidname)::text) || ':'::text) || unordered.roletype);
 
 
-ALTER VIEW rbac.role_ev OWNER TO test;
+ALTER VIEW rbac.role_ev OWNER TO admin;
 
 --
 -- Name: statistics_v; Type: VIEW; Schema: rbac; Owner: test
@@ -9865,7 +9877,7 @@ CREATE VIEW rbac.statistics_v AS
   ORDER BY totals.no;
 
 
-ALTER VIEW rbac.statistics_v OWNER TO test;
+ALTER VIEW rbac.statistics_v OWNER TO admin;
 
 --
 -- Name: subject_ev; Type: VIEW; Schema: rbac; Owner: test
@@ -9886,7 +9898,7 @@ CREATE VIEW rbac.subject_ev AS
   ORDER BY unordered.name;
 
 
-ALTER VIEW rbac.subject_ev OWNER TO test;
+ALTER VIEW rbac.subject_ev OWNER TO admin;
 
 --
 -- Name: subject_rv; Type: VIEW; Schema: rbac; Owner: test
@@ -9908,7 +9920,7 @@ CREATE VIEW rbac.subject_rv AS
   ORDER BY unordered.name;
 
 
-ALTER VIEW rbac.subject_rv OWNER TO test;
+ALTER VIEW rbac.subject_rv OWNER TO admin;
 
 --
 -- Name: customer_iv; Type: VIEW; Schema: rbactest; Owner: test
@@ -9920,7 +9932,7 @@ CREATE VIEW rbactest.customer_iv AS
    FROM rbactest.customer target;
 
 
-ALTER VIEW rbactest.customer_iv OWNER TO test;
+ALTER VIEW rbactest.customer_iv OWNER TO admin;
 
 --
 -- Name: customer_rv; Type: VIEW; Schema: rbactest; Owner: test
@@ -9969,7 +9981,7 @@ CREATE VIEW rbactest.customer_rv AS
   ORDER BY target.reference;
 
 
-ALTER VIEW rbactest.customer_rv OWNER TO test;
+ALTER VIEW rbactest.customer_rv OWNER TO admin;
 
 --
 -- Name: domain_iv; Type: VIEW; Schema: rbactest; Owner: test
@@ -9981,7 +9993,7 @@ CREATE VIEW rbactest.domain_iv AS
    FROM rbactest.domain target;
 
 
-ALTER VIEW rbactest.domain_iv OWNER TO test;
+ALTER VIEW rbactest.domain_iv OWNER TO admin;
 
 --
 -- Name: domain_rv; Type: VIEW; Schema: rbactest; Owner: test
@@ -10029,7 +10041,7 @@ CREATE VIEW rbactest.domain_rv AS
   ORDER BY target.name;
 
 
-ALTER VIEW rbactest.domain_rv OWNER TO test;
+ALTER VIEW rbactest.domain_rv OWNER TO admin;
 
 --
 -- Name: package_iv; Type: VIEW; Schema: rbactest; Owner: test
@@ -10041,7 +10053,7 @@ CREATE VIEW rbactest.package_iv AS
    FROM rbactest.package target;
 
 
-ALTER VIEW rbactest.package_iv OWNER TO test;
+ALTER VIEW rbactest.package_iv OWNER TO admin;
 
 --
 -- Name: package_rv; Type: VIEW; Schema: rbactest; Owner: test
@@ -10090,7 +10102,7 @@ CREATE VIEW rbactest.package_rv AS
   ORDER BY target.name;
 
 
-ALTER VIEW rbactest.package_rv OWNER TO test;
+ALTER VIEW rbactest.package_rv OWNER TO admin;
 
 --
 -- Name: contact_legacy_id contact_id; Type: DEFAULT; Schema: hs_office; Owner: test

@@ -113,9 +113,9 @@ function _gwTest1() {
     echo "DONE gw $@"
 }
 function _gwTest() {
-  . .aliases;
-  . .tc-environment;
-  rm /tmp/gwTest.tmp
+  . .aliases
+  . .tc-environment
+  rm -f /tmp/gwTest.tmp
   if [ "$1" == "--all" ]; then
     shift # to remove the --all from $@
     # delierately in separate gradlew-calls to avoid Testcontains-PostgreSQL problem spillover

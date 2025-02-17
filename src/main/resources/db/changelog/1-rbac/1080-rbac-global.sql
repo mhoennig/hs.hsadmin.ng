@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-OBJECT endDelimiter:--//
+--changeset michael.hoennig:rbac-global-OBJECT runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     The purpose of this table is provide root business objects
@@ -11,12 +11,12 @@
     In production databases, there is only a single row in this table,
     in test stages, there can be one row for each test data realm.
  */
-create table rbac.global
+create table if not exists rbac.global
 (
     uuid uuid primary key references rbac.object (uuid) on delete cascade,
     name varchar(63) unique
 );
-create unique index Global_Singleton on rbac.global ((0));
+create unique index if not exists Global_Singleton on rbac.global ((0));
 
 grant select on rbac.global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
@@ -75,13 +75,12 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-IDENTITY-VIEW endDelimiter:--//
+--changeset michael.hoennig:rbac-global-IDENTITY-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates a view to the rbac.global object table which maps the identifying name to the objectUuid.
  */
-drop view if exists rbac.global_iv;
 create or replace view rbac.global_iv as
 select target.uuid, target.name as idName
     from rbac.global as target;

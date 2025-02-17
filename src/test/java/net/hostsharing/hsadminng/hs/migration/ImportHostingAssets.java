@@ -12,6 +12,7 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProject;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
@@ -29,14 +30,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.orm.jpa.EntityManagerFactoryInfo;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.jdbc.Sql;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.net.IDN;
 import java.util.ArrayList;
@@ -52,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.Map.entry;
 import static java.util.Map.ofEntries;
@@ -80,7 +86,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static org.springframework.util.FileCopyUtils.copyToByteArray;
 
 @Tag("importHostingAssets")
 @DataJpaTest(properties = {
@@ -95,7 +101,6 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @ActiveProfiles({ "without-test-data", "liquibase-migration", "hosting-asset-import" })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)
-@Sql(value = "/db/released-only-office-schema-with-import-test-data.sql", executionPhase = BEFORE_TEST_CLASS) // release-schema
 public class ImportHostingAssets extends CsvDataImport {
 
     private static final Set<String> NOBODY_SUBSTITUTES = Set.of("nomail", "bounce");
@@ -133,9 +138,14 @@ public class ImportHostingAssets extends CsvDataImport {
     @Autowired
     LiquibaseMigration liquibase;
 
+    @Value("${HSADMINNG_OFFICE_DATA_SQL_FILE:/db/released-only-office-schema-with-import-test-data.sql}")
+    String officeSchemaAndDataSqlFile;
+
     @Test
     @Order(11000)
+    @SneakyThrows
     void liquibaseMigrationForBookingAndHosting() {
+        executeSqlScript(officeSchemaAndDataSqlFile);
         liquibase.assertReferenceStatusAfterRestore(286, "hs-booking-SCHEMA");
         makeSureThatTheImportAdminUserExists();
         liquibase.runWithContexts("migration", "without-test-data");
@@ -146,8 +156,8 @@ public class ImportHostingAssets extends CsvDataImport {
     @Order(11010)
     void createBookingProjects() {
 
-        record PartnerLegacyIdMapping(UUID uuid, Integer bp_id){}
-        record DebitorRecord(UUID uuid, Integer version, String defaultPrefix){}
+        record PartnerLegacyIdMapping(UUID uuid, Integer bp_id) {}
+        record DebitorRecord(UUID uuid, Integer version, String defaultPrefix) {}
 
         final var partnerLegacyIdMappings = em.createNativeQuery(
                 """
@@ -161,16 +171,18 @@ public class ImportHostingAssets extends CsvDataImport {
         //noinspection unchecked
         final var debitorUuidToLegacyBpIdMap = ((List<PartnerLegacyIdMapping>) partnerLegacyIdMappings).stream()
                 .collect(toMap(row -> row.uuid, row -> row.bp_id));
-        final var debitors = em.createNativeQuery("SELECT debitor.uuid, debitor.version, debitor.defaultPrefix FROM hs_office.debitor debitor", DebitorRecord.class).getResultList();
+        final var debitors = em.createNativeQuery(
+                "select debitor.uuid, debitor.version, debitor.defaultPrefix from hs_office.debitor debitor",
+                DebitorRecord.class).getResultList();
         //noinspection unchecked
-        ((List<DebitorRecord>)debitors).forEach(debitor -> {
-                    bookingProjects.put(
-                            debitorUuidToLegacyBpIdMap.get(debitor.uuid), HsBookingProjectRealEntity.builder()
-                                    .version(debitor.version)
-                                    .caption(debitor.defaultPrefix + " default project")
-                                    .debitor(em.find(HsBookingDebitorEntity.class, debitor.uuid))
-                                    .build());
-                });
+        ((List<DebitorRecord>) debitors).forEach(debitor -> {
+            bookingProjects.put(
+                    debitorUuidToLegacyBpIdMap.get(debitor.uuid), HsBookingProjectRealEntity.builder()
+                            .version(debitor.version)
+                            .caption(debitor.defaultPrefix + " default project")
+                            .debitor(em.find(HsBookingDebitorEntity.class, debitor.uuid))
+                            .build());
+        });
     }
 
     @Test
@@ -1231,9 +1243,7 @@ public class ImportHostingAssets extends CsvDataImport {
                     bookingItems.put(packet_id, bookingItem);
                     final var haType = determineHaType(basepacket_code);
 
-                    logError(() -> assertThat(!free || haType == MANAGED_WEBSPACE || bookingItem.getRelatedProject()
-                            .getDebitor()
-                            .getDefaultPrefix()
+                    logError(() -> assertThat(!free || haType == MANAGED_WEBSPACE || defaultPrefix(bookingItem)
                             .equals("hsh"))
                             .as("packet.free only supported for Hostsharing-Assets and ManagedWebspace in customer-ManagedServer, but is set for "
                                     + packet_name)
@@ -1286,6 +1296,13 @@ public class ImportHostingAssets extends CsvDataImport {
                         }
                     }
                 });
+    }
+
+    private String defaultPrefix(final HsBookingItem bookingItem) {
+        return ofNullable(bookingItem.getProject())
+                .map(HsBookingProject::getDebitor)
+                .map(HsBookingDebitorEntity::getDefaultPrefix)
+                .orElse("<no default prefix for BI: " + bookingItem.getCaption() + ">");
     }
 
     private void importPacketComponents(final String[] header, final List<String[]> records) {
@@ -1939,5 +1956,18 @@ public class ImportHostingAssets extends CsvDataImport {
                 .getResultList()).stream()
                 .map(row -> row.stream().map(Object::toString).collect(joining(", ")))
                 .collect(joining("\n"));
+    }
+
+    @SneakyThrows
+    private void executeSqlScript(final String sqlFile) {
+        jpaAttempt.transacted(() -> {
+            try (InputStream resourceStream = resourceOf(sqlFile).getInputStream()) {
+                final var sqlScript = new String(copyToByteArray(resourceStream), UTF_8);
+                final var emf = (EntityManagerFactoryInfo) em.getEntityManagerFactory();
+                new JdbcTemplate(emf.getDataSource()).execute(sqlScript);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).assertSuccessful();
     }
 }

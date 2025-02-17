@@ -16,6 +16,9 @@ import org.junit.jupiter.api.extension.TestWatcher;
 import org.opentest4j.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -26,6 +29,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -118,10 +122,16 @@ public class CsvDataImport extends ContextBasedTest {
         return stream(lines.getFirst()).map(String::trim).toArray(String[]::new);
     }
 
+    public static @NotNull AbstractResource resourceOf(final String sqlFile) {
+        return new File(sqlFile).exists()
+                ? new FileSystemResource(sqlFile)
+                : new ClassPathResource(sqlFile);
+    }
+
     protected Reader resourceReader(@NotNull final String resourcePath) {
         try {
-            return new InputStreamReader(requireNonNull(getClass().getClassLoader().getResourceAsStream(resourcePath)));
-        } catch (Exception exc) {
+            return new InputStreamReader(requireNonNull(resourceOf(resourcePath).getInputStream()));
+        } catch (final Exception exc) {
             throw new AssertionFailedError("cannot open '" + resourcePath + "'");
         }
     }

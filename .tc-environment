@@ -1,7 +1,7 @@
-unset HSADMINNG_POSTGRES_JDBC_URL # dynamically set, different for normal tests and imports
-export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
-export HSADMINNG_POSTGRES_ADMIN_PASSWORD=
+source .unset-environment
+
 export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
-export HSADMINNG_SUPERUSER=superuser-alex@hostsharing.net
-export HSADMINNG_MIGRATION_DATA_PATH=migration
+export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
+export HSADMINNG_SUPERUSER=import-superuser@hostsharing.net
+
 export LANG=en_US.UTF-8

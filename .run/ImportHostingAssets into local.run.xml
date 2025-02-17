@@ -7,6 +7,7 @@
           <entry key="HSADMINNG_POSTGRES_ADMIN_USERNAME" value="postgres" />
           <entry key="HSADMINNG_POSTGRES_JDBC_URL" value="jdbc:postgresql://localhost:5432/postgres" />
           <entry key="HSADMINNG_POSTGRES_RESTRICTED_USERNAME" value="restricted" />
+          <entry key="HSADMINNG_MIGRATION_DATA_PATH" value="migration" />
         </map>
       </option>
       <option name="executionName" />
