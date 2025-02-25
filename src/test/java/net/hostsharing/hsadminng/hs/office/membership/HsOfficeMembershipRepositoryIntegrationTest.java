@@ -4,19 +4,20 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
-import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
-import net.hostsharing.hsadminng.mapper.Array;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -31,7 +32,7 @@ import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@Import({ Context.class, JpaAttempt.class })
 @Tag("officeIntegrationTest")
 class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -70,21 +71,47 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
 
             // when
-            final var result = attempt(em, () -> {
-                final var newMembership = HsOfficeMembershipEntity.builder()
-                        .memberNumberSuffix("11")
-                        .partner(givenPartner)
-                        .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
-                        .membershipFeeBillable(true)
-                        .build();
-                return toCleanup(membershipRepo.save(newMembership).load());
-            });
+            final var result = attempt(
+                    em, () -> {
+                        final var newMembership = HsOfficeMembershipEntity.builder()
+                                .memberNumberSuffix("11")
+                                .partner(givenPartner)
+                                .validity(Range.closedInfinite(LocalDate.parse("2025-01-01")))
+                                .membershipFeeBillable(true)
+                                .build();
+                        return toCleanup(membershipRepo.save(newMembership).load());
+                    });
 
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeMembershipEntity::getUuid).isNotNull();
             assertThatMembershipIsPersisted(result.returnedValue());
             assertThat(membershipRepo.count()).isEqualTo(count + 1);
+        }
+
+        @Test
+        public void creatingMembershipForSamePartnerIsDisallowedIfAnotherOneIsStillActive() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").getFirst();
+
+            // when
+            final var result = attempt(
+                    em, () -> {
+                        final var newMembership = HsOfficeMembershipEntity.builder()
+                                .memberNumberSuffix("11")
+                                .partner(givenPartner)
+                                .validity(Range.closedInfinite(LocalDate.parse("2024-01-01")))
+                                .membershipFeeBillable(true)
+                                .build();
+                        return toCleanup(membershipRepo.save(newMembership).load());
+                    });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(
+                    PSQLException.class,
+                    "Membership validity ranges overlap for partnerUuid " + givenPartner.getUuid() +
+                            ", partnerNumber " + givenPartner.getPartnerNumber());
         }
 
         @Test
@@ -97,16 +124,17 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                     .toList();
 
             // when
-            attempt(em, () -> {
-                final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
-                final var newMembership = HsOfficeMembershipEntity.builder()
-                        .memberNumberSuffix("17")
-                        .partner(givenPartner)
-                        .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
-                        .membershipFeeBillable(true)
-                        .build();
-                return toCleanup(membershipRepo.save(newMembership));
-            }).assertSuccessful();
+            attempt(
+                    em, () -> {
+                        final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
+                        final var newMembership = HsOfficeMembershipEntity.builder()
+                                .memberNumberSuffix("17")
+                                .partner(givenPartner)
+                                .validity(Range.closedInfinite(LocalDate.parse("2025-01-01")))
+                                .membershipFeeBillable(true)
+                                .build();
+                        return toCleanup(membershipRepo.save(newMembership));
+                    }).assertSuccessful();
 
             // then
             final var all = rawRoleRepo.findAll();
@@ -145,7 +173,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
         private void assertThatMembershipIsPersisted(final HsOfficeMembershipEntity saved) {
             final var found = membershipRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString()) ;
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 
@@ -163,8 +191,8 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             // then
             exactlyTheseMembershipsAreReturned(
                     result,
-                    "Membership(M-1000101, P-10001, [2022-10-01,), ACTIVE)",
-                    "Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)",
+                    "Membership(M-1000101, P-10001, [2022-10-01,2024-12-31), ACTIVE)",
+                    "Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)",
                     "Membership(M-1000303, P-10003, [2022-10-01,), ACTIVE)");
         }
 
@@ -178,8 +206,9 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             final var result = membershipRepo.findMembershipsByPartnerUuid(givenPartner.getUuid());
 
             // then
-            exactlyTheseMembershipsAreReturned(result,
-                    "Membership(M-1000101, P-10001, [2022-10-01,), ACTIVE)");
+            exactlyTheseMembershipsAreReturned(
+                    result,
+                    "Membership(M-1000101, P-10001, [2022-10-01,2024-12-31), ACTIVE)");
         }
 
         @Test
@@ -194,7 +223,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             assertThat(result)
                     .isNotNull()
                     .extracting(Object::toString)
-                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)");
+                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)");
         }
 
         @Test
@@ -209,7 +238,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             assertThat(result)
                     .isNotNull()
                     .extracting(Object::toString)
-                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)");
+                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)");
         }
 
         @Test
@@ -221,8 +250,9 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             final var result = membershipRepo.findMembershipsByPartnerNumber(10002);
 
             // then
-            exactlyTheseMembershipsAreReturned(result,
-                    "Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)");
+            exactlyTheseMembershipsAreReturned(
+                    result,
+                    "Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)");
         }
     }
 
@@ -233,7 +263,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         public void globalAdmin_canUpdateValidityOfArbitraryMembership() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership =  givenSomeTemporaryMembership("First", "11");
+            final var givenMembership = givenSomeTemporaryMembership("First", "11");
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             final var newValidityEnd = LocalDate.now();
 
@@ -273,7 +303,8 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             });
 
             // then
-            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
+            result.assertExceptionWithRootCauseMessage(
+                    JpaSystemException.class,
                     "[403] Subject ", " is not allowed to update hs_office.membership uuid");
         }
 
@@ -381,14 +412,16 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                 "[creating Membership test-data, hs_office.membership, INSERT, 03]");
     }
 
-    private HsOfficeMembershipEntity givenSomeTemporaryMembership(final String partnerTradeName, final String memberNumberSuffix) {
+    private HsOfficeMembershipEntity givenSomeTemporaryMembership(
+            final String partnerTradeName,
+            final String memberNumberSuffix) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike(partnerTradeName).get(0);
             final var newMembership = HsOfficeMembershipEntity.builder()
                     .memberNumberSuffix(memberNumberSuffix)
                     .partner(givenPartner)
-                    .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
+                    .validity(Range.closedInfinite(LocalDate.parse("2025-02-01")))
                     .membershipFeeBillable(true)
                     .build();
 

@@ -116,7 +116,7 @@ classDiagram
         +BankAccount refundBankAccount
         +String      defaultPrefix:          mei
     }
-    debitor-MeierGmbH o-- partner-MeierGmbH
+    debitor-MeierGmbH o.. partner-MeierGmbH
     debitor-MeierGmbH *-- rel-MeierGmbH-Buha
 
     class contactData-MeierGmbH-Buha {

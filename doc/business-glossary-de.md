@@ -108,6 +108,40 @@ der Person des _Subscriber-Contact_ (_Holder_) zur repräsentierten Person (_Anc
 Zusätzlich wird diese Relation mit dem Kurznamen der abonnierten Mailingliste markiert.  
 
 
+### Coop-Asset-Transactions (Geschäftsguthabens-Transaktionen)
+
+- positiver Wert => Geschäftsguthaben nehmen zu
+- negativer Wert => Geschäftsguthaben nehmen ab
+
+**REVERSAL**: **Korrekturbuchung** einer fehlerhaften Buchung, positiver oder negativer Wert ist möglich 
+
+**DEPOSIT**: **Zahlungseingang** vom Mitglied nach Beteiligung mit Geschäftsanteilen, immer positiver Wert
+
+**DISBURSAL**: **Zahlungsausgang** an Mitglied nach Kündigung von Geschäftsanteilen, immer negativer Wert
+
+**TRANSFER**: **Übertragung** von Geschäftsguthaben an ein anderes Mitglied, immer negativer Wert
+
+**ADOPTION**: **Übernahme** von Geschäftsguthaben von einem anderen Mitglied, immer positiver Wert
+
+**CLEARING**: **Verrechnung** von Geschäftsguthaben mit Schulden des Mitglieds, immer negativer Wert
+
+**LOSS**: **Verlust** von Geschäftsguthaben bei Zuweisung Eigenkapitalverlust nach Kündigung von Geschäftsanteilen, immer negativer Wert 
+
+**LIMITATION**: **Verjährung** von Geschäftsguthaben, wenn Auszahlung innerhalb der Frist nicht möglich war.
+
+
+### Coop-Share-Transactions (Geschäftsanteil-Transaktionen)
+
+- positiver Wert => Geschäftsanteile nehmen zu
+- negativer Wert => Geschäftsanteile nehmen ab
+- 
+**REVERSAL**: **Korrekturbuchung** einer fehlerhaften Buchung, positiver oder negativer Wert ist möglich
+
+**SUBSCRIPTION**: **Beteiligung** mit Geschäftsanteilen, z.B. durch Beitrittserklärung, immer positiver Wert
+
+**CANCELLATION**: **Kündigung** von Geschäftsanteilen, z.B. durch Austritt, immer negativer Wert
+
+
 #### Anchor / Relation-Anchor
 
 siehe [Relation](#Relation)

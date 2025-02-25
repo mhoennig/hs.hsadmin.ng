@@ -19,7 +19,7 @@ public class DeleteDebitor extends UseCase<DeleteDebitor> {
                 .given("vatCountryCode", "DE")
                 .given("vatBusiness", true)
                 .given("vatReverseCharge", false)
-                .given("defaultPrefix", "tsy"));
+                .given("defaultPrefix", "tsz"));
     }
 
     @Override

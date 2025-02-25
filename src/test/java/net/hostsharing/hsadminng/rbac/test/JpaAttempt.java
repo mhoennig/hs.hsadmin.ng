@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test;
 
-import org.assertj.core.api.ObjectAssert;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
@@ -78,9 +78,9 @@ public class JpaAttempt {
     public static class JpaResult<T> {
 
         private final T value;
-        private final RuntimeException exception;
+        private final Throwable exception;
 
-        private JpaResult(final T value, final RuntimeException exception) {
+        private JpaResult(final T value, final Throwable exception) {
             this.value = value;
             this.exception = exception;
         }
@@ -93,7 +93,7 @@ public class JpaAttempt {
             return new JpaResult<>(value, null);
         }
 
-        public static <T> JpaResult<T> forException(final RuntimeException exception) {
+        public static <T> JpaResult<T> forException(final Throwable exception) {
             return new JpaResult<>(null, exception);
         }
 
@@ -105,19 +105,22 @@ public class JpaAttempt {
             return value;
         }
 
-        public ObjectAssert<T> assertThatResult() {
-            assertSuccessful();
-            return assertThat(returnedValue());
-        }
-
-        public RuntimeException caughtException() {
+        public Throwable caughtException() {
             return exception;
         }
 
-        @SuppressWarnings("unchecked")
-        public <E extends RuntimeException> E caughtException(final Class<E> expectedExceptionClass) {
+        public <E extends Throwable> E caughtException(final Class<E> expectedExceptionClass) {
+            //noinspection unchecked
+            return caughtException((E) exception, expectedExceptionClass);
+        }
+
+        public static <E extends Throwable> E caughtException(final Throwable exception, final Class<E> expectedExceptionClass) {
             if (expectedExceptionClass.isAssignableFrom(exception.getClass())) {
+                //noinspection unchecked
                 return (E) exception;
+            }
+            if(exception.getCause() != null && exception.getCause() != exception ) {
+                return caughtException(exception.getCause(), expectedExceptionClass);
             }
             throw new AssertionError("expected " + expectedExceptionClass + " but got " + exception);
         }
@@ -127,7 +130,7 @@ public class JpaAttempt {
         }
 
         public void assertExceptionWithRootCauseMessage(
-                final Class<? extends RuntimeException> expectedExceptionClass,
+                final Class<? extends Throwable> expectedExceptionClass,
                 final String... expectedRootCauseMessages) {
             assertThat(wasSuccessful()).as("wasSuccessful").isFalse();
             final String firstRootCauseMessageLine = firstRootCauseMessageLineOf(caughtException(expectedExceptionClass));
@@ -136,11 +139,11 @@ public class JpaAttempt {
             }
         }
 
-        public JpaResult<T> reThrowException() {
+        @SneakyThrows
+        public void reThrowException() {
             if (exception != null) {
                 throw exception;
             }
-            return this;
         }
 
         public JpaResult<T> assumeSuccessful() {
@@ -158,9 +161,9 @@ public class JpaAttempt {
             return this;
         }
 
-        private String firstRootCauseMessageLineOf(final RuntimeException exception) {
+        private String firstRootCauseMessageLineOf(final Throwable exception) {
             final var rootCause = NestedExceptionUtils.getRootCause(exception);
-            return Optional.ofNullable(rootCause)
+            return Optional.ofNullable(rootCause != null ? rootCause : exception)
                     .map(Throwable::getMessage)
                     .map(message -> message.split("\\r|\\n|\\r\\n", 0)[0])
                     .orElse(null);

@@ -86,7 +86,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumber": "M-1000101",
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
-                              "validTo": null,
+                              "validTo": "2024-12-30",
                               "status": "ACTIVE"
                           },
                           {
@@ -94,7 +94,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumber": "M-1000202",
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
-                              "validTo": null,
+                              "validTo": "2025-12-31",
                               "status": "ACTIVE"
                           },
                           {
@@ -133,7 +133,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumber": "M-1000101",
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
-                              "validTo": null,
+                              "validTo": "2024-12-30",
                               "status": "ACTIVE"
                           }
                       ]
@@ -161,7 +161,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                                   "memberNumber": "M-1000202",
                                   "memberNumberSuffix": "02",
                                   "validFrom": "2022-10-01",
-                                  "validTo": null,
+                                  "validTo": "2025-12-31",
                                   "status": "ACTIVE"
                               }
                           ]
@@ -177,7 +177,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         void globalAdmin_canAddMembership() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
+            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").getFirst();
             final var givenMemberSuffix = TEMP_MEMBER_NUMBER_SUFFIX;
             final var expectedMemberNumber = Integer.parseInt(givenPartner.getPartnerNumber() + TEMP_MEMBER_NUMBER_SUFFIX);
 
@@ -189,7 +189,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                                {
                                    "partner.uuid": "%s",
                                    "memberNumberSuffix": "%s",
-                                   "validFrom": "2022-10-13",
+                                   "validFrom": "2025-02-13",
                                    "membershipFeeBillable": "true"
                                  }
                             """.formatted(givenPartner.getUuid(), givenMemberSuffix))
@@ -200,10 +200,10 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("partner.partnerNumber", is("P-10003"))
+                        .body("partner.partnerNumber", is("P-10001"))
                         .body("memberNumber", is("M-" + expectedMemberNumber))
                         .body("memberNumberSuffix", is(givenMemberSuffix))
-                        .body("validFrom", is("2022-10-13"))
+                        .body("validFrom", is("2025-02-13"))
                         .body("validTo", equalTo(null))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
@@ -239,7 +239,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                          "memberNumber": "M-1000101",
                          "memberNumberSuffix": "01",
                          "validFrom": "2022-10-01",
-                         "validTo": null,
+                         "validTo": "2024-12-30",
                          "status": "ACTIVE"
                      }
                     """)); // @formatter:on
@@ -297,13 +297,13 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                               "validTo": "2023-12-31",
+                               "validTo": "2025-12-31",
                                "status": "CANCELLED"
                            }
                           """)
@@ -316,8 +316,8 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("uuid", isUuidValid())
                     .body("partner.partnerNumber", is("P-" + givenMembership.getPartner().getPartnerNumber()))
                     .body("memberNumberSuffix", is(givenMembership.getMemberNumberSuffix()))
-                    .body("validFrom", is("2022-11-01"))
-                    .body("validTo", is("2023-12-31"))
+                    .body("validFrom", is("2025-02-01"))
+                    .body("validTo", is("2025-12-31"))
                     .body("status", is("CANCELLED"));
             // @formatter:on
 
@@ -326,7 +326,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .matches(mandate -> {
                         assertThat(mandate.getPartner().toShortString()).isEqualTo("P-10001");
                         assertThat(mandate.getMemberNumberSuffix()).isEqualTo(givenMembership.getMemberNumberSuffix());
-                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-01)");
+                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2026-01-01)");
                         assertThat(mandate.getStatus()).isEqualTo(CANCELLED);
                         return true;
                     });
@@ -348,7 +348,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                               "validTo": "2024-01-01",
+                               "validTo": "2025-12-31",
                                "status": "CANCELLED"
                            }
                            """)
@@ -361,7 +361,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             // finally, the Membership is actually updated
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-02)");
+                        assertThat(mandate.getValidity().asString()).isEqualTo("[2025-02-01,2026-01-01)");
                         assertThat(mandate.getStatus()).isEqualTo(CANCELLED);
                         return true;
                     });
@@ -434,7 +434,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             final var newMembership = HsOfficeMembershipEntity.builder()
                     .partner(givenPartner)
                     .memberNumberSuffix(TEMP_MEMBER_NUMBER_SUFFIX)
-                    .validity(Range.closedInfinite(LocalDate.parse("2022-11-01")))
+                    .validity(Range.closedInfinite(LocalDate.parse("2025-02-01")))
                     .status(ACTIVE)
                     .membershipFeeBillable(true)
                     .build();

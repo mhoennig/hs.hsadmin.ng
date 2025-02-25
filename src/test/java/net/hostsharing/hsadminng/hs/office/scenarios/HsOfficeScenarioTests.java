@@ -287,12 +287,12 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
         @Test
         @Order(2011)
-        @Requires("Person: Test AG")
-        @Produces("Debitor: D-3101001 - Test AG - main debitor")
-        void shouldCreateExternalDebitorForPartner() {
-            new CreateExternalDebitorForPartner(scenarioTest)
+        @Requires("Debitor: D-3101000 - Test AG - main debitor")
+        @Produces("Debitor: D-3101001 - Test AG - additional debitor")
+        void shouldCreateAdditionDebitorForPartner() {
+            new CreateSelfDebitorForPartner(scenarioTest)
                     .given("partnerPersonTradeName", "Test AG")
-                    .given("billingContactCaption", "Billing GmbH - billing department")
+                    .given("billingContactCaption", "Test AG - billing department")
                     .given("billingContactEmailAddress", "billing@test-ag.example.org")
                     .given("debitorNumberSuffix", "01")
                     .given("billable", true)
@@ -306,9 +306,29 @@ class HsOfficeScenarioTests extends ScenarioTest {
         }
 
         @Test
+        @Order(2012)
+        @Requires("Person: Test AG")
+        @Produces("Debitor: D-3101002 - Test AG - external debitor")
+        void shouldCreateExternalDebitorForPartner() {
+            new CreateExternalDebitorForPartner(scenarioTest)
+                    .given("partnerPersonTradeName", "Test AG")
+                    .given("billingContactCaption", "Billing GmbH - billing department")
+                    .given("billingContactEmailAddress", "billing@test-ag.example.org")
+                    .given("debitorNumberSuffix", "02")
+                    .given("billable", true)
+                    .given("vatId", "VAT123456")
+                    .given("vatCountryCode", "DE")
+                    .given("vatBusiness", true)
+                    .given("vatReverseCharge", false)
+                    .given("defaultPrefix", "tsy")
+                    .doRun()
+                    .keep();
+        }
+
+        @Test
         @Order(2020)
         @Requires("Person: Test AG")
-        @Produces(explicitly = "Debitor: D-3101000 - Test AG - delete debitor", permanent = false)
+        @Produces(explicitly = "Debitor: D-3101002 - Test AG - delete debitor", permanent = false)
         void shouldDeleteDebitor() {
             new DeleteDebitor(scenarioTest)
                     .given("partnerNumber", "P-31020")
@@ -317,7 +337,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         }
 
         @Test
-        @Order(2020)
+        @Order(2021)
         @Requires("Debitor: D-3101000 - Test AG - main debitor")
         @Disabled("see TODO.spec in DontDeleteDefaultDebitor")
         void shouldNotDeleteDefaultDebitor() {
@@ -387,7 +407,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldCreateMembershipForPartner() {
             new CreateMembership(scenarioTest)
                     .given("partnerName", "Test AG")
-                    .given("validFrom", "2024-10-15")
+                    .given("validFrom", "2020-10-15")
                     .given("newStatus", "ACTIVE")
                     .given("membershipFeeBillable", "true")
                     .doRun()
@@ -395,14 +415,31 @@ class HsOfficeScenarioTests extends ScenarioTest {
         }
 
         @Test
-        @Order(4090)
+        @Order(4080)
         @Requires("Membership: M-3101000 - Test AG")
+        @Produces("Membership: M-3101000 - Test AG - cancelled")
         void shouldCancelMembershipOfPartner() {
             new CancelMembership(scenarioTest)
                     .given("memberNumber", "M-3101000")
-                    .given("validTo", "2025-12-30")
+                    .given("validTo", "2023-12-31")
                     .given("newStatus", "CANCELLED")
-                    .doRun();
+                    .doRun()
+                    .keep();
+        }
+
+        @Test
+        @Order(4090)
+        @Requires("Membership: M-3101000 - Test AG - cancelled")
+        @Produces("Membership: M-3101001 - Test AG")
+        void shouldCreateSubsequentMembershipOfPartner() {
+            new CreateMembership(scenarioTest)
+                    .given("partnerName", "Test AG")
+                    .given("memberNumberSuffix", "01")
+                    .given("validFrom", "2025-02-24")
+                    .given("newStatus", "ACTIVE")
+                    .given("membershipFeeBillable", "true")
+                    .doRun()
+                    .keep();
         }
     }
 
