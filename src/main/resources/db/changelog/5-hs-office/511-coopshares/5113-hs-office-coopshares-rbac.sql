@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_office.coopsharetx');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-coopsharetx-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-coopsharetx-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -57,7 +57,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_office.coopsharetx
     for each row
 execute procedure hs_office.coopsharetx_build_rbac_system_after_insert_tf();
@@ -153,7 +153,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.coopsharetx',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-coopsharetx-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-coopsharetx-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.coopsharetx',
     $orderBy$
@@ -166,7 +166,7 @@ call rbac.generateRbacRestrictedView('hs_office.coopsharetx',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-coopsharetx-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-coopsharetx-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.coopsharetx after changing its RBAC specification.

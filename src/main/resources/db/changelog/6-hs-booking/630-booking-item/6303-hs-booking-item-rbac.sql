@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_booking.item');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-booking-item-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-booking-item-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -87,7 +87,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_booking.item
     for each row
 execute procedure hs_booking.item_build_rbac_system_after_insert_tf();
@@ -261,7 +261,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_booking.item',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-booking-item-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-booking-item-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_booking.item',
     $orderBy$
@@ -277,7 +277,7 @@ call rbac.generateRbacRestrictedView('hs_booking.item',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-booking-item-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-booking-item-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_booking.item after changing its RBAC specification.

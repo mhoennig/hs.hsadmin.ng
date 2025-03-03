@@ -37,6 +37,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @Tag("officeIntegrationTest")
 @DataJpaTest(properties = {
         "spring.datasource.url=jdbc:tc:postgresql:15.5-bookworm:///liquibaseMigrationTestTC",
+        "hsadminng.superuser=${HSADMINNG_SUPERUSER:import-superuser@hostsharing.net}",
         "spring.liquibase.enabled=false" // @Sql should go first, Liquibase will be initialized programmatically
 })
 @DirtiesContext

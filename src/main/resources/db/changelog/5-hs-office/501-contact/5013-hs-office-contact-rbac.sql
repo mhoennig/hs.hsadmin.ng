@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_office.contact');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-contact-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-contact-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -69,7 +69,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_office.contact
     for each row
 execute procedure hs_office.contact_build_rbac_system_after_insert_tf();
@@ -88,7 +88,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.contact',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-contact-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-contact-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.contact',
     $orderBy$
@@ -104,7 +104,7 @@ call rbac.generateRbacRestrictedView('hs_office.contact',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-contact-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-contact-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.contact after changing its RBAC specification.

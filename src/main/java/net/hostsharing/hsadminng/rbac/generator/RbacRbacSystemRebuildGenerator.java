@@ -22,7 +22,7 @@ class RbacRbacSystemRebuildGenerator {
     void generateTo(final StringWriter plPgSql) {
         plPgSql.writeLn("""
                 -- ============================================================================
-                --changeset RbacRbacSystemRebuildGenerator:${liquibaseTagPrefix}-rbac-rebuild endDelimiter:--//
+                --changeset RbacRbacSystemRebuildGenerator:${liquibaseTagPrefix}-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
                 -- ----------------------------------------------------------------------------
 
                 -- HOWTO: Rebuild RBAC-system for table ${rawTableName} after changing its RBAC specification.

@@ -19,7 +19,7 @@ public class RbacRestrictedViewGenerator {
     void generateTo(final StringWriter plPgSql) {
         plPgSql.writeLn("""
                 -- ============================================================================
-                --changeset RbacRestrictedViewGenerator:${liquibaseTagPrefix}-rbac-RESTRICTED-VIEW endDelimiter:--//
+                --changeset RbacRestrictedViewGenerator:${liquibaseTagPrefix}-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
                 -- ----------------------------------------------------------------------------
                 call rbac.generateRbacRestrictedView('${rawTableName}',
                     $orderBy$

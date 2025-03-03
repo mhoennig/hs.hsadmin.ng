@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('rbactest.customer');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:rbactest-customer-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-customer-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -69,7 +69,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on rbactest.customer
     for each row
 execute procedure rbactest.customer_build_rbac_system_after_insert_tf();
@@ -165,7 +165,7 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.customer',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:rbactest-customer-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:rbactest-customer-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('rbactest.customer',
     $orderBy$
@@ -180,7 +180,7 @@ call rbac.generateRbacRestrictedView('rbactest.customer',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:rbactest-customer-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:rbactest-customer-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table rbactest.customer after changing its RBAC specification.

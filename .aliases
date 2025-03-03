@@ -109,8 +109,10 @@ function _gwTest1() {
     echo "RUNNING gw $@"
     printf -- '-%0.s' {1..80}; echo
     ./gradlew "$@"
+    local buildResultCode=$?
     printf -- '-%0.s' {1..80}; echo
     echo "DONE gw $@"
+    return $buildResultCode
 }
 function _gwTest() {
   . .aliases
@@ -146,6 +148,6 @@ if [ ! -f .environment ]; then
 fi
 source .environment
 
-alias scenario-reports-upload='./gradlew scenarioTest convertMarkdownToHtml && ssh hsh03-hsngdev@h50.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@h50.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
+alias scenario-reports-upload='./gradlew scenarioTest convertMarkdownToHtml && ssh hsh03-hsngdev@hsh03.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@hsh03.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
 alias scenario-reports-open='open https://hsngdev.hs-example.de/scenarios/office'
 

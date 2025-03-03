@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('rbactest.domain');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:rbactest-domain-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-domain-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -69,7 +69,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on rbactest.domain
     for each row
 execute procedure rbactest.domain_build_rbac_system_after_insert_tf();
@@ -77,7 +77,7 @@ execute procedure rbactest.domain_build_rbac_system_after_insert_tf();
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:rbactest-domain-rbac-update-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-domain-rbac-update-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -133,7 +133,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger update_rbac_system_after_update_tg
+create or replace trigger update_rbac_system_after_update_tg
     after update on rbactest.domain
     for each row
 execute procedure rbactest.domain_update_rbac_system_after_update_tf();
@@ -229,7 +229,7 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.domain',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:rbactest-domain-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:rbactest-domain-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('rbactest.domain',
     $orderBy$
@@ -244,7 +244,7 @@ call rbac.generateRbacRestrictedView('rbactest.domain',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:rbactest-domain-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:rbactest-domain-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table rbactest.domain after changing its RBAC specification.

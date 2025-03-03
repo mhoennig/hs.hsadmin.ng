@@ -191,8 +191,8 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             // then
             exactlyTheseMembershipsAreReturned(
                     result,
-                    "Membership(M-1000101, P-10001, [2022-10-01,2024-12-31), ACTIVE)",
-                    "Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)",
+                    "Membership(M-1000101, P-10001, [2022-10-01,2024-12-31), CANCELLED)",
+                    "Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), CANCELLED)",
                     "Membership(M-1000303, P-10003, [2022-10-01,), ACTIVE)");
         }
 
@@ -208,7 +208,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             // then
             exactlyTheseMembershipsAreReturned(
                     result,
-                    "Membership(M-1000101, P-10001, [2022-10-01,2024-12-31), ACTIVE)");
+                    "Membership(M-1000101, P-10001, [2022-10-01,2024-12-31), CANCELLED)");
         }
 
         @Test
@@ -223,7 +223,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             assertThat(result)
                     .isNotNull()
                     .extracting(Object::toString)
-                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)");
+                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), CANCELLED)");
         }
 
         @Test
@@ -238,7 +238,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             assertThat(result)
                     .isNotNull()
                     .extracting(Object::toString)
-                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)");
+                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), CANCELLED)");
         }
 
         @Test
@@ -252,7 +252,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             // then
             exactlyTheseMembershipsAreReturned(
                     result,
-                    "Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), ACTIVE)");
+                    "Membership(M-1000202, P-10002, [2022-10-01,2026-01-01), CANCELLED)");
         }
     }
 

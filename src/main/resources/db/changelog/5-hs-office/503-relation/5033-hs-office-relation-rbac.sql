@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_office.relation');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-relation-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-relation-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -102,7 +102,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_office.relation
     for each row
 execute procedure hs_office.relation_build_rbac_system_after_insert_tf();
@@ -110,7 +110,7 @@ execute procedure hs_office.relation_build_rbac_system_after_insert_tf();
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-relation-rbac-update-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-relation-rbac-update-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -143,7 +143,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger update_rbac_system_after_update_tg
+create or replace trigger update_rbac_system_after_update_tg
     after update on hs_office.relation
     for each row
 execute procedure hs_office.relation_update_rbac_system_after_update_tf();
@@ -241,7 +241,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.relation',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-relation-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-relation-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.relation',
     $orderBy$
@@ -254,7 +254,7 @@ call rbac.generateRbacRestrictedView('hs_office.relation',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-relation-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-relation-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.relation after changing its RBAC specification.

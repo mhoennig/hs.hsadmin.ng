@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_office.partner_details');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-partner-details-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-partner-details-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -50,7 +50,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_office.partner_details
     for each row
 execute procedure hs_office.partner_details_build_rbac_system_after_insert_tf();
@@ -149,7 +149,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.partner_details',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-partner-details-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-partner-details-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.partner_details',
     $orderBy$
@@ -167,7 +167,7 @@ call rbac.generateRbacRestrictedView('hs_office.partner_details',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-partner-details-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-partner-details-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.partner_details after changing its RBAC specification.

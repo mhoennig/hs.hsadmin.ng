@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_office.bankaccount');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-bankaccount-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-bankaccount-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -69,7 +69,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_office.bankaccount
     for each row
 execute procedure hs_office.bankaccount_build_rbac_system_after_insert_tf();
@@ -88,7 +88,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.bankaccount',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-bankaccount-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-bankaccount-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.bankaccount',
     $orderBy$
@@ -103,7 +103,7 @@ call rbac.generateRbacRestrictedView('hs_office.bankaccount',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-bankaccount-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-bankaccount-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.bankaccount after changing its RBAC specification.

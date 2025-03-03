@@ -45,13 +45,13 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     Context context;
 
     @Autowired
-    HsOfficeRelationRealRepository relationrealRepo;
+    HsOfficeRelationRealRepository realRelationRepo;
 
     @Autowired
-    HsOfficePersonRealRepository personRepo;
+    HsOfficePersonRealRepository realPersonRepo;
 
     @Autowired
-    HsOfficeContactRealRepository contactrealRepo;
+    HsOfficeContactRealRepository realContactRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -64,7 +64,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             // given
             context.define("superuser-alex@hostsharing.net");
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
+            final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("Hostsharing eG").getFirst();
 
             RestAssured // @formatter:off
                 .given()
@@ -122,7 +122,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             // given
             context.define("contact-admin@firstcontact.example.com");
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("First GmbH").get(0);
+            final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
 
             RestAssured // @formatter:off
                     .given()
@@ -229,9 +229,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_withoutAssumedRole_canAddRelationWithHolderUuidAndContactUuid() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
-            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("second").get(0);
+            final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
+            final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Paul").getFirst();
+            final var givenContact = realContactRepo.findContactByOptionalCaptionLike("second").getFirst();
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -276,7 +276,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_withoutAssumedRole_canAddRelationWithHolderAndContactData() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
+            final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -343,8 +343,8 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPersonUuid = GIVEN_NON_EXISTING_HOLDER_PERSON_UUID;
-            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Smith").get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Smith").getFirst();
+            final var givenContact = realContactRepo.findContactByOptionalCaptionLike("fourth").getFirst();
 
             RestAssured // @formatter:off
                 .given()
@@ -375,8 +375,8 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canNotAddRelation_ifHolderPersonDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
+            final var givenContact = realContactRepo.findContactByOptionalCaptionLike("fourth").getFirst();
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -407,8 +407,8 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canNotAddRelation_ifContactDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
-            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").get(0);
+            final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
+            final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Paul").getFirst();
             final var givenContactUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
@@ -506,9 +506,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     private HsOfficeRelation findRelation(
             final String anchorPersonName,
             final String holderPersoneName) {
-        final var anchorPersonUuid = personRepo.findPersonByOptionalNameLike(anchorPersonName).get(0).getUuid();
-        final var holderPersonUuid = personRepo.findPersonByOptionalNameLike(holderPersoneName).get(0).getUuid();
-        final var givenRelation = relationrealRepo
+        final var anchorPersonUuid = realPersonRepo.findPersonByOptionalNameLike(anchorPersonName).getFirst().getUuid();
+        final var holderPersonUuid = realPersonRepo.findPersonByOptionalNameLike(holderPersoneName).getFirst().getUuid();
+        final var givenRelation = realRelationRepo
                 .findRelationRelatedToPersonUuid(anchorPersonUuid)
                 .stream()
                 .filter(r -> r.getHolder().getUuid().equals(holderPersonUuid))
@@ -525,7 +525,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler();
             assertThat(givenRelation.getContact().getCaption()).isEqualTo("seventh contact");
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = realContactRepo.findContactByOptionalCaptionLike("fourth").getFirst();
 
             RestAssured // @formatter:off
                 .given()
@@ -551,7 +551,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             // finally, the relation is actually updated
             context.define("superuser-alex@hostsharing.net");
-            assertThat(relationrealRepo.findByUuid(givenRelation.getUuid())).isPresent().get()
+            assertThat(realRelationRepo.findByUuid(givenRelation.getUuid())).isPresent().get()
                     .matches(rel -> {
                         assertThat(rel.getAnchor().getTradeName()).contains("Bessler");
                         assertThat(rel.getHolder().getFamilyName()).contains("Winkler");
@@ -580,7 +580,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .statusCode(204); // @formatter:on
 
             // then the given relation is gone
-            assertThat(relationrealRepo.findByUuid(givenRelation.getUuid())).isEmpty();
+            assertThat(realRelationRepo.findByUuid(givenRelation.getUuid())).isEmpty();
         }
 
         @Test
@@ -599,7 +599,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .statusCode(403); // @formatter:on
 
             // then the given relation is still there
-            assertThat(relationrealRepo.findByUuid(givenRelation.getUuid())).isNotEmpty();
+            assertThat(realRelationRepo.findByUuid(givenRelation.getUuid())).isNotEmpty();
         }
 
         @Test
@@ -618,16 +618,16 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .statusCode(404); // @formatter:on
 
             // then the given relation is still there
-            assertThat(relationrealRepo.findByUuid(givenRelation.getUuid())).isNotEmpty();
+            assertThat(realRelationRepo.findByUuid(givenRelation.getUuid())).isNotEmpty();
         }
     }
 
     private HsOfficeRelation givenSomeTemporaryRelationBessler() {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
-            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Winkler").get(0);
-            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("seventh contact").get(0);
+            final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Erben Bessler").getFirst();
+            final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Winkler").getFirst();
+            final var givenContact = realContactRepo.findContactByOptionalCaptionLike("seventh contact").getFirst();
             final var newRelation = HsOfficeRelationRealEntity.builder()
                     .type(HsOfficeRelationType.REPRESENTATIVE)
                     .anchor(givenAnchorPerson)
@@ -635,7 +635,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .contact(givenContact)
                     .build();
 
-            assertThat(toCleanup(relationrealRepo.save(newRelation))).isEqualTo(newRelation);
+            assertThat(toCleanup(realRelationRepo.save(newRelation))).isEqualTo(newRelation);
 
             return newRelation;
         }).assertSuccessful().returnedValue();

@@ -87,7 +87,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
                               "validTo": "2024-12-30",
-                              "status": "ACTIVE"
+                              "status": "CANCELLED"
                           },
                           {
                               "partner": { "partnerNumber": "P-10002" },
@@ -95,7 +95,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
                               "validTo": "2025-12-31",
-                              "status": "ACTIVE"
+                              "status": "CANCELLED"
                           },
                           {
                               "partner": { "partnerNumber": "P-10003" },
@@ -134,7 +134,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
                               "validTo": "2024-12-30",
-                              "status": "ACTIVE"
+                              "status": "CANCELLED"
                           }
                       ]
                     """));
@@ -162,7 +162,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                                   "memberNumberSuffix": "02",
                                   "validFrom": "2022-10-01",
                                   "validTo": "2025-12-31",
-                                  "status": "ACTIVE"
+                                  "status": "CANCELLED"
                               }
                           ]
                         """));
@@ -240,7 +240,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                          "memberNumberSuffix": "01",
                          "validFrom": "2022-10-01",
                          "validTo": "2024-12-30",
-                         "status": "ACTIVE"
+                         "status": "CANCELLED"
                      }
                     """)); // @formatter:on
         }
@@ -326,7 +326,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .matches(mandate -> {
                         assertThat(mandate.getPartner().toShortString()).isEqualTo("P-10001");
                         assertThat(mandate.getMemberNumberSuffix()).isEqualTo(givenMembership.getMemberNumberSuffix());
-                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2026-01-01)");
+                        assertThat(mandate.getValidity().asString()).isEqualTo("[2025-02-01,2026-01-01)");
                         assertThat(mandate.getStatus()).isEqualTo(CANCELLED);
                         return true;
                     });

@@ -12129,8 +12129,8 @@ INSERT INTO hs_office.debitor (uuid, version, debitornumbersuffix, debitorreluui
 -- Data for Name: membership; Type: TABLE DATA; Schema: hs_office; Owner: postgres
 --
 
-INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('4330e211-e36c-45ec-9332-f7593ff42811', 0, 'c27d1b0c-7e43-4b64-ae69-4317f51023ba', '01', '[2022-10-01,)', 'ACTIVE', true);
-INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('bed3c145-aa55-425f-9211-be9f5e9f4ebe', 0, '11583dae-da71-4786-a61d-d70f51ce988e', '02', '[2022-10-01,)', 'ACTIVE', true);
+INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('4330e211-e36c-45ec-9332-f7593ff42811', 0, 'c27d1b0c-7e43-4b64-ae69-4317f51023ba', '01', '[2022-10-01,2025-01-01)', 'ACTIVE', true);
+INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('bed3c145-aa55-425f-9211-be9f5e9f4ebe', 0, '11583dae-da71-4786-a61d-d70f51ce988e', '02', '[2022-10-01,2026-01-01)', 'ACTIVE', true);
 INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('a42d61c5-7dad-4379-9dd9-39a8d21ddc32', 0, '7fe704c0-2e54-463e-891e-533f0274da76', '03', '[2022-10-01,)', 'ACTIVE', true);
 
 

@@ -52,7 +52,7 @@ class RolesGrantsAndPermissionsGenerator {
     private void generateHeader(final StringWriter plPgSql, final String triggerType) {
         plPgSql.writeLn("""
                 -- ============================================================================
-                --changeset RolesGrantsAndPermissionsGenerator:${liquibaseTagPrefix}-rbac-${triggerType}-trigger endDelimiter:--//
+                --changeset RolesGrantsAndPermissionsGenerator:${liquibaseTagPrefix}-rbac-${triggerType}-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
                 -- ----------------------------------------------------------------------------
                 """,
                 with("liquibaseTagPrefix", liquibaseTagPrefix),
@@ -523,12 +523,11 @@ class RolesGrantsAndPermissionsGenerator {
                     return NEW;
                 end; $$;
 
-                create trigger build_rbac_system_after_insert_tg
+                create or replace trigger build_rbac_system_after_insert_tg
                     after insert on ${rawTableQualifiedName}
                     for each row
                 execute procedure ${rawTableQualifiedName}_build_rbac_system_after_insert_tf();
                 """
-                .replace("${schemaPrefix}", schemaPrefix(qualifiedRawTableName))
                 .replace("${rawTableQualifiedName}", qualifiedRawTableName)
         );
 
@@ -558,7 +557,7 @@ class RolesGrantsAndPermissionsGenerator {
                     return NEW;
                 end; $$;
 
-                create trigger update_rbac_system_after_update_tg
+                create or replace trigger update_rbac_system_after_update_tg
                     after update on ${rawTableQualifiedName}
                     for each row
                 execute procedure ${rawTableQualifiedName}_update_rbac_system_after_update_tf();

@@ -283,7 +283,6 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     result.returnedValue(),
                     "hs_office.contact#fifthcontact:ADMIN");
 
-            relationRbacRepo.deleteByUuid(givenRelation.getUuid());
         }
 
         @Test
@@ -296,13 +295,17 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     givenRelation,
                     "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
             assertThatRelationActuallyInDatabase(givenRelation);
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("sixth contact")
+                    .stream()
+                    .findFirst()
+                    .orElseThrow();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context(
                         "superuser-alex@hostsharing.net",
                         "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
-                givenRelation.setContact(null);
+                givenRelation.setContact(givenContact);
                 return relationRbacRepo.save(givenRelation);
             });
 
@@ -455,9 +458,9 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
     private HsOfficeRelationRbacEntity givenSomeTemporaryRelationBessler(final String holderPerson, final String contact) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
-            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderPerson).get(0);
-            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike(contact).get(0);
+            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").getFirst();
+            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderPerson).getFirst();
+            final var givenContact = contactRealRepo.findContactByOptionalCaptionLike(contact).getFirst();
             final var newRelation = HsOfficeRelationRbacEntity.builder()
                     .type(HsOfficeRelationType.REPRESENTATIVE)
                     .anchor(givenAnchorPerson)

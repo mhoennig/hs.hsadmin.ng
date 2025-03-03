@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_hosting.asset');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -105,7 +105,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_hosting.asset
     for each row
 execute procedure hs_hosting.asset_build_rbac_system_after_insert_tf();
@@ -113,7 +113,7 @@ execute procedure hs_hosting.asset_build_rbac_system_after_insert_tf();
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-update-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-update-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -147,7 +147,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger update_rbac_system_after_update_tg
+create or replace trigger update_rbac_system_after_update_tg
     after update on hs_hosting.asset
     for each row
 execute procedure hs_hosting.asset_update_rbac_system_after_update_tf();
@@ -166,7 +166,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_hosting.asset',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-hosting-asset-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-hosting-asset-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_hosting.asset',
     $orderBy$
@@ -183,7 +183,7 @@ call rbac.generateRbacRestrictedView('hs_hosting.asset',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-hosting-asset-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-hosting-asset-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_hosting.asset after changing its RBAC specification.

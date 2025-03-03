@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_office.membership');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-membership-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-membership-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -81,7 +81,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_office.membership
     for each row
 execute procedure hs_office.membership_build_rbac_system_after_insert_tf();
@@ -180,7 +180,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.membership',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-membership-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-membership-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.membership',
     $orderBy$
@@ -195,7 +195,7 @@ call rbac.generateRbacRestrictedView('hs_office.membership',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-membership-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-membership-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.membership after changing its RBAC specification.

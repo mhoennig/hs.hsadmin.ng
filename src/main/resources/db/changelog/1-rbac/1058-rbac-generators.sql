@@ -235,7 +235,7 @@ begin
      */
     newColumns := 'new.' || replace(columnNames, ', ', ', new.');
     sql := format($sql$
-    create function %1$s_instead_of_insert_tf()
+    create or replace function %1$s_instead_of_insert_tf()
         returns trigger
         language plpgsql as $f$
     declare
@@ -254,7 +254,7 @@ begin
         Creates an instead of insert trigger for the restricted view.
      */
     sql := format($sql$
-        create trigger instead_of_insert_tg
+        create or replace trigger instead_of_insert_tg
             instead of insert
             on %1$s_rv
             for each row
@@ -266,7 +266,7 @@ begin
         Instead of delete trigger function for the restricted view.
      */
     sql := format($sql$
-        create function %1$s_instead_of_delete_tf()
+        create or replace function %1$s_instead_of_delete_tf()
             returns trigger
             language plpgsql as $f$
         begin
@@ -283,7 +283,7 @@ begin
         Creates an instead of delete trigger for the restricted view.
      */
     sql := format($sql$
-        create trigger instead_of_delete_tg
+        create or replace trigger instead_of_delete_tg
             instead of delete
             on %1$s_rv
             for each row
@@ -297,7 +297,7 @@ begin
      */
     if columnUpdates is not null then
         sql := format($sql$
-            create function %1$s_instead_of_update_tf()
+            create or replace function %1$s_instead_of_update_tf()
                 returns trigger
                 language plpgsql as $f$
             begin
@@ -316,7 +316,7 @@ begin
             Creates an instead of delete trigger for the restricted view.
          */
         sql = format($sql$
-            create trigger instead_of_update_tg
+            create or replace trigger instead_of_update_tg
                 instead of update
                 on %1$s_rv
                 for each row

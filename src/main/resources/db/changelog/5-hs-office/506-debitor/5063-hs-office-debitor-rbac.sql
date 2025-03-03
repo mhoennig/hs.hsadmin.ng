@@ -17,7 +17,7 @@ call rbac.generateRbacRoleDescriptors('hs_office.debitor');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-debitor-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-debitor-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -77,7 +77,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger build_rbac_system_after_insert_tg
+create or replace trigger build_rbac_system_after_insert_tg
     after insert on hs_office.debitor
     for each row
 execute procedure hs_office.debitor_build_rbac_system_after_insert_tf();
@@ -85,7 +85,7 @@ execute procedure hs_office.debitor_build_rbac_system_after_insert_tf();
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-debitor-rbac-update-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-debitor-rbac-update-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -119,7 +119,7 @@ begin
     return NEW;
 end; $$;
 
-create trigger update_rbac_system_after_update_tg
+create or replace trigger update_rbac_system_after_update_tg
     after update on hs_office.debitor
     for each row
 execute procedure hs_office.debitor_update_rbac_system_after_update_tf();
@@ -224,7 +224,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.debitor',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-debitor-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-debitor-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.debitor',
     $orderBy$
@@ -244,7 +244,7 @@ call rbac.generateRbacRestrictedView('hs_office.debitor',
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-debitor-rbac-rebuild endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-debitor-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.debitor after changing its RBAC specification.
