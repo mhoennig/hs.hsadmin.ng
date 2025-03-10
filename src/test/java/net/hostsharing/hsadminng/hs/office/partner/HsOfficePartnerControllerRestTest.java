@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
@@ -38,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficePartnerController.class)
-@Import({StrictMapper.class, DisableSecurityConfig.class})
+@Import({ StrictMapper.class, HsOfficeContactFromResourceConverter.class, DisableSecurityConfig.class})
 @ActiveProfiles("test")
 class HsOfficePartnerControllerRestTest {
 
@@ -108,8 +109,6 @@ class HsOfficePartnerControllerRestTest {
                                              "holder.uuid": "%s",
                                              "contact.uuid": "%s"
                                         },
-                                        "person.uuid": "%s",
-                                        "contact.uuid": "%s",
                                         "details": {
                                             "registrationOffice": "Temp Registergericht Aurich",
                                             "registrationNumber": "111111"
@@ -117,8 +116,6 @@ class HsOfficePartnerControllerRestTest {
                                     }
                                     """.formatted(
                                     GIVEN_MANDANTE_UUID,
-                                    GIVEN_INVALID_UUID,
-                                    GIVEN_CONTACT_UUID,
                                     GIVEN_INVALID_UUID,
                                     GIVEN_CONTACT_UUID))
                             .accept(MediaType.APPLICATION_JSON))
@@ -145,8 +142,6 @@ class HsOfficePartnerControllerRestTest {
                                              "holder.uuid": "%s",
                                              "contact.uuid": "%s"
                                         },
-                                        "person.uuid": "%s",
-                                        "contact.uuid": "%s",
                                         "details": {
                                             "registrationOffice": "Temp Registergericht Aurich",
                                             "registrationNumber": "111111"
@@ -154,8 +149,6 @@ class HsOfficePartnerControllerRestTest {
                                     }
                                     """.formatted(
                                     GIVEN_MANDANTE_UUID,
-                                    GIVEN_PERSON_UUID,
-                                    GIVEN_INVALID_UUID,
                                     GIVEN_PERSON_UUID,
                                     GIVEN_INVALID_UUID))
                             .accept(MediaType.APPLICATION_JSON))

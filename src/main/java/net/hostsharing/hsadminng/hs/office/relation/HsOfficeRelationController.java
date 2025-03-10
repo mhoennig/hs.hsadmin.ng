@@ -163,13 +163,13 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
             final String currentSubject,
             final String assumedRoles,
             final UUID relationUuid,
-            final HsOfficeRelationPatchResource body) {
+            final HsOfficeRelationContactPatchResource body) {
 
         context.define(currentSubject, assumedRoles);
 
         final var current = rbacRelationRepo.findByUuid(relationUuid).orElseThrow();
 
-        new HsOfficeRelationEntityPatcher(em, current).apply(body);
+        new HsOfficeRelationEntityContactPatcher(em, current).apply(body);
 
         final var saved = rbacRelationRepo.save(current);
         final var mapped = mapper.map(saved, HsOfficeRelationResource.class);

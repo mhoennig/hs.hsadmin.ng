@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 public abstract class PatchUnitTestBase<R, E> {
 
     @Test
-    void willPatchNoProperty() {
+    protected void willPatchNoProperty() {
         // given
         final var givenEntity = newInitialEntity();
         final var patchResource = newPatchResource();
@@ -73,7 +73,7 @@ public abstract class PatchUnitTestBase<R, E> {
 
     @ParameterizedTest
     @MethodSource("propertyTestCases")
-    void willThrowExceptionIfNotNullableValueIsNull(final Property<R, Object, E, Object> testCase) {
+    protected void willThrowExceptionIfNotNullableValueIsNull(final Property<R, Object, E, Object> testCase) {
         assumeThat(testCase instanceof JsonNullableProperty).isTrue();
         assumeThat(testCase.nullable).isFalse();
 
@@ -94,7 +94,7 @@ public abstract class PatchUnitTestBase<R, E> {
 
     @ParameterizedTest
     @MethodSource("propertyTestCases")
-    void willPatchOnlyGivenPropertyToNull(final Property<R, Object, E, Object> testCase) {
+    protected void willPatchOnlyGivenPropertyToNull(final Property<R, Object, E, Object> testCase) {
         assumeThat(testCase.nullable).isTrue();
 
         // given
@@ -113,7 +113,7 @@ public abstract class PatchUnitTestBase<R, E> {
 
     @ParameterizedTest
     @MethodSource("propertyTestCases")
-    void willNotPatchIfGivenPropertyNotGiven(final Property<R, Object, E, Object> testCase) {
+    protected void willNotPatchIfGivenPropertyNotGiven(final Property<R, Object, E, Object> testCase) {
 
         // given
         final var givenEntity = newInitialEntity();

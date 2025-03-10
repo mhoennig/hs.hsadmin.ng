@@ -32,6 +32,12 @@ public class TemplateResolver {
                 return jsonQuoted(value);
             }
         },
+        JSON_OBJECT('§'){
+            @Override
+            String convert(final Object value, final Resolver resolver) {
+                return jsonObject(value);
+            }
+        },
         URI_ENCODED('&'){
             @Override
             String convert(final Object value, final Resolver resolver) {
@@ -211,6 +217,14 @@ public class TemplateResolver {
             case Number number -> number.toString();
             case String string -> "\"" + string.replace("\n", "\\n") + "\"";
             default -> "\"" + value + "\"";
+        };
+    }
+
+    private static String jsonObject(final Object value) {
+        return switch (value) {
+            case null -> null;
+            case String string -> "{" + string.replace("\n", " ") + "}";
+            default -> throw new IllegalArgumentException("can not format " + value.getClass() + " (" + value + ") as JSON object");
         };
     }
 }

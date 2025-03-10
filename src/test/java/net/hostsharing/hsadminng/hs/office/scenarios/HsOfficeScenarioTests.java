@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFr
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateExternalDebitorForPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSelfDebitorForPartner;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSelfDebitorForPartnerWithIdenticalContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DeleteDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DontDeleteDefaultDebitor;
@@ -266,10 +267,26 @@ class HsOfficeScenarioTests extends ScenarioTest {
     class DebitorScenarios {
 
         @Test
+        @Order(2000)
+        @Requires("Partner: P-31011 - Michelle Matthieu")
+        @Produces("Debitor: D-3101100 - Michelle Matthieu")
+        void shouldCreateSelfDebitorForPartnerWithIdenticalContactData() {
+            new CreateSelfDebitorForPartnerWithIdenticalContactData(scenarioTest)
+                    .given("partnerNumber", "P-31011")
+                    .given("debitorNumberSuffix", "00") // TODO.impl: could be assigned automatically, but is not yet
+                    .given("billable", true)
+                    .given("vatBusiness", false)
+                    .given("vatReverseCharge", false)
+                    .given("defaultPrefix", "mim")
+                    .doRun()
+                    .keep();
+        }
+
+        @Test
         @Order(2010)
         @Requires("Partner: P-31010 - Test AG")
         @Produces("Debitor: D-3101000 - Test AG - main debitor")
-        void shouldCreateSelfDebitorForPartner() {
+        void shouldCreateSelfDebitorForPartnerWithDistinctContactData() {
             new CreateSelfDebitorForPartner(scenarioTest)
                     .given("partnerPersonTradeName", "Test AG")
                     .given("billingContactCaption", "Test AG - billing department")
@@ -654,7 +671,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
         @Test
         @Order(6010)
-        @Requires("Partner: P-31011 - Michelle Matthieu")
+        @Requires("Debitor: D-3101100 - Michelle Matthieu") // which should also get updated
         void shouldReplaceDeceasedPartnerByCommunityOfHeirs() {
             new ReplaceDeceasedPartnerWithCommunityOfHeirs(scenarioTest)
                     .given("partnerNumber", "P-31011")

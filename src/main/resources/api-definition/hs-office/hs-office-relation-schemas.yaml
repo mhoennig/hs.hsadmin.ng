@@ -34,13 +34,34 @@ components:
                 contact:
                     $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
 
-        HsOfficeRelationPatch:
+        HsOfficeRelationContactPatch:
             type: object
             properties:
                 contact.uuid:
                     type: string
                     format: uuid
                     nullable: true
+
+        HsOfficeRelationPatch:
+            type: object
+            properties:
+                anchor.uuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                holder.uuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                holder:
+                    $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonInsert'
+                contact.uuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                contact:
+                    $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContactInsert'
+            additionalProperties: false
 
         # arbitrary relation with explicit type
         HsOfficeRelationInsert:

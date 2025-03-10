@@ -124,7 +124,9 @@ create or replace procedure hs_office.relation_update_rbac_system(
     language plpgsql as $$
 begin
 
-    if NEW.contactUuid is distinct from OLD.contactUuid then
+    if NEW.holderUuid is distinct from OLD.holderUuid
+    or NEW.anchorUuid is distinct from OLD.anchorUuid
+    or NEW.contactUuid is distinct from OLD.contactUuid then
         delete from rbac.grant g where g.grantedbytriggerof = OLD.uuid;
         call hs_office.relation_build_rbac_system(NEW);
     end if;
@@ -248,6 +250,8 @@ call rbac.generateRbacRestrictedView('hs_office.relation',
         (select idName from hs_office.person_iv p where p.uuid = target.holderUuid)
     $orderBy$,
     $updates$
+        anchorUuid = new.anchorUuid,
+        holderUuid = new.holderUuid,
         contactUuid = new.contactUuid
     $updates$);
 --//

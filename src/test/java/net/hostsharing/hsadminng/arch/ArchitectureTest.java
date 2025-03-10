@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.repository.Repository;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.Table;
 
 import java.lang.annotation.Annotation;
@@ -420,7 +421,7 @@ public class ArchitectureTest {
                     if (isGeneratedSpringRepositoryMethod(item, method)) {
                         continue;
                     }
-                    if (item.isAnnotatedWith(RestController.class) && !method.getModifiers().contains(PUBLIC)) {
+                    if (!method.getModifiers().contains(PUBLIC) || method.isAnnotatedWith(PostConstruct.class)) {
                         continue;
                     }
                     final var message = String.format(

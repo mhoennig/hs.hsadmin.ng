@@ -44,7 +44,7 @@ patch:
         content:
             'application/json':
                 schema:
-                    $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationPatch'
+                    $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationContactPatch'
     responses:
         "200":
             description: OK

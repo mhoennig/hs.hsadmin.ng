@@ -28,6 +28,7 @@ import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATU
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.UNINCORPORATED_FIRM;
 import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
+import static net.hostsharing.hsadminng.rbac.role.RbacRoleType.ADMIN;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -282,7 +283,40 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             assertThatRelationIsNotVisibleForUserWithRole(
                     result.returnedValue(),
                     "hs_office.contact#fifthcontact:ADMIN");
+        }
 
+        @Test
+        public void hostsharingAdmin_withoutAssumedRole_canUpdateHolderOfArbitraryRelation() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var givenRelation = givenSomeTemporaryRelationBessler(
+                    "Bert", "fifth contact");
+            final var oldHolderPerson = givenRelation.getHolder();
+            final var newHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").getFirst();
+            assertThatRelationActuallyInDatabase(givenRelation);
+            assertThatRelationIsVisibleForUserWithRole(
+                    givenRelation,
+                    givenRelation.getHolder().roleId(ADMIN));
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net");
+                givenRelation.setHolder(newHolderPerson);
+                return toCleanup(relationRbacRepo.save(givenRelation).load());
+            });
+
+            // then
+            result.assertSuccessful();
+            assertThat(result.returnedValue().getHolder().getGivenName()).isEqualTo("Paul");
+            assertThatRelationIsVisibleForUserWithRole(
+                    result.returnedValue(),
+                    "rbac.global#global:ADMIN");
+            assertThatRelationIsVisibleForUserWithRole(
+                    result.returnedValue(),
+                    newHolderPerson.roleId(ADMIN));
+            assertThatRelationIsNotVisibleForUserWithRole(
+                    result.returnedValue(),
+                    oldHolderPerson.roleId(ADMIN));
         }
 
         @Test

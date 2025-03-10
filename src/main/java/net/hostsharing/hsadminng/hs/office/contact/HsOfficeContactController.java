@@ -13,15 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.errors.Validate.validate;
-import static net.hostsharing.hsadminng.mapper.KeyValueMap.from;
 
 @RestController
-
 public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Autowired
@@ -31,7 +29,18 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     private StrictMapper mapper;
 
     @Autowired
+    private HsOfficeContactFromResourceConverter<HsOfficeContactRbacEntity> contactFromResourceConverter;
+
+    @Autowired
     private HsOfficeContactRbacRepository contactRepo;
+
+    @PostConstruct
+    public void init() {
+        // HOWTO: add a ModelMapper converter for a generic entity class to a ModelMapper to be used in a certain context
+        //  This @PostConstruct could be implemented in the converter, but only without generics.
+        //  But this converter is for HsOfficeContactRbacEntity and HsOfficeContactRealEntity.
+        mapper.addConverter(contactFromResourceConverter, HsOfficeContactInsertResource.class, HsOfficeContactRbacEntity.class);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -62,7 +71,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
         context.define(currentSubject, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsOfficeContactRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapper.map(body, HsOfficeContactRbacEntity.class);
 
         final var saved = contactRepo.save(entityToSave);
 
@@ -128,11 +137,4 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
         final var mapped = mapper.map(saved, HsOfficeContactResource.class);
         return ResponseEntity.ok(mapped);
     }
-
-    @SuppressWarnings("unchecked")
-    final BiConsumer<HsOfficeContactInsertResource, HsOfficeContactRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        entity.putPostalAddress(from(resource.getPostalAddress()));
-        entity.putEmailAddresses(from(resource.getEmailAddresses()));
-        entity.putPhoneNumbers(from(resource.getPhoneNumbers()));
-    };
 }

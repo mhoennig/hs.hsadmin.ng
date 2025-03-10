@@ -3,8 +3,10 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.ReferenceNotFoundException;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerResource;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;
@@ -42,13 +45,21 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     private StrictMapper mapper;
 
     @Autowired
-    private HsOfficePartnerRbacRepository partnerRepo;
+    private HsOfficeContactFromResourceConverter<HsOfficeContactRealEntity> contactFromResourceConverter;
 
     @Autowired
-    private HsOfficeRelationRealRepository relationRepo;
+    private HsOfficePartnerRbacRepository rbacPartnerRepo;
+
+    @Autowired
+    private HsOfficeRelationRealRepository realRelationRepo;
 
     @PersistenceContext
     private EntityManager em;
+
+    @PostConstruct
+    public void init() {
+        mapper.addConverter(contactFromResourceConverter, HsOfficeContactInsertResource.class, HsOfficeContactRealEntity.class);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -59,7 +70,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
             final String name) {
         context.define(currentSubject, assumedRoles);
 
-        final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
+        final var entities = rbacPartnerRepo.findPartnerByOptionalNameLike(name);
 
         final var resources = mapper.mapList(entities, HsOfficePartnerResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
@@ -77,7 +88,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var entityToSave = createPartnerEntity(body);
 
-        final var saved = partnerRepo.save(entityToSave);
+        final var saved = rbacPartnerRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -98,7 +109,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         context.define(currentSubject, assumedRoles);
 
-        final var result = partnerRepo.findByUuid(partnerUuid);
+        final var result = rbacPartnerRepo.findByUuid(partnerUuid);
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -116,7 +127,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         context.define(currentSubject, assumedRoles);
 
-        final var result = partnerRepo.findPartnerByPartnerNumber(partnerNumber);
+        final var result = rbacPartnerRepo.findPartnerByPartnerNumber(partnerNumber);
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -133,12 +144,12 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
             final UUID partnerUuid) {
         context.define(currentSubject, assumedRoles);
 
-        final var partnerToDelete = partnerRepo.findByUuid(partnerUuid);
+        final var partnerToDelete = rbacPartnerRepo.findByUuid(partnerUuid);
         if (partnerToDelete.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        if (partnerRepo.deleteByUuid(partnerUuid) != 1) {
+        if (rbacPartnerRepo.deleteByUuid(partnerUuid) != 1) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -156,22 +167,55 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         context.define(currentSubject, assumedRoles);
 
-        final var current = partnerRepo.findByUuid(partnerUuid).orElseThrow();
-        final var previousPartnerRel = current.getPartnerRel();
+        final var current = rbacPartnerRepo.findByUuid(partnerUuid).orElseThrow();
+        final var previousPartnerPerson = current.getPartnerRel().getHolder();
 
-        new HsOfficePartnerEntityPatcher(em, current).apply(body);
+        new HsOfficePartnerEntityPatcher(mapper, em, current).apply(body);
 
-        final var saved = partnerRepo.save(current);
-        optionallyCreateExPartnerRelation(saved, previousPartnerRel);
+        final var saved = rbacPartnerRepo.save(current);
+        optionallyCreateExPartnerRelation(saved, previousPartnerPerson);
+        optionallyUpdateRelatedRelations(saved, previousPartnerPerson);
 
         final var mapped = mapper.map(saved, HsOfficePartnerResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
-    private void optionallyCreateExPartnerRelation(final HsOfficePartnerRbacEntity saved, final HsOfficeRelationRealEntity previousPartnerRel) {
-        if (!saved.getPartnerRel().getUuid().equals(previousPartnerRel.getUuid())) {
-            // TODO.impl: we also need to use the new partner-person as the anchor
-            relationRepo.save(previousPartnerRel.toBuilder().uuid(null).type(EX_PARTNER).build());
+    private void optionallyCreateExPartnerRelation(final HsOfficePartnerRbacEntity saved, final HsOfficePersonRealEntity previousPartnerPerson) {
+
+        final var partnerPersonHasChanged = !saved.getPartnerRel().getHolder().getUuid().equals(previousPartnerPerson.getUuid());
+        if (partnerPersonHasChanged) {
+            realRelationRepo.save(saved.getPartnerRel().toBuilder()
+                    .uuid(null)
+                    .type(EX_PARTNER)
+                    .anchor(saved.getPartnerRel().getHolder())
+                    .holder(previousPartnerPerson)
+                    .build());
+        }
+    }
+
+    private void optionallyUpdateRelatedRelations(final HsOfficePartnerRbacEntity saved, final HsOfficePersonRealEntity previousPartnerPerson) {
+        final var partnerPersonHasChanged = !saved.getPartnerRel().getHolder().getUuid().equals(previousPartnerPerson.getUuid());
+        if (partnerPersonHasChanged) {
+            // self-debitors of the old partner-person become self-debitors of the new partner person
+            em.createNativeQuery("""
+                UPDATE hs_office.relation
+                    SET holderUuid = :newPartnerPersonUuid
+                    WHERE type = 'DEBITOR' AND
+                          holderUuid = :oldPartnerPersonUuid AND anchorUuid = :oldPartnerPersonUuid
+            """)
+                    .setParameter("oldPartnerPersonUuid", previousPartnerPerson.getUuid())
+                    .setParameter("newPartnerPersonUuid", saved.getPartnerRel().getHolder().getUuid())
+                    .executeUpdate();
+
+            // re-anchor all relations from the old partner person to the new partner persion
+            em.createNativeQuery("""
+                UPDATE hs_office.relation
+                    SET anchorUuid = :newPartnerPersonUuid
+                    WHERE anchorUuid = :oldPartnerPersonUuid
+            """)
+                    .setParameter("oldPartnerPersonUuid", previousPartnerPerson.getUuid())
+                    .setParameter("newPartnerPersonUuid", saved.getPartnerRel().getHolder().getUuid())
+                    .executeUpdate();
         }
     }
 

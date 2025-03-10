@@ -316,7 +316,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20011);
-            final var givenPartnerRel = givenSomeTemporaryPartnerRel("Winkler", "third contact");
+            final var newPartnerPerson = personRealRepo.findPersonByOptionalNameLike("Winkler").getFirst();
 
             RestAssured // @formatter:off
                 .given()
@@ -325,7 +325,9 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                            {
                                "partnerNumber": "P-20011",
-                               "partnerRel.uuid": "%s",
+                               "partnerRel": {
+                                   "holder.uuid": "%s"
+                               },
                                "details": {
                                    "registrationOffice": "Temp Registergericht Aurich",
                                    "registrationNumber": "222222",
@@ -334,7 +336,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                    "dateOfDeath": "2022-01-12"
                                }
                              }
-                           """.formatted(givenPartnerRel.getUuid()))
+                           """.formatted(newPartnerPerson.getUuid()))
                     .port(port)
                 .when()
                     .patch("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
@@ -348,7 +350,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "anchor": { "tradeName": "Hostsharing eG" },
                             "holder": { "familyName": "Winkler" },
                             "type": "PARTNER",
-                            "contact": { "caption": "third contact" }
+                            "contact": { "caption": "fourth contact" }
                         },
                         "details": {
                             "registrationOffice": "Temp Registergericht Aurich",
@@ -368,7 +370,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .matches(partner -> {
                         assertThat(partner.getPartnerNumber()).isEqualTo(givenPartner.getPartnerNumber());
                         assertThat(partner.getPartnerRel().getHolder().getFamilyName()).isEqualTo("Winkler");
-                        assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("third contact");
+                        assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("fourth contact");
                         assertThat(partner.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Aurich");
                         assertThat(partner.getDetails().getRegistrationNumber()).isEqualTo("222222");
                         assertThat(partner.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
@@ -379,11 +381,11 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void patchingThePartnerRelCreatesExPartnerRel() {
+        void patchingThePartnerPersonCreatesExPartnerRel() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20011);
-            final var givenPartnerRel = givenSomeTemporaryPartnerRel("Winkler", "third contact");
+            final var newPartnerPerson = personRealRepo.findPersonByOptionalNameLike("Winkler").getFirst();
 
             RestAssured // @formatter:off
                     .given()
@@ -391,9 +393,11 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
-                                   "partnerRel.uuid": "%s"
+                                   "partnerRel": {
+                                       "holder.uuid": "%s"
+                                   }
                                 }
-                                """.formatted(givenPartnerRel.getUuid()))
+                                """.formatted(newPartnerPerson.getUuid()))
                         .port(port)
                     .when()
                         .patch("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
@@ -405,16 +409,16 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             context.define("superuser-alex@hostsharing.net");
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(partner -> {
-                        assertThat(partner.getPartnerRel().getHolder().getFamilyName()).isEqualTo("Winkler");
-                        assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("third contact");
+                        assertThat(partner.getPartnerRel().getHolder().getFamilyName()).isEqualTo("Winkler"); // updated
+                        assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("fourth contact"); // unchanged
                         return true;
                     });
 
             // and an ex-partner-relation got created
-            final var anchorpartnerPersonUUid = givenPartner.getPartnerRel().getAnchor().getUuid();
-            assertThat(relationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(anchorpartnerPersonUUid, EX_PARTNER, null, null, null))
+            final var newPartnerPersonUuid = givenPartner.getPartnerRel().getHolder().getUuid();
+            assertThat(relationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(newPartnerPersonUuid, EX_PARTNER, null, null, null))
                     .map(HsOfficeRelation::toShortString)
-                    .contains("rel(anchor='LP Hostsharing eG', type='EX_PARTNER', holder='UF Erben Bessler')");
+                    .contains("rel(anchor='NP Winkler, Paul', type='EX_PARTNER', holder='UF Erben Bessler')");
         }
 
         @Test

@@ -51,7 +51,7 @@ public class HsOfficeRelationRbacEntity extends HsOfficeRelation {
                         """))
                 .withRestrictedViewOrderBy(SQL.expression(
                         "(select idName from hs_office.person_iv p where p.uuid = target.holderUuid)"))
-                .withUpdatableColumns("contactUuid")
+                .withUpdatableColumns("anchorUuid", "holderUuid", "contactUuid") // BEWARE: additional checks at API-level
                 .importEntityAlias("anchorPerson", HsOfficePersonRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("anchorUuid"),
                         directlyFetchedByDependsOnColumn(),

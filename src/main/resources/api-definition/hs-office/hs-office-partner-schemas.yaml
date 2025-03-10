@@ -48,12 +48,11 @@ components:
         HsOfficePartnerPatch:
             type: object
             properties:
-                partnerRel.uuid:
-                    type: string
-                    format: uuid
-                    nullable: true
+                partnerRel:
+                    $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationPatch'
                 details:
                     $ref: '#/components/schemas/HsOfficePartnerDetailsPatch'
+            additionalProperties: false
 
         HsOfficePartnerDetailsPatch:
             type: object

@@ -1,35 +1,36 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationPatcher;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
-import net.hostsharing.hsadminng.mapper.OptionalFromJson;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
 
 import jakarta.persistence.EntityManager;
 
 class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatchResource> {
+
+    private final StrictMapper mapper;
     private final EntityManager em;
     private final HsOfficePartnerRbacEntity entity;
+
     HsOfficePartnerEntityPatcher(
+            final StrictMapper mapper,
             final EntityManager em,
             final HsOfficePartnerRbacEntity entity) {
+        this.mapper = mapper;
         this.em = em;
         this.entity = entity;
     }
 
     @Override
     public void apply(final HsOfficePartnerPatchResource resource) {
-        OptionalFromJson.of(resource.getPartnerRelUuid()).ifPresent(newValue -> {
-            verifyNotNull(newValue, "partnerRel");
-            entity.setPartnerRel(em.getReference(HsOfficeRelationRealEntity.class, newValue));
-        });
 
-        new HsOfficePartnerDetailsEntityPatcher(em, entity.getDetails()).apply(resource.getDetails());
-    }
+        if (resource.getPartnerRel() != null) {
+            new HsOfficeRelationPatcher(mapper, em, entity.getPartnerRel()).apply(resource.getPartnerRel());
+        }
 
-    private void verifyNotNull(final Object newValue, final String propertyName) {
-        if (newValue == null) {
-            throw new IllegalArgumentException("property '" + propertyName + "' must not be null");
+        if (resource.getDetails() != null) {
+            new HsOfficePartnerDetailsEntityPatcher(em, entity.getDetails()).apply(resource.getDetails());
         }
     }
 }
