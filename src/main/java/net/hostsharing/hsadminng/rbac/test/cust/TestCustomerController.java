@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test.cust;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.test.generated.api.v1.api.TestCustomersApi;
@@ -15,6 +16,7 @@ import jakarta.persistence.PersistenceContext;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class TestCustomerController implements TestCustomersApi {
 
     @Autowired

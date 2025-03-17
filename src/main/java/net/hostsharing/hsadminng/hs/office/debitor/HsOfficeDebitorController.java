@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
@@ -32,7 +33,7 @@ import static net.hostsharing.hsadminng.hs.validation.UuidResolver.resolve;
 import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
-
+@SecurityRequirement(name = "casTicket")
 public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Autowired

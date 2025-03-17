@@ -17,7 +17,7 @@ management:
                 # HOWTO: view the effective application configuration properties:
                 #   http://localhost:8081/actuator/configprops
 
-                include: info, health, metrics, metric-links, mappings, openapi, swaggerui, configprops, env
+                include: info, health, metrics, metric-links, mappings, openapi, configprops, env
     endpoint:
         env:
             # TODO.spec: check this, maybe set to when_authorized?
@@ -37,6 +37,11 @@ spring:
         url: ${HSADMINNG_POSTGRES_JDBC_URL}
         username: postgres
 
+    data:
+        rest:
+            # do NOT implicilty expose SpringData repositories as REST-controllers
+            detection-strategy: annotated
+
     sql:
         init:
             mode: never
@@ -48,10 +53,6 @@ spring:
 
     liquibase:
         contexts: ${spring.profiles.active}
-
-# keep this in sync with test/.../application.yml
-springdoc:
-    use-management-port: true
 
 hsadminng:
     postgres:
@@ -66,3 +67,9 @@ metrics:
             http:
                 server:
                     requests: true
+
+logging:
+    level:
+        org:
+            springframework:
+                security: TRACE

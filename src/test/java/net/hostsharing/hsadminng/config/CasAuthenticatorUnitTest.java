@@ -10,14 +10,15 @@ import static org.mockito.Mockito.mock;
 
 class CasAuthenticatorUnitTest {
 
-    final CasAuthenticator casAuthenticator = new CasAuthenticator();
+    final RealCasAuthenticator casAuthenticator = new RealCasAuthenticator();
 
     @Test
     void bypassesAuthenticationIfNoCasServerIsConfigured() {
 
         // given
         final var request = mock(HttpServletRequest.class);
-        given(request.getHeader("current-subject")).willReturn("given-user");
+        // bypassing the CAS-server HTTP-request fakes the user from the authorization header's fake CAS-ticket
+        given(request.getHeader("authorization")).willReturn("Bearer given-user");
 
         // when
         final var userName = casAuthenticator.authenticate(request);

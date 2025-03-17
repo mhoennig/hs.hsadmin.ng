@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeContactsApi;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static net.hostsharing.hsadminng.errors.Validate.validate;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Autowired

@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
@@ -26,7 +27,7 @@ import java.util.function.BiConsumer;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
-
+@SecurityRequirement(name = "casTicket")
 public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Autowired

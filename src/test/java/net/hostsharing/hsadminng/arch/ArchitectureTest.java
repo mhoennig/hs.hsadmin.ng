@@ -11,7 +11,9 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.config.NoSecurityRequirement;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
@@ -351,6 +353,15 @@ public class ArchitectureTest {
     @SuppressWarnings("unused")
     static final ArchRule restControllerNaming =
         classes().that().areAnnotatedWith(RestController.class).should().haveSimpleNameEndingWith("Controller");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    static final ArchRule restControllerSecurityRequirement =
+            // TODO.impl: seems that the Spring templates for the OpenAPI generator don't support this,
+            //  thus we need this annotation to support Swagger UI authorization.
+            classes().that().areAnnotatedWith(RestController.class).should()
+                    .beAnnotatedWith(SecurityRequirement.class).orShould()
+                    .beAnnotatedWith(NoSecurityRequirement.class);
 
     @ArchTest
     @SuppressWarnings("unused")

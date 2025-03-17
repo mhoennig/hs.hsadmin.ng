@@ -39,10 +39,6 @@ spring:
         change-log: classpath:/db/changelog/db.changelog-master.yaml
         contexts: tc,test,dev,pg_stat_statements
 
-# keep this in sync with main/.../application.yml
-springdoc:
-    use-management-port: true
-
 logging:
     level:
         liquibase: WARN

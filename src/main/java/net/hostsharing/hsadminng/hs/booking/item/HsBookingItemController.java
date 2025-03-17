@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.booking.item;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingItemsApi;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
@@ -32,6 +33,7 @@ import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateR
 
 @RestController
 @Profile("!only-office")
+@SecurityRequirement(name = "casTicket")
 public class HsBookingItemController implements HsBookingItemsApi {
 
     @Autowired

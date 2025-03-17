@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
@@ -29,6 +30,7 @@ import java.util.function.BiConsumer;
 
 @RestController
 @Profile("!only-office")
+@SecurityRequirement(name = "casTicket")
 public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Autowired

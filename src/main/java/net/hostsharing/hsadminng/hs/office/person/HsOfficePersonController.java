@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePersonsApi;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-
+@SecurityRequirement(name = "casTicket")
 public class HsOfficePersonController implements HsOfficePersonsApi {
 
     @Autowired

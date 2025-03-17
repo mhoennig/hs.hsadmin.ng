@@ -132,9 +132,10 @@ Also try for example 'admin@xxx.example.com' or 'unknown@example.org'.
 
 If you want a formatted JSON output, you can pipe the result to `jq` or similar.
 
-And to see the full, currently implemented, API, open http://localhost:8081/actuator/swagger-ui/index.html (uses management-port and thus bypasses authentication).
-
-If you still need to install some of these tools, find some hints in the next chapters. 
+And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html).
+For a locally running app without CAS-authentication (export HSADMINNG_CAS_SERVER=''), 
+authorize using the name of the subject (e.g. "superuser-alex@hostsharing.net" in case of test-data).
+Otherwise, use a valid CAS-ticket.
 
 
 ### PostgreSQL Server
@@ -664,6 +665,29 @@ These profiles mean:
 - **external-db**: an external PostgreSQL database is used with the PostgreSQL users already created as specified in the environment
 - **only-office**: only the Office module is started, but neither the Booking nor the Hosting modules
 - **without-test-data**: no test-data is inserted
+
+
+### How to Run the Application in a Debugger
+
+Add `' --debug-jvm` to the command line:
+
+
+```sh
+gw bootRun --debug-jvm
+```
+
+At the very beginning, the application is going to wait for a debugger with a message like this:
+
+> Listening for transport dt_socket at address: 5005
+
+As soon as a debugger connects to that port, the application will continue to run.
+
+In IntelliJ IDEA you need a 'Remote JVM Debug' run configuration like this:
+
+![IntelliJ IDEA JVM-Debug Run Config](./doc/.images/intellij-idea-jvm-debug-run-config.png)
+
+Now, to attach IntelliJ IDEA as a debugger, you just need to run that config in debug mode.
+If it's selected, just hit the *bug*-symbol next to it.
 
 
 ### How to Do a Clean Run of the Application

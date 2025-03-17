@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopAssetsApi;
@@ -37,6 +38,7 @@ import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOffic
 import static net.hostsharing.hsadminng.lambda.WithNonNull.withNonNull;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAssetsApi {
 
     @Autowired

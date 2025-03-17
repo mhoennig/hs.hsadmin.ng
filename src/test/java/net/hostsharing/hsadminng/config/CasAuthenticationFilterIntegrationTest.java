@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = {"server.port=0", "hsadminng.cas.server=http://localhost:8088/cas"})
+@TestPropertySource(properties = {"server.port=0", "hsadminng.cas.server=http://localhost:8088"})
 @ActiveProfiles("wiremock") // IMPORTANT: To test prod config, do not use test profile!
 @Tag("generalIntegrationTest")
 class CasAuthenticationFilterIntegrationTest {
@@ -37,10 +37,10 @@ class CasAuthenticationFilterIntegrationTest {
     private WireMockServer wireMockServer;
 
     @Test
-    public void shouldAcceptRequest() {
+    public void shouldAcceptRequestWithValidCasTicket() {
         // given
         final var username = "test-user-" + randomAlphanumeric(4);
-        wireMockServer.stubFor(get(urlEqualTo("/cas/p3/serviceValidate?service=" + serviceUrl + "&ticket=valid"))
+        wireMockServer.stubFor(get(urlEqualTo("/cas/p3/serviceValidate?service=" + serviceUrl + "&ticket=ST-valid"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody("""
@@ -56,7 +56,7 @@ class CasAuthenticationFilterIntegrationTest {
         final var result = restTemplate.exchange(
                 "http://localhost:" + this.serverPort + "/api/ping",
                 HttpMethod.GET,
-                new HttpEntity<>(null, headers("Authorization", "valid")),
+                new HttpEntity<>(null, headers("Authorization", "ST-valid")),
                 String.class
         );
 
@@ -66,7 +66,7 @@ class CasAuthenticationFilterIntegrationTest {
     }
 
     @Test
-    public void shouldRejectRequest() {
+    public void shouldRejectRequestWithInvalidCasTicket() {
         // given
         wireMockServer.stubFor(get(urlEqualTo("/cas/p3/serviceValidate?service=" + serviceUrl + "&ticket=invalid"))
                 .willReturn(aResponse()

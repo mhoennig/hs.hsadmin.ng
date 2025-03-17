@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import io.micrometer.core.annotation.Timed;
+import net.hostsharing.hsadminng.config.NoSecurityRequirement;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetPropsApi;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 @RestController
 @Profile("!only-office")
+@NoSecurityRequirement
 public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
 
     @Override

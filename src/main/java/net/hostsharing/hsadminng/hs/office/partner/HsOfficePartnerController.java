@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.ReferenceNotFoundException;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
@@ -35,7 +36,7 @@ import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.
 import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
-
+@SecurityRequirement(name = "casTicket")
 public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Autowired

@@ -4,6 +4,7 @@ get:
     tags:
         - testCustomers
     operationId: listCustomers
+
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

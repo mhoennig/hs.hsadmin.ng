@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembershipsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
@@ -24,6 +25,7 @@ import static net.hostsharing.hsadminng.errors.Validate.validate;
 import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Autowired

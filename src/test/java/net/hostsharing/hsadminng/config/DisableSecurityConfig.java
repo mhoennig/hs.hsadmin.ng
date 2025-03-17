@@ -21,7 +21,7 @@ public class DisableSecurityConfig {
 
     @Bean
     @Profile("test")
-    public Authenticator fakeAuthenticator() {
-        return new FakeAuthenticator();
+    public CasAuthenticator fakeAuthenticator() {
+        return new FakeCasAuthenticator();
     }
 }

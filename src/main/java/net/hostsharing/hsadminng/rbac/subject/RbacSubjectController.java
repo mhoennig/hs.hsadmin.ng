@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacSubjectsApi;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class RbacSubjectController implements RbacSubjectsApi {
 
     @Autowired

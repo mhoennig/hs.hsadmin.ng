@@ -31,7 +31,7 @@ def search_keywords_in_files(keywords):
         sys.exit(1)
 
     # Allowed comment symbols
-    comment_symbols = {"//", "#", ";"}
+    comment_symbols = {"//", "#", "##", "###", "####", "#####", ";"}
 
     for root, dirs, files in os.walk("."):
         # Ausschließen bestimmter Verzeichnisse

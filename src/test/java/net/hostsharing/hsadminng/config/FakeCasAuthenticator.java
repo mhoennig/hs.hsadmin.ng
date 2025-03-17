@@ -4,7 +4,7 @@ import lombok.SneakyThrows;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-public class FakeAuthenticator implements Authenticator {
+public class FakeCasAuthenticator implements CasAuthenticator {
 
     @Override
     @SneakyThrows

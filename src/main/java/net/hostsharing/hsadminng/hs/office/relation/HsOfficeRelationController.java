@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
@@ -26,6 +27,7 @@ import java.util.function.BiConsumer;
 import static net.hostsharing.hsadminng.mapper.KeyValueMap.from;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Autowired

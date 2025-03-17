@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeBankAccountsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountInsertResource;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-
+@SecurityRequirement(name = "casTicket")
 public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
     @Autowired

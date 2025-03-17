@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test.pac;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class TestPackageController implements TestPackagesApi {
 
     @Autowired
