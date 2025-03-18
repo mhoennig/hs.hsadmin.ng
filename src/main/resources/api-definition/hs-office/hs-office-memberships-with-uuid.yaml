@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single membership by its uuid, if visible for the current subject.'
     operationId: getSingleMembershipByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: membershipUUID
           in: path
@@ -32,7 +31,6 @@ patch:
     description: 'Updates a single membership by its uuid, if permitted for the current subject.'
     operationId: patchMembership
     parameters:
-        -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: membershipUUID
             in: path
@@ -63,7 +61,6 @@ delete:
     description: 'Delete a single membership by its uuid, if permitted for the current subject.'
     operationId: deleteMembershipByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: membershipUUID
           in: path

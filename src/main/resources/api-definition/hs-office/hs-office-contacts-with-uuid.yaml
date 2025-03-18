@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single business contact by its uuid, if visible for the current subject.'
     operationId: getSingleContactByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: contactUUID
           in: path
@@ -32,7 +31,6 @@ patch:
     description: 'Updates a single contact by its uuid, if permitted for the current subject.'
     operationId: patchContact
     parameters:
-        -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: contactUUID
             in: path
@@ -63,7 +61,6 @@ delete:
     description: 'Delete a single business contact by its uuid, if permitted for the current subject.'
     operationId: deleteContactByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: contactUUID
           in: path

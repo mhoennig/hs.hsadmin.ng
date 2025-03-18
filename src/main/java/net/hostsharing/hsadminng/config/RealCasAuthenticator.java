@@ -2,11 +2,8 @@ package net.hostsharing.hsadminng.config;
 
 import io.micrometer.core.annotation.Timed;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
@@ -16,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.util.function.Supplier;
 
 public class RealCasAuthenticator implements CasAuthenticator {
 
@@ -31,23 +27,6 @@ public class RealCasAuthenticator implements CasAuthenticator {
     @SneakyThrows
     @Timed("app.cas.authenticate")
     public String authenticate(final HttpServletRequest httpRequest) {
-        final var userName = StringUtils.isBlank(casServerUrl)
-                ? bypassCurrentSubject(httpRequest)
-                : casAuthentication(httpRequest);
-        final var authentication = new UsernamePasswordAuthenticationToken(userName, null, null);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        return authentication.getName();
-    }
-
-    private static String bypassCurrentSubject(final HttpServletRequest httpRequest) {
-        final var userName = httpRequest.getHeader("authorization").replaceAll("^Bearer ", "");
-        System.err.println("CasAuthenticator.bypassCurrentSubject: " + userName);
-        return userName;
-    }
-
-    private String casAuthentication(final HttpServletRequest httpRequest)
-            throws SAXException, IOException, ParserConfigurationException {
-
         final var ticket = httpRequest.getHeader("authorization").replaceAll("^Bearer ", "");
         final var serviceTicket = ticket.startsWith("TGT-")
                 ? fetchServiceTicket(ticket)
@@ -76,7 +55,7 @@ public class RealCasAuthenticator implements CasAuthenticator {
                 "?service=" + serviceUrl +
                 "&ticket=" + serviceTicket;
 
-        final var response = ((Supplier<String>) () -> restTemplate.getForObject(url, String.class)).get();
+        final var response = restTemplate.getForObject(url, String.class);
 
         return DocumentBuilderFactory.newInstance().newDocumentBuilder()
                 .parse(new java.io.ByteArrayInputStream(response.getBytes()));
@@ -93,8 +72,7 @@ public class RealCasAuthenticator implements CasAuthenticator {
         return verification.getElementsByTagName("cas:user").item(0).getTextContent();
     }
 
-    private String throwBadCredentialsException(final String message) {
+    private void throwBadCredentialsException(final String message) {
         throw new BadCredentialsException(message);
     }
-
 }

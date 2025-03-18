@@ -9,6 +9,6 @@ public class FakeCasAuthenticator implements CasAuthenticator {
     @Override
     @SneakyThrows
     public String authenticate(final HttpServletRequest httpRequest) {
-        return httpRequest.getHeader("current-subject");
+        return httpRequest.getHeader("Authorization").replaceAll("^Bearer ", "");
     }
 }

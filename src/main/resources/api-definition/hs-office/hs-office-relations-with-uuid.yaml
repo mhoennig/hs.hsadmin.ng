@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single person relation by its uuid, if visible for the current subject.'
     operationId: getSingleRelationByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: relationUUID
           in: path
@@ -32,7 +31,6 @@ patch:
     description: 'Updates a single person relation by its uuid, if permitted for the current subject.'
     operationId: patchRelation
     parameters:
-        -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: relationUUID
             in: path
@@ -63,7 +61,6 @@ delete:
     description: 'Delete a single person relation by its uuid, if permitted for the current subject.'
     operationId: deleteRelationByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: relationUUID
           in: path

@@ -48,11 +48,10 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.contacts.api.getListOfContacts")
     public ResponseEntity<List<HsOfficeContactResource>> getListOfContacts(
-            final String currentSubject,
             final String assumedRoles,
             final String caption,
             final String emailAddress) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         validate("caption, emailAddress").atMaxOne(caption, emailAddress);
         final var entities = emailAddress != null
@@ -67,11 +66,10 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     @Transactional
     @Timed("app.office.contacts.api.postNewContact")
     public ResponseEntity<HsOfficeContactResource> postNewContact(
-            final String currentSubject,
             final String assumedRoles,
             final HsOfficeContactInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeContactRbacEntity.class);
 
@@ -90,11 +88,10 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.contacts.api.getSingleContactByUuid")
     public ResponseEntity<HsOfficeContactResource> getSingleContactByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID contactUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = contactRepo.findByUuid(contactUuid);
         if (result.isEmpty()) {
@@ -107,10 +104,9 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     @Transactional
     @Timed("app.office.contacts.api.deleteContactByUuid")
     public ResponseEntity<Void> deleteContactByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID contactUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = contactRepo.deleteByUuid(contactUuid);
         if (result == 0) {
@@ -124,12 +120,11 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     @Transactional
     @Timed("app.office.contacts.api.patchContact")
     public ResponseEntity<HsOfficeContactResource> patchContact(
-            final String currentSubject,
             final String assumedRoles,
             final UUID contactUuid,
             final HsOfficeContactPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var current = contactRepo.findByUuid(contactUuid).orElseThrow();
 

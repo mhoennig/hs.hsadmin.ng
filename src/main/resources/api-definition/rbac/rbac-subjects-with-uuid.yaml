@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single subject by its id, if visible for the current subject.'
     operationId: getSingleSubjectByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: subjectUuid
           in: path
@@ -31,7 +30,6 @@ delete:
         - rbac-subjects
     operationId: deleteSubjectByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: subjectUuid
           in: path

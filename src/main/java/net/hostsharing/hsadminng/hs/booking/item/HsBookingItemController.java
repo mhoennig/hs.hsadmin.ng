@@ -58,10 +58,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Transactional(readOnly = true)
     @Timed("app.bookingItems.api.getListOfBookingItemsByProjectUuid")
     public ResponseEntity<List<HsBookingItemResource>> getListOfBookingItemsByProjectUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID projectUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entities = bookingItemRepo.findAllByProjectUuid(projectUuid);
 
@@ -73,11 +72,10 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Transactional
     @Timed("app.bookingItems.api.postNewBookingItem")
     public ResponseEntity<HsBookingItemResource> postNewBookingItem(
-            final String currentSubject,
             final String assumedRoles,
             final HsBookingItemInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entityToSave = mapper.map(body, HsBookingItemRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
         final var saveProcessor = new BookingItemEntitySaveProcessor(em, entityToSave);
@@ -103,11 +101,10 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Transactional(readOnly = true)
     @Timed("app.bookingItems.api.getSingleBookingItemByUuid")
     public ResponseEntity<HsBookingItemResource> getSingleBookingItemByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID bookingItemUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = bookingItemRepo.findByUuid(bookingItemUuid);
         result.ifPresent(entity -> em.detach(entity)); // prevent further LAZY-loading
@@ -121,10 +118,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Transactional
     @Timed("app.bookingItems.api.deleteBookingIemByUuid")
     public ResponseEntity<Void> deleteBookingIemByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID bookingItemUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = bookingItemRepo.deleteByUuid(bookingItemUuid);
         return result == 0
@@ -136,12 +132,11 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Transactional
     @Timed("app.bookingItems.api.patchBookingItem")
     public ResponseEntity<HsBookingItemResource> patchBookingItem(
-            final String currentSubject,
             final String assumedRoles,
             final UUID bookingItemUuid,
             final HsBookingItemPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var current = bookingItemRepo.findByUuid(bookingItemUuid).orElseThrow();
 

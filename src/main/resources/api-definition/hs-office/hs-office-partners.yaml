@@ -5,7 +5,6 @@ get:
         - hs-office-partners
     operationId: getListOfPartners
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query
@@ -33,7 +32,6 @@ post:
         - hs-office-partners
     operationId: postNewPartner
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

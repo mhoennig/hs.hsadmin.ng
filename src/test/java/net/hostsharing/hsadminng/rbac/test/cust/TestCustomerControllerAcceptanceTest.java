@@ -59,7 +59,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewAllCustomers_ifNoCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -77,7 +77,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers?prefix=y")
@@ -93,7 +93,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -110,7 +110,7 @@ class TestCustomerControllerAcceptanceTest {
         void customerAdmin_withoutAssumedRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "customer-admin@yyy.example.com")
+                    .header("Authorization", "Bearer customer-admin@yyy.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -131,7 +131,7 @@ class TestCustomerControllerAcceptanceTest {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -163,7 +163,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -194,7 +194,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "customer-admin@yyy.example.com")
+                    .header("Authorization", "Bearer customer-admin@yyy.example.com")
                     .contentType(ContentType.JSON)
                     .body("""
                               {
@@ -224,7 +224,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("{]") // deliberately invalid JSON
                     .port(port)

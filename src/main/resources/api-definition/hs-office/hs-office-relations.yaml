@@ -7,7 +7,6 @@ get:
         - hs-office-relations
     operationId: getListOfRelations
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUuid
           in: query
@@ -60,7 +59,6 @@ post:
         - hs-office-relations
     operationId: postNewRelation
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

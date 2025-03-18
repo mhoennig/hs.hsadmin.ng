@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {"management.port=0", "server.port=0", "hsadminng.cas.server=http://localhost:8088"})
-@ActiveProfiles("wiremock") // IMPORTANT: To test prod config, do not use test profile!
+@ActiveProfiles({"wiremock", "realCasAuthenticator"}) // IMPORTANT: To test prod config, do NOT use test profile!
 @Tag("generalIntegrationTest")
 class WebSecurityConfigIntegrationTest {
 

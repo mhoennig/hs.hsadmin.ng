@@ -3,7 +3,6 @@ get:
         - rbac-roles
     operationId: getListOfRoles
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     responses:
         "200":

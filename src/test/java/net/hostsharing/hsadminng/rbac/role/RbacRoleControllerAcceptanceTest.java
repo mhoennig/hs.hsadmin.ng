@@ -40,7 +40,7 @@ class RbacRoleControllerAcceptanceTest {
         // @formatter:off
         RestAssured
             .given()
-                .header("current-subject", "superuser-alex@hostsharing.net")
+                .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac/roles")
@@ -65,7 +65,7 @@ class RbacRoleControllerAcceptanceTest {
         // @formatter:off
         RestAssured
             .given()
-                .header("current-subject", "superuser-alex@hostsharing.net")
+                .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                 .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
                 .port(port)
             .when()
@@ -98,7 +98,7 @@ class RbacRoleControllerAcceptanceTest {
         // @formatter:off
         RestAssured
             .given()
-                .header("current-subject", "pac-admin-zzz00@zzz.example.com")
+                .header("Authorization", "Bearer pac-admin-zzz00@zzz.example.com")
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac/roles")

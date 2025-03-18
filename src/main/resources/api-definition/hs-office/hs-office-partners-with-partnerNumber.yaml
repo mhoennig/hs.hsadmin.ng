@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single business partner by its partner-number (prefixed with "P-"), if visible for the current subject.'
     operationId: getSinglePartnerByPartnerNumber
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: partnerNumber
           in: path

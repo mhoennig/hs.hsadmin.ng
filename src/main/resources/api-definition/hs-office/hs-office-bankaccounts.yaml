@@ -5,7 +5,6 @@ get:
         - hs-office-bank-accounts
     operationId: getListOfBankAccounts
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: holder
           in: query
@@ -33,7 +32,6 @@ post:
         - hs-office-bank-accounts
     operationId: postNewBankAccount
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

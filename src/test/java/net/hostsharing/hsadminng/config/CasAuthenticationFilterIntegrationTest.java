@@ -20,7 +20,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {"server.port=0", "hsadminng.cas.server=http://localhost:8088"})
-@ActiveProfiles("wiremock") // IMPORTANT: To test prod config, do not use test profile!
+@ActiveProfiles({"wiremock", "realCasAuthenticator"}) // IMPORTANT: To test prod config, do NOT use test profile!
 @Tag("generalIntegrationTest")
 class CasAuthenticationFilterIntegrationTest {
 

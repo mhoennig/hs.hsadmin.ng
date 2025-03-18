@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single asset transaction by its uuid, if visible for the current subject.'
     operationId: getSingleCoopAssetTransactionByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: assetTransactionUUID
           in: path

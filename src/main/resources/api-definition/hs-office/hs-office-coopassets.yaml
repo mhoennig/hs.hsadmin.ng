@@ -5,7 +5,6 @@ get:
     - hs-office-coopAssets
   operationId: getListOfCoopAssets
   parameters:
-    - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     - name: membershipUuid
       in: query
@@ -48,7 +47,6 @@ post:
     - hs-office-coopAssets
   operationId: postNewCoopAssetTransaction
   parameters:
-    - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'
   requestBody:
     description: A JSON object describing the new cooperative assets transaction.

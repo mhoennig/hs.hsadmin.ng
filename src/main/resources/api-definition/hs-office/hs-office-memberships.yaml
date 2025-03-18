@@ -6,7 +6,6 @@ get:
         - hs-office-memberships
     operationId: getListOfMemberships
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: partnerUuid
           in: query
@@ -42,7 +41,6 @@ post:
         - hs-office-memberships
     operationId: postNewMembership
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new membership.

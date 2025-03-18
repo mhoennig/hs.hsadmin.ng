@@ -91,16 +91,14 @@ Next, compile and run the application on `localhost:8080` and the management ser
     export HSADMINNG_CAS_SERVER=
 
     # this runs the application with test-data and all modules:
-    gw bootRun --args='--spring.profiles.active=dev,complete,test-data'
+    gw bootRun --args='--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data'
 
 The meaning of these profiles is:
 
 - **dev**: the PostgreSQL users are created via Liquibase
+- **fakeCasAuthenticator**: The username is simply taken from whatever is after "Bearer " in the "Authorization" header.
 - **complete**: all modules are started
 - **test-data**: some test data inserted 
-
-Running just `gw bootRun` would just run the *office* module, not insert any test-data and
-require the PostgreSQL users created in the database (see env-vars in `.aliases`).
 
 Now we can access the REST API, e.g. using curl:
 
@@ -109,19 +107,19 @@ Now we can access the REST API, e.g. using curl:
 
     # the following command should return a JSON array with just all customers:
     curl -f -s\
-        -H 'current-subject: superuser-alex@hostsharing.net' \
+        -H 'Authorization: Bearer superuser-alex@hostsharing.net' \
         http://localhost:8080/api/test/customers \
     | jq # just if `jq` is installed, to prettyprint the output
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
     curl -f -s\
-        -H 'current-subject: superuser-alex@hostsharing.net' -H 'assumed-roles: rbactest.customer#yyy:ADMIN' \
+        -H 'Authorization: Bearer superuser-alex@hostsharing.net' -H 'assumed-roles: rbactest.customer#yyy:ADMIN' \
         http://localhost:8080/api/test/packages \
     | jq
 
     # add a new customer
     curl -f -s\
-        -H 'current-subject: superuser-alex@hostsharing.net' -H "Content-Type: application/json" \
+        -H 'Authorization: Bearer superuser-alex@hostsharing.net' -H "Content-Type: application/json" \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
         -X POST http://localhost:8080/api/test/customers \
     | jq
@@ -136,6 +134,14 @@ And to see the full, currently implemented, API, open http://localhost:8080/swag
 For a locally running app without CAS-authentication (export HSADMINNG_CAS_SERVER=''), 
 authorize using the name of the subject (e.g. "superuser-alex@hostsharing.net" in case of test-data).
 Otherwise, use a valid CAS-ticket.
+
+If you want to run the application with real CAS-Authentication:
+
+    # set the CAS-SERVER-Root, also see `bin/cas-curl`.
+    export HSADMINNG_CAS_SERVER=https://login.hostsharing.net # or whatever your CAS-Server-URL you want to use
+
+    # run the application against the real CAS authenticator
+    gw bootRun --args='--spring.profiles.active=dev,realCasAuthenticator,complete,test-data'
 
 
 ### PostgreSQL Server
@@ -657,7 +663,7 @@ howto
 Add `--args='--spring.profiles.active=...` with the wanted profile selector:
 
 ```sh
-gw bootRun --args='--spring.profiles.active=external-db,only -office,without-test-data'
+gw bootRun --args='--spring.profiles.active=external-db,only-office,without-test-data'
 ```
 
 These profiles mean:
@@ -673,7 +679,7 @@ Add `' --debug-jvm` to the command line:
 
 
 ```sh
-gw bootRun --debug-jvm
+gw bootRun ... --debug-jvm
 ```
 
 At the very beginning, the application is going to wait for a debugger with a message like this:

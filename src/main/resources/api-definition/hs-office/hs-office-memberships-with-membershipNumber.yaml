@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single membership by its membershipNumber, if visible for the current subject.'
     operationId: getSingleMembershipByMembershipNumber
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: membershipNumber
           in: path

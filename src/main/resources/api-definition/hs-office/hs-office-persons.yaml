@@ -5,7 +5,6 @@ get:
         - hs-office-persons
     operationId: getListOfPersons
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query
@@ -33,7 +32,6 @@ post:
         - hs-office-persons
     operationId: postNewPerson
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

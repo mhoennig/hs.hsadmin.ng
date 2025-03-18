@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
@@ -64,6 +66,28 @@ class ContextIntegrationTests {
 
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
                 .containsExactly(context.fetchCurrentSubjectUuid());
+    }
+
+    @Test
+    @Transactional
+    void assumeRoles() {
+        // given
+        final var authentication = new UsernamePasswordAuthenticationToken("superuser-fran@hostsharing.net", null, null);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // when
+        context.assumeRoles("rbactest.package#yyy00:ADMIN");
+
+        // then
+        assertThat(context.fetchCurrentSubject()).
+                isEqualTo("superuser-fran@hostsharing.net");
+
+        assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
+
+        assertThat(context.fetchAssumedRoles()).isEqualTo(Array.of("rbactest.package#yyy00:ADMIN"));
+
+        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
+                .containsExactly(context.fetchCurrentSubjectOrAssumedRolesUuids());
     }
 
     @Test

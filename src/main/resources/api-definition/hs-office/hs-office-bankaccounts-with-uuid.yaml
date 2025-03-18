@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single bank account by its uuid, if visible for the current subject.'
     operationId: getSingleBankAccountByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: bankAccountUUID
           in: path
@@ -31,7 +30,6 @@ delete:
     description: 'Delete a single bank account by its uuid, if permitted for the current subject.'
     operationId: deleteBankAccountByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: bankAccountUUID
           in: path

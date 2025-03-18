@@ -35,10 +35,9 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.bankAccounts.api.patchDebitor")
     public ResponseEntity<List<HsOfficeBankAccountResource>> getListOfBankAccounts(
-            final String currentSubject,
             final String assumedRoles,
             final String holder) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entities = bankAccountRepo.findByOptionalHolderLike(holder);
 
@@ -50,11 +49,10 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     @Transactional
     @Timed("app.office.bankAccounts.api.postNewBankAccount")
     public ResponseEntity<HsOfficeBankAccountResource> postNewBankAccount(
-            final String currentSubject,
             final String assumedRoles,
             final HsOfficeBankAccountInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         IbanUtil.validate(body.getIban());
         BicUtil.validate(body.getBic());
@@ -77,11 +75,10 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.bankAccounts.api.getSingleBankAccountByUuid")
     public ResponseEntity<HsOfficeBankAccountResource> getSingleBankAccountByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID bankAccountUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = bankAccountRepo.findByUuid(bankAccountUuid);
         if (result.isEmpty()) {
@@ -94,10 +91,9 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     @Transactional
     @Timed("app.office.bankAccounts.api.deleteBankAccountByUuid")
     public ResponseEntity<Void> deleteBankAccountByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID BankAccountUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = bankAccountRepo.deleteByUuid(BankAccountUuid);
         if (result == 0) {

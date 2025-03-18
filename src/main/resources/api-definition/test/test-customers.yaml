@@ -6,7 +6,6 @@ get:
     operationId: listCustomers
 
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: prefix
           in: query
@@ -34,7 +33,6 @@ post:
         - testCustomers
     operationId: addCustomer
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

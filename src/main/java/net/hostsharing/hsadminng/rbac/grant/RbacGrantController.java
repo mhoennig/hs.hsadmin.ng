@@ -37,12 +37,11 @@ public class RbacGrantController implements RbacGrantsApi {
     @Transactional(readOnly = true)
     @Timed("app.rbac.grants.api.getListOfGrantsByUuid")
     public ResponseEntity<RbacGrantResource> getListOfGrantsByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID grantedRoleUuid,
             final UUID granteeSubjectUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var id = new RbacGrantId(granteeSubjectUuid, grantedRoleUuid);
         final var result = rbacGrantRepository.findById(id);
@@ -56,10 +55,9 @@ public class RbacGrantController implements RbacGrantsApi {
     @Transactional(readOnly = true)
     @Timed("app.rbac.grants.api.getListOfSubjectGrants")
     public ResponseEntity<List<RbacGrantResource>> getListOfSubjectGrants(
-            final String currentSubject,
             final String assumedRoles) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         return ResponseEntity.ok(mapper.mapList(rbacGrantRepository.findAll(), RbacGrantResource.class));
     }
@@ -68,11 +66,10 @@ public class RbacGrantController implements RbacGrantsApi {
     @Transactional
     @Timed("app.rbac.grants.api.postNewRoleGrantToSubject")
     public ResponseEntity<RbacGrantResource> postNewRoleGrantToSubject(
-            final String currentSubject,
             final String assumedRoles,
             final RbacGrantResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var granted = rbacGrantRepository.save(mapper.map(body, RbacGrantEntity.class));
         em.flush();
@@ -90,12 +87,11 @@ public class RbacGrantController implements RbacGrantsApi {
     @Transactional
     @Timed("app.rbac.grants.api.deleteRoleGrantFromSubject")
     public ResponseEntity<Void> deleteRoleGrantFromSubject(
-            final String currentSubject,
             final String assumedRoles,
             final UUID grantedRoleUuid,
             final UUID granteeSubjectUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         rbacGrantRepository.deleteByRbacGrantId(new RbacGrantId(granteeSubjectUuid, grantedRoleUuid));
 

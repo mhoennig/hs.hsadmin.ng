@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single debitor by its debitorNumber, if visible for the current subject.'
     operationId: getSingleDebitorByDebitorNumber
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: debitorNumber
           in: path

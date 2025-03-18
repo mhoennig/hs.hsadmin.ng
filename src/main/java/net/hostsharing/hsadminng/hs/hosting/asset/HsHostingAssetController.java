@@ -55,12 +55,11 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     @Transactional(readOnly = true)
     @Timed("app.hosting.assets.api.getListOfHostingAssets")
     public ResponseEntity<List<HsHostingAssetResource>> getListOfHostingAssets(
-            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid,
             final UUID parentAssetUuid,
             final HsHostingAssetTypeResource type) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entities = rbacAssetRepo.findAllByCriteria(debitorUuid, parentAssetUuid, HsHostingAssetType.of(type));
 
@@ -73,11 +72,10 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     @Transactional
     @Timed("app.hosting.assets.api.postNewHostingAsset")
     public ResponseEntity<HsHostingAssetResource> postNewHostingAsset(
-            final String currentSubject,
             final String assumedRoles,
             final HsHostingAssetInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entity = mapper.map(body, HsHostingAssetRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
@@ -102,11 +100,10 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     @Transactional(readOnly = true)
     @Timed("app.hosting.assets.api.getSingleHostingAssetByUuid")
     public ResponseEntity<HsHostingAssetResource> getSingleHostingAssetByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID assetUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = rbacAssetRepo.findByUuid(assetUuid);
         return result
@@ -119,10 +116,9 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     @Transactional
     @Timed("app.hosting.assets.api.deleteHostingAssetByUuid")
     public ResponseEntity<Void> deleteHostingAssetByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID assetUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = rbacAssetRepo.deleteByUuid(assetUuid);
         return result == 0
@@ -134,12 +130,11 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     @Transactional
     @Timed("app.hosting.assets.api.patchHostingAsset")
     public ResponseEntity<HsHostingAssetResource> patchHostingAsset(
-            final String currentSubject,
             final String assumedRoles,
             final UUID assetUuid,
             final HsHostingAssetPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entity = rbacAssetRepo.findByUuid(assetUuid).orElseThrow();
 

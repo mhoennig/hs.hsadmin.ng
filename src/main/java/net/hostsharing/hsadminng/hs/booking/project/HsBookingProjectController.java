@@ -42,10 +42,9 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Transactional(readOnly = true)
     @Timed("app.bookingProjects.api.getListOfBookingProjectsByDebitorUuid")
     public ResponseEntity<List<HsBookingProjectResource>> getListOfBookingProjectsByDebitorUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entities = bookingProjectRepo.findAllByDebitorUuid(debitorUuid);
 
@@ -57,11 +56,10 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Transactional
     @Timed("app.bookingProjects.api.postNewBookingProject")
     public ResponseEntity<HsBookingProjectResource> postNewBookingProject(
-            final String currentSubject,
             final String assumedRoles,
             final HsBookingProjectInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entityToSave = mapper.map(body, HsBookingProjectRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
@@ -80,11 +78,10 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Transactional(readOnly = true)
     @Timed("app.bookingProjects.api.getBookingProjectByUuid")
     public ResponseEntity<HsBookingProjectResource> getBookingProjectByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID bookingProjectUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = bookingProjectRepo.findByUuid(bookingProjectUuid);
         return result
@@ -97,10 +94,9 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Transactional
     @Timed("app.bookingProjects.api.deleteBookingIemByUuid")
     public ResponseEntity<Void> deleteBookingIemByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID bookingProjectUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = bookingProjectRepo.deleteByUuid(bookingProjectUuid);
         return result == 0
@@ -112,12 +108,11 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Transactional
     @Timed("app.bookingProjects.api.patchBookingProject")
     public ResponseEntity<HsBookingProjectResource> patchBookingProject(
-            final String currentSubject,
             final String assumedRoles,
             final UUID bookingProjectUuid,
             final HsBookingProjectPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var current = bookingProjectRepo.findByUuid(bookingProjectUuid).orElseThrow();
 

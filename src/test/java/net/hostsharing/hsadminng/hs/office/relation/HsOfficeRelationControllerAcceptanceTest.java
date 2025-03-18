@@ -68,7 +68,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations?personUuid=%s&relationType=%s"
@@ -126,7 +126,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                     .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/office/relations?personUuid=%s"
@@ -183,7 +183,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                     .given()
-                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/office/relations?personData=firby&contactData=Contact-Admin@FirstContact.Example.COM")
@@ -235,7 +235,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -280,7 +280,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -348,7 +348,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -380,7 +380,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -413,7 +413,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -447,7 +447,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelationUuid)
@@ -470,7 +470,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
+                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelationUuid)
@@ -486,7 +486,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "contact-admin@firstcontact.example.com")
+                    .header("Authorization", "Bearer contact-admin@firstcontact.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -529,7 +529,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -572,7 +572,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -591,7 +591,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "contact-admin@seventhcontact.example.com")
+                    .header("Authorization", "Bearer contact-admin@seventhcontact.example.com")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -610,7 +610,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
+                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())

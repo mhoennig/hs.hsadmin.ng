@@ -5,7 +5,6 @@ get:
         - hs-office-contacts
     operationId: getListOfContacts
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: caption
           in: query
@@ -40,7 +39,6 @@ post:
         - hs-office-contacts
     operationId: postNewContact
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

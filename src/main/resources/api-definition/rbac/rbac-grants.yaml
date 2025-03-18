@@ -3,7 +3,6 @@ get:
         - rbac-grants
     operationId: getListOfSubjectGrants
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     responses:
         "200":
@@ -20,7 +19,6 @@ post:
         - rbac-grants
     operationId: postNewRoleGrantToSubject
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         required: true

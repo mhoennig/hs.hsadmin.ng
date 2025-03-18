@@ -44,11 +44,10 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.membership.api.getListOfMemberships")
     public ResponseEntity<List<HsOfficeMembershipResource>> getListOfMemberships(
-            final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid,
             final String partnerNumber) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         validate("partnerUuid, partnerNumber").atMaxOne(partnerUuid, partnerNumber);
 
@@ -69,11 +68,10 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Transactional
     @Timed("app.office.membership.api.postNewMembership")
     public ResponseEntity<HsOfficeMembershipResource> postNewMembership(
-            final String currentSubject,
             final String assumedRoles,
             final HsOfficeMembershipInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeMembershipEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
 
@@ -94,11 +92,10 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.membership.api.getSingleMembershipByUuid")
     public ResponseEntity<HsOfficeMembershipResource> getSingleMembershipByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = membershipRepo.findByUuid(membershipUuid);
         if (result.isEmpty()) {
@@ -113,11 +110,10 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.membership.api.getSingleMembershipByMembershipNumber")
     public ResponseEntity<HsOfficeMembershipResource> getSingleMembershipByMembershipNumber(
-            final String currentSubject,
             final String assumedRoles,
             final Integer membershipNumber) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = membershipRepo.findMembershipByMemberNumber(membershipNumber);
         if (result.isEmpty()) {
@@ -132,10 +128,9 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Transactional
     @Timed("app.office.membership.api.deleteMembershipByUuid")
     public ResponseEntity<Void> deleteMembershipByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = membershipRepo.deleteByUuid(membershipUuid);
         if (result == 0) {
@@ -149,12 +144,11 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Transactional
     @Timed("app.office.membership.api.patchMembership")
     public ResponseEntity<HsOfficeMembershipResource> patchMembership(
-            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid,
             final HsOfficeMembershipPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var current = membershipRepo.findByUuid(membershipUuid).orElseThrow();
 

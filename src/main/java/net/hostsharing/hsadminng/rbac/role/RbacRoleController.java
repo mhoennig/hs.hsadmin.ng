@@ -30,10 +30,9 @@ public class RbacRoleController implements RbacRolesApi {
     @Transactional(readOnly = true)
     @Timed("app.rbac.roles.api.getListOfRoles")
     public ResponseEntity<List<RbacRoleResource>> getListOfRoles(
-            final String currentSubject,
             final String assumedRoles) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final List<RbacRoleEntity> result = rbacRoleRepository.findAll();
 

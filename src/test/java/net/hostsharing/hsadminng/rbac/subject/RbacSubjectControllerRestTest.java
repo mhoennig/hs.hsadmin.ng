@@ -22,6 +22,7 @@ import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -62,6 +63,7 @@ class RbacSubjectControllerRestTest {
 
                 // then
                 .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "http://localhost/api/rbac/subjects/" + givenUuid))
                 .andExpect(jsonPath("uuid", is(givenUuid.toString())));
 
         // then

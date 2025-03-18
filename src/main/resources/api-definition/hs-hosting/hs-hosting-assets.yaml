@@ -5,7 +5,6 @@ get:
         - hs-hosting-assets
     operationId: getListOfHostingAssets
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: projectUuid
           in: query
@@ -47,7 +46,6 @@ post:
         - hs-hosting-assets
     operationId: postNewHostingAsset
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new hosting asset.

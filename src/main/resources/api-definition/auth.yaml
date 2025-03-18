@@ -3,14 +3,6 @@ components:
 
     parameters:
 
-        currentSubject:
-            name: current-subject
-            in: header
-            required: false
-            schema:
-                type: string
-            description: Identifying name of the current subject (e.g. user).
-
         assumedRoles:
             name: assumed-roles
             in: header

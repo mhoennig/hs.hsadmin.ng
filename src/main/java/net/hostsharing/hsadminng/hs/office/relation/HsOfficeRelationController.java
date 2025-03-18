@@ -52,14 +52,13 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.relations.api.getListOfRelations")
     public ResponseEntity<List<HsOfficeRelationResource>> getListOfRelations(
-            final String currentSubject,
             final String assumedRoles,
             final UUID personUuid,
             final HsOfficeRelationTypeResource relationType,
             final String mark,
             final String personData,
             final String contactData) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final List<HsOfficeRelationRbacEntity> entities =
                 rbacRelationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
@@ -76,11 +75,10 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     @Transactional
     @Timed("app.office.relations.api.postNewRelation")
     public ResponseEntity<HsOfficeRelationResource> postNewRelation(
-            final String currentSubject,
             final String assumedRoles,
             final HsOfficeRelationInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entityToSave = new HsOfficeRelationRbacEntity();
         entityToSave.setType(HsOfficeRelationType.valueOf(body.getType()));
@@ -128,11 +126,10 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.relations.api.getSingleRelationByUuid")
     public ResponseEntity<HsOfficeRelationResource> getSingleRelationByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID relationUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = rbacRelationRepo.findByUuid(relationUuid);
         if (result.isEmpty()) {
@@ -145,10 +142,9 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     @Transactional
     @Timed("apprelations.api..deleteRelationByUuid")
     public ResponseEntity<Void> deleteRelationByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID relationUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = rbacRelationRepo.deleteByUuid(relationUuid);
         if (result == 0) {
@@ -162,12 +158,11 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     @Transactional
     @Timed("app.office.relations.api.patchRelation")
     public ResponseEntity<HsOfficeRelationResource> patchRelation(
-            final String currentSubject,
             final String assumedRoles,
             final UUID relationUuid,
             final HsOfficeRelationContactPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var current = rbacRelationRepo.findByUuid(relationUuid).orElseThrow();
 

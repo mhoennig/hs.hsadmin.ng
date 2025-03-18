@@ -66,7 +66,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void globalAdmin_withoutAssumedRole_canViewAllGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -118,7 +118,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void globalAdmin_withAssumedPackageAdminRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
                     .port(port)
                 .when()
@@ -141,7 +141,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void packageAdmin_withoutAssumedRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-subject", "pac-admin-yyy00@yyy.example.com")
+                    .header("Authorization", "Bearer pac-admin-yyy00@yyy.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -387,22 +387,22 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
                 return RestAssured // @formatter:ff
                         .given()
-                        .header("current-subject", grantingSubject.currentSubject)
-                        .header("assumed-roles", grantingSubject.assumedRole)
-                        .contentType(ContentType.JSON)
-                        .body("""
-                                {
-                                  "assumed": true,
-                                  "grantedRole.uuid": "%s",
-                                  "granteeSubject.uuid": "%s"
-                                }
-                                """.formatted(
-                                grantedRole.getUuid(),
-                                granteeUser.getUuid())
-                        )
-                        .port(port)
+                            .header("Authorization", "Bearer " + grantingSubject.currentSubject)
+                            .header("assumed-roles", grantingSubject.assumedRole)
+                            .contentType(ContentType.JSON)
+                            .body("""
+                                    {
+                                      "assumed": true,
+                                      "grantedRole.uuid": "%s",
+                                      "granteeSubject.uuid": "%s"
+                                    }
+                                    """.formatted(
+                                    grantedRole.getUuid(),
+                                    granteeUser.getUuid())
+                            )
+                            .port(port)
                         .when()
-                        .post("http://localhost/api/rbac/grants")
+                            .post("http://localhost/api/rbac/grants")
                         .then().log().all(); // @formatter:on
             }
         }
@@ -423,7 +423,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
                 return RestAssured // @formatter:ff
                         .given()
-                        .header("current-subject", currentSubject.currentSubject)
+                        .header("Authorization", "Bearer " + currentSubject.currentSubject)
                         .header("assumed-roles", currentSubject.assumedRole)
                         .contentType(ContentType.JSON)
                         .body("""
@@ -459,7 +459,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
                 return RestAssured // @formatter:ff
                         .given()
-                        .header("current-subject", currentSubject.currentSubject)
+                        .header("Authorization", "Bearer " + currentSubject.currentSubject)
                         .header("assumed-roles", currentSubject.assumedRole)
                         .port(port)
                         .when()

@@ -3,7 +3,6 @@ get:
     - rbac-grants
   operationId: getListOfGrantsByUuid
   parameters:
-    - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     - name: grantedRoleUuid
       in: path
@@ -38,7 +37,6 @@ delete:
         - rbac-grants
     operationId: deleteRoleGrantFromSubject
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: grantedRoleUuid
           in: path

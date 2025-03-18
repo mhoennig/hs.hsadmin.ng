@@ -5,7 +5,6 @@ get:
         - hs-office-sepaMandates
     operationId: getListOfSepaMandates
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: iban
           in: query
@@ -33,7 +32,6 @@ post:
         - hs-office-sepaMandates
     operationId: postNewSepaMandate
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new SEPA-Mandate.

@@ -4,7 +4,6 @@ get:
     description: List accessible RBAC subjects with optional filter by name.
     operationId: getListOfSubjects
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query

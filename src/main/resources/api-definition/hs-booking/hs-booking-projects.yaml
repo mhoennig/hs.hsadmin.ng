@@ -5,7 +5,6 @@ get:
         - hs-booking-projects
     operationId: getListOfBookingProjectsByDebitorUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: debitorUuid
           in: query
@@ -34,7 +33,6 @@ post:
         - hs-booking-projects
     operationId: postNewBookingProject
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new booking project.

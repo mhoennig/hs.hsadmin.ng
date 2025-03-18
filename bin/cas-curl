@@ -131,6 +131,15 @@ function casTicket() {
   echo $HSADMINNG_CAS_TICKET
 }
 
+function casTgt() {
+  HSADMINNG_CAS_TGT=$(<~/.cas-login-tgt)
+    if [[ -z "$HSADMINNG_CAS_TGT" ]]; then
+      echo "ERROR: cannot get CAS ticket granting ticket for $HSADMINNG_CAS_USERNAME" >&2
+      exit 1
+    fi
+    echo "CAS-TGT: $HSADMINNG_CAS_TGT"
+}
+
 function casValidate() {
   HSADMINNG_CAS_TICKET=`casTicket`
 
@@ -190,6 +199,9 @@ case "${1,,}" in
     ;;
   "unassume") ## do not assume any particular role anymore, use the plain user as RBAC subject
     rm ~/.cas-curl-assume
+    ;;
+  "tgt") ## prints the current ticket granting ticket
+    casTgt
     ;;
   "validate") ## validates current ticket granting ticket and prints currently logged in user
     casValidate

@@ -22,9 +22,6 @@ import jakarta.servlet.http.HttpServletResponse;
 @SecurityScheme(type = SecuritySchemeType.HTTP, name = "casTicket", scheme = "bearer", bearerFormat = "CAS ticket", description = "CAS ticket", in = SecuritySchemeIn.HEADER)
 public class WebSecurityConfig {
 
-    private static final String[] PERMITTED_PATHS = new String[] { "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**" };
-    private static final String[] AUTHENTICATED_PATHS = new String[] { "/api/**" };
-
     @Lazy
     @Autowired
     private CasAuthenticationFilter authenticationFilter;
@@ -34,8 +31,13 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(PERMITTED_PATHS).permitAll()
-                        .requestMatchers(AUTHENTICATED_PATHS).authenticated()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/**",
+                                "/api/hs/hosting/asset-types/**"
+                        ).permitAll()
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(authenticationFilter, AuthenticationFilter.class)
@@ -51,9 +53,15 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    @Profile("!test")
-    public CasAuthenticator casServiceTicketValidator() {
+    @Profile("realCasAuthenticator")
+    public CasAuthenticator realCasServiceTicketValidator() {
         return new RealCasAuthenticator();
+    }
+
+    @Bean
+    @Profile("fakeCasAuthenticator")
+    public CasAuthenticator fakeCasServiceTicketValidator() {
+        return new FakeCasAuthenticator();
     }
 
     @Bean

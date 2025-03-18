@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -44,6 +45,12 @@ public class Context {
 
     @Transactional(propagation = MANDATORY)
     public void define(final String currentSubject, final String assumedRoles) {
+        define(toTask(request), toCurl(request), currentSubject, assumedRoles);
+    }
+
+    @Transactional(propagation = MANDATORY)
+    public void assumeRoles(final String assumedRoles) {
+        final var currentSubject = SecurityContextHolder.getContext().getAuthentication().getName();
         define(toTask(request), toCurl(request), currentSubject, assumedRoles);
     }
 

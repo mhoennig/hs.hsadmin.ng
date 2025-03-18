@@ -86,7 +86,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -104,7 +104,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -123,7 +123,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "customer-admin@yyy.example.com")
+                    .header("Authorization", "Bearer customer-admin@yyy.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -141,7 +141,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "customer-admin@xxx.example.com")
+                    .header("Authorization", "Bearer customer-admin@xxx.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -160,7 +160,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
@@ -185,7 +185,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects?name=pac-admin-zzz0")
@@ -205,7 +205,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -227,7 +227,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "customer-admin@yyy.example.com")
+                    .header("Authorization", "Bearer customer-admin@yyy.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
@@ -248,7 +248,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "pac-admin-xxx01@xxx.example.com")
+                    .header("Authorization", "Bearer pac-admin-xxx01@xxx.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
@@ -271,7 +271,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")
@@ -300,7 +300,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -330,7 +330,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "pac-admin-yyy00@yyy.example.com")
+                    .header("Authorization", "Bearer pac-admin-yyy00@yyy.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")
@@ -359,7 +359,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-subject", "pac-admin-yyy00@yyy.example.com")
+                    .header("Authorization", "Bearer pac-admin-yyy00@yyy.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")
@@ -383,7 +383,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             final var location = RestAssured
                     .given()
-                        .header("current-subject", givenUser.getName())
+                        .header("Authorization", "Bearer " + givenUser.getName())
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -404,7 +404,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             final var location = RestAssured
                     .given()
-                        .header("current-subject", "customer-admin@xxx.example.com")
+                        .header("Authorization", "Bearer customer-admin@xxx.example.com")
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -426,7 +426,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             final var location = RestAssured
                     .given()
-                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())

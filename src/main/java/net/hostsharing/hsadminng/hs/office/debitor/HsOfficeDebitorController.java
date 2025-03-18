@@ -64,12 +64,11 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.debitors.api.getListOfDebitors")
     public ResponseEntity<List<HsOfficeDebitorResource>> getListOfDebitors(
-            final String currentSubject,
             final String assumedRoles,
             final String name,
             final UUID partnerUuid,
             final String partnerNumber) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entities = partnerNumber != null
                 ? debitorRepo.findDebitorsByPartnerNumber(cropTag("P-", partnerNumber))
@@ -85,11 +84,10 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Transactional
     @Timed("app.office.debitors.api.postNewDebitor")
     public ResponseEntity<HsOfficeDebitorResource> postNewDebitor(
-            String currentSubject,
             String assumedRoles,
             HsOfficeDebitorInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         Validate.isTrue(
                 body.getDebitorRel() == null || body.getDebitorRelUuid() == null,
@@ -118,11 +116,10 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.debitors.api.getSingleDebitorByUuid")
     public ResponseEntity<HsOfficeDebitorResource> getSingleDebitorByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = debitorRepo.findByUuid(debitorUuid);
         if (result.isEmpty()) {
@@ -135,11 +132,10 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Transactional(readOnly = true)
     @Timed("app.office.debitors.api.getSingleDebitorByDebitorNumber")
     public ResponseEntity<HsOfficeDebitorResource> getSingleDebitorByDebitorNumber(
-            final String currentSubject,
             final String assumedRoles,
             final Integer debitorNumber) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = debitorRepo.findDebitorByDebitorNumber(debitorNumber);
         if (result.isEmpty()) {
@@ -152,10 +148,9 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Transactional
     @Timed("app.office.debitors.api.deleteDebitorByUuid")
     public ResponseEntity<Void> deleteDebitorByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = debitorRepo.deleteByUuid(debitorUuid);
         if (result == 0) {
@@ -169,12 +164,11 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Transactional
     @Timed("app.office.debitors.api.patchDebitor")
     public ResponseEntity<HsOfficeDebitorResource> patchDebitor(
-            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid,
             final HsOfficeDebitorPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var current = debitorRepo.findByUuid(debitorUuid).orElseThrow().reload(em);
 

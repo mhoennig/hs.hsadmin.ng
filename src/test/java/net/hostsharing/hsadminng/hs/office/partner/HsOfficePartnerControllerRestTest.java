@@ -99,7 +99,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/partners")
-                            .header("current-subject", "superuser-alex@hostsharing.net")
+                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                      {
@@ -132,7 +132,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/partners")
-                            .header("current-subject", "superuser-alex@hostsharing.net")
+                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                      {
@@ -174,7 +174,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                     .get("/api/hs/office/partners/P-12345")
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON))
 
@@ -191,7 +191,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                     .get("/api/hs/office/partners/P-12345")
-                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON))
 
@@ -219,7 +219,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/office/partners/" + givenPartnerUuid)
-                            .header("current-subject", "superuser-alex@hostsharing.net")
+                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON))
 

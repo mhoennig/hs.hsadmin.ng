@@ -159,7 +159,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         final var request = HttpRequest.newBuilder()
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
-                .header("current-subject", ScenarioTest.RUN_AS_USER)
+                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
                 .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -174,7 +174,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .POST(BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("current-subject", ScenarioTest.RUN_AS_USER)
+                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
                 .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -189,7 +189,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .method(HttpMethod.PATCH.toString(), BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("current-subject", ScenarioTest.RUN_AS_USER)
+                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
                 .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -203,7 +203,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .DELETE()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("current-subject", ScenarioTest.RUN_AS_USER)
+                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
                 .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());

@@ -2,6 +2,8 @@ package net.hostsharing.hsadminng.config;
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -24,7 +26,8 @@ public class CasAuthenticationFilter extends OncePerRequestFilter {
         if (request.getHeader("authorization") != null) {
             final var authenticatedRequest = new AuthenticatedHttpServletRequestWrapper(request);
             final var currentSubject = authenticator.authenticate(request);
-            authenticatedRequest.addHeader("current-subject", currentSubject);
+            final var authentication = new UsernamePasswordAuthenticationToken(currentSubject, null, null);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(authenticatedRequest, response);
         } else {
             filterChain.doFilter(request, response);

@@ -66,10 +66,9 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Transactional(readOnly = true)
     @Timed("app.office.partners.api.getListOfPartners")
     public ResponseEntity<List<HsOfficePartnerResource>> getListOfPartners(
-            final String currentSubject,
             final String assumedRoles,
             final String name) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entities = rbacPartnerRepo.findPartnerByOptionalNameLike(name);
 
@@ -81,11 +80,10 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Transactional
     @Timed("app.office.partners.api.postNewPartner")
     public ResponseEntity<HsOfficePartnerResource> postNewPartner(
-            final String currentSubject,
             final String assumedRoles,
             final HsOfficePartnerInsertResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var entityToSave = createPartnerEntity(body);
 
@@ -104,11 +102,10 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Transactional(readOnly = true)
     @Timed("app.office.partners.api.getSinglePartnerByUuid")
     public ResponseEntity<HsOfficePartnerResource> getSinglePartnerByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = rbacPartnerRepo.findByUuid(partnerUuid);
         if (result.isEmpty()) {
@@ -122,11 +119,10 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Transactional(readOnly = true)
     @Timed("app.office.partners.api.getSinglePartnerByPartnerNumber")
     public ResponseEntity<HsOfficePartnerResource> getSinglePartnerByPartnerNumber(
-            final String currentSubject,
             final String assumedRoles,
             final Integer partnerNumber) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = rbacPartnerRepo.findPartnerByPartnerNumber(partnerNumber);
         if (result.isEmpty()) {
@@ -140,10 +136,9 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Transactional
     @Timed("app.office.partners.api.deletePartnerByUuid")
     public ResponseEntity<Void> deletePartnerByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var partnerToDelete = rbacPartnerRepo.findByUuid(partnerUuid);
         if (partnerToDelete.isEmpty()) {
@@ -161,12 +156,11 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Transactional
     @Timed("app.office.partners.api.patchPartner")
     public ResponseEntity<HsOfficePartnerResource> patchPartner(
-            final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid,
             final HsOfficePartnerPatchResource body) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var current = rbacPartnerRepo.findByUuid(partnerUuid).orElseThrow();
         final var previousPartnerPerson = current.getPartnerRel().getHolder();

@@ -44,7 +44,7 @@ public class RbacSubjectController implements RbacSubjectsApi {
         rbacSubjectRepository.create(saved);
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/rbac.yaml/users/{id}")
+                        .path("/api/rbac/subjects/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(mapper.map(saved, RbacSubjectResource.class));
@@ -54,11 +54,10 @@ public class RbacSubjectController implements RbacSubjectsApi {
     @Transactional
     @Timed("app.rbac.subjects.api.deleteSubjectByUuid")
     public ResponseEntity<Void> deleteSubjectByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID subjectUuid
     ) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         rbacSubjectRepository.deleteByUuid(subjectUuid);
 
@@ -69,11 +68,10 @@ public class RbacSubjectController implements RbacSubjectsApi {
     @Transactional(readOnly = true)
     @Timed("app.rbac.subjects.api.getSingleSubjectByUuid")
     public ResponseEntity<RbacSubjectResource> getSingleSubjectByUuid(
-            final String currentSubject,
             final String assumedRoles,
             final UUID subjectUuid) {
 
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         final var result = rbacSubjectRepository.findByUuid(subjectUuid);
         if (result == null) {
@@ -86,11 +84,10 @@ public class RbacSubjectController implements RbacSubjectsApi {
     @Transactional(readOnly = true)
     @Timed("app.rbac.subjects.api.getListOfSubjects")
     public ResponseEntity<List<RbacSubjectResource>> getListOfSubjects(
-            final String currentSubject,
             final String assumedRoles,
             final String userName
     ) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         return ResponseEntity.ok(mapper.mapList(rbacSubjectRepository.findByOptionalNameLike(userName), RbacSubjectResource.class));
     }
@@ -99,11 +96,10 @@ public class RbacSubjectController implements RbacSubjectsApi {
     @Transactional(readOnly = true)
     @Timed("app.rbac.subjects.api.getListOfSubjectPermissions")
     public ResponseEntity<List<RbacSubjectPermissionResource>> getListOfSubjectPermissions(
-            final String currentSubject,
             final String assumedRoles,
             final UUID subjectUuid
     ) {
-        context.define(currentSubject, assumedRoles);
+        context.assumeRoles(assumedRoles);
 
         return ResponseEntity.ok(mapper.mapList(
                 rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid),

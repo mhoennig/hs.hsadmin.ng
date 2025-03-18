@@ -4,7 +4,6 @@ get:
     description: 'Fetch a single share transaction by its uuid, if visible for the current subject.'
     operationId: getSingleCoopShareTransactionByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: shareTransactionUUID
           in: path
