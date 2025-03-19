@@ -39,8 +39,8 @@ class RestResponseEntityExceptionHandlerUnitTest {
         final var errorResponse = exceptionHandler.handleConflict(givenException, givenWebRequest);
 
         // then
-        assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(409);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [409] First Line");
+        assertThat(errorResponse.getBody()).extracting(CustomErrorResponse::getStatusCode).isEqualTo(409);
+        assertThat(errorResponse.getBody()).extracting(CustomErrorResponse::getMessage).isEqualTo("ERROR: [409] First Line");
     }
 
     @Test

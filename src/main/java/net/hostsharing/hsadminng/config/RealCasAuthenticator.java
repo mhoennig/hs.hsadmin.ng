@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.config;
 
 import io.micrometer.core.annotation.Timed;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.util.LinkedMultiValueMap;
@@ -14,6 +15,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 
+// HOWTO add logger
+@Slf4j
 public class RealCasAuthenticator implements CasAuthenticator {
 
     @Value("${hsadminng.cas.server}")
@@ -32,7 +35,8 @@ public class RealCasAuthenticator implements CasAuthenticator {
                 ? fetchServiceTicket(ticket)
                 : ticket;
         final var userName = extractUserName(verifyServiceTicket(serviceTicket));
-        System.err.println("CAS-user: " + userName);
+        // HOWTO log some message for a certain log level (trace, debug, info, warn, error)
+        log.debug("CAS-user: {}", userName);
         return userName;
     }
 
@@ -65,9 +69,7 @@ public class RealCasAuthenticator implements CasAuthenticator {
     private String extractUserName(final Document verification) {
 
         if (verification.getElementsByTagName("cas:authenticationSuccess").getLength() == 0) {
-            System.err.println("CAS service ticket could not be validated");
-            System.err.println(verification);
-            throwBadCredentialsException("CAS service ticket could not be validated");
+            throwBadCredentialsException("CAS service ticket could not be verified");
         }
         return verification.getElementsByTagName("cas:user").item(0).getTextContent();
     }

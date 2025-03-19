@@ -1261,15 +1261,11 @@ public class RbacSpec {
                         m -> isStatic(m.getModifiers()) && m.getName().equals("main")
                 )
                 .findFirst()
-                .orElse(null);
-        if (mainMethod != null) {
-            try {
-                mainMethod.invoke(null, new Object[] { null });
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            System.err.println("WARNING: no main method in: " + c.getName() + " => no RBAC rules generated");
+                .orElseThrow(() -> new RuntimeException("no main method in: " + c.getName() + " => cannot generate RBAC rules"));
+        try {
+            mainMethod.invoke(null, new Object[] { null });
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
         }
     }
 

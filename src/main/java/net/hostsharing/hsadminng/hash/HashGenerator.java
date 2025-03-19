@@ -121,10 +121,4 @@ public final class HashGenerator {
         }
         return withSalt(stringBuilder.toString());
     }
-
-    public static void main(String[] args) {
-        System.out.println(
-            HashGenerator.using(Algorithm.LINUX_YESCRYPT).withRandomSalt().hash("my plaintext domain transfer passphrase")
-        );
-    }
 }

@@ -358,9 +358,6 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private String roleRef(final PostgresTriggerReference rootRefVar, final RbacSpec.RbacRoleDefinition roleDef) {
-        if (roleDef == null) {
-            System.out.println("null");
-        }
         if (roleDef.getEntityAlias().isGlobal()) {
             return "rbac.global_ADMIN()";
         }

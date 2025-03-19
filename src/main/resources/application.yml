@@ -68,8 +68,10 @@ metrics:
                 server:
                     requests: true
 
+# HOWTO set logging-levels for certain Java packages (trace, debug, info, warn, error)
 logging:
     level:
-        org:
-            springframework:
-                security: TRACE
+        org.springframework.security: info
+# HOWTO configure logging, e.g. logging to a separate file, see:
+#   https://docs.spring.io/spring-boot/reference/features/logging.html
+

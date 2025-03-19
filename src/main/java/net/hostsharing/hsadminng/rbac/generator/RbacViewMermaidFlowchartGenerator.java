@@ -202,6 +202,5 @@ public class RbacViewMermaidFlowchartGenerator {
                     .replace("%{flowchart}", flowchart.toString())
                     .replace("%{case}", forCase == null ? "" : " " + forCase),
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        System.out.println("Markdown-File: " + path.toAbsolutePath());
     }
 }

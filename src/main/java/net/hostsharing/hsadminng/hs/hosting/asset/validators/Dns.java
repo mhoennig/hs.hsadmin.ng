@@ -125,10 +125,4 @@ public class Dns {
             return Result.fromException(exception);
         }
     }
-
-    public static void main(String[] args) {
-        final var result = new Dns("example.org").fetchRecordsOfType("TXT");
-        System.out.println(result);
-    }
-
 }

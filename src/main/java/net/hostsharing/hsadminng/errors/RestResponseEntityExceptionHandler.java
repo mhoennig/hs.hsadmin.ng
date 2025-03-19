@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 import static net.hostsharing.hsadminng.errors.CustomErrorResponse.*;
 
 @ControllerAdvice
+// HOWTO handle exceptions to produce specific http error codes and sensible error messages
 public class RestResponseEntityExceptionHandler
         extends ResponseEntityExceptionHandler {
 

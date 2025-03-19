@@ -49,6 +49,5 @@ public class RbacViewPostgresGenerator {
                 toString(),
                 StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING);
-        System.out.println(outputPath.toAbsolutePath());
     }
 }
