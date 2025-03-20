@@ -555,7 +555,6 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .contentType(ContentType.JSON)
                     .body("""
                         {
-                            "validFrom": "2020-06-05",
                             "validTo": "2022-12-31",
                             "resources": {
                                 "Traffic": 500,

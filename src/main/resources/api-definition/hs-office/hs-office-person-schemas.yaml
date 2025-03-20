@@ -50,12 +50,12 @@ components:
                     type: string
             required:
                 - personType
+            additionalProperties: false
 
         HsOfficePersonPatch:
             type: object
             properties:
                 personType:
-                    nullable: true
                     $ref: '#/components/schemas/HsOfficePersonType'
                 tradeName:
                     type: string
@@ -72,3 +72,4 @@ components:
                 familyName:
                     type: string
                     nullable: true
+            additionalProperties: false

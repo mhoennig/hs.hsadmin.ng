@@ -21,6 +21,7 @@ components:
                 caption:
                     type: string
                     nullable: true
+            additionalProperties: false
 
         HsBookingProjectInsert:
             type: object

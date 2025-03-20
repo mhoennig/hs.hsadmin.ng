@@ -157,7 +157,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
             final var givenPerson = personRealRepo.findPersonByOptionalNameLike("Third").get(0);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
@@ -169,8 +169,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                      "holder.uuid": "%s",
                                      "contact.uuid": "%s"
                                 },
-                                "person.uuid": "%s",
-                                "contact.uuid": "%s",
                                 "details": {}
                             }
                             """.formatted(
@@ -207,8 +205,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                     "holder.uuid": "%s",
                                     "contact.uuid": "%s"
                                 },
-                                "person.uuid": "%s",
-                                "contact.uuid": "%s",
                                 "details": {}
                             }
                             """.formatted(
@@ -324,7 +320,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                               "partnerNumber": "P-20011",
                                "partnerRel": {
                                    "holder.uuid": "%s"
                                },

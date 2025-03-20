@@ -25,6 +25,12 @@ class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatch
     @Override
     public void apply(final HsOfficePartnerPatchResource resource) {
 
+        // HOWTO: allow properties from the GET request to be passed to PATCH, but only if unchanged.
+        //  These properties have to be specified in the OpenAPI PATCH resource specification,
+        //  ídeally with a comment in the description field, that the value mist be unchanged, if given at all.
+        ignoreUnchangedPropertyValue("uuid", resource.getUuid(), entity.getUuid());
+        ignoreUnchangedPropertyValue("partnerNumber", resource.getPartnerNumber(), entity.getPartnerNumber().toString());
+
         if (resource.getPartnerRel() != null) {
             new HsOfficeRelationPatcher(mapper, em, entity.getPartnerRel()).apply(resource.getPartnerRel());
         }

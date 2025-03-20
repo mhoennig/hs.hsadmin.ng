@@ -67,6 +67,7 @@ components:
                     type: string
                     pattern: '^[a-z0-9]{3}$'
                     nullable: true
+            additionalProperties: false
 
         HsOfficeDebitorInsert:
             type: object
@@ -101,3 +102,4 @@ components:
               - debitorNumberSuffix
               - defaultPrefix
               - billable
+            additionalProperties: false

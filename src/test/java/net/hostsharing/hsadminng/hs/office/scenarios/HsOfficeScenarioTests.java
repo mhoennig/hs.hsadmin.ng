@@ -398,7 +398,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldInvalidateSepaMandateForDebitor() {
             new InvalidateSepaMandateForDebitor(scenarioTest)
                     .given("bankAccountIBAN", "DE02701500000000594937")
-                    .given("mandateValidUntil", "2025-09-30")
+                    .given("mandateValidTo", "2025-09-30")
                     .doRun();
         }
 

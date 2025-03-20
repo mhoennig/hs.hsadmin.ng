@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.booking.item;
 
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -35,6 +36,7 @@ import static org.hamcrest.Matchers.matchesRegex;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -112,7 +114,6 @@ class HsBookingItemControllerRestTest {
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "validTo": "{validTo}",
-                                "garbage": "should not be accepted",
                                 "resources": { "CPU": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
                             }
                             """
@@ -120,6 +121,7 @@ class HsBookingItemControllerRestTest {
                                     .replace("{validTo}", LocalDate.now().plusMonths(1).toString())
                             )
                             .accept(MediaType.APPLICATION_JSON))
+                            .andDo(print())
 
                     // then
                     .andExpect(status().isCreated())
@@ -161,7 +163,7 @@ class HsBookingItemControllerRestTest {
                                 "project.uuid": "{projectUuid}",
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
-                                "validFrom": "{validFrom}",
+                                "validFrom": "{validFrom}", // not specified => not accepted
                                 "resources": { "CPU": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
                             }
                             """
@@ -169,24 +171,15 @@ class HsBookingItemControllerRestTest {
                                     .replace("{validFrom}", LocalDate.now().plusMonths(1).toString())
                             )
                             .accept(MediaType.APPLICATION_JSON))
+                            .andDo(print())
 
                     // then
-                    // TODO.test: MockMvc does not seem to validate additionalProperties=false
-                    // .andExpect(status().is4xxClientError())
-                    .andExpect(status().isCreated())
+                    .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("$", lenientlyEquals("""
                             {
-                                "type": "MANAGED_SERVER",
-                                "caption": "some new booking",
-                                "validFrom": "{today}",
-                                "validTo": null,
-                                "resources": { "CPU": 12, "SSD": 100, "Traffic": 250 }
-                             }
-                            """
-                            .replace("{today}", LocalDate.now().toString())
-                            .replace("{todayPlus1Month}", LocalDate.now().plusMonths(1).toString()))
-                    ))
-                    .andExpect(header().string("Location", matchesRegex("http://localhost/api/hs/booking/items/[^/]*")));
+                                "message": "ERROR: [400] JSON parse error: Unrecognized field \\"validFrom\\" (class ${resourceClass}), not marked as ignorable"
+                            }
+                            """.replace("${resourceClass}", HsBookingItemInsertResource.class.getName()))));
         }
     }
 }

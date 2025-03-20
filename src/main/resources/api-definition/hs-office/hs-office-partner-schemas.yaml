@@ -48,6 +48,16 @@ components:
         HsOfficePartnerPatch:
             type: object
             properties:
+                uuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                    description: if given (e.g. taken from a GET request), it must be identical to the patched entities uuid
+                partnerNumber:
+                    type: string
+                    pattern: 'P-[0-9]{5}'
+                    nullable: true
+                    description: if given (e.g. taken from a GET request), it must be identical to the patched entities partnerNumber
                 partnerRel:
                     $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationPatch'
                 details:
@@ -78,6 +88,7 @@ components:
                     type: string
                     format: date
                     nullable: true
+            additionalProperties: false
 
         HsOfficePartnerInsert:
             type: object
@@ -93,6 +104,7 @@ components:
                 - partnerNumber
                 - partnerRel
                 - details
+            additionalProperties: false
 
         HsOfficePartnerRelInsert:
             type: object
@@ -111,6 +123,7 @@ components:
                 - anchor.uuid
                 - holder.uuid
                 - relContact.uuid
+            additionalProperties: false
 
         HsOfficePartnerDetailsInsert:
             type: object
@@ -136,3 +149,4 @@ components:
                     type: string
                     format: date
                     nullable: true
+            additionalProperties: false

@@ -25,7 +25,7 @@ public class InvalidateSepaMandateForDebitor extends UseCase<InvalidateSepaManda
         return withTitle("Patch the End of the Mandate into the SEPA-Mandate", () ->
                 httpPatch("/api/hs/office/sepamandates/&{SEPA-Mandate: %{bankAccountIBAN}}", usingJsonBody("""
                 {
-                   "validUntil": ${mandateValidUntil}
+                   "validTo": ${mandateValidTo}
                 }
                 """))
                 .expecting(OK).expecting(JSON)

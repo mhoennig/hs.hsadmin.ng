@@ -627,13 +627,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "contactUuid": "%s",
                                    "vatId": "VAT222222",
                                    "vatCountryCode": "AA",
                                    "vatBusiness": true,
                                    "defaultPrefix": "for"
                                  }
-                            """.formatted(givenContact.getUuid()))
+                            """)
                     .port(port)
                 .when()
                     .patch("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())

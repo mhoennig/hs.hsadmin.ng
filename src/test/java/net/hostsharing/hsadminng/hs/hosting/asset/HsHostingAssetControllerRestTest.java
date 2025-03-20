@@ -50,6 +50,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -667,10 +668,8 @@ public class HsHostingAssetControllerRestTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
-                            "type": "DOMAIN_HTTP_SETUP",
-                            "identifier": "updated example.org|HTTP",
                             "caption": "some updated fake Domain-HTTP-Setup",
-                            "alarmContact": null,
+                            "alarmContact.uuid": null,
                             "config": {
                                 "autoconfig": true,
                                 "multiviews": true,
@@ -682,6 +681,7 @@ public class HsHostingAssetControllerRestTest {
                         }
                         """)
                         .accept(MediaType.APPLICATION_JSON))
+                        .andDo(print())
 
                 // then
                 .andExpect(status().is2xxSuccessful())

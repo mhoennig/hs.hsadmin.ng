@@ -29,3 +29,4 @@ components:
                 - holder
                 - iban
                 - bic
+            additionalProperties: false

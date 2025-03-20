@@ -34,18 +34,15 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
                 () -> httpPatch("/api/hs/office/partners/%{Partner: %{partnerNumber}}",
                         usingJsonBody("""
                                 {
-                                    "wrong1": false,
                                     "partnerRel": {
-                                        "wrong2": false,
                                         "holder": {
                                             "personType": "UNINCORPORATED_FIRM",
                                             "tradeName": "Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}",
                                         },
                                         "contact": {
-                                            "wrong3": false,
                                             "caption": "Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}",
                                             "postalAddress": {
-                                                "wrong4": false,
+                                                "whatever": "any key is allowed here",
                                                 "name": "Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}",
                                                 "co": "%{representativeGivenName} %{representativeFamilyName}",
                                                 %{communityOfHeirsPostalAddress}

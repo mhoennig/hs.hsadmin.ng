@@ -31,6 +31,7 @@ components:
                     $ref: '#/components/schemas/HsOfficeContactPhoneNumbers'
             required:
                 - caption
+            additionalProperties: false
 
         HsOfficeContactPatch:
             type: object
@@ -44,6 +45,7 @@ components:
                     $ref: '#/components/schemas/HsOfficeContactEmailAddresses'
                 phoneNumbers:
                     $ref: '#/components/schemas/HsOfficeContactPhoneNumbers'
+            additionalProperties: false
 
         HsOfficeContactPostalAddress:
             # forces generating a java.lang.Object containing a Map, instead of a class with fixed properties

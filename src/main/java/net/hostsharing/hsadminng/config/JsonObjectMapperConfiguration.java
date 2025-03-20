@@ -27,7 +27,8 @@ public class JsonObjectMapperConfiguration {
                 .modules(new JsonNullableModule(), new JavaTimeModule())
                 .featuresToEnable(
                         JsonParser.Feature.ALLOW_COMMENTS,
-                        DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS
+                        DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS,
+                        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
                 )
                 .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }

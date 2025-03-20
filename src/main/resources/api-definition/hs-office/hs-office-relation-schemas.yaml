@@ -41,6 +41,7 @@ components:
                     type: string
                     format: uuid
                     nullable: true
+            additionalProperties: false
 
         HsOfficeRelationPatch:
             type: object
@@ -95,6 +96,7 @@ components:
             description:
                 Additionally to `type` and `anchor.uuid`, either `anchor.uuid` or `anchor`
                 and either `contact` or `contact.uuid` need to be given.
+            additionalProperties: false
 
         # relation created as a sub-element with implicitly known type
         HsOfficeRelationSubInsert:
@@ -116,3 +118,4 @@ components:
                 - anchor.uuid
                 - holder.uuid
                 - contact.uuid
+            additionalProperties: false

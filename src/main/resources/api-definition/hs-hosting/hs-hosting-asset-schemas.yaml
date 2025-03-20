@@ -60,6 +60,7 @@ components:
                     nullable: true
                 config:
                     $ref: '#/components/schemas/HsHostingAssetConfiguration'
+            additionalProperties: false
 
         HsHostingAssetInsert:
             type: object
