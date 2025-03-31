@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.ReferenceNotFoundException;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
@@ -44,6 +45,9 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Autowired
     private StrictMapper mapper;
+
+    @Autowired
+    private MessageTranslator translator;
 
     @Autowired
     private HsOfficeContactFromResourceConverter<HsOfficeContactRealEntity> contactFromResourceConverter;
@@ -236,7 +240,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         try {
             return em.getReference(entityClass, uuid);
         } catch (final Throwable exc) {
-                throw new ReferenceNotFoundException(entityClass, uuid, exc);
+                throw new ReferenceNotFoundException(translator, entityClass, uuid, exc);
         }
     }
 

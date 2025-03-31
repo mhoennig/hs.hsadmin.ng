@@ -1,10 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
+import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
@@ -42,6 +44,7 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -49,7 +52,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeCoopAssetsTransactionController.class)
-@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class })
+@Import({ StrictMapper.class,
+          MessagesResourceConfig.class,
+          MessageTranslator.class,
+          JsonObjectMapperConfiguration.class,
+          DisableSecurityConfig.class })
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
 class HsOfficeCoopAssetsTransactionControllerRestTest {
@@ -531,11 +538,12 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     enum BadRequestTestCases {
         MEMBERSHIP_UUID_MISSING(
                 requestBody -> requestBody.without("membership.uuid"),
-                "[membershipUuid must not be null but is \"null\"]"), // TODO.impl: should be membership.uuid, Spring validation-problem?
+                // TODO.impl: should be membership.uuid, but the Hibernate validator does not use the name from @JsonProperty
+                "[membershipUuid darf nicht null sein"), // bracket because it's from a list of violations
 
         MEMBERSHIP_UUID_NOT_FOUND_OR_NOT_ACCESSIBLE(
                 requestBody -> requestBody.with("membership.uuid", UNAVAILABLE_UUID),
-                "membership.uuid " + UNAVAILABLE_UUID + " not found"),
+                "membership.uuid \"" + UNAVAILABLE_UUID + "\" nicht gefunden"),
 
         MEMBERSHIP_UUID_AND_MEMBER_NUMBER_MUST_NOT_BE_GIVEN_BOTH(
                 requestBody -> requestBody
@@ -543,92 +551,92 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                         .with("assetValue", "-128.00")
                         .with("adoptingMembership.uuid", UNAVAILABLE_UUID)
                         .with("adoptingMembership.memberNumber", UNAVAILABLE_MEMBER_NUMBER),
-                "either adoptingMembership.uuid or adoptingMembership.memberNumber can be given, not both"),
+                "entweder adoptingMembership.uuid oder adoptingMembership.memberNumber muss angegeben werden, nicht beide"),
 
         MEMBERSHIP_UUID_OR_MEMBER_NUMBER_MUST_BE_GIVEN(
                 requestBody -> requestBody
                         .with("transactionType", TRANSFER)
                         .with("assetValue", "-128.00"),
-                "either adoptingMembership.uuid or adoptingMembership.memberNumber must be given for transactionType=TRANSFER"),
+                "für transactionType=TRANSFER muss entweder adoptingMembership.uuid oder adoptingMembership.memberNumber angegeben werden"),
 
         REVERSAL_ASSET_TRANSACTION_REQUIRES_REVERTED_ASSET_TX_UUID(
                 requestBody -> requestBody
                             .with("transactionType", REVERSAL)
                             .with("assetValue", "-128.00"),
-                "REVERSAL asset transaction requires revertedAssetTx.uuid"),
+                "eine REVERSAL Geschäftsguthaben-Transaktion erfordert die Angabe einer revertedAssetTx.uuid"),
 
         REVERSAL_ASSET_TRANSACTION_REQUIRES_AVAILABLE_REVERTED_ASSET_TX_UUID(
                 requestBody -> requestBody
                         .with("transactionType", REVERSAL)
                         .with("assetValue", "-128.00")
                         .with("revertedAssetTx.uuid", UNAVAILABLE_UUID),
-                "revertedAssetTx.uuid " + UNAVAILABLE_UUID + " not found"),
+                "revertedAssetTx.uuid \"" + UNAVAILABLE_UUID + "\" nicht gefunden"),
 
         REVERSAL_ASSET_TRANSACTION_MUST_NEGATE_VALUE_OF_REVERTED_ASSET_TX(
                 requestBody -> requestBody
                         .with("transactionType", REVERSAL)
                         .with("assetValue", "128.00")
                         .with("revertedAssetTx.uuid", SOME_EXISTING_LOSS_ASSET_TX_UUID),
-                "given assetValue=128.00 but must be negative value from reverted asset tx: -64"),
+                "assetValue=128,00 muss dem negativen Wert des Wertes der stornierten Geschäftsguthaben-Transaktion entsprechen: -64,00"),
 
         TRANSACTION_TYPE_MISSING(
                 requestBody -> requestBody.without("transactionType"),
-                "[transactionType must not be null but is \"null\"]"),
+                "[transactionType darf nicht null sein"),
 
         VALUE_DATE_MISSING(
                 requestBody -> requestBody.without("valueDate"),
-                "[valueDate must not be null but is \"null\"]"),
+                "[valueDate darf nicht null sein"),
 
         ASSETS_VALUE_FOR_DEPOSIT_MUST_BE_POSITIVE(
                 requestBody -> requestBody
                         .with("transactionType", DEPOSIT)
                         .with("assetValue", -64.00),
-                "[for DEPOSIT, assetValue must be positive but is \"-64.00\"]"),
+                "[für transactionType=DEPOSIT, muss assetValue positiv sein, ist aber -64,00]"),
 
         ASSETS_VALUE_FOR_DISBURSAL_MUST_BE_NEGATIVE(
                 requestBody -> requestBody
                         .with("transactionType", DISBURSAL)
                         .with("assetValue", 64.00),
-                "[for DISBURSAL, assetValue must be negative but is \"64.00\"]"),
+                "[für transactionType=DISBURSAL, muss assetValue negativ sein, ist aber 64,00]"),
 
         ADOPTING_MEMBERSHIP_MUST_NOT_BE_THE_SAME(
                 requestBody -> requestBody
                         .with("transactionType", TRANSFER)
                         .with("assetValue", -64.00)
                         .with("adoptingMembership.uuid", ORIGIN_MEMBERSHIP_UUID),
-                "transferring and adopting membership must be different, but both are M-1111100"),
+                "übertragende und annehmende Mitgliedschaft müssen unterschiedlich sein, aber beide sind M-1111100"),
 
         ADOPTING_MEMBERSHIP_NUMBER_FOR_TRANSFER_MUST_BE_GIVEN_AND_AVAILABLE(
                 requestBody -> requestBody
                         .with("transactionType", TRANSFER)
                         .with("assetValue", -64.00)
                         .with("adoptingMembership.memberNumber", UNAVAILABLE_MEMBER_NUMBER),
-                "adoptingMembership.memberNumber='M-1234699' not found or not accessible"),
+                "adoptingMembership.memberNumber \"M-1234699\" nicht gefunden oder nicht zugänglich"),
 
         ADOPTING_MEMBERSHIP_UUID_FOR_TRANSFER_MUST_BE_GIVEN_AND_AVAILABLE(
                 requestBody -> requestBody
                         .with("transactionType", TRANSFER)
                         .with("assetValue", -64.00)
                         .with("adoptingMembership.uuid", UNAVAILABLE_UUID),
-                "adoptingMembership.uuid='" + UNAVAILABLE_UUID + "' not found or not accessible"),
+                "adoptingMembership.uuid \"" + UNAVAILABLE_UUID + "\" nicht gefunden oder nicht zugänglich"),
 
         ASSETS_VALUE_MUST_NOT_BE_NULL(
                 requestBody -> requestBody
                         .with("transactionType", REVERSAL)
                         .with("assetValue", 0.00),
-                "[assetValue must not be 0 but is \"0.00\"]"),
+                "[assetValue darf nicht 0 sein]"),
 
         REFERENCE_MISSING(
                 requestBody -> requestBody.without("reference"),
-                "[reference must not be null but is \"null\"]"),
+                "[reference darf nicht null sein"),
 
         REFERENCE_TOO_SHORT(
                 requestBody -> requestBody.with("reference", "12345"),
-                "[reference size must be between 6 and 48 but is \"12345\"]"),
+                "[reference Größe muss zwischen 6 und 48 sein"), // OpenAPI Spring templates uses @Size, but should use @Length
 
         REFERENCE_TOO_LONG(
                 requestBody -> requestBody.with("reference", "0123456789012345678901234567890123456789012345678"),
-                "[reference size must be between 6 and 48 but is \"0123456789012345678901234567890123456789012345678\"]");
+                "[reference Größe muss zwischen 6 und 48 sein"); // OpenAPI Spring templates uses @Size, but should use @Length
 
         private final Function<JsonBuilder, JsonBuilder> givenBodyTransformation;
         private final String expectedErrorMessage;
@@ -652,12 +660,13 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
         //  - set SINGLE_TEST_CASE_EXECUTION to true - see above
         //  - select the test case enum value you want to run
         assumeThat(!SINGLE_TEST_CASE_EXECUTION ||
-                testCase == BadRequestTestCases.ADOPTING_MEMBERSHIP_MUST_NOT_BE_THE_SAME).isTrue();
+                testCase == BadRequestTestCases.MEMBERSHIP_UUID_OR_MEMBER_NUMBER_MUST_BE_GIVEN).isTrue();
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopassetstransactions")
                         .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Accept-Language", "de")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(testCase.givenRequestBody())
                         .accept(MediaType.APPLICATION_JSON))
@@ -665,7 +674,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                 // then
                 .andExpect(jsonPath("statusCode", is(400)))
                 .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                .andExpect(jsonPath("message", is("ERROR: [400] " + testCase.expectedErrorMessage)))
+                .andExpect(jsonPath("message", startsWith("ERROR: [400] " + testCase.expectedErrorMessage)))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -944,4 +953,5 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     private String suffixOf(final String memberNumber) {
         return memberNumber.substring("M-".length() + 5);
     }
+
 }

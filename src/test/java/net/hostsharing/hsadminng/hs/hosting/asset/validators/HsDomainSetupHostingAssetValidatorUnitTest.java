@@ -93,7 +93,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).contains(
-                "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.org', but is '"
+                "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.org' but is '"
                         + testCase.domainName + "'"
         );
     }
@@ -179,7 +179,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'identifier' expected to match 'example.org', but is 'not-matching-booking-item-domain-name.org'");
+                "'identifier' expected to match 'example.org' but is 'not-matching-booking-item-domain-name.org'");
     }
 
     @ParameterizedTest
@@ -197,8 +197,8 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.org', " +
-                        "but is '" + newDomainName + "'");
+                "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.org'" +
+                        " but is '" + newDomainName + "'");
     }
 
     @Test
@@ -490,7 +490,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
         void isRejectedDueToInvalidIdentifier() {
             assertThat(validate()).contains(
-                    "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.net', but is 'sub.example.org'"
+                    "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.net' but is 'sub.example.org'"
             );
         }
 

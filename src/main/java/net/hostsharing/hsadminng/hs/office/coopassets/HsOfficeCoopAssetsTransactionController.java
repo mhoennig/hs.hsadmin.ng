@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopAssetsApi;
@@ -30,7 +31,6 @@ import java.util.function.BiConsumer;
 
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.REVERSAL;
-import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.TRANSFER;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.CLEARING;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.DEPOSIT;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.DISBURSAL;
@@ -49,6 +49,9 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Autowired
     private EntityManagerWrapper emw;
+
+    @Autowired
+    private MessageTranslator messageTranslator;
 
     @Autowired
     private HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
@@ -131,33 +134,32 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         MultiValidationException.throwIfNotEmpty(violations);
     }
 
-    private static void validateDebitTransaction(
+    private void validateDebitTransaction(
             final HsOfficeCoopAssetsTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (List.of(DEPOSIT, HsOfficeCoopAssetsTransactionTypeResource.ADOPTION).contains(requestBody.getTransactionType())
                 && requestBody.getAssetValue().signum() < 0) {
-            violations.add("for %s, assetValue must be positive but is \"%.2f\"".formatted(
+            violations.add(messageTranslator.translate("for transactionType={0}, assetValue must be positive but is {1,number,#0.00}",
                     requestBody.getTransactionType(), requestBody.getAssetValue()));
         }
     }
 
-    private static void validateCreditTransaction(
+    private void validateCreditTransaction(
             final HsOfficeCoopAssetsTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (List.of(DISBURSAL, HsOfficeCoopAssetsTransactionTypeResource.TRANSFER, CLEARING, LOSS)
                 .contains(requestBody.getTransactionType())
                 && requestBody.getAssetValue().signum() > 0) {
-            violations.add("for %s, assetValue must be negative but is \"%.2f\"".formatted(
+            violations.add(messageTranslator.translate("for transactionType={0}, assetValue must be negative but is {1,number,#0.00}",
                     requestBody.getTransactionType(), requestBody.getAssetValue()));
         }
     }
 
-    private static void validateAssetValue(
+    private void validateAssetValue(
             final HsOfficeCoopAssetsTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (requestBody.getAssetValue().signum() == 0) {
-            violations.add("assetValue must not be 0 but is \"%.2f\"".formatted(
-                    requestBody.getAssetValue()));
+            violations.add(messageTranslator.translate("assetValue must not be 0"));
         }
     }
 
@@ -221,26 +223,32 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
             final HsOfficeMembershipEntity membership = ofNullable(emw.find(
                     HsOfficeMembershipEntity.class,
                     resource.getMembershipUuid()))
-                    .orElseThrow(() -> new EntityNotFoundException("membership.uuid %s not found".formatted(
-                            resource.getMembershipUuid())));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            messageTranslator.translate(
+                                "{0} \"{1}\" not found", "membership.uuid", resource.getMembershipUuid())));
             entity.setMembership(membership);
         }
 
         if (entity.getTransactionType() == REVERSAL) {
             if (resource.getRevertedAssetTxUuid() == null) {
-                throw new ValidationException("REVERSAL asset transaction requires revertedAssetTx.uuid");
+                throw new ValidationException(messageTranslator.translate(
+                        "a REVERSAL asset transaction requires specifying a revertedAssetTx.uuid"));
             }
             final var revertedAssetTx = coopAssetsTransactionRepo.findByUuid(resource.getRevertedAssetTxUuid())
-                    .orElseThrow(() -> new EntityNotFoundException("revertedAssetTx.uuid %s not found".formatted(
+                    .orElseThrow(() -> new EntityNotFoundException(messageTranslator.translate(
+                            "{0} \"{1}\" not found",
+                            "revertedAssetTx.uuid",
                             resource.getRevertedAssetTxUuid())));
             revertedAssetTx.setReversalAssetTx(entity);
             entity.setRevertedAssetTx(revertedAssetTx);
             if (resource.getAssetValue().negate().compareTo(revertedAssetTx.getAssetValue()) != 0) {
-                throw new ValidationException("given assetValue=" + resource.getAssetValue() +
-                        " but must be negative value from reverted asset tx: " + revertedAssetTx.getAssetValue());
+                throw new ValidationException(
+                        messageTranslator.translate(
+                                "given assetValue {0,number,#0.00} must be the negative value of the reverted asset transaction: {1,number,#0.00}",
+                                resource.getAssetValue(), revertedAssetTx.getAssetValue()));
             }
 
-            if (revertedAssetTx.getTransactionType() == TRANSFER) {
+            if (revertedAssetTx.getTransactionType() == HsOfficeCoopAssetsTransactionType.TRANSFER) {
                 final var adoptionAssetTx = revertedAssetTx.getAdoptionAssetTx();
                 final var adoptionReversalAssetTx = HsOfficeCoopAssetsTransactionEntity.builder()
                         .transactionType(REVERSAL)
@@ -259,8 +267,9 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         if (resource.getTransactionType() == HsOfficeCoopAssetsTransactionTypeResource.TRANSFER) {
             final var adoptingMembership = determineAdoptingMembership(resource);
             if ( entity.getMembership() == adoptingMembership) {
-                throw new ValidationException("transferring and adopting membership must be different, but both are " +
-                        adoptingMembership.getTaggedMemberNumber());
+                throw new ValidationException(messageTranslator.translate(
+                        "transferring and adopting membership must be different, but both are {0}",
+                        adoptingMembership.getTaggedMemberNumber()));
             }
             final var adoptingAssetTx = createAdoptingAssetTx(entity, adoptingMembership);
             entity.setAdoptionAssetTx(adoptingAssetTx);
@@ -271,34 +280,45 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         final var adoptingMembershipUuid = resource.getAdoptingMembershipUuid();
         final var adoptingMembershipMemberNumber = resource.getAdoptingMembershipMemberNumber();
         if (adoptingMembershipUuid != null && adoptingMembershipMemberNumber != null) {
-            throw new ValidationException(
-                    // @formatter:off
-                resource.getTransactionType() == HsOfficeCoopAssetsTransactionTypeResource.TRANSFER
-                    ? "either adoptingMembership.uuid or adoptingMembership.memberNumber can be given, not both"
-                    : "adoptingMembership.uuid and adoptingMembership.memberNumber must not be given for transactionType="
-                            + resource.getTransactionType());
-                // @formatter:on
+            // @formatter:off
+            final var message =  messageTranslator.translate(
+                    resource.getTransactionType() == HsOfficeCoopAssetsTransactionTypeResource.TRANSFER
+                            ? "either {0} or {1} must be given, not both"
+                            : "neither {0} nor {1} must be given for transactionType={2}",
+                            "adoptingMembership.uuid",
+                            "adoptingMembership.memberNumber",
+                            resource.getTransactionType());
+            // @formatter:on
+            throw new ValidationException(message);
         }
 
         if (adoptingMembershipUuid != null) {
             final var adoptingMembership = membershipRepo.findByUuid(adoptingMembershipUuid);
             return adoptingMembership.orElseThrow(() ->
-                    new ValidationException(
-                            "adoptingMembership.uuid='" + adoptingMembershipUuid + "' not found or not accessible"));
+                    new ValidationException(messageTranslator.translate(
+                            "{0} \"{1}\" not found or not accessible",
+                            "adoptingMembership.uuid",
+                            adoptingMembershipUuid)));
         }
 
         if (adoptingMembershipMemberNumber != null) {
             final var adoptingMemberNumber = Integer.valueOf(adoptingMembershipMemberNumber.substring("M-".length()));
             final var adoptingMembership = membershipRepo.findMembershipByMemberNumber(adoptingMemberNumber);
             return adoptingMembership.orElseThrow( () ->
-                    new ValidationException("adoptingMembership.memberNumber='" + adoptingMembershipMemberNumber
-                            + "' not found or not accessible")
-            );
+                    new ValidationException(
+                            messageTranslator.translate(
+                                    "{0} \"{1}\" not found or not accessible",
+                                    "adoptingMembership.memberNumber",
+                                    adoptingMembershipMemberNumber)));
         }
 
         throw new ValidationException(
-                "either adoptingMembership.uuid or adoptingMembership.memberNumber must be given for transactionType="
-                        + HsOfficeCoopAssetsTransactionTypeResource.TRANSFER);
+                messageTranslator.translate(
+                        "either {0} or {1} must be given for transactionType={2}",
+                        "adoptingMembership.uuid",
+                        "adoptingMembership.memberNumber",
+                        resource.getTransactionType()
+                        ));
     }
 
     private HsOfficeCoopAssetsTransactionEntity createAdoptingAssetTx(

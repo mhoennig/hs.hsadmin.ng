@@ -162,7 +162,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^abc00$|^abc00-[a-z0-9\\._-]+$', but is 'xyz99-temp'");
+                "'identifier' expected to match '^abc00$|^abc00-[a-z0-9\\._-]+$' but is 'xyz99-temp'");
     }
 
     @Test

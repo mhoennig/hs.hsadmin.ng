@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.role;
 
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
@@ -31,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RbacRoleController.class)
-@Import({StrictMapper.class, DisableSecurityConfig.class})
+@Import({StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class})
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
 class RbacRoleControllerRestTest {

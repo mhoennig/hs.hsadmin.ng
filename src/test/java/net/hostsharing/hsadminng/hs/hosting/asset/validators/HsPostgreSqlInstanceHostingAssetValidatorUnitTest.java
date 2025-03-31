@@ -71,7 +71,7 @@ class HsPostgreSqlInstanceHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^\\Qvm1234|PgSql.default\\E$', but is 'PostgreSQL'"
+                "'identifier' expected to match '^\\Qvm1234|PgSql.default\\E$' but is 'PostgreSQL'"
         );
     }
 

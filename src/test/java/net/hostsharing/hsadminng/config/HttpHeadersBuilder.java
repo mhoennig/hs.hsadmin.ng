@@ -2,11 +2,16 @@ package net.hostsharing.hsadminng.config;
 
 import org.springframework.http.HttpHeaders;
 
+import java.util.Map;
+
 public class HttpHeadersBuilder {
 
-    public static HttpHeaders headers(final String key, final String value) {
-        final var headers = new HttpHeaders();
-        headers.set(key, value);
-        return headers;
+    @SafeVarargs
+    public static HttpHeaders headers(final Map.Entry<String, String>... headers) {
+        final var httpHeaders = new HttpHeaders();
+        for (Map.Entry<String, String> entry : headers) {
+            httpHeaders.set(entry.getKey(), entry.getValue());
+        }
+        return httpHeaders;
     }
 }

@@ -121,7 +121,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^\\Qexample.org|DNS\\E$', but is 'example.org'"
+                "'identifier' expected to match '^\\Qexample.org|DNS\\E$' but is 'example.org'"
         );
     }
 
@@ -203,7 +203,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'DOMAIN_DNS_SETUP:example.org|DNS.config.TTL' is expected to be of type Integer, but is of type String",
+                "'DOMAIN_DNS_SETUP:example.org|DNS.config.TTL' is expected to be of type Integer but is of type String",
                 "'DOMAIN_DNS_SETUP:example.org|DNS.config.user-RR' is expected to match any of [(\\*\\.)?([a-zA-Z0-9\\._-]+|@)[ \t]+(([1-9][0-9]*[mMhHdDwW]?)+[ \t]+)?[iI][nN][ \t]+[a-zA-Z]+[ \t]+(([^;]+)|(\".*\")|(\\(.*\\)))[ \t]*(;.*)?, (\\*\\.)?([a-zA-Z0-9\\._-]+|@)[ \t]+[iI][nN][ \t]+(([1-9][0-9]*[mMhHdDwW]?)+[ \t]+)?[a-zA-Z]+[ \t]+(([^;]+)|(\".*\")|(\\(.*\\)))[ \t]*(;.*)?] but '@     1814400  IN  1814400 BAD1  TTL only allowed once' does not match any",
                 "'DOMAIN_DNS_SETUP:example.org|DNS.config.user-RR' is expected to match any of [(\\*\\.)?([a-zA-Z0-9\\._-]+|@)[ \t]+(([1-9][0-9]*[mMhHdDwW]?)+[ \t]+)?[iI][nN][ \t]+[a-zA-Z]+[ \t]+(([^;]+)|(\".*\")|(\\(.*\\)))[ \t]*(;.*)?, (\\*\\.)?([a-zA-Z0-9\\._-]+|@)[ \t]+[iI][nN][ \t]+(([1-9][0-9]*[mMhHdDwW]?)+[ \t]+)?[a-zA-Z]+[ \t]+(([^;]+)|(\".*\")|(\\(.*\\)))[ \t]*(;.*)?] but 'www                        BAD1  Record-Class missing / not enough columns' does not match any");
     }

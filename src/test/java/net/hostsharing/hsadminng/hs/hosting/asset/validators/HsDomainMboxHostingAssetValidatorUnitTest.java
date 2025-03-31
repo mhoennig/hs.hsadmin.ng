@@ -63,7 +63,7 @@ class HsDomainMboxHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^\\Qexample.org|MBOX\\E$', but is 'example.org'"
+                "'identifier' expected to match '^\\Qexample.org|MBOX\\E$' but is 'example.org'"
         );
     }
 

@@ -1,8 +1,13 @@
 package net.hostsharing.hsadminng.errors;
 
+import lombok.RequiredArgsConstructor;
+import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.config.RetroactiveTranslator;
 import org.iban4j.Iban4jException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -23,62 +28,67 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
 import java.util.*;
-import java.util.regex.Pattern;
+import java.util.function.Function;
 
 import static net.hostsharing.hsadminng.errors.CustomErrorResponse.*;
 
 @ControllerAdvice
+@RequiredArgsConstructor
 // HOWTO handle exceptions to produce specific http error codes and sensible error messages
 public class RestResponseEntityExceptionHandler
         extends ResponseEntityExceptionHandler {
+
+    @Autowired
+    private final MessageTranslator messageTranslator;
+
+    @Autowired(required = false)
+    private final List<RetroactiveTranslator> retroactiveTranslators;
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<CustomErrorResponse> handleConflict(
             final RuntimeException exc, final WebRequest request) {
 
-        final var rawMessage = NestedExceptionUtils.getMostSpecificCause(exc).getMessage();
-        var message = line(rawMessage, 0);
-        if (message.contains("violates foreign key constraint")) {
-            return errorResponse(request, HttpStatus.BAD_REQUEST, line(rawMessage, 1).replaceAll(" *Detail: *", ""));
-        }
-        return errorResponse(request, HttpStatus.CONFLICT, message);
+        final var fullMaybeLocalizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
+        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(fullMaybeLocalizedMessage);
+        return errorResponse(request, HttpStatus.CONFLICT, sprippedMaybeLocalizedMessage);
     }
 
     @ExceptionHandler(JpaSystemException.class)
     protected ResponseEntity<CustomErrorResponse> handleJpaExceptions(
             final RuntimeException exc, final WebRequest request) {
-        final var message = line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0);
-        return errorResponse(request, httpStatus(exc, message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
+        final var fullMaybeLocalizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
+        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(fullMaybeLocalizedMessage);
+        return errorResponse(request, httpStatus(exc, sprippedMaybeLocalizedMessage).orElse(HttpStatus.INTERNAL_SERVER_ERROR), sprippedMaybeLocalizedMessage);
     }
 
     @ExceptionHandler(NoSuchElementException.class)
     protected ResponseEntity<CustomErrorResponse> handleNoSuchElementException(
             final RuntimeException exc, final WebRequest request) {
-        final var message = line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0);
-        return errorResponse(request, HttpStatus.NOT_FOUND, message);
+        final var fullMaybeLocalizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
+        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(fullMaybeLocalizedMessage);
+        return errorResponse(request, HttpStatus.NOT_FOUND, sprippedMaybeLocalizedMessage);
     }
 
     @ExceptionHandler(ReferenceNotFoundException.class)
     protected ResponseEntity<CustomErrorResponse> handleReferenceNotFoundException(
             final ReferenceNotFoundException exc, final WebRequest request) {
-        return errorResponse(request, HttpStatus.BAD_REQUEST, exc.getMessage());
+        return errorResponse(request, HttpStatus.BAD_REQUEST, localizedMessage(exc));
     }
 
     @ExceptionHandler({ JpaObjectRetrievalFailureException.class, EntityNotFoundException.class })
     protected ResponseEntity<CustomErrorResponse> handleJpaObjectRetrievalFailureException(
             final RuntimeException exc, final WebRequest request) {
-        final var message =
-                userReadableEntityClassName(
-                        line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0));
-        return errorResponse(request, HttpStatus.BAD_REQUEST, message);
+        final var localizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
+        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(localizedMessage);
+        return errorResponse(request, HttpStatus.BAD_REQUEST, sprippedMaybeLocalizedMessage);
     }
 
     @ExceptionHandler({ Iban4jException.class, ValidationException.class })
     protected ResponseEntity<CustomErrorResponse> handleValidationExceptions(
             final Throwable exc, final WebRequest request) {
-        final String fullMessage = NestedExceptionUtils.getMostSpecificCause(exc).getMessage();
-        final var message = exc instanceof MultiValidationException ? fullMessage : line(fullMessage, 0);
-        return errorResponse(request, HttpStatus.BAD_REQUEST, message);
+        final var localizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
+        final var sprippedMaybeLocalizedMessage = exc instanceof MultiValidationException ? localizedMessage : stripTechnicalDetails(localizedMessage);
+        return errorResponse(request, HttpStatus.BAD_REQUEST, sprippedMaybeLocalizedMessage);
     }
 
     @ExceptionHandler(Throwable.class)
@@ -96,15 +106,16 @@ public class RestResponseEntityExceptionHandler
 
         final var response = super.handleExceptionInternal(exc, body, headers, statusCode, request);
         return errorResponse(request, HttpStatus.valueOf(statusCode.value()),
-                Optional.ofNullable(response.getBody()).map(Object::toString).orElse(firstMessageLine(exc)));
+                Optional.ofNullable(response).map(HttpEntity::getBody).map(Object::toString).orElse(firstMessageLine(exc)));
     }
 
     @Override
     @SuppressWarnings("unchecked,rawtypes")
     protected ResponseEntity handleHttpMessageNotReadable(
             HttpMessageNotReadableException exc, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        final var message = line(exc.getMessage(), 0);
-        return errorResponse(request, HttpStatus.BAD_REQUEST, message);
+        final var localizedMessage = localizedMessage(exc);
+        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(localizedMessage);
+        return errorResponse(request, HttpStatus.BAD_REQUEST, sprippedMaybeLocalizedMessage);
     }
 
     @Override
@@ -139,37 +150,26 @@ public class RestResponseEntityExceptionHandler
                 .flatMap(Collection::stream)
                 .filter(FieldError.class::isInstance)
                 .map(FieldError.class::cast)
-                .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage() + " but is \""
-                        + fieldError.getRejectedValue() + "\"")
+                .map(toEnrichedFieldErrorMessage())
                 .toList();
         return errorResponse(request, HttpStatus.BAD_REQUEST, errorList.toString());
     }
 
-
-    private String userReadableEntityClassName(final String exceptionMessage) {
-        final var regex = "(net.hostsharing.hsadminng.[a-z0-9_.]*.[A-Za-z0-9_$]*Entity) ";
-        final var pattern = Pattern.compile(regex);
-        final var matcher = pattern.matcher(exceptionMessage);
-        if (matcher.find()) {
-            final var entityName = matcher.group(1);
-            final var entityClass = resolveClass(entityName);
-            if (entityClass.isPresent()) {
-                return (entityClass.get().isAnnotationPresent(DisplayAs.class)
-                        ? exceptionMessage.replace(entityName, entityClass.get().getAnnotation(DisplayAs.class).value())
-                        : exceptionMessage.replace(entityName, entityClass.get().getSimpleName()))
-                        .replace(" with id ", " with uuid ");
-            }
-
-        }
-        return exceptionMessage;
+    private Function<FieldError, String> toEnrichedFieldErrorMessage() {
+        final var translatedButIsLiteral = messageTranslator.translate("but is");
+        // TODO.i18n: the following does not work in all languages, e.g. not in right-to-left languages
+        return fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage() +
+                " " + translatedButIsLiteral + " " + optionallyQuoted(fieldError.getRejectedValue());
     }
 
-    private static Optional<Class<?>> resolveClass(final String entityName) {
-        try {
-            return Optional.of(ClassLoader.getSystemClassLoader().loadClass(entityName));
-        } catch (ClassNotFoundException e) {
-            return Optional.empty();
+    private String optionallyQuoted(final Object value) {
+        if (value == null) {
+            return "null";
         }
+        if (value instanceof Number) {
+            return value.toString();
+        }
+        return "\"" + value + "\"";
     }
 
     private Optional<HttpStatus> httpStatus(final Throwable causingException, final String message) {
@@ -187,4 +187,25 @@ public class RestResponseEntityExceptionHandler
         return Optional.empty();
     }
 
+    private String localizedMessage(final Throwable throwable) {
+        // most libraries seem to provide the localized message in both properties, but just for the case:
+        return throwable.getLocalizedMessage() != null ? throwable.getLocalizedMessage() : throwable.getMessage();
+    }
+
+    private String tryTranslation(final String message) {
+
+        for ( RetroactiveTranslator rtx: retroactiveTranslators ) {
+            if (rtx.canTranslate(message)) {
+                return rtx.translate(message);
+            }
+        }
+        return message;
+    }
+
+    private ResponseEntity<CustomErrorResponse> errorResponse(
+            final WebRequest request,
+            final HttpStatus httpStatus,
+            final String maybeTranslatedMessage) {
+        return customErrorResponse(request, httpStatus, tryTranslation(maybeTranslatedMessage));
+    }
 }

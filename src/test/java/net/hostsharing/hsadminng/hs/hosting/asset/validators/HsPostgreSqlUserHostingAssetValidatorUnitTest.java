@@ -126,6 +126,6 @@ class HsPostgreSqlUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^PGU\\|xyz00$|^PGU\\|xyz00_[a-zA-Z0-9_]+$', but is 'xyz99-temp'");
+                "'identifier' expected to match '^PGU\\|xyz00$|^PGU\\|xyz00_[a-zA-Z0-9_]+$' but is 'xyz99-temp'");
     }
 }

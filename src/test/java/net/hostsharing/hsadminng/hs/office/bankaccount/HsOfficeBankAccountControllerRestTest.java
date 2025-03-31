@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
@@ -19,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeBankAccountController.class)
-@Import(DisableSecurityConfig.class)
+@Import({DisableSecurityConfig.class, MessageTranslator.class})
 @ActiveProfiles("test")
 class HsOfficeBankAccountControllerRestTest {
 

@@ -196,7 +196,7 @@ class HsEMailAddressHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'identifier' expected to match '^\\Qold-local-part@example.org\\E$', but is 'abc00-office'");
+                "'identifier' expected to match '^\\Qold-local-part@example.org\\E$' but is 'abc00-office'");
     }
 
     @Test

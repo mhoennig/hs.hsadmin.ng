@@ -54,7 +54,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'identifier' expected to match '^vm[0-9][0-9][0-9][0-9]$', but is 'xyz99'");
+                "'identifier' expected to match '^vm[0-9][0-9][0-9][0-9]$' but is 'xyz99'");
     }
 
     @Test

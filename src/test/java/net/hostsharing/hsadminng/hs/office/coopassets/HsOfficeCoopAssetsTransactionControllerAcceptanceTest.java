@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.coopassets;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -34,7 +35,8 @@ import static org.hamcrest.Matchers.startsWith;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
+        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class,
+                    MessageTranslator.class}
 )
 @ActiveProfiles("test")
 @Transactional
@@ -355,6 +357,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Accept-Language", "de")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -376,7 +379,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                             {
                                  "statusCode": 400,
                                  "statusPhrase": "Bad Request",
-                                 "message": "ERROR: [400] coop assets transaction would result in a negative balance of assets"
+                                 "message": "ERROR: [400] Geschäftsguthaben-Transaktion würde zu einem negativen Geschäftsguthaben-Saldo führen"
                              }
                         """));  // @formatter:on
         }

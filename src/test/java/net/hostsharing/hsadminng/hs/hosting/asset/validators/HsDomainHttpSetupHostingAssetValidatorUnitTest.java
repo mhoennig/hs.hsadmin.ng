@@ -88,7 +88,7 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^\\Qexample.org|HTTP\\E$', but is 'example.org'"
+                "'identifier' expected to match '^\\Qexample.org|HTTP\\E$' but is 'example.org'"
         );
     }
 
@@ -155,7 +155,7 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.htdocsfallback' is expected to be of type Boolean, but is of type String",
+                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.htdocsfallback' is expected to be of type Boolean but is of type String",
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.fcgi-php-bin' is expected to match [^/.*] but 'false' does not match",
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match [(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))] but '' does not match",
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match [(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))] but '@' does not match",

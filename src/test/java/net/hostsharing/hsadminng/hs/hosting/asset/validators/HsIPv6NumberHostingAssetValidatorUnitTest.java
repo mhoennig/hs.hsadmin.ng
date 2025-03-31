@@ -60,7 +60,7 @@ class HsIPv6NumberHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).contains(
-                "'identifier' expected to be a valid IPv6 address, but is '" + givenIdentifier + "'"
+                "'identifier' expected to be a valid IPv6 address but is '" + givenIdentifier + "'"
         );
     }
 

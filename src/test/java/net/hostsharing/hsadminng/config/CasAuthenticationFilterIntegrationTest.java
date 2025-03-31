@@ -18,9 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.config.HttpHeadersBuilder.headers;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,13 +71,13 @@ class CasAuthenticationFilterIntegrationTest {
         final var result = restTemplate.exchange(
                 "http://localhost:" + this.serverPort + "/api/ping",
                 HttpMethod.GET,
-                new HttpEntity<>(null, headers("Authorization", "ST-valid")),
+                new HttpEntity<>(null, headers(entry("Authorization", "ST-valid"))),
                 String.class
         );
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).isEqualTo("pong " + username + "\n");
+        assertThat(result.getBody()).startsWith("pong " + username);
         // HOWTO assert log messages
         assertThat(capturedOutput.getOut()).containsPattern(
                 LogbackLogPattern.of(LogLevel.DEBUG, RealCasAuthenticator.class, "CAS-user: " + username));
@@ -97,7 +99,7 @@ class CasAuthenticationFilterIntegrationTest {
         final var result = restTemplate.exchange(
                 "http://localhost:" + this.serverPort + "/api/ping",
                 HttpMethod.GET,
-                new HttpEntity<>(null, headers("Authorization", "invalid")),
+                new HttpEntity<>(null, headers(entry("Authorization", "invalid"))),
                 String.class
         );
 

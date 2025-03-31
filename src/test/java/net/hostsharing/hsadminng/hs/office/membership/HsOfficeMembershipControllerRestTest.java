@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRbacEntity;
@@ -30,13 +31,14 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeMembershipController.class)
-@Import({StrictMapper.class, DisableSecurityConfig.class})
+@Import({StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class})
 @ActiveProfiles("test")
 public class HsOfficeMembershipControllerRestTest {
 
@@ -73,6 +75,9 @@ public class HsOfficeMembershipControllerRestTest {
 
     @MockitoBean
     Context contextMock;
+
+    @Autowired
+    MessageTranslator messageTranslator;
 
     @MockitoBean
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
@@ -249,7 +254,7 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                     // FYI: the brackets around the message are here because it's actually an array, in this case of size 1
-                    .andExpect(jsonPath("message", is("ERROR: [400] [partnerUuid must not be null but is \"null\"]")));
+                    .andExpect(jsonPath("message", startsWith("ERROR: [400] [partnerUuid must not be null")));
         }
 
         @Test
@@ -310,7 +315,7 @@ public class HsOfficeMembershipControllerRestTest {
         }
 
         public enum InvalidMemberSuffixVariants {
-            MISSING("", "[memberNumberSuffix must not be null but is \"null\"]"),
+            MISSING("", "[memberNumberSuffix must not be null"),
             TOO_SMALL("\"memberNumberSuffix\": \"9\",", "memberNumberSuffix must match \"[0-9]{2}\" but is \"9\""),
             TOO_LARGE("\"memberNumberSuffix\": \"100\",", "memberNumberSuffix must match \"[0-9]{2}\" but is \"100\""),
             NOT_NUMERIC("\"memberNumberSuffix\": \"AA\",", "memberNumberSuffix must match \"[0-9]{2}\" but is \"AA\""),

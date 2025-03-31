@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.errors;
 
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,6 +21,7 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,7 +29,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RestResponseEntityExceptionHandlerUnitTest {
 
-    final RestResponseEntityExceptionHandler exceptionHandler = new RestResponseEntityExceptionHandler();
+    final RestResponseEntityExceptionHandler exceptionHandler =
+            new RestResponseEntityExceptionHandler(mock(MessageTranslator.class), emptyList());
 
     @Test
     void handleConflict() {
@@ -46,20 +49,16 @@ class RestResponseEntityExceptionHandlerUnitTest {
     @Test
     void handleForeignKeyViolation() {
         // given
-        final var givenException = new DataIntegrityViolationException("""
-            ... violates foreign key constraint ...
-               Detail:   Second Line
-            Third Line
-            """);
+        final var givenException = new DataIntegrityViolationException("... violates foreign key constraint ...");
         final var givenWebRequest = mock(WebRequest.class);
 
         // when
         final var errorResponse = exceptionHandler.handleConflict(givenException, givenWebRequest);
 
         // then
-        assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
-        assertThat(errorResponse.getBody()).isNotNull()
-                .extracting(CustomErrorResponse::getMessage).isEqualTo("ERROR: [400] Second Line");
+        assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(errorResponse.getBody()).isNotNull().extracting(CustomErrorResponse::getMessage).isEqualTo(
+                    "ERROR: [409] ... violates foreign key constraint ...");
     }
 
     @Test
@@ -125,24 +124,6 @@ class RestResponseEntityExceptionHandlerUnitTest {
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
         assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] whatever error message");
-    }
-
-    @Test
-    void handleJpaObjectRetrievalFailureExceptionWithEntityName() {
-        // given
-        final var givenException = new JpaObjectRetrievalFailureException(
-                new EntityNotFoundException("Unable to find "
-                        + NoDisplayNameEntity.class.getTypeName()
-                        + " with id 12345-123454")
-        );
-        final var givenWebRequest = mock(WebRequest.class);
-
-        // when
-        final var errorResponse = exceptionHandler.handleJpaObjectRetrievalFailureException(givenException, givenWebRequest);
-
-        // then
-        assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] Unable to find NoDisplayNameEntity with uuid 12345-123454");
     }
 
     @Test

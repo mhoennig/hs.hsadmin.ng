@@ -101,7 +101,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
         final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
 
         // then
-        assertThat(result).containsExactly("'identifier' expected to match '^abc[0-9][0-9]$', but is 'xyz00'");
+        assertThat(result).containsExactly("'identifier' expected to match '^abc[0-9][0-9]$' but is 'xyz00'");
     }
 
     @Test

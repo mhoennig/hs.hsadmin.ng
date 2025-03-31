@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.mapper.Array;
@@ -55,7 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsHostingAssetController.class)
-@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class })
+@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class, MessageTranslator.class })
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 public class HsHostingAssetControllerRestTest {

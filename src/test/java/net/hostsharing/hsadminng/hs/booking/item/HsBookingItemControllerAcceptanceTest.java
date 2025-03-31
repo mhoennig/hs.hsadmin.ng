@@ -45,7 +45,7 @@ import static org.hamcrest.Matchers.matchesRegex;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
+        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class}
 )
 @ActiveProfiles("test")
 @Transactional

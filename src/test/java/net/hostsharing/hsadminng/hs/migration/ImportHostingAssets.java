@@ -1230,7 +1230,7 @@ public class ImportHostingAssets extends CsvDataImport {
                     final var free = rec.getBoolean("free");
 
                     assertThat(old_inet_addr_id)
-                            .as("packet.old_inet_addr_id not supported, but is not null for " + packet_name)
+                            .as("packet.old_inet_addr_id not supported but is not null for " + packet_name)
                             .isNull();
 
                     final var biType = determineBiType(basepacket_code);
@@ -1245,7 +1245,7 @@ public class ImportHostingAssets extends CsvDataImport {
 
                     logError(() -> assertThat(!free || haType == MANAGED_WEBSPACE || defaultPrefix(bookingItem)
                             .equals("hsh"))
-                            .as("packet.free only supported for Hostsharing-Assets and ManagedWebspace in customer-ManagedServer, but is set for "
+                            .as("packet.free only supported for Hostsharing-Assets and ManagedWebspace in customer-ManagedServerbut is set for "
                                     + packet_name)
                             .isTrue());
 
@@ -1739,7 +1739,7 @@ public class ImportHostingAssets extends CsvDataImport {
             return givenValue != null && !givenValue.isBlank() ? givenValue : defaultStringValue;
         }
         throw new RuntimeException(
-                "property default value expected to be of type string, but is of type " + defaultValue.getClass()
+                "property default value expected to be of type stringbut is of type " + defaultValue.getClass()
                         .getSimpleName());
     }
 

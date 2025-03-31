@@ -26,6 +26,9 @@ public class WebSecurityConfig {
     @Autowired
     private CasAuthenticationFilter authenticationFilter;
 
+    @Autowired
+    private MessageTranslator messageTranslator;
+
     @Bean
     @Profile("!test")
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
@@ -55,7 +58,7 @@ public class WebSecurityConfig {
     @Bean
     @Profile("realCasAuthenticator")
     public CasAuthenticator realCasServiceTicketValidator() {
-        return new RealCasAuthenticator();
+        return new RealCasAuthenticator(messageTranslator);
     }
 
     @Bean

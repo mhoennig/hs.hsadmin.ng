@@ -28,7 +28,7 @@ class HsIPv6NumberHostingAssetValidator extends HostingAssetEntityValidator {
         final var violations = super.validateEntity(assetEntity);
 
         if (!isValidIPv6Address(assetEntity.getIdentifier())) {
-            violations.add("'identifier' expected to be a valid IPv6 address, but is '" + assetEntity.getIdentifier() + "'");
+            violations.add("'identifier' expected to be a valid IPv6 address but is '" + assetEntity.getIdentifier() + "'");
         }
 
         return violations;

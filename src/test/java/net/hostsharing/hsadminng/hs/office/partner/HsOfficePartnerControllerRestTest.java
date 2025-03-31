@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
+import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
@@ -8,17 +10,18 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -30,7 +33,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -39,7 +42,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficePartnerController.class)
-@Import({ StrictMapper.class, HsOfficeContactFromResourceConverter.class, DisableSecurityConfig.class})
+@Import({ StrictMapper.class,
+          MessagesResourceConfig.class,
+          MessageTranslator.class,
+          HsOfficeContactFromResourceConverter.class,
+          DisableSecurityConfig.class })
 @ActiveProfiles("test")
 class HsOfficePartnerControllerRestTest {
 
@@ -53,6 +60,12 @@ class HsOfficePartnerControllerRestTest {
 
     @MockitoBean
     Context contextMock;
+
+    @Autowired
+    MessageSource messageSource;
+
+    @Autowired
+    MessageTranslator translator;
 
     @MockitoBean
     HsOfficePartnerRbacRepository partnerRepo;
@@ -100,6 +113,7 @@ class HsOfficePartnerControllerRestTest {
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/partners")
                             .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Accept-Language", "de")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                      {
@@ -124,7 +138,8 @@ class HsOfficePartnerControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", startsWith("ERROR: [400] Cannot resolve HsOfficePersonRealEntity with uuid ")));
+                    .andExpect(jsonPath("message", equalTo(
+                            "ERROR: [400] RealPerson \"00000000-0000-0000-0000-000000000000\" nicht gefunden")));
         }
 
         @Test
@@ -157,7 +172,8 @@ class HsOfficePartnerControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", startsWith("ERROR: [400] Cannot resolve HsOfficeContactRealEntity with uuid ")));
+                    .andExpect(jsonPath("message", equalTo(
+                            "ERROR: [400] RealContact \"00000000-0000-0000-0000-000000000000\" not found")));
         }
     }
 
@@ -173,14 +189,14 @@ class HsOfficePartnerControllerRestTest {
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
-                    .get("/api/hs/office/partners/P-12345")
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON))
+                            .get("/api/hs/office/partners/P-12345")
+                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
 
-            // then
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("partnerNumber", is("P-12345")));
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("partnerNumber", is("P-12345")));
         }
 
         @Test
@@ -190,13 +206,13 @@ class HsOfficePartnerControllerRestTest {
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
-                    .get("/api/hs/office/partners/P-12345")
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON))
+                            .get("/api/hs/office/partners/P-12345")
+                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
 
-            // then
-            .andExpect(status().isNotFound());
+                    // then
+                    .andExpect(status().isNotFound());
         }
     }
 

@@ -64,7 +64,7 @@ public class PostgresTestcontainer {
     }
 
     private static void makeDir(final File dir) {
-        assertThat(!dir.exists() || dir.isDirectory()).describedAs(dir + " does exist, but is not a directory").isTrue();
+        assertThat(!dir.exists() || dir.isDirectory()).describedAs(dir + " does exist but is not a directory").isTrue();
         assertThat(dir.isDirectory() || dir.mkdirs()).describedAs(dir + " cannot be created").isTrue();
     }
 

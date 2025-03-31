@@ -273,7 +273,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldCreateSelfDebitorForPartnerWithIdenticalContactData() {
             new CreateSelfDebitorForPartnerWithIdenticalContactData(scenarioTest)
                     .given("partnerNumber", "P-31011")
-                    .given("debitorNumberSuffix", "00") // TODO.impl: could be assigned automatically, but is not yet
+                    .given("debitorNumberSuffix", "00") // TODO.impl: could be assigned automatically but is not yet
                     .given("billable", true)
                     .given("vatBusiness", false)
                     .given("vatReverseCharge", false)
@@ -291,7 +291,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("partnerPersonTradeName", "Test AG")
                     .given("billingContactCaption", "Test AG - billing department")
                     .given("billingContactEmailAddress", "billing@test-ag.example.org")
-                    .given("debitorNumberSuffix", "00") // TODO.impl: could be assigned automatically, but is not yet
+                    .given("debitorNumberSuffix", "00") // TODO.impl: could be assigned automaticallybut is not yet
                     .given("billable", true)
                     .given("vatId", "VAT123456")
                     .given("vatCountryCode", "DE")

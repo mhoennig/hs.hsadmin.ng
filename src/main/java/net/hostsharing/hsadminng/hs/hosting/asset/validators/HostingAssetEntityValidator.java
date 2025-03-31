@@ -145,7 +145,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
         if (assetEntity.getIdentifier() == null ||
                 !expectedIdentifierPattern.matcher(assetEntity.getIdentifier()).matches()) {
             return List.of(
-                    "'identifier' expected to match '" + expectedIdentifierPattern + "', but is '" + assetEntity.getIdentifier()
+                    "'identifier' expected to match '" + expectedIdentifierPattern + "' but is '" + assetEntity.getIdentifier()
                             + "'");
         }
         return Collections.emptyList();

@@ -1069,7 +1069,7 @@ public class RbacSpec {
          */
         public static SQL fetchedBySql(final String sql) {
             if ( !sql.startsWith("SELECT ${columns}") ) {
-                throw new IllegalArgumentException("SQL SELECT expression must start with 'SELECT ${columns}', but is: " + sql);
+                throw new IllegalArgumentException("SQL SELECT expression must start with 'SELECT ${columns}' but is: " + sql);
             }
             validateExpression(sql);
             return new SQL(sql, Part.SQL_QUERY);

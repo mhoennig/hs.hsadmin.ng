@@ -43,7 +43,7 @@ class HsManagedServerHostingAssetValidatorUnitTest {
                 "'MANAGED_SERVER:vm1234.assignedToAsset' must be null but is of type CLOUD_SERVER",
                 "'MANAGED_SERVER:vm1234.config.monit_max_cpu_usage' is expected to be at least 10 but is 2",
                 "'MANAGED_SERVER:vm1234.config.monit_max_ram_usage' is expected to be at most 100 but is 101",
-                "'MANAGED_SERVER:vm1234.config.monit_max_hdd_usage' is expected to be of type Integer, but is of type String");
+                "'MANAGED_SERVER:vm1234.config.monit_max_hdd_usage' is expected to be of type Integer but is of type String");
     }
 
     @Test
@@ -61,7 +61,7 @@ class HsManagedServerHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'identifier' expected to match '^vm[0-9][0-9][0-9][0-9]$', but is 'xyz00'");
+                "'identifier' expected to match '^vm[0-9][0-9][0-9][0-9]$' but is 'xyz00'");
     }
 
     @Test

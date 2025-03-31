@@ -128,6 +128,6 @@ class HsMariaDbUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^MAU\\|xyz00$|^MAU\\|xyz00_[a-zA-Z0-9_]+$', but is 'xyz99-temp'");
+                "'identifier' expected to match '^MAU\\|xyz00$|^MAU\\|xyz00_[a-zA-Z0-9_]+$' but is 'xyz99-temp'");
     }
 }

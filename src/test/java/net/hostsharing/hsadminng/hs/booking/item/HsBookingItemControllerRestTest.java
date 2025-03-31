@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
@@ -42,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsBookingItemController.class)
-@Import({StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class})
+@Import({StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class, MessageTranslator.class})
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 class HsBookingItemControllerRestTest {

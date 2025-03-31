@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.config;
 
 import io.micrometer.core.annotation.Timed;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import java.io.IOException;
 
 // HOWTO add logger
 @Slf4j
+@RequiredArgsConstructor
 public class RealCasAuthenticator implements CasAuthenticator {
 
     @Value("${hsadminng.cas.server}")
@@ -25,7 +27,10 @@ public class RealCasAuthenticator implements CasAuthenticator {
     @Value("${hsadminng.cas.service}")
     private String serviceUrl;
 
+    private final MessageTranslator messageTranslator;
+
     private final RestTemplate restTemplate = new RestTemplate();
+
 
     @SneakyThrows
     @Timed("app.cas.authenticate")
@@ -52,7 +57,7 @@ public class RealCasAuthenticator implements CasAuthenticator {
 
     private Document verifyServiceTicket(final String serviceTicket) throws SAXException, IOException, ParserConfigurationException {
         if ( !serviceTicket.startsWith("ST-") ) {
-            throwBadCredentialsException("Invalid authorization ticket");
+            throwBadCredentialsException("unknown authorization ticket");
         }
 
         final var url = casServerUrl + "/cas/p3/serviceValidate" +
@@ -69,12 +74,13 @@ public class RealCasAuthenticator implements CasAuthenticator {
     private String extractUserName(final Document verification) {
 
         if (verification.getElementsByTagName("cas:authenticationSuccess").getLength() == 0) {
-            throwBadCredentialsException("CAS service ticket could not be verified");
+            throwBadCredentialsException("CAS service-ticket could not be verified");
         }
         return verification.getElementsByTagName("cas:user").item(0).getTextContent();
     }
 
-    private void throwBadCredentialsException(final String message) {
-        throw new BadCredentialsException(message);
+    private void throwBadCredentialsException(final String messageKey) {
+        final var translatedMessage = messageTranslator.translate(messageKey);
+        throw new BadCredentialsException(translatedMessage);
     }
 }

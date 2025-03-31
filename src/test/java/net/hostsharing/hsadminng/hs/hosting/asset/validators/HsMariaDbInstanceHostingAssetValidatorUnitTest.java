@@ -72,7 +72,7 @@ class HsMariaDbInstanceHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^\\Qvm1234|MariaDB.default\\E$', but is 'example.org'"
+                "'identifier' expected to match '^\\Qvm1234|MariaDB.default\\E$' but is 'example.org'"
         );
     }
 

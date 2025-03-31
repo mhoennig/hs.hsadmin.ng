@@ -119,7 +119,7 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'identifier' expected to match '^xyz00$|^xyz00-[a-z0-9][a-z0-9\\._-]*$', but is 'abc00-office'");
+                "'identifier' expected to match '^xyz00$|^xyz00-[a-z0-9][a-z0-9\\._-]*$' but is 'abc00-office'");
     }
 
     @Test

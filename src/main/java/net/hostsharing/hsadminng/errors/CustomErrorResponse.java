@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 public class CustomErrorResponse {
 
-    static ResponseEntity<CustomErrorResponse> errorResponse(
+    static ResponseEntity<CustomErrorResponse> customErrorResponse(
             final WebRequest request,
             final HttpStatus httpStatus,
             final String message) {
@@ -21,13 +21,13 @@ public class CustomErrorResponse {
 
     static String firstMessageLine(final Throwable exception) {
         if (exception.getMessage() != null) {
-            return line(exception.getMessage(), 0);
+            return stripTechnicalDetails(exception.getMessage());
         }
         return "ERROR: [500] " + exception.getClass().getName();
     }
 
-    static String line(final String message, final int lineNo) {
-        return message.split("\\r|\\n|\\r\\n", 0)[lineNo];
+    static String stripTechnicalDetails(final String message) {
+        return message.split("\\r|\\n|\\r\\n", 0)[0];
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
@@ -41,12 +41,12 @@ public class CustomErrorResponse {
 
     private final String message;
 
-    CustomErrorResponse(final String path, final HttpStatus status, final String message) {
+    CustomErrorResponse(final String path, final HttpStatus status, final String rawMessage) {
+        // HOWTO: debug serverside error response - set a breakpoint here
         this.timestamp = LocalDateTime.now();
         this.path = path;
         this.statusCode = status.value();
         this.statusPhrase = status.getReasonPhrase();
-        // HOWTO: debug serverside error response - set a breakpoint here
-        this.message = message.startsWith("ERROR: [") ? message : "ERROR: [" + statusCode + "] " + message;
+        this.message = rawMessage.startsWith("ERROR: [") ? rawMessage : "ERROR: [" + statusCode + "] " + rawMessage;
     }
 }

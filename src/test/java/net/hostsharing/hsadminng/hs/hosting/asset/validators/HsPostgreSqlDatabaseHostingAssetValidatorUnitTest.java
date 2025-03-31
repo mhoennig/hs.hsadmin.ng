@@ -123,7 +123,7 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
         // then
         assertThat(result).containsExactlyInAnyOrder(
                 "'PGSQL_DATABASE:PGD|xyz00_db.config.unknown' is not expected but is set to 'wrong'",
-                "'PGSQL_DATABASE:PGD|xyz00_db.config.encoding' is expected to be of type String, but is of type Integer"
+                "'PGSQL_DATABASE:PGD|xyz00_db.config.encoding' is expected to be of type String but is of type Integer"
         );
     }
 
@@ -140,6 +140,6 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^PGD\\|xyz00$|^PGD\\|xyz00_[a-zA-Z0-9_]+$', but is 'xyz99-temp'");
+                "'identifier' expected to match '^PGD\\|xyz00$|^PGD\\|xyz00_[a-zA-Z0-9_]+$' but is 'xyz99-temp'");
     }
 }

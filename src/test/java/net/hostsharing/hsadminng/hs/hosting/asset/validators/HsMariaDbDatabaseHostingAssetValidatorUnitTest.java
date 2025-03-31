@@ -100,7 +100,7 @@ class HsMariaDbDatabaseHostingAssetValidatorUnitTest {
         // then
         assertThat(result).containsExactlyInAnyOrder(
                 "'MARIADB_DATABASE:MAD|xyz00_temp.config.unknown' is not expected but is set to 'wrong'",
-                "'MARIADB_DATABASE:MAD|xyz00_temp.config.encoding' is expected to be of type String, but is of type Integer"
+                "'MARIADB_DATABASE:MAD|xyz00_temp.config.encoding' is expected to be of type String but is of type Integer"
         );
     }
 
@@ -117,6 +117,6 @@ class HsMariaDbDatabaseHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^MAD\\|xyz00$|^MAD\\|xyz00_[a-zA-Z0-9_]+$', but is 'xyz99-temp'");
+                "'identifier' expected to match '^MAD\\|xyz00$|^MAD\\|xyz00_[a-zA-Z0-9_]+$' but is 'xyz99-temp'");
     }
 }
