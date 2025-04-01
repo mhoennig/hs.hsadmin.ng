@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.hosting.asset;
+package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.RetroactiveTranslator;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 // HOWTO translate messages which got created without i18n support, in this case in a PostgreSQL constraint trigger
 @Service
-public class HsHostingAssetTranslations implements RetroactiveTranslator {
+public class HsCoopAssetTranslations implements RetroactiveTranslator {
 
     public static final String ERROR_400_PREFIX = "ERROR: [400] ";
 

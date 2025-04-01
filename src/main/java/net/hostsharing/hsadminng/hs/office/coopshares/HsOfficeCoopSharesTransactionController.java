@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopSharesApi;
@@ -36,6 +37,9 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Autowired
     private StrictMapper mapper;
+
+    @Autowired
+    private MessageTranslator messageTranslator;
 
     @Autowired
     private HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
@@ -118,32 +122,31 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         MultiValidationException.throwIfNotEmpty(violations);
     }
 
-    private static void validateSubscriptionTransaction(
+    private void validateSubscriptionTransaction(
             final HsOfficeCoopSharesTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (requestBody.getTransactionType() == SUBSCRIPTION
                 && requestBody.getShareCount() < 0) {
-            violations.add("for %s, shareCount must be positive but is \"%d\"".formatted(
+            violations.add(messageTranslator.translate("for transactionType={0}, shareCount must be positive but is {1}",
                     requestBody.getTransactionType(), requestBody.getShareCount()));
         }
     }
 
-    private static void validateCancellationTransaction(
+    private void validateCancellationTransaction(
             final HsOfficeCoopSharesTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (requestBody.getTransactionType() == CANCELLATION
                 && requestBody.getShareCount() > 0) {
-            violations.add("for %s, shareCount must be negative but is \"%d\"".formatted(
+            violations.add(messageTranslator.translate("for transactionType={0}, shareCount must be negative but is {1}",
                     requestBody.getTransactionType(), requestBody.getShareCount()));
         }
     }
 
-    private static void validateshareCount(
+    private void validateshareCount(
             final HsOfficeCoopSharesTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (requestBody.getShareCount() == 0) {
-            violations.add("shareCount must not be 0 but is \"%d\"".formatted(
-                    requestBody.getShareCount()));
+            violations.add(messageTranslator.translate("shareCount must not be 0"));
         }
     }
 

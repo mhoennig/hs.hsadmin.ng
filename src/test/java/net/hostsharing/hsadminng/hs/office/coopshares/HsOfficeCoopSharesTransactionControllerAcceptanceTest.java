@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.coopshares;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -32,7 +33,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class})
+        classes = {HsadminNgApplication.class, DisableSecurityConfig.class, MessageTranslator.class, JpaAttempt.class})
 @ActiveProfiles("test")
 @Transactional
 @Tag("officeIntegrationTest")
@@ -180,7 +181,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    class AddCoopSharesTransaction {
+    class PostNewCoopSharesTransaction {
 
         @Test
         void globalAdmin_canAddCoopSharesTransaction() {
@@ -191,6 +192,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var location = RestAssured // @formatter:off
                 .given()
                     .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Accept-Language", "de")
                     .contentType(ContentType.JSON).body("""
                        {
                            "membership.uuid": "%s",
@@ -306,6 +308,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Accept-Language", "de")
                     .contentType(ContentType.JSON)
                     .body("""
                         {
@@ -329,7 +332,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                         {
                             "statusCode": 400,
                             "statusPhrase": "Bad Request",
-                            "message": "ERROR: [400] coop shares transaction would result in a negative number of shares"
+                            "message": "ERROR: [400] Geschäftsanteile-Transaktion würde zu negativen Geschäftsanteilen führen"
                         }
                         """));  // @formatter:on
         }

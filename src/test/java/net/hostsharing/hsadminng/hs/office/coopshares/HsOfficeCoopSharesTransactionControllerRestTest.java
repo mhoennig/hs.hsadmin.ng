@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -27,7 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeCoopSharesTransactionController.class)
-@Import({DisableSecurityConfig.class, MessageTranslator.class})
+@Import({DisableSecurityConfig.class,
+         MessagesResourceConfig.class,
+         MessageTranslator.class})
 @ActiveProfiles("test")
 class HsOfficeCoopSharesTransactionControllerRestTest {
 
@@ -61,45 +64,45 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
     enum BadRequestTestCases {
         MEMBERSHIP_UUID_MISSING(
                 requestBody -> requestBody.without("membership.uuid"),
-                "membershipUuid must not be null"),
+                "membershipUuid darf nicht null sein ist aber null"),
 
         TRANSACTION_TYPE_MISSING(
                 requestBody -> requestBody.without("transactionType"),
-                "transactionType must not be null"),
+                "transactionType darf nicht null sein ist aber null"),
 
         VALUE_DATE_MISSING(
                 requestBody -> requestBody.without("valueDate"),
-                "valueDate must not be null"),
+                "valueDate darf nicht null sein ist aber null"),
 
         SHARES_COUNT_FOR_SUBSCRIPTION_MUST_BE_POSITIVE(
                 requestBody -> requestBody
                         .with("transactionType", "SUBSCRIPTION")
                         .with("shareCount", -1),
-                "for SUBSCRIPTION, shareCount must be positive but is \"-1\""),
+                "für transactionType=SUBSCRIPTION, muss shareCount positiv sein, ist aber -1"),
 
         SHARES_COUNT_FOR_CANCELLATION_MUST_BE_NEGATIVE(
                 requestBody -> requestBody
                         .with("transactionType", "CANCELLATION")
                         .with("shareCount", 1),
-                "for CANCELLATION, shareCount must be negative but is \"1\""),
+                "für transactionType=CANCELLATION, muss shareCount negativ sein, ist aber 1"),
 
         SHARES_COUNT_MUST_NOT_BE_NULL(
                 requestBody -> requestBody
                         .with("transactionType", "REVERSAL")
                         .with("shareCount", 0),
-                "shareCount must not be 0 but is \"0\""),
+                "shareCount darf nicht 0 sein"),
 
         REFERENCE_MISSING(
                 requestBody -> requestBody.without("reference"),
-                "reference must not be null"),
+                "reference darf nicht null sein ist aber null"),
 
         REFERENCE_TOO_SHORT(
                 requestBody -> requestBody.with("reference", "12345"),
-                "reference size must be between 6 and 48 but is \"12345\""),
+                "reference Größe muss zwischen 6 und 48 sein ist aber \"12345\""),
 
         REFERENCE_TOO_LONG(
                 requestBody -> requestBody.with("reference", "0123456789012345678901234567890123456789012345678"),
-                "reference size must be between 6 and 48 but is \"0123456789012345678901234567890123456789012345678\"");
+                "reference Größe muss zwischen 6 und 48 sein ist aber \"0123456789012345678901234567890123456789012345678\"");
 
         private final Function<JsonBuilder, JsonBuilder> givenBodyTransformation;
         private final String expectedErrorMessage;
@@ -124,6 +127,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopsharestransactions")
                         .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Accept-Language", "de")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(testCase.givenRequestBody())
                         .accept(MediaType.APPLICATION_JSON))
