@@ -157,9 +157,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
         }
     }
 
-    final BiConsumer<HsBookingItem, HsBookingItemResource> ITEM_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+    final static BiConsumer<HsBookingItem, HsBookingItemResource> ITEM_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setValidFrom(entity.getValidity().lower());
-        if (entity.getValidity().hasUpperBound()) {
+        if (entity.getValidity().upper() != null) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
     };

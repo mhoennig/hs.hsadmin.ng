@@ -17,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.UUID;
@@ -44,9 +42,6 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Autowired
     private HsOfficeSepaMandateRepository sepaMandateRepo;
-
-    @PersistenceContext
-    private EntityManager em;
 
     @Override
     @Transactional(readOnly = true)
@@ -140,7 +135,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     final BiConsumer<HsOfficeSepaMandateEntity, HsOfficeSepaMandateResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setValidFrom(entity.getValidity().lower());
-        if (entity.getValidity().hasUpperBound()) {
+         if (entity.getValidity().upper() != null) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
         resource.setDebitor(mapper.map(entity.getDebitor(), HsOfficeDebitorResource.class));

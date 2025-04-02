@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
+import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
@@ -22,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +36,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,16 +48,24 @@ public class HsOfficeMembershipControllerRestTest {
     private static final HsOfficePartnerRealEntity PARTNER_12345 = HsOfficePartnerRealEntity.builder()
             .partnerNumber(12345)
             .build();
+    public static final HsOfficeMembershipEntity MEMBERSHIP_1234502 = HsOfficeMembershipEntity.builder()
+            .partner(PARTNER_12345)
+            .memberNumberSuffix("02")
+            .validity(Range.emptyRange(LocalDate.class))
+            .status(HsOfficeMembershipStatus.INVALID)
+            .build();
     public static final HsOfficeMembershipEntity MEMBERSHIP_1234501 = HsOfficeMembershipEntity.builder()
             .partner(PARTNER_12345)
             .memberNumberSuffix("01")
             .validity(localDateRange("[2013-10-01,]"))
+            .membershipFeeBillable(false)
             .status(HsOfficeMembershipStatus.ACTIVE)
             .build();
     public static final HsOfficeMembershipEntity MEMBERSHIP_1234500 = HsOfficeMembershipEntity.builder()
             .partner(PARTNER_12345)
             .memberNumberSuffix("00")
             .validity(localDateRange("[2011-04-01,2016-12-31]"))
+            .membershipFeeBillable(true)
             .status(HsOfficeMembershipStatus.CANCELLED)
             .build();
     public static final String MEMBERSHIP_1234501_JSON = """
@@ -101,15 +112,6 @@ public class HsOfficeMembershipControllerRestTest {
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/memberships?partnerNumber=P-12345")
                             .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("""
-                                       {
-                                           "partner.uuid": null,
-                                           "memberNumberSuffix": "01",
-                                           "validFrom": "2022-10-13",
-                                           "membershipFeeBillable": "true"
-                                         }
-                                    """)
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -124,7 +126,8 @@ public class HsOfficeMembershipControllerRestTest {
             when(membershipRepo.findMembershipsByPartnerNumber(12345))
                     .thenReturn(List.of(
                             MEMBERSHIP_1234500,
-                            MEMBERSHIP_1234501
+                            MEMBERSHIP_1234501,
+                            MEMBERSHIP_1234502
                     ));
 
             // when
@@ -143,8 +146,40 @@ public class HsOfficeMembershipControllerRestTest {
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
+                    .andDo(print())
                     .andExpect(status().is2xxSuccessful())
-                    .andExpect(jsonPath("$", hasSize(2)));
+                    .andExpect(jsonPath("$", hasSize(3)))
+                    .andExpect(jsonPath("$", lenientlyEquals("""
+                            [
+                              {
+                                "partner": { "partnerNumber": "P-12345" },
+                                "memberNumber": "M-1234500",
+                                "memberNumberSuffix": "00",
+                                "validFrom": "2011-04-01",
+                                "validTo": "2016-12-30",
+                                "status": "CANCELLED",
+                                "membershipFeeBillable": true
+                              },
+                              {
+                                "partner": { "partnerNumber": "P-12345" },
+                                "memberNumber": "M-1234501",
+                                "memberNumberSuffix": "01",
+                                "validFrom": "2013-10-01",
+                                "validTo": null,
+                                "status": "ACTIVE",
+                                "membershipFeeBillable": false
+                              },
+                              {
+                                "partner": { "partnerNumber": "P-12345" },
+                                "memberNumber": "M-1234502",
+                                "memberNumberSuffix": "02",
+                                "validFrom": null,
+                                "validTo": null,
+                                "status": "INVALID",
+                                "membershipFeeBillable": null
+                              }
+                            ]
+                            """)));
         }
     }
 

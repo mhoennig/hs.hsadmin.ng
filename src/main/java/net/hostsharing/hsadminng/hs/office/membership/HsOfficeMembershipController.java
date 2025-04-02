@@ -162,7 +162,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     final BiConsumer<HsOfficeMembershipEntity, HsOfficeMembershipResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setMemberNumber(entity.getTaggedMemberNumber());
         resource.setValidFrom(entity.getValidity().lower());
-        if (entity.getValidity().hasUpperBound()) {
+        if (entity.getValidity().upper() != null) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
         resource.getPartner().setPartnerNumber(entity.getPartner().getTaggedPartnerNumber()); // TODO.refa: use partner mapper?
