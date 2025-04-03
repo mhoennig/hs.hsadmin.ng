@@ -17,7 +17,7 @@ In diesem System ist ein _Partner_ grundsätzlich jeglicher Geschäftspartner de
 Dies können grundsätzlich Kunden, siehe [Debitor](#Debitor), wie Lieferanten sein.
 Derzeit sind aber nur Debitoren implementiert.
 
-Des Weiteren gibt es für jeden _Partner_ eine fünfstellige Partnernummer mit dem Prefix 'P-' (z.B. `P-123454`)
+Des Weiteren gibt es für jeden _Partner_ eine fünfstellige Partnernummer mit dem Prefix 'P-' (z.B. `P-12345`)
 sowie Zusatzinformationen (z.B. Registergerichtnummer oder Geburtsdatum), die zur genauen Identifikation benötigt werden.
 
 Für einen _Partner_ kann es gleichzeitig mehrere [Debitoren](#Debitor) 
@@ -26,17 +26,38 @@ und zeitlich nacheinander mehrere [Mitgliedschaften](#Mitgliedschaft) geben.
 Partner sind grundsätzlich als ist [Relation](#Relation) der Vertragsperson mit der Person _Hostsharing eG_ implementiert.
 
 
-### Debitor
+#### Debitor
 
-Ein `Debitor` ist quasi ein Rechnungsempfänger für einen [Partner](#Partner).
+Ein _Debitor_ ist quasi ein Rechnungsempfänger für einen [Partner](#Partner).
 
 Für einen _Partner_ kann es gleichzeitig mehrere [Debitoren](#Debitor) geben, 
 z.B. für spezielle Projekte des Kunden oder verbundene Organisationen.
 
-Des Weiteren gibt es für jeden _Partner_ eine fünfstellige Partnernummer mit dem Prefix 'P-' (z.B. `P-123454`)
-sowie Zusatzinformationen (z.B. Registergerichtsnummer oder Geburtsdatum), die zur genauen Identifikation benötigt werden.
+Die Debitoren-Nummer besteht aus dem Prefix `D-`, dem nummerischen Teil der Partnernummer und einem zweistelligen, fortlaufenden Debitoren-Suffix (also z.B. `D-1234500`).
 
-Debitoren sind grundsätzlich als ist [Relation](#Relation) der Vertragsperson mit der Person des Vertragspartners implementiert.
+Debitoren sind grundsätzlich als [Relation](#Relation) der Vertragsperson mit der Person des Vertragspartners implementiert.
+
+
+#### Mitgliedschaft
+
+_Mitgliedschaften_ enthalten Zusatzdaten für [Partner](#Partner), die Mitglieder sind.
+
+Für einen _Partner_ kann es nacheinander mehrere _Mitgliedschaften_ geben,
+falls dieser ausgetreten und später wieder eingetreten ist.
+Gleichzeitig ist nur eine Mitgliedschaft möglich.
+
+Die Mitgliedschafts-Nummer besteht aus dem Prefix `M-`, dem nummerischen Teil der Partnernummer und einem zweistelligen, fortlaufenden Mitgliedschafts-Suffix (also z.B. `M-1234500`).
+
+Mitgliedschaften haben einen der folgenden Status:
+
+- `INVALID`: ungültige Mitgliedschaft - sollte nur durch den Import entstanden sein, falls es Fehlbuchungen von Geschäftsanteilen und/oder Geschäftsguthaben gab, aber gar keine gültige Mitgliedschaft  
+- `ACTIVE`: aktive Mitgliedschaft
+- `CANCELLED`: Mitgliedschaft wurde vom Mitglied ausgehend gekündigt
+- `TRANSFERRED`: Mitgliedschaft wurde übertragen
+- `DECEASED`: Mitglied ist verstorben und es fand keine Erbfolge statt
+- `LIQUIDATED`: Mitglied (Firma, Verein) wurde aufgelöst
+- `EXPULSED`: Mitglied wurde aus der Genossenschaft ausgeschlossen
+- `UNKNOWN`: unbekannter Mitgliedschaftsstatus - sollte nur durch den Import entstanden sein, falls die Daten unvollständig waren
 
 
 #### Relation
@@ -68,7 +89,7 @@ Implementiert ist der _Representative_ als eine besondere Form der [Relation](#R
 der Person des Repräsentanten (_Holder_) zur repräsentierten Person (_Anchor_) dargestellt.
 
 
-### VIP-Contact
+#### VIP-Contact
 
 Ein _VIP-Contact_ ist eine natürliche Person, die für einen Geschäftspartner eine wichtige Funktion übernimmt, 
 nicht aber deren offizieller Repräsentant ist. 
@@ -77,7 +98,7 @@ Implementiert ist der _VIP-Contact_ als eine besondere Form der [Relation](#Rela
 der Person des VIP-Contact (_Holder_) zur repräsentierten Person (_Anchor_) dargestellt.
 
 
-### Operations-Contact
+#### Operations-Contact
 
 Ein _Operations-_Contact_ ist_ eine natürliche Person, die für einen Geschäftspartner technischer Ansprechpartner ist.
 
@@ -89,7 +110,7 @@ Implementiert ist der _Operations-Contact_ als eine besondere Form der [Relation
 der Person des _Operations-Contact_ (_Holder_) zur repräsentierten Person (_Anchor_) dargestellt.
 
 
-### OperationsAlert-Contact
+#### OperationsAlert-Contact
 
 Ein _OperationsAlert-_Contact_ ist_ eine natürliche Person, die für einen Geschäftspartner bei technischen Probleme kontaktiert werden soll.
 
@@ -99,7 +120,7 @@ Implementiert ist der _OperationsAlert-Contact_ als eine besondere Form der [Rel
 der Person des _OperationsAlert-Contact_ (_Holder_) zur repräsentierten Person (_Anchor_) dargestellt.
 
 
-### Subscriber-Contact
+#### Subscriber-Contact
 
 Ein _Subscriber-_Contact_ ist_ eine natürliche Person, die für einen Geschäftspartner eine bestimmte Mailingliste abonniert.
 
@@ -108,7 +129,7 @@ der Person des _Subscriber-Contact_ (_Holder_) zur repräsentierten Person (_Anc
 Zusätzlich wird diese Relation mit dem Kurznamen der abonnierten Mailingliste markiert.  
 
 
-### Coop-Asset-Transactions (Geschäftsguthabens-Transaktionen)
+#### Coop-Asset-Transactions (Geschäftsguthabens-Transaktionen)
 
 - positiver Wert => Geschäftsguthaben nehmen zu
 - negativer Wert => Geschäftsguthaben nehmen ab
@@ -130,7 +151,7 @@ Zusätzlich wird diese Relation mit dem Kurznamen der abonnierten Mailingliste m
 **LIMITATION**: **Verjährung** von Geschäftsguthaben, wenn Auszahlung innerhalb der Frist nicht möglich war.
 
 
-### Coop-Share-Transactions (Geschäftsanteil-Transaktionen)
+#### Coop-Share-Transactions (Geschäftsanteil-Transaktionen)
 
 - positiver Wert => Geschäftsanteile nehmen zu
 - negativer Wert => Geschäftsanteile nehmen ab
@@ -154,5 +175,5 @@ siehe [Relation](#Relation)
 
 #### API
 
-Und API (Application-Programming-Interface) verstehen wir eine über HTTPS angesprochene programmatisch bedienbare Schnittstell 
+Und API (Application-Programming-Interface) verstehen wir eine über HTTPS angesprochene programmatisch bedienbare Schnittstelle 
 zur Funktionalität des hsAdmin-NG-Systems.
