@@ -7,14 +7,4 @@
         <packageUrl regex="true">^pkg:maven/org\.pitest/pitest\-command\-line@.*$</packageUrl>
         <cpe>cpe:/a:line:line</cpe>
     </suppress>
-    <suppress>
-        <notes><![CDATA[
-          file name: logback-core-1.5.12.jar
-          A successful attack requires the user to have write access to a configuration file or environment vars.
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/ch\.qos\.logback/logback-core@.*$</packageUrl>
-        <cpe>cpe:/a:qos:logback</cpe>
-        <cve>CVE-2024-12798</cve>
-    </suppress>
-
 </suppressions>

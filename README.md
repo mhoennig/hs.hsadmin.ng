@@ -315,7 +315,7 @@ If you have figured out how it works, please add instructions above this section
 ##### Build Settings
 
 Go to [Gradle Settings}(jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Build+Tools--Gradle) and select "Build and run using" and "Run tests using" both to "gradle".
-Otherwise, settings from `build.gradle`, like compiler arguments, are not applied when compiling through *IntelliJ IDEA*.
+Otherwise, settings from `build.gradle.kts`, like compiler arguments, are not applied when compiling through *IntelliJ IDEA*.
 
 ##### Annotation Processor
 
@@ -368,8 +368,8 @@ You can explore the prototype as follows:
 `build/`
     Output directory for gradle build results. Ignored by git.
 
-`build.gradle`
-    Gradle build-file. Contains dependencies and build configurations.
+`build.gradle.kts`
+    Gradle build-file (Kotlin-Script). Contains dependencies and build configurations.
 
 `doc/`
     Contains project documentation.
@@ -503,7 +503,7 @@ gw jacocoTestReport
 ```
 
 This task is also automatically run after `gw test`.
-It is configured in [build.gradle](build.gradle).
+It is configured in [build.gradle.kts](build.gradle.kts).
 
 A report is generated under [build/reports/jacoco/tests/test/index.html](./build/reports/jacoco/test/html/index.html).
 
@@ -525,7 +525,7 @@ It can be executed with:
 gw pitest
 ```
 
-Classes to be scanned, tests to be executed and thresholds are configured in [build.gradle](build.gradle).
+Classes to be scanned, tests to be executed and thresholds are configured in [build.gradle.kts](build.gradle.kts).
 
 A report is generated under [build/reports/pitest/index.html](./build/reports/pitest/index.html).
 A link to the report is also printed after the `pitest` run.
@@ -561,7 +561,7 @@ gw dependencyCheckAnalyze
 ```
 
 This task is also included in `gw build` and `gw check`.
-It is configured in [build.gradle](build.gradle).
+It is configured in [build.gradle.kts](build.gradle.kts).
 
 Often vulnerability reports don't apply to our use cases.
 Therefore, reports can be [suppressed](./etc/owasp-dependency-check-suppression.xml).
@@ -663,7 +663,7 @@ howto
 Add `--args='--spring.profiles.active=...` with the wanted profile selector:
 
 ```sh
-gw bootRun --args='--spring.profiles.active=external-db,only-office,without-test-data'
+gw bootRun --args='--spring.profiles.active=fakeCasAuthenticator,external-db,only-office,without-test-data'
 ```
 
 These profiles mean:
@@ -836,6 +836,12 @@ By default, `gw bootRun` starts the application on port 8080.
 
 This port can be changed in
 [src/main/resources/application.yml](src/main/resources/application.yml) through the property `server.port`.
+
+Or on the command line, add ` --server.port=...` to the `--args` parameter of the `bootRun` task, e.g.:
+
+```sh
+gw bootRun --args='--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=8888'
+```
 
 ### How to Use a Persistent Database for Integration Tests?
 

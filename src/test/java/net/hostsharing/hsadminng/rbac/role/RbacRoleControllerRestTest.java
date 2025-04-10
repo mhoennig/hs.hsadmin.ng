@@ -7,14 +7,12 @@ import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -34,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(RbacRoleController.class)
 @Import({StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class})
 @ActiveProfiles("test")
-@RunWith(SpringRunner.class)
 class RbacRoleControllerRestTest {
 
     @Autowired

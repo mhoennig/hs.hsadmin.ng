@@ -16,14 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -58,7 +56,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           JsonObjectMapperConfiguration.class,
           DisableSecurityConfig.class })
 @ActiveProfiles("test")
-@RunWith(SpringRunner.class)
 class HsOfficeCoopAssetsTransactionControllerRestTest {
 
     // If you need to run just a single test-case in this data-driven test-method, set SINGLE_TEST_CASE_EXECUTION to true!
