@@ -11,8 +11,9 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.IPV6
 
 class HsIPv6NumberHostingAssetValidator extends HostingAssetEntityValidator {
 
-    // simplified pattern, the real check is done by letting Java parse the address
-    private static final Pattern IPV6_REGEX = Pattern.compile("([a-f0-9:]+:+)+[a-f0-9]+");
+    // Simple pattern to check only max length and valid characters (hex digits and colons).
+    // A robust validation is done via isValidIPv6Address.
+    private static final Pattern SIMPLE_IPV6_REGEX_PATTERN = Pattern.compile("^[0-9a-fA-F:]{1,39}$");
 
     HsIPv6NumberHostingAssetValidator() {
         super(
@@ -36,7 +37,7 @@ class HsIPv6NumberHostingAssetValidator extends HostingAssetEntityValidator {
 
     @Override
     protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
-        return IPV6_REGEX;
+        return SIMPLE_IPV6_REGEX_PATTERN;
     }
 
     private boolean isValidIPv6Address(final String identifier) {
