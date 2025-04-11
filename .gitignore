@@ -142,3 +142,8 @@ Desktop.ini
 ######################
 /.environment*
 /src/test/resources/migration-prod/*
+.aider/
+.aider.tags.cache.*
+.aider.chat.history.md
+.aider.input.history
+.cache
