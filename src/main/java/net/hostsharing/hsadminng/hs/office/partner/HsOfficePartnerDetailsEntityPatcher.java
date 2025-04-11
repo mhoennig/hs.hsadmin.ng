@@ -25,6 +25,7 @@ class HsOfficePartnerDetailsEntityPatcher implements EntityPatcher<HsOfficePartn
             OptionalFromJson.of(resource.getBirthPlace()).ifPresent(entity::setBirthPlace);
             OptionalFromJson.of(resource.getBirthName()).ifPresent(entity::setBirthName);
             OptionalFromJson.of(resource.getDateOfDeath()).ifPresent(entity::setDateOfDeath);
+            OptionalFromJson.of(resource.getNotes()).ifPresent(entity::setNotes);
         }
     }
 }

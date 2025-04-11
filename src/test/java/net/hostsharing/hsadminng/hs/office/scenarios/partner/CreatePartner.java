@@ -73,7 +73,8 @@ public class CreatePartner extends UseCase<CreatePartner> {
                         "birthPlace": ${birthPlace???},
                         "birthName": ${birthName???},
                         "registrationOffice": ${registrationOffice???},
-                        "registrationNumber": ${registrationNumber???}
+                        "registrationNumber": ${registrationNumber???},
+                        "notes": ${notes???}
                     }
                 }
                 """))

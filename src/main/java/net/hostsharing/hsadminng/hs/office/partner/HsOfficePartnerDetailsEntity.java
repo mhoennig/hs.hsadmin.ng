@@ -38,6 +38,7 @@ public class HsOfficePartnerDetailsEntity implements BaseEntity<HsOfficePartnerD
             .withProp(HsOfficePartnerDetailsEntity::getBirthday)
             .withProp(HsOfficePartnerDetailsEntity::getBirthName)
             .withProp(HsOfficePartnerDetailsEntity::getDateOfDeath)
+            .withProp(HsOfficePartnerDetailsEntity::getNotes)
             .quotedValues(false);
 
     @Id
@@ -51,6 +52,7 @@ public class HsOfficePartnerDetailsEntity implements BaseEntity<HsOfficePartnerD
     private @Column(name = "birthplace") String birthPlace;
     private @Column(name = "birthday") LocalDate birthday;
     private @Column(name = "dateofdeath") LocalDate dateOfDeath;
+    private @Column(name = "notes") String notes;
 
     @Override
     public String toString() {
@@ -82,7 +84,8 @@ public class HsOfficePartnerDetailsEntity implements BaseEntity<HsOfficePartnerD
                         "birthPlace",
                         "birthName",
                         "birthday",
-                        "dateOfDeath")
+                        "dateOfDeath",
+                        "notes")
                 .toRole(GLOBAL, ADMIN).grantPermission(INSERT)
 
                 // The grants are defined in HsOfficePartnerEntity.rbac()

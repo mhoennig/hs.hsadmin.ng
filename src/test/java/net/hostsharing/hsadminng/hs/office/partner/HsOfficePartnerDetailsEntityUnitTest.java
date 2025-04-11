@@ -14,6 +14,7 @@ class HsOfficePartnerDetailsEntityUnitTest {
             .birthday(LocalDate.parse("2002-01-15"))
             .birthName("Melly Miller")
             .dateOfDeath(LocalDate.parse("2081-12-21"))
+            .notes("Some important notes here.")
             .build();
 
     @Test
@@ -22,7 +23,7 @@ class HsOfficePartnerDetailsEntityUnitTest {
         final var result = given.toString();
 
         assertThat(result).isEqualTo(
-                "partnerDetails(Hamburg, 12345, 2002-01-15, Melly Miller, 2081-12-21)");
+                "partnerDetails(Hamburg, 12345, 2002-01-15, Melly Miller, 2081-12-21, Some important notes here.)");
     }
 
     @Test

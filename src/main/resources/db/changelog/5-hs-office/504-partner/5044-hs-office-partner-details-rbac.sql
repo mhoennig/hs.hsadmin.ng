@@ -161,7 +161,8 @@ call rbac.generateRbacRestrictedView('hs_office.partner_details',
         birthPlace = new.birthPlace,
         birthName = new.birthName,
         birthday = new.birthday,
-        dateOfDeath = new.dateOfDeath
+        dateOfDeath = new.dateOfDeath,
+        notes = new.notes
     $updates$);
 --//
 

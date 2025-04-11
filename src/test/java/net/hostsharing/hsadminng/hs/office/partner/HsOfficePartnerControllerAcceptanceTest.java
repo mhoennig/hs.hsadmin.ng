@@ -112,7 +112,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                 },
                                 "details": {
                                     "registrationOffice": "Temp Registergericht Aurich",
-                                    "registrationNumber": "111111"
+                                    "registrationNumber": "111111",
+                                    "notes": "Initial notes for new partner"
                                 }
                             }
                             """.formatted(
@@ -137,7 +138,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             },
                             "details": {
                                 "registrationOffice": "Temp Registergericht Aurich",
-                                "registrationNumber": "111111"
+                                "registrationNumber": "111111",
+                                "notes": "Initial notes for new partner"
                             }
                         }
                         """))
@@ -328,7 +330,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                    "registrationNumber": "222222",
                                    "birthName": "Maja Schmidt",
                                    "birthday": "1938-04-08",
-                                   "dateOfDeath": "2022-01-12"
+                                   "dateOfDeath": "2022-01-12",
+                                   "notes": "Patched notes here"
                                }
                              }
                            """.formatted(newPartnerPerson.getUuid()))
@@ -353,7 +356,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "birthName": "Maja Schmidt",
                             "birthPlace": null,
                             "birthday": "1938-04-08",
-                            "dateOfDeath": "2022-01-12"
+                            "dateOfDeath": "2022-01-12",
+                            "notes": "Patched notes here"
                         }
                     }
                     """));
@@ -371,6 +375,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         assertThat(partner.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
                         assertThat(partner.getDetails().getBirthday()).isEqualTo("1938-04-08");
                         assertThat(partner.getDetails().getDateOfDeath()).isEqualTo("2022-01-12");
+                        assertThat(partner.getDetails().getNotes()).isEqualTo("Patched notes here");
                         return true;
                     });
         }
@@ -431,7 +436,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                     "details": {
                                        "birthName": "Maja Schmidt",
                                        "birthday": "1938-04-08",
-                                       "dateOfDeath": "2022-01-12"
+                                       "dateOfDeath": "2022-01-12",
+                                       "notes": "Partially patched notes"
                                     }
                                  }
                             """)
@@ -455,6 +461,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         assertThat(partner.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
                         assertThat(partner.getDetails().getBirthday()).isEqualTo("1938-04-08");
                         assertThat(partner.getDetails().getDateOfDeath()).isEqualTo("2022-01-12");
+                        assertThat(partner.getDetails().getNotes()).isEqualTo("Partially patched notes");
                         return true;
                     });
         }
@@ -552,6 +559,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .details(HsOfficePartnerDetailsEntity.builder()
                             .registrationOffice("Temp Registergericht Leer")
                             .registrationNumber("333333")
+                            .notes("Initial notes for temp partner Bessler")
                             .build())
                     .build();
 

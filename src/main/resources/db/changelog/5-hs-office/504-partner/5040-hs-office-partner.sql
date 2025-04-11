@@ -20,11 +20,22 @@ create table hs_office.partner_details
 
 
 -- ============================================================================
+--changeset your-name:hs-office-partner-DETAILS-TABLE-ADD-NOTES endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+alter table hs_office.partner_details
+    add column notes text;
+
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:hs-office-partner-DETAILS-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 call base.create_journal('hs_office.partner_details');
 --//
+
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-partner-MAIN-TABLE endDelimiter:--//

@@ -44,6 +44,9 @@ components:
                     type: string
                     format: date
                     nullable: true
+                notes:
+                    type: string
+                    nullable: true
 
         HsOfficePartnerPatch:
             type: object
@@ -87,6 +90,9 @@ components:
                 dateOfDeath:
                     type: string
                     format: date
+                    nullable: true
+                notes:
+                    type: string
                     nullable: true
             additionalProperties: false
 
@@ -148,5 +154,8 @@ components:
                 dateOfDeath:
                     type: string
                     format: date
+                    nullable: true
+                notes:
+                    type: string
                     nullable: true
             additionalProperties: false

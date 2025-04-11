@@ -99,7 +99,12 @@ class HsOfficePartnerDetailsEntityPatcherUnitTest extends PatchUnitTestBase<
                         "dayOfDeath",
                         HsOfficePartnerDetailsPatchResource::setDateOfDeath,
                         PATCHED_DATE_OF_DEATH,
-                        HsOfficePartnerDetailsEntity::setDateOfDeath)
+                        HsOfficePartnerDetailsEntity::setDateOfDeath),
+                new JsonNullableProperty<>(
+                        "notes",
+                        HsOfficePartnerDetailsPatchResource::setNotes,
+                        "patched notes",
+                        HsOfficePartnerDetailsEntity::setNotes)
         );
     }
 }
