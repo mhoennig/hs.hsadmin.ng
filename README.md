@@ -1,5 +1,7 @@
 # hsadminNg Development
 
+(The origin repository for this project can be found at [Hostsharing eG](https://git.hostsharing.net/hostsharing/hs.hsadmin.ng).)
+
 This documents gives an overview of the development environment and tools.
 For architecture consider the files in the `doc` and `adr` folder.
 
@@ -361,6 +363,9 @@ You can explore the prototype as follows:
 ### Directory and Package Structure
 
 #### General Directory Structure
+ 
+`.aider.conf.yml`
+    Configuration for the _aider AI_ coding agent.
 
 `.aliases`
     Shell-aliases for common tasks.
@@ -370,6 +375,9 @@ You can explore the prototype as follows:
 
 `build.gradle.kts`
     Gradle build-file (Kotlin-Script). Contains dependencies and build configurations.
+
+`CONVENTIONS.md`
+    Coding conventions for use by an AI agent.
 
 `doc/`
     Contains project documentation.
@@ -931,6 +939,126 @@ BEGIN
         END LOOP;
 END $$;
 ```
+
+### How to Use _aider AI_ - Pair Programming in Your Terminal
+
+[aider](https://aider.chat/) is an [open source](https://github.com/Aider-AI/aider) AI agent in the shape of a command-line tool that lets you code with large language models (LLMs) OpenAI GPT, Claude Sonnet or Google Gemini.
+It allows you to easily analyze and edit files by chatting with the AI.
+
+*BEWARE*: aider is going to send your source code to the LLM!
+
+_hsadmin-NG_ is open source, so this is not a big problem.
+For more information about security regarding aider, please have a look at the end of this chapter and check out [the aider privacy policy](https://aider.chat/docs/legal/privacy.html).
+
+#### Installation
+
+Assuming you have Python 3 and `pipx` installed (a tool to install and run Python applications in isolated environments), you can install `aider-chat` like this:
+
+```shell
+pipx install aider-chat
+```
+
+If you want to use specific features like OpenAI's vision capabilities, you might need to add the following dependencies:
+
+```shell
+pipx inject aider-chat openai --include-apps
+```
+
+To add support for Google's Gemini AI, you can add the `google-generativeai` package:
+
+```shell
+pipx inject aider-chat google-generativeai --include-apps
+```
+
+#### Configuration
+
+`aider` requires an API key for the AI model you want to use.
+
+E.g. for _OpenAI GPT_, set the `OPENAI_API_KEY` environment variable:
+
+```shell
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+And e.g. for _Google Gemini_, set the `GEMINI_API_KEY` environment variable:
+
+```shell
+export GEMINI_API_KEY="your-api-key-here"
+```
+
+You might want to add this to your shell's startup file (e.g., `.bashrc`, `.zshrc`).
+
+#### Usage
+
+1.  Navigate to your project's root directory in the terminal.
+2.  Start `aider` by simply typing:
+    ```shell
+    aider # see also .aider.conf.yml
+    ```
+3.  Add the files you want the AI to work with:
+    ```
+    /add path/to/your/file.java path/to/another/file.py
+    ```
+4.  Start chatting! Describe the changes you want, ask questions, or request code generation. `aider` will propose changes and apply them directly to your files after your confirmation.
+5.  Use `/quit` to exit `aider`.
+
+Refer to the [official aider documentation](https://aider.chat/docs/usage.html) for more commands and advanced features.
+
+#### Example Session
+
+Aider is not yet very good at figuring out which files to amend in a large code base.
+I tried giving hints with `/ask`, but it was always missing too many files.
+With some of my approaches, it even wanted to create new files, which is not necessary for this task. 
+
+I even tried with other language models, like gpt-o4 or r1 (deepseek-reasoning), no success.
+Maybe somebody else can figure it out, or it gets better with time?
+
+For now, I just determined the files myself.
+As I knew that the new filed needs to be supported everywhere, 
+where the existing field `registrationOffice` occurs, I could simply use grep:  
+
+```shell
+    aider `grep -rl registrationOffice src/main/java/ src/test/java/ src/main/resources/api-definition src/main/resources/db/`
+```
+
+Then I requested my change to the _aider AI_ chat:
+
+> I want to add a text field `notes` to the database table `hs_office.partner_details` and related files.
+  Files to amend have already been added to aider AI.
+  Please apply all required changes for Java production+test-code,
+  add the Liquibase changeset and amend the OpenAPI-Spec. 
+
+I ran the tests and found that patching the partner details did not work.
+So, I told the _aider AI_ about it:
+
+> Please doublecheck if you followed all conventions.
+  Any other amendments necessary to support the new field `notes` in the partner details?   
+
+Then I saw, that _aider AI_ did add some notes to the test data, but not to the assertions.
+I decided that the changes in the test-data are not necessary and reverted thos files using git.
+
+Now, all tests passed.
+
+Try it yourself, but keep in mind that LLMs use a concept called _temperature_ which specifies a level of randomness.
+This means, you might get different results.
+
+#### Security
+
+To reassure myself which files _aider AI_ accesses, I checked this with `strace`:
+
+```
+# run aider under strace: 
+strace -f -t -e trace=file -o build/aider.strace aider ...
+
+# and in another terminal check the strace log:
+tail -f build/aider.strace | grep -oP '"\K[^\n"]+(?=")' 
+```
+
+At the time I've checked it, all accessed files made sense.
+Of course, as with any locally installed application, there is no guarantee.
+
+There is a _Docker_ image for _aider AI_, but it's pretty restriced
+and to be able to use some features, you'd need to rebuild the image.
 
 
 ## Further Documentation

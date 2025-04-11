@@ -71,9 +71,11 @@ repositories {
     maven { url = uri("https://repo.spring.io/milestone") }
 }
 
+val JAVA_VERSION = 21
+
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(JAVA_VERSION))
         vendor.set(JvmVendorSpec.ADOPTIUM)
         implementation.set(JvmImplementation.VENDOR_SPECIFIC)
     }
@@ -623,6 +625,20 @@ tasks.register("convertMarkdownToHtml") {
     dependsOn(tasks.named("scenarioTest"))
 }
 
+// HOWTO re-generate the RBAC rules (PostgreSQL code) from the RBAC specs in the entities rbac()-method
+//  in a shell run `gw rbacGenerate`
+tasks.register<JavaExec>("rbacGenerate") {
+    group = "application"
+    mainClass.set("net.hostsharing.hsadminng.rbac.generator.RbacSpec")
+    classpath = sourceSets["main"].runtimeClasspath
+
+    // This ensures the task uses the Java version from the defined toolchain.
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(JAVA_VERSION))
+        vendor.set(JvmVendorSpec.ADOPTIUM)
+        implementation.set(JvmImplementation.VENDOR_SPECIFIC)
+    })
+}
 
 // shortcut for compiling all files
 tasks.register("compile") {
