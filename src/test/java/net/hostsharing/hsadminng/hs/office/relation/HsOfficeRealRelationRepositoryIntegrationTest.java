@@ -1,7 +1,9 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -21,6 +23,8 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.REPRESENTATIVE;
+import static net.hostsharing.hsadminng.rbac.test.EntityList.one;
+import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -29,10 +33,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
-    HsOfficeRelationRealRepository relationRealRepo;
+    HsOfficeRelationRealRepository realRelationRepo;
 
     @Autowired
-    HsOfficePersonRbacRepository personRepo;
+    HsOfficePersonRealRepository realPersonRepo;
+
+    @Autowired
+    HsOfficeContactRealRepository realContactRepo;
 
     @PersistenceContext
     EntityManager em;
@@ -49,7 +56,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             final var personUuid = determinePersonUuid(NATURAL_PERSON, "Smith");
 
             // when
-            final var result = relationRealRepo.findRelationRelatedToPersonUuid(personUuid);
+            final var result = realRelationRepo.findRelationRelatedToPersonUuid(personUuid);
 
             // then
             context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
@@ -68,7 +75,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             final var personUuid = determinePersonUuid(NATURAL_PERSON, "Smith");
 
             // when:
-            final var result = relationRealRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(personUuid, REPRESENTATIVE, null, null, null);
+            final var result = realRelationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(personUuid, REPRESENTATIVE, null, null, null);
 
             // then:
             context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
@@ -76,6 +83,34 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
                     result,
                     "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')"
             );
+        }
+    }
+
+    @Nested
+    class CreateRelation {
+
+        @Test
+        public void canNotAddDebitorRelationWithAnchorThatIsNotAPartner() {
+            // given
+            context("superuser-alex@hostsharing.net");
+
+            final var givenPartnerPerson = hsOfficePersonRealEntity("Non-Partner Person");
+            final var givenContact = one(realContactRepo.findContactByOptionalCaptionLike("eleventh contact"));
+
+            // when
+            final var result = attempt(em, () -> {
+                final var newRelation = HsOfficeRelationRealEntity.builder()
+                    .type(HsOfficeRelationType.DEBITOR)
+                    .anchor(givenPartnerPerson)
+                    .holder(givenPartnerPerson)
+                    .contact(givenContact)
+                    .build();
+                final var entity = realRelationRepo.save(newRelation);
+                return toCleanup(entity.load());
+            });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(org.postgresql.util.PSQLException.class, "ERROR: [400] invalid debitor relation: anchor person must have a PARTNER relation");
         }
     }
 
@@ -97,4 +132,12 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
                 .extracting(HsOfficeRelation::toString)
                 .containsExactlyInAnyOrder(relationNames);
     }
+
+    public HsOfficePersonRealEntity hsOfficePersonRealEntity(final String tradeName) {
+        return realPersonRepo.save(HsOfficePersonRealEntity.builder()
+            .personType(HsOfficePersonType.NATURAL_PERSON)
+            .tradeName(tradeName)
+            .build());
+    }
+
 }
