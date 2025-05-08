@@ -73,32 +73,38 @@ CREATE TRIGGER enforce_transaction_constraints
 --//
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-coopassets-ASSET-VALUE-CONSTRAINT endDelimiter:--//
+--changeset marc.sandlus:hs-office-coopassets-ASSET-VALUE-CONSTRAINT-BY-TRIGGER endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function hs_office.coopassetstx_check_positive_total(forMembershipUuid UUID, newAssetValue numeric(12, 5))
-returns boolean
-language plpgsql as $$
+alter table hs_office.coopassettx
+    drop constraint if exists coopassetstx_check_positive_total;
+
+drop function if exists hs_office.coopassetstx_check_positive_total cascade;
+
+create or replace function hs_office.coopassettx_enforce_positive_total()
+returns trigger as $$
+
 declare
     currentAssetValue numeric(12,2);
     totalAssetValue numeric(12,2);
 begin
     select sum(cat.assetValue)
         from hs_office.coopassettx cat
-        where cat.membershipUuid = forMembershipUuid
+        where cat.membershipUuid = NEW.membershipUuid
         into currentAssetValue;
-    totalAssetValue := currentAssetValue + newAssetValue;
+    totalAssetValue := currentAssetValue + NEW.assetValue;
     if totalAssetValue::numeric < 0 then
         raise exception '[400] coop assets transaction would result in a negative balance of assets';
     end if;
-    return true;
-end; $$;
+    return NEW;
+end;
+$$ LANGUAGE plpgsql;;
 
-alter table hs_office.coopassettx
-    add constraint check_positive_total
-        check ( hs_office.coopassetstx_check_positive_total(membershipUuid, assetValue) );
+create trigger positive_total_assets_count_tg before insert
+    on hs_office.coopassettx
+    for each row execute function hs_office.coopassettx_enforce_positive_total();
+
 --//
-
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-coopassets-MAIN-TABLE-JOURNAL endDelimiter:--//

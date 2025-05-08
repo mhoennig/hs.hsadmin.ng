@@ -33,30 +33,36 @@ alter table hs_office.coopsharetx
 --//
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-coopshares-SHARE-COUNT-CONSTRAINT endDelimiter:--//
+--changeset marc.sandlus:hs-office-coopshares-SHARE-COUNT-CONSTRAINT-BY-TRIGGER endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function hs_office.coopsharestx_check_positive_total(forMembershipUuid UUID, newShareCount integer)
-returns boolean
-language plpgsql as $$
+alter table hs_office.coopsharetx drop constraint if exists check_positive_total_shares_count;
+
+drop function if exists hs_office.coopsharestx_check_positive_total cascade;
+
+create or replace function hs_office.coopsharetx_enforce_positive_total()
+returns trigger as $$
+
 declare
     currentShareCount integer;
     totalShareCount integer;
 begin
     select sum(cst.shareCount)
     from hs_office.coopsharetx cst
-    where cst.membershipUuid = forMembershipUuid
+    where cst.membershipUuid = NEW.membershipUuid
     into currentShareCount;
-    totalShareCount := currentShareCount + newShareCount;
+    totalShareCount := currentShareCount + NEW.shareCount;
     if totalShareCount < 0 then
         raise exception '[400] coop shares transaction would result in a negative number of shares';
     end if;
-    return true;
-end; $$;
+    return NEW;
+end;
+$$ LANGUAGE plpgsql;;
 
-alter table hs_office.coopsharetx
-    add constraint check_positive_total_shares_count
-        check ( hs_office.coopsharestx_check_positive_total(membershipUuid, shareCount) );
+
+create trigger positive_total_shares_count_tg before insert
+    on hs_office.coopsharetx
+    for each row execute function hs_office.coopsharetx_enforce_positive_total();
 
 --//
 

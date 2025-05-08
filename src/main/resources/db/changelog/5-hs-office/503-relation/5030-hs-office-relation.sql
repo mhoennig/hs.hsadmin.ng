@@ -49,36 +49,36 @@ CREATE UNIQUE INDEX unique_partner_relation
 
 --//
 
-
 -- =====================================================================================
---changeset timotheus.pokorra:hs-office-relation-debitor-anchor-CONSTRAINT endDelimiter:--//
+--changeset marc.sandlus:hs-office-relation-debitor-anchor-CONSTRAINT-BY-TRIGGER endDelimiter:--//
 -- -------------------------------------------------------------------------------------
+alter table hs_office.relation
+    drop constraint if exists relation_check_debitor_anchor_person;
 
---
--- Name: relation_check_debitor_anchor_partner(RelationType, uuid); Type: FUNCTION; Schema: hs_office; Owner: test
---
+drop function if exists hs_office.relation_check_debitor_anchor_partner cascade;
 
-CREATE FUNCTION hs_office.relation_check_debitor_anchor_partner(mytype hs_office.RelationType, debitoranchoruuid uuid) RETURNS boolean
-    LANGUAGE plpgsql
-    AS '
+CREATE FUNCTION hs_office.relation_enforce_debitor_anchor_partner()
+returns trigger as $$
 declare
     countPartner integer;
 begin
-    if mytype = ''DEBITOR'' then
+    if NEW.type = 'DEBITOR' then
         SELECT COUNT(*) FROM hs_office.relation r
-            WHERE r.type = ''PARTNER'' AND r.holderuuid = debitoranchoruuid
+            WHERE r.type = 'PARTNER' AND r.holderuuid = NEW.anchorUuid
             INTO countPartner;
         if countPartner < 1 then
-            raise exception ''[400] invalid debitor relation: anchor person must have a PARTNER relation'';
+            raise exception '[400] invalid debitor relation: anchor person must have a PARTNER relation';
         end if;
     end if;
-    return true;
-end; ';
+    return NEW;
+end;
+$$ LANGUAGE plpgsql;;
 
-ALTER TABLE hs_office.relation ADD CONSTRAINT check_debitor_anchor_person CHECK (hs_office.relation_check_debitor_anchor_partner(type, anchorUuid));
+create trigger relation_enforce_debitor_anchor_partner_tg before insert
+    on hs_office.relation
+    for each row execute function hs_office.relation_enforce_debitor_anchor_partner();
 
 --//
-
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-relation-MAIN-TABLE-JOURNAL endDelimiter:--//
