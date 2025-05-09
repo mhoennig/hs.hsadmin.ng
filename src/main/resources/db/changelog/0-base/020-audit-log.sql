@@ -66,7 +66,7 @@ select txc.*, txj.targettable, txj.targetop, txj.targetuuid, txj.targetdelta
 --//
 
 -- ============================================================================
---changeset michael.hoennig:audit-TX-JOURNAL-TRIGGER endDelimiter:--//
+--changeset michael.hoennig:audit-TX-JOURNAL-TRIGGER runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Trigger function for transaction audit journal.
@@ -78,16 +78,24 @@ declare
     curTask text;
     curTxId xid8;
     tableSchemaAndName text;
+    next_timestamp timestamp;
 begin
     curTask := base.currentTask();
     curTxId := pg_current_xact_id();
     tableSchemaAndName := base.combine_table_schema_and_name(tg_table_schema, tg_table_name);
 
+    next_timestamp = '1970-01-01';
     insert
         into base.tx_context (txId, txTimestamp, currentSubject, assumedRoles, currentTask, currentRequest)
             values ( curTxId, now(),
                      base.currentSubject(), base.assumedRoles(), curTask, base.currentRequest())
-        on conflict do nothing;
+        on conflict do nothing
+        returning txTimestamp into next_timestamp;
+
+    -- only if a row was inserted, a notification should be send
+    if next_timestamp <> '1970-01-01' then
+        PERFORM pg_notify ('tx_context_inserted', CONCAT(curTxId, ',', extract(epoch from next_timestamp), ',', curTask));
+    end if;
 
     case tg_op
         when 'INSERT' then insert
