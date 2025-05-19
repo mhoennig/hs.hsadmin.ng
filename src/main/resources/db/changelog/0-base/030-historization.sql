@@ -91,13 +91,16 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-global-historization-tx-create-historicization endDelimiter:--//
+--changeset michael.hoennig:hs-global-historization-tx-create-historicization runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-
-create or replace procedure base.tx_create_historicization(baseTable varchar)
+create or replace procedure base.tx_create_historicization(
+    basetable varchar -- format 'schemaname.tablename'
+)
     language plpgsql as $$
 declare
+    baseSchemaName     varchar;
+    baseTableName      varchar;
     createHistTableSql varchar;
     createTriggerSQL   varchar;
     viewName           varchar;
@@ -106,14 +109,19 @@ declare
     baseCols           varchar;
 begin
 
+    -- determine schema and pure table name
+    SELECT split_part(basetable, '.', 1),
+           split_part(basetable, '.', 2)
+        INTO baseSchemaName, baseTableName;
+
     -- create the history table
     createHistTableSql = '' ||
-                         'CREATE TABLE ' || baseTable || '_ex (' ||
+                         'CREATE TABLE ' || basetable || '_ex (' ||
                          '   version_id serial PRIMARY KEY,' ||
                          '   txid xid8 NOT NULL REFERENCES base.tx_context(txid),' ||
                          '   trigger_op base.tx_operation NOT NULL,' ||
                          '   alive boolean not null,' ||
-                         '   LIKE ' || baseTable ||
+                         '   LIKE ' || basetable ||
                          '       EXCLUDING CONSTRAINTS' ||
                          '       EXCLUDING STATISTICS' ||
                          ')';
@@ -121,12 +129,12 @@ begin
     execute createHistTableSql;
 
     -- create the historical view
-    viewName = baseTable || '_hv';
-    exVersionsTable = baseTable || '_ex';
+    viewName = basetable || '_hv';
+    exVersionsTable = basetable || '_ex';
     baseCols = (select string_agg(quote_ident(column_name), ', ')
                     from information_schema.columns
-                    where table_schema = 'public'
-                      and table_name = baseTable);
+                    where table_schema = baseSchemaName
+                      and table_name = baseTableName);
 
     createViewSQL = format(
             'CREATE OR REPLACE VIEW %1$s AS' ||
@@ -152,7 +160,7 @@ begin
 
     -- "-9-" to put the trigger execution after any alphabetically lesser tx-triggers
     createTriggerSQL = 'CREATE TRIGGER tx_9_historicize_tg' ||
-                       ' AFTER INSERT OR DELETE OR UPDATE ON ' || baseTable ||
+                       ' AFTER INSERT OR DELETE OR UPDATE ON ' || basetable ||
                        '   FOR EACH ROW EXECUTE PROCEDURE base.tx_historicize_tf()';
     execute createTriggerSQL;
 

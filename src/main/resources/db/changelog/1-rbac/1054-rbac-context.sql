@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-context-DETERMINE endDelimiter:--//
+--changeset michael.hoennig:rbac-context-DETERMINE runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create or replace function rbac.determineCurrentSubjectUuid(currentSubject varchar)

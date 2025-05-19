@@ -4,6 +4,7 @@ package net.hostsharing.hsadminng.rbac.generator;
 import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.indented;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
+import static net.hostsharing.hsadminng.rbac.generator.StringWriter.withQuoted;
 
 public class RbacRestrictedViewGenerator {
     private final RbacSpec rbacDef;
@@ -22,20 +23,21 @@ public class RbacRestrictedViewGenerator {
                 --changeset RbacRestrictedViewGenerator:${liquibaseTagPrefix}-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
                 -- ----------------------------------------------------------------------------
                 call rbac.generateRbacRestrictedView('${rawTableName}',
-                    $orderBy$
-                ${orderBy}
-                    $orderBy$,
-                    $updates$
-                ${updates}
-                    $updates$);
+                    ${orderBy},
+                    ${updates}
+                );
                 --//
 
                 """,
                 with("liquibaseTagPrefix", liquibaseTagPrefix),
-                with("orderBy", indented(2, rbacDef.getOrderBySqlExpression().sql)),
-                with("updates", indented(2, rbacDef.getUpdatableColumns().stream()
-                        .map(c -> c + " = new." + c)
-                        .collect(joining(",\n")))),
+                withQuoted("orderBy", indented(2, rbacDef.getOrderBySqlExpression().sql)),
+                withQuoted("updates",
+                        rbacDef.getUpdatableColumns().isEmpty()
+                                ? null
+                                : indented(2, rbacDef.getUpdatableColumns().stream()
+                                        .map(c -> c + " = new." + c)
+                                        .collect(joining(",\n")))
+                ),
                 with("rawTableName", rawTableName));
     }
 }

@@ -38,6 +38,8 @@ public class RbacSpec {
     public static final String GLOBAL = "rbac.global";
     public static final String OUTPUT_BASEDIR = "src/main/resources/db/changelog";
 
+    public static Consumer<RbacSpec.RbacRoleDefinition> WITHOUT_IMPLICIT_GRANTS =  with -> {};
+
     private final EntityAlias rootEntityAlias;
 
     private final Set<RbacSubjectReference> userDefs = new LinkedHashSet<>();
@@ -109,9 +111,20 @@ public class RbacSpec {
      * @return
      *  the `this` instance itself to allow chained calls.
      */
-    public RbacSpec withUpdatableColumns(final String... columnNames) {
+    public RbacSpec withUpdatableColumns(final String columnName, final String... columnNames) {
+        Collections.addAll(updatableColumns, columnName);
         Collections.addAll(updatableColumns, columnNames);
         verifyVersionColumnExists();
+        return this;
+    }
+
+    /**
+     * Specifies, thta no columns are updatable at all.
+     *
+     * @return this
+     */
+    public RbacSpec withoutUpdatableColumns() {
+        updatableColumns.clear();
         return this;
     }
 
@@ -187,7 +200,6 @@ public class RbacSpec {
         previousRoleDef = newRoleDef;
         return this;
     }
-
 
     /**
      * Specifies that the given role (OWNER, ADMIN, ...) is to be created for new/updated roles in this table,

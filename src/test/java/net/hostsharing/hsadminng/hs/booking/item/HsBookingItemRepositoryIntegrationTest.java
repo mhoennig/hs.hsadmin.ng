@@ -92,26 +92,23 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     @Test
     public void historizationIsAvailable() {
         // given
-        final String nativeQuerySql = """
-                select count(*)
-                    from hs_booking.item_hv ha;
-                """;
+        final String nativeQuerySql = "select * from hs_booking.item_hv";
 
         // when
         historicalContext(Timestamp.from(ZonedDateTime.now().minusDays(1).toInstant()));
-        final var query = em.createNativeQuery(nativeQuerySql, Integer.class);
-        @SuppressWarnings("unchecked") final var countBefore = (Integer) query.getSingleResult();
+        final var query = em.createNativeQuery(nativeQuerySql);
+        final var rowsBefore = query.getResultList();
 
         // then
-        assertThat(countBefore).as("hs_booking.item should not contain rows for a timestamp in the past").isEqualTo(0);
+        assertThat(rowsBefore).as("hs_booking.item should not contain rows for a timestamp in the past").hasSize(0);
 
         // and when
         historicalContext(Timestamp.from(ZonedDateTime.now().plusHours(1).toInstant()));
-        em.createNativeQuery(nativeQuerySql, Integer.class);
-        @SuppressWarnings("unchecked") final var countAfter = (Integer) query.getSingleResult();
+        em.createNativeQuery(nativeQuerySql);
+        final var rowsAfter = query.getResultList();
 
         // then
-        assertThat(countAfter).as("hs_booking.item should contain rows for a timestamp in the future").isGreaterThan(1);
+        assertThat(rowsAfter).as("hs_booking.item should contain rows for a timestamp in the future").hasSize(21);
     }
 
     @Nested

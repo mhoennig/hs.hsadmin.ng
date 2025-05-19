@@ -99,6 +99,11 @@ class RolesGrantsAndPermissionsGenerator {
                 .distinct()
                 .map(columnName -> "NEW." + columnName + " is distinct from OLD." + columnName)
                 .collect(joining( "\n    or "));
+        if (updateConditions.isBlank()) {
+            // TODO_impl: RBAC rules for _rv do not yet work properly - check if this comment appears in generated output!
+            plPgSql.writeLn("-- no updatable columns found, skipping update trigger");
+            return;
+        }
         plPgSql.writeLn("""
                     /*
                         Called from the AFTER UPDATE TRIGGER to re-wire the grants.

@@ -28,6 +28,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/0-base/030-historization.sql
     - include:
+        file: db/changelog/0-base/040-array-functions.sql
+    - include:
         file: db/changelog/0-base/090-log-slow-queries-extensions.sql
 
     - include:
@@ -99,6 +101,9 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql
     - include:
         file: db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data.sql
+        context: "!without-test-data"
+    - include:
+        file: db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data-for-credentials.sql
         context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/503-relation/5030-hs-office-relation.sql
@@ -213,17 +218,28 @@ databaseChangeLog:
         context: "!only-office"
 
     - include:
-          file: db/changelog/9-hs-global/9800-cleanup.sql
-          context: "without-test-data"
+          file: db/changelog/9-hs-global/950-credentials/9500-hs-credentials-schema.sql
+    - include:
+          file: db/changelog/9-hs-global/950-credentials/9510-hs-credentials.sql
+    #    TODO_impl: RBAC rules for _rv do not yet work properly
+    #    - include:
+    #          file: db/changelog/9-hs-global/950-credentials/9513-hs-credentials-rbac.sql
+    - include:
+          file: db/changelog/9-hs-global/950-credentials/9519-hs-credentials-test-data.sql
+          context: "!without-test-data"
 
     - include:
-        file: db/changelog/9-hs-global/9100-hs-integration-schema.sql
+          file: db/changelog/9-hs-global/960-integrations/9600-hs-integration-schema.sql
     - include:
-        file: db/changelog/9-hs-global/9110-integration-kimai.sql
+          file: db/changelog/9-hs-global/960-integrations/9610-integration-kimai.sql
     - include:
-        file: db/changelog/9-hs-global/9120-integration-znuny.sql
+          file: db/changelog/9-hs-global/960-integrations/9620-integration-znuny.sql
     - include:
-        file: db/changelog/9-hs-global/9130-integration-mlmmj.sql
+          file: db/changelog/9-hs-global/960-integrations/9630-integration-mlmmj.sql
+
+    - include:
+          file: db/changelog/9-hs-global/9800-cleanup.sql
+          context: "without-test-data"
 
     - include:
         file: db/changelog/9-hs-global/9999-liquibase-migration-test.sql

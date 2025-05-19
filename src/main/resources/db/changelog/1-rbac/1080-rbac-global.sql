@@ -148,12 +148,12 @@ commit;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-GUEST-ROLE endDelimiter:--//
+--changeset michael.hoennig:rbac-global-GUEST-ROLE runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     A rbac.Global guest role.
  */
-create or replace function rbac.globalglobalGuest(assumed boolean = true)
+create or replace function rbac.global_GUEST(assumed boolean = true)
     returns rbac.RoleDescriptor
     returns null on null input
     stable -- leakproof
@@ -161,10 +161,17 @@ create or replace function rbac.globalglobalGuest(assumed boolean = true)
 select 'rbac.global', (select uuid from rbac.object where objectTable = 'rbac.global'), 'GUEST'::rbac.RoleType, assumed;
 $$;
 
-begin transaction;
-    call base.defineContext('creating role:rbac.global#global:guest', null, null, null);
-    select rbac.createRole(rbac.globalglobalGuest());
-commit;
+do language plpgsql $$
+    begin
+        call base.defineContext('creating role:rbac.global#global:guest', null, null, null);
+        begin
+            perform rbac.createRole(rbac.global_GUEST());
+        exception
+            when unique_violation then
+                null; -- ignore if it already exists from prev execution of this changeset
+        end;
+    end;
+$$;
 --//
 
 

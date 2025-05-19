@@ -49,6 +49,7 @@ public class ArchitectureTest {
                     "..test.pac",
                     "..test.dom",
                     "..context",
+                    "..credentials",
                     "..hash",
                     "..lambda",
                     "..generated..",

@@ -536,7 +536,7 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-GRANTS endDelimiter:--//
+--changeset michael.hoennig:rbac-base-GRANTS  endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Table to store grants / role- or permission assignments to subjects or roles.

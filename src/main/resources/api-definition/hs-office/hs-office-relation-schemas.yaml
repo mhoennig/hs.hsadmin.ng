@@ -16,6 +16,7 @@ components:
                 - OPERATIONS_ALERT
                 - SUBSCRIBER
 
+
         HsOfficeRelation:
             type: object
             properties:

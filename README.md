@@ -95,6 +95,9 @@ Next, compile and run the application on `localhost:8080` and the management ser
     # this runs the application with test-data and all modules:
     gw bootRun --args='--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data'
 
+    # there is also an alias which takes an optional port as an argument:
+    gw-bootRun 8888
+
 The meaning of these profiles is:
 
 - **dev**: the PostgreSQL users are created via Liquibase

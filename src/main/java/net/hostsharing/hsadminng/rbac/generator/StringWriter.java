@@ -11,7 +11,11 @@ public class StringWriter {
     private int indentLevel = 0;
 
     static VarDef with(final String var, final String name) {
-        return new VarDef(var, name);
+        return new VarDef(var, name, false);
+    }
+
+    static VarDef withQuoted(final String var, final String name) {
+        return new VarDef(var, name, true);
     }
 
     void writeLn(final String text) {
@@ -97,7 +101,7 @@ public class StringWriter {
         return indented(indentLevel, text);
     }
 
-    record VarDef(String name, String value){}
+    record VarDef(String name, String value, boolean quoted) {}
 
     private static final class VarReplacer {
 
@@ -111,13 +115,22 @@ public class StringWriter {
         String apply(final String textToAppend) {
             text = textToAppend;
             stream(varDefs).forEach(varDef -> {
-                // TODO.impl: I actually want a case-independent search+replace but ...
-                // for which the substitution String can contain sequences of "${...}" to be replaced by further varDefs.
-                text = text.replace("${" + varDef.name() + "}", varDef.value());
-                text = text.replace("${" + varDef.name().toUpperCase() + "}", varDef.value());
-                text = text.replace("${" + varDef.name().toLowerCase() + "}", varDef.value());
+                replacePlaceholder(varDef.name(),
+                        varDef.quoted()
+                        ? varDef.value() != null
+                            ? "$" + varDef.name() + "$\n" + varDef.value() + "\n$" + varDef.name() + "$"
+                            : "null"
+                        : varDef.value());
             });
             return text;
+        }
+
+        private void replacePlaceholder(final String name, final String value) {
+            // TODO.impl: I actually want a case-independent search+replace but ...
+            // for which the substitution String can contain sequences of "${...}" to be replaced by further varDefs.
+            text = text.replace("${" + name+ "}", value);
+            text = text.replace("${" + name.toUpperCase() + "}", value);
+            text = text.replace("${" + name.toLowerCase() + "}", value);
         }
     }
 }
