@@ -2,6 +2,9 @@ package net.hostsharing.hsadminng.credentials;
 
 import java.util.List;
 import java.util.UUID;
+
+import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.api.LoginCredentialsApi;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginCredentialsInsertResource;
@@ -15,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@SecurityRequirement(name = "casTicket")
 public class HsCredentialsController implements LoginCredentialsApi {
 
     @Autowired
@@ -33,6 +37,7 @@ public class HsCredentialsController implements LoginCredentialsApi {
     private HsCredentialsRepository loginCredentialsRepo;
 
     @Override
+    @Timed("app.credentials.credentials.getSingleLoginCredentialsByUuid")
     public ResponseEntity<LoginCredentialsResource> getSingleLoginCredentialsByUuid(
             final String assumedRoles,
             final UUID loginCredentialsUuid) {
@@ -44,6 +49,7 @@ public class HsCredentialsController implements LoginCredentialsApi {
     }
 
     @Override
+    @Timed("app.credentials.credentials.getListOfLoginCredentialsByPersonUuid")
     public ResponseEntity<List<LoginCredentialsResource>> getListOfLoginCredentialsByPersonUuid(
             final String assumedRoles,
             final UUID personUuid
@@ -57,6 +63,7 @@ public class HsCredentialsController implements LoginCredentialsApi {
     }
 
     @Override
+    @Timed("app.credentials.credentials.postNewLoginCredentials")
     public ResponseEntity<LoginCredentialsResource> postNewLoginCredentials(
             final String assumedRoles,
             final LoginCredentialsInsertResource body
@@ -70,6 +77,7 @@ public class HsCredentialsController implements LoginCredentialsApi {
     }
 
     @Override
+    @Timed("app.credentials.credentials.deleteLoginCredentialsByUuid")
     public ResponseEntity<Void> deleteLoginCredentialsByUuid(final String assumedRoles, final UUID loginCredentialsUuid) {
         context.assumeRoles(assumedRoles);
         final var loginCredentialsEntity = em.getReference(HsCredentialsEntity.class, loginCredentialsUuid);
@@ -78,6 +86,7 @@ public class HsCredentialsController implements LoginCredentialsApi {
     }
 
     @Override
+    @Timed("app.credentials.credentials.patchLoginCredentials")
     public ResponseEntity<LoginCredentialsResource> patchLoginCredentials(
             final String assumedRoles,
             final UUID loginCredentialsUuid,

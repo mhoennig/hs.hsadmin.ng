@@ -2,6 +2,8 @@ package net.hostsharing.hsadminng.credentials;
 
 import java.util.List;
 
+import io.micrometer.core.annotation.Timed;
+import net.hostsharing.hsadminng.config.NoSecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.api.LoginContextsApi;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginContextResource;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@NoSecurityRequirement
 public class HsCredentialsContextsController implements LoginContextsApi {
 
     @Autowired
@@ -23,6 +26,7 @@ public class HsCredentialsContextsController implements LoginContextsApi {
     private HsCredentialsContextRbacRepository contextRepo;
 
     @Override
+    @Timed("app.credentials.contexts.getListOfLoginContexts")
     public ResponseEntity<List<LoginContextResource>> getListOfLoginContexts(final String assumedRoles) {
         context.assumeRoles(assumedRoles);
 
