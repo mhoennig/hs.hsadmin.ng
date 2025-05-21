@@ -97,7 +97,7 @@ class HsCredentialsContextsControllerRestTest {
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/login/contexts")
+                .get("/api/hs/credentials/contexts")
                 .header("Authorization", "Bearer superuser-alex@hostsharing.net")
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())

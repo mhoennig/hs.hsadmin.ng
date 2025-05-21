@@ -52,6 +52,7 @@ public class ArchitectureTest {
                     "..credentials",
                     "..hash",
                     "..lambda",
+                    "..journal",
                     "..generated..",
                     "..persistence..",
                     "..reflection",
@@ -155,14 +156,14 @@ public class ArchitectureTest {
     public static final ArchRule testPackagesRule = classes()
             .that().resideInAPackage("..test.(*)..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..test.(*)..");
+            .resideInAnyPackage("..test.(*)..", "..journal..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule testPackagePackageRule = classes()
             .that().resideInAPackage("..test.pac..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..test.pac..");
+            .resideInAnyPackage("..test.pac..", "..journal..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -174,6 +175,7 @@ public class ArchitectureTest {
                     "..hs.office.(*)..",
                     "..hs.booking.(*)..",
                     "..hs.hosting.(*)..",
+                    "..credentials..",
                     "..hs.scenarios",
                     "..hs.migration",
                     "..rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest

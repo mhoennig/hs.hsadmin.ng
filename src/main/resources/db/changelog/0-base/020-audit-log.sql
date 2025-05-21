@@ -34,6 +34,33 @@ create table base.tx_context
 create index on base.tx_context using brin (txTimestamp);
 --//
 
+
+-- ============================================================================
+--changeset michael.hoennig:audit-TX-CONTEXT-TABLE-COLUMN-SEQUENTIAL-TX-ID endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Adds a column to base.tx_context which keeps a strictly sequentially ordered tx-id.
+ */
+
+alter table base.tx_context
+    add column seqTxId BIGINT;
+
+CREATE OR REPLACE FUNCTION set_next_sequential_txid()
+    RETURNS TRIGGER AS $$
+BEGIN
+    LOCK TABLE base.tx_context IN EXCLUSIVE MODE;
+    SELECT COALESCE(MAX(seqTxId)+1, 0) INTO NEW.seqTxId FROM base.tx_context;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_commit_order_trigger
+    BEFORE INSERT ON base.tx_context
+    FOR EACH ROW
+EXECUTE FUNCTION set_next_sequential_txid();
+--//
+
+
 -- ============================================================================
 --changeset michael.hoennig:audit-TX-JOURNAL-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
@@ -53,13 +80,24 @@ create index on base.tx_journal (targetTable, targetUuid);
 --//
 
 -- ============================================================================
---changeset michael.hoennig:audit-TX-JOURNAL-VIEW endDelimiter:--//
+--changeset michael.hoennig:audit-TX-JOURNAL-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     A view combining base.tx_journal with base.tx_context.
  */
+drop view if exists base.tx_journal_v;
 create view base.tx_journal_v as
-select txc.*, txj.targettable, txj.targetop, txj.targetuuid, txj.targetdelta
+select txc.seqTxId,
+       txc.txId,
+       txc.txTimeStamp,
+       txc.currentSubject,
+       txc.assumedRoles,
+       txc.currentTask,
+       txc.currentRequest,
+       txj.targetTable,
+       txj.targeTop,
+       txj.targetUuid,
+       txj.targetDelta
     from base.tx_journal txj
     left join base.tx_context txc using (txId)
     order by txc.txtimestamp;

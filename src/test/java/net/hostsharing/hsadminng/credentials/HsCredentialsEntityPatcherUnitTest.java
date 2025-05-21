@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.credentials;
 
-import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginContextResource;
-import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginContextTypeResource;
-import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginCredentialsPatchResource;
+import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.credentials.generated.api.v1.model.ContextResource;
+import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsPatchResource;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -20,11 +20,12 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 
 @TestInstance(PER_CLASS)
 @ExtendWith(MockitoExtension.class)
 class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
-        LoginCredentialsPatchResource,
+        CredentialsPatchResource,
         HsCredentialsEntity
         > {
 
@@ -58,8 +59,8 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
             .qualifier("dev")
             .build();
 
-    private LoginContextResource patchContextResource2;
-    private LoginContextResource patchContextResource3;
+    private ContextResource patchContextResource2;
+    private ContextResource patchContextResource3;
 
     // This is what em.find should return for CONTEXT_UUID_3
     private final HsCredentialsContextRealEntity newContextEntity3 = HsCredentialsContextRealEntity.builder()
@@ -69,7 +70,7 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
             .build();
 
     private final Set<HsCredentialsContextRealEntity> initialContextEntities = Set.of(initialContextEntity1, initialContextEntity2);
-    private List<LoginContextResource> patchedContextResources;
+    private List<ContextResource> patchedContextResources;
     private final Set<HsCredentialsContextRealEntity> expectedPatchedContextEntities = Set.of(initialContextEntity2, newContextEntity3);
 
     @Mock
@@ -82,14 +83,14 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
         lenient().when(em.find(eq(HsCredentialsContextRealEntity.class), eq(CONTEXT_UUID_2))).thenReturn(initialContextEntity2);
         lenient().when(em.find(eq(HsCredentialsContextRealEntity.class), eq(CONTEXT_UUID_3))).thenReturn(newContextEntity3);
 
-        patchContextResource2 = new LoginContextResource();
+        patchContextResource2 = new ContextResource();
         patchContextResource2.setUuid(CONTEXT_UUID_2);
-        patchContextResource2.setType(LoginContextTypeResource.SSH);
+        patchContextResource2.setType("SSH");
         patchContextResource2.setQualifier("dev");
 
-        patchContextResource3 = new LoginContextResource();
+        patchContextResource3 = new ContextResource();
         patchContextResource3.setUuid(CONTEXT_UUID_3);
-        patchContextResource3.setType(LoginContextTypeResource.HSADMIN);
+        patchContextResource3.setType("HSADMIN");
         patchContextResource3.setQualifier("test");
 
         patchedContextResources = List.of(patchContextResource2, patchContextResource3);
@@ -110,13 +111,13 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected LoginCredentialsPatchResource newPatchResource() {
-        return new LoginCredentialsPatchResource();
+    protected CredentialsPatchResource newPatchResource() {
+        return new CredentialsPatchResource();
     }
 
     @Override
     protected HsCredentialsEntityPatcher createPatcher(final HsCredentialsEntity entity) {
-        return new HsCredentialsEntityPatcher(em, entity);
+        return new HsCredentialsEntityPatcher(em, mock(MessageTranslator.class), entity);
     }
 
     @Override
@@ -124,38 +125,38 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
         return Stream.of(
                 new SimpleProperty<>(
                         "active",
-                        LoginCredentialsPatchResource::setActive,
+                        CredentialsPatchResource::setActive,
                         PATCHED_ACTIVE,
                         HsCredentialsEntity::setActive,
                         PATCHED_ACTIVE)
                     .notNullable(),
                 new JsonNullableProperty<>(
                         "emailAddress",
-                        LoginCredentialsPatchResource::setEmailAddress,
+                        CredentialsPatchResource::setEmailAddress,
                         PATCHED_EMAIL_ADDRESS,
                         HsCredentialsEntity::setEmailAddress,
                         PATCHED_EMAIL_ADDRESS),
                 new JsonNullableProperty<>(
                         "twoFactorAuth",
-                        LoginCredentialsPatchResource::setTwoFactorAuth,
+                        CredentialsPatchResource::setTwoFactorAuth,
                         PATCHED_TWO_FACTOR_AUTH,
                         HsCredentialsEntity::setTwoFactorAuth,
                         PATCHED_TWO_FACTOR_AUTH),
                 new JsonNullableProperty<>(
                         "smsNumber",
-                        LoginCredentialsPatchResource::setSmsNumber,
+                        CredentialsPatchResource::setSmsNumber,
                         PATCHED_SMS_NUMBER,
                         HsCredentialsEntity::setSmsNumber,
                         PATCHED_SMS_NUMBER),
                 new JsonNullableProperty<>(
                         "phonePassword",
-                        LoginCredentialsPatchResource::setPhonePassword,
+                        CredentialsPatchResource::setPhonePassword,
                         PATCHED_PHONE_PASSWORD,
                         HsCredentialsEntity::setPhonePassword,
                         PATCHED_PHONE_PASSWORD),
                 new SimpleProperty<>(
                         "contexts",
-                        LoginCredentialsPatchResource::setContexts,
+                        CredentialsPatchResource::setContexts,
                         patchedContextResources,
                         HsCredentialsEntity::setLoginContexts,
                         expectedPatchedContextEntities)

@@ -1,7 +1,8 @@
 package net.hostsharing.hsadminng.credentials;
 
-import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginContextResource;
-import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginCredentialsPatchResource;
+import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.credentials.generated.api.v1.model.ContextResource;
+import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsPatchResource;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
@@ -11,18 +12,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class HsCredentialsEntityPatcher implements EntityPatcher<LoginCredentialsPatchResource> {
+public class HsCredentialsEntityPatcher implements EntityPatcher<CredentialsPatchResource> {
 
     private final EntityManager em;
+    private MessageTranslator messageTranslator;
     private final HsCredentialsEntity entity;
 
-    public HsCredentialsEntityPatcher(final EntityManager em, final HsCredentialsEntity entity) {
+    public HsCredentialsEntityPatcher(final EntityManager em, MessageTranslator messageTranslator, final HsCredentialsEntity entity) {
         this.em = em;
+        this.messageTranslator = messageTranslator;
         this.entity = entity;
     }
 
     @Override
-    public void apply(final LoginCredentialsPatchResource resource) {
+    public void apply(final CredentialsPatchResource resource) {
         if ( resource.getActive() != null ) {
                 entity.setActive(resource.getActive());
         }
@@ -40,11 +43,11 @@ public class HsCredentialsEntityPatcher implements EntityPatcher<LoginCredential
     }
 
     public void syncLoginContextEntities(
-            List<LoginContextResource> resources,
+            List<ContextResource> resources,
             Set<HsCredentialsContextRealEntity> entities
     ) {
         final var resourceUuids = resources.stream()
-                .map(LoginContextResource::getUuid)
+                .map(ContextResource::getUuid)
                 .collect(Collectors.toSet());
 
         final var entityUuids = entities.stream()
@@ -57,14 +60,15 @@ public class HsCredentialsEntityPatcher implements EntityPatcher<LoginCredential
             if (!entityUuids.contains(resource.getUuid())) {
                 final var existingContextEntity = em.find(HsCredentialsContextRealEntity.class, resource.getUuid());
                 if ( existingContextEntity == null ) {
-                    // FIXME: i18n
                     throw new EntityNotFoundException(
-                            HsCredentialsContextRealEntity.class.getName() + " with uuid " + resource.getUuid() + " not found.");
+                            messageTranslator.translate("{0} \"{1}\" not found or not accessible",
+                                    "credentials uuid", resource.getUuid()));
                 }
-                if (!existingContextEntity.getType().equals(resource.getType().name()) &&
+                if (!existingContextEntity.getType().equals(resource.getType()) &&
                     !existingContextEntity.getQualifier().equals(resource.getQualifier())) {
-                    // FIXME: i18n
-                    throw new EntityNotFoundException("existing " +  existingContextEntity + " does not match given resource " + resource);
+                    throw new EntityNotFoundException(
+                            messageTranslator.translate("existing {0} does not match given resource {1}",
+                                    existingContextEntity, resource));
                 }
                 entities.add(existingContextEntity);
             }
