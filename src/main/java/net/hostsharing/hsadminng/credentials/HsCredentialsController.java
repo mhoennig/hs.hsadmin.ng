@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.api.CredentialsApi;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsInsertResource;
@@ -16,6 +17,8 @@ import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @RestController
 @SecurityRequirement(name = "casTicket")
@@ -29,6 +32,9 @@ public class HsCredentialsController implements CredentialsApi {
 
     @Autowired
     private StrictMapper mapper;
+
+    @Autowired
+    private MessageTranslator messageTranslator;
 
     @Autowired
     private HsOfficePersonRbacRepository personRepo;
@@ -56,7 +62,12 @@ public class HsCredentialsController implements CredentialsApi {
     ) {
         context.assumeRoles(assumedRoles);
 
-        final var person = personRepo.findByUuid(personUuid).orElseThrow(); // FIXME: use proper exception
+        final var person = personRepo.findByUuid(personUuid).orElseThrow(
+                () -> new EntityNotFoundException(
+                        messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", personUuid)
+                )
+
+        ); // FIXME: use proper exception
         final var credentials = credentialsRepo.findByPerson(person);
         final var result = mapper.mapList(credentials, CredentialsResource.class);
         return ResponseEntity.ok(result);
@@ -96,7 +107,7 @@ public class HsCredentialsController implements CredentialsApi {
 
         final var current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
 
-        new HsCredentialsEntityPatcher(em, current).apply(body);
+        new HsCredentialsEntityPatcher(em, messageTranslator, current).apply(body);
 
         final var saved = credentialsRepo.save(current);
         final var mapped = mapper.map(saved, CredentialsResource.class);

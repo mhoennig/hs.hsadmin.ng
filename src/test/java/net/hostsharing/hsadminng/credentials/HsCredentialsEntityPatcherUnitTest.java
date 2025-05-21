@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.credentials;
 
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.ContextResource;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsPatchResource;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
@@ -19,6 +20,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 
 @TestInstance(PER_CLASS)
 @ExtendWith(MockitoExtension.class)
@@ -115,7 +117,7 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @Override
     protected HsCredentialsEntityPatcher createPatcher(final HsCredentialsEntity entity) {
-        return new HsCredentialsEntityPatcher(em, entity);
+        return new HsCredentialsEntityPatcher(em, mock(MessageTranslator.class), entity);
     }
 
     @Override
