@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.credentials;
 
-import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginContextResource;
-import net.hostsharing.hsadminng.credentials.generated.api.v1.model.LoginCredentialsPatchResource;
+import net.hostsharing.hsadminng.credentials.generated.api.v1.model.ContextResource;
+import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsPatchResource;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class HsCredentialsEntityPatcher implements EntityPatcher<LoginCredentialsPatchResource> {
+public class HsCredentialsEntityPatcher implements EntityPatcher<CredentialsPatchResource> {
 
     private final EntityManager em;
     private final HsCredentialsEntity entity;
@@ -22,7 +22,7 @@ public class HsCredentialsEntityPatcher implements EntityPatcher<LoginCredential
     }
 
     @Override
-    public void apply(final LoginCredentialsPatchResource resource) {
+    public void apply(final CredentialsPatchResource resource) {
         if ( resource.getActive() != null ) {
                 entity.setActive(resource.getActive());
         }
@@ -40,11 +40,11 @@ public class HsCredentialsEntityPatcher implements EntityPatcher<LoginCredential
     }
 
     public void syncLoginContextEntities(
-            List<LoginContextResource> resources,
+            List<ContextResource> resources,
             Set<HsCredentialsContextRealEntity> entities
     ) {
         final var resourceUuids = resources.stream()
-                .map(LoginContextResource::getUuid)
+                .map(ContextResource::getUuid)
                 .collect(Collectors.toSet());
 
         final var entityUuids = entities.stream()
@@ -61,7 +61,7 @@ public class HsCredentialsEntityPatcher implements EntityPatcher<LoginCredential
                     throw new EntityNotFoundException(
                             HsCredentialsContextRealEntity.class.getName() + " with uuid " + resource.getUuid() + " not found.");
                 }
-                if (!existingContextEntity.getType().equals(resource.getType().name()) &&
+                if (!existingContextEntity.getType().equals(resource.getType()) &&
                     !existingContextEntity.getQualifier().equals(resource.getQualifier())) {
                     // FIXME: i18n
                     throw new EntityNotFoundException("existing " +  existingContextEntity + " does not match given resource " + resource);

@@ -42,7 +42,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     HttpServletRequest request;
 
     @Autowired
-    private HsCredentialsRepository loginCredentialsRepository;
+    private HsCredentialsRepository credentialsRepository;
 
     @Autowired
     private HsCredentialsContextRealRepository loginContextRealRepo;
@@ -88,7 +88,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     @Test
     void shouldFindByUuidUsingTestData() {
         // when
-        final var foundEntityOptional = loginCredentialsRepository.findByUuid(alexSubject.getUuid());
+        final var foundEntityOptional = credentialsRepository.findByUuid(alexSubject.getUuid());
 
         // then
         assertThat(foundEntityOptional).isPresent()
@@ -96,7 +96,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Test
-    void shouldSaveLoginCredentialsWithExistingContext() {
+    void shouldSaveCredentialsWithExistingContext() {
         // given
         final var existingContext = loginContextRealRepo.findByTypeAndQualifier("HSADMIN", "prod")
                 .orElseThrow();
@@ -111,12 +111,12 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
                 .build();
 
         // when
-        loginCredentialsRepository.save(newCredentials);
+        credentialsRepository.save(newCredentials);
         em.flush();
         em.clear();
 
         // then
-        final var foundEntityOptional = loginCredentialsRepository.findByUuid(drewSubject.getUuid());
+        final var foundEntityOptional = credentialsRepository.findByUuid(drewSubject.getUuid());
         assertThat(foundEntityOptional).isPresent();
         final var foundEntity = foundEntityOptional.get();
         assertThat(foundEntity.getEmailAddress()).isEqualTo("drew.new@example.com");
@@ -129,7 +129,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Test
-    void shouldNotSaveLoginCredentialsWithNewContext() {
+    void shouldNotSaveCredentialsWithNewContext() {
         // given
         final var newContext = HsCredentialsContextRealEntity.builder()
                 .type("MATRIX")
@@ -146,7 +146,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
 
         // when
         final var exception = catchThrowable(() -> {
-            loginCredentialsRepository.save(newCredentials);
+            credentialsRepository.save(newCredentials);
             em.flush();
         });
 
@@ -155,7 +155,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Test
-    void shouldSaveNewLoginCredentialsWithoutContext() {
+    void shouldSaveNewCredentialsWithoutContext() {
         // given
         final var newCredentials = HsCredentialsEntity.builder()
                 .subject(testUserSubject)
@@ -167,12 +167,12 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
                 .build();
 
         // when
-        loginCredentialsRepository.save(newCredentials);
+        credentialsRepository.save(newCredentials);
         em.flush();
         em.clear();
 
         // then
-        final var foundEntityOptional = loginCredentialsRepository.findByUuid(testUserSubject.getUuid());
+        final var foundEntityOptional = credentialsRepository.findByUuid(testUserSubject.getUuid());
         assertThat(foundEntityOptional).isPresent();
         final var foundEntity = foundEntityOptional.get();
         assertThat(foundEntity.getEmailAddress()).isEqualTo("test.user.new@example.com");
@@ -183,21 +183,21 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Test
-    void shouldUpdateExistingLoginCredentials() {
+    void shouldUpdateExistingCredentials() {
         // given
-        final var entityToUpdate = loginCredentialsRepository.findByUuid(alexSubject.getUuid()).orElseThrow();
+        final var entityToUpdate = credentialsRepository.findByUuid(alexSubject.getUuid()).orElseThrow();
         final var initialVersion = entityToUpdate.getVersion();
 
         // when
         entityToUpdate.setActive(false);
         entityToUpdate.setEmailAddress("updated.user1@example.com");
-        final var savedEntity = loginCredentialsRepository.save(entityToUpdate);
+        final var savedEntity = credentialsRepository.save(entityToUpdate);
         em.flush();
         em.clear();
 
         // then
         assertThat(savedEntity.getVersion()).isGreaterThan(initialVersion);
-        final var updatedEntityOptional = loginCredentialsRepository.findByUuid(alexSubject.getUuid());
+        final var updatedEntityOptional = credentialsRepository.findByUuid(alexSubject.getUuid());
         assertThat(updatedEntityOptional).isPresent();
         final var updatedEntity = updatedEntityOptional.get();
         assertThat(updatedEntity.isActive()).isFalse();

@@ -26,7 +26,7 @@ import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 @AllArgsConstructor
 public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Stringifyable {
 
-    protected static Stringify<HsCredentialsEntity> stringify = stringify(HsCredentialsEntity.class, "loginCredentials")
+    protected static Stringify<HsCredentialsEntity> stringify = stringify(HsCredentialsEntity.class, "credentials")
             .withProp(HsCredentialsEntity::isActive)
             .withProp(HsCredentialsEntity::getEmailAddress)
             .withProp(HsCredentialsEntity::getTwoFactorAuth)
