@@ -14,7 +14,7 @@ import java.util.Map;
 
 
 @RestController
-@Profile("!only-office")
+@Profile("!only-prod-schema")
 @NoSecurityRequirement
 public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
 

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Profile("!only-office")
+@Profile("!only-prod-schema")
 public interface HsHostingAssetRepository<E extends HsHostingAsset> {
 
     @Timed("app.hosting.assets.repo.findByUuid")

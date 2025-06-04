@@ -174,59 +174,61 @@ databaseChangeLog:
 
     - include:
         file: db/changelog/6-hs-booking/600-hs-booking-schema.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/6-hs-booking/610-booking-debitor/6100-hs-booking-debitor.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/6-hs-booking/620-booking-project/6200-hs-booking-project.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/6-hs-booking/620-booking-project/6203-hs-booking-project-rbac.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/6-hs-booking/620-booking-project/6208-hs-booking-project-test-data.sql
-        context: "!only-office and !without-test-data"
+        context: "!only-prod-schema and !without-test-data"
     - include:
         file: db/changelog/6-hs-booking/630-booking-item/6300-hs-booking-item.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/6-hs-booking/630-booking-item/6303-hs-booking-item-rbac.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/6-hs-booking/630-booking-item/6308-hs-booking-item-test-data.sql
-        context: "!only-office and !without-test-data"
+        context: "!only-prod-schema and !without-test-data"
 
     - include:
         file: db/changelog/7-hs-hosting/700-hs-hosting-schema.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7010-hs-hosting-asset.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7013-hs-hosting-asset-rbac.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7016-hs-hosting-asset-migration.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7018-hs-hosting-asset-test-data.sql
-        context: "!only-office and !without-test-data"
+        context: "!only-prod-schema and !without-test-data"
 
     - include:
         file: db/changelog/9-hs-global/9000-statistics.sql
-        context: "!only-office"
+        context: "!only-prod-schema"
 
     - include:
           file: db/changelog/9-hs-global/950-credentials/9500-hs-credentials-schema.sql
+          context: "!only-prod-schema"
     - include:
           file: db/changelog/9-hs-global/950-credentials/9510-hs-credentials.sql
+          context: "!only-prod-schema"
     #    TODO_impl: RBAC rules for _rv do not yet work properly
     #    - include:
     #          file: db/changelog/9-hs-global/950-credentials/9513-hs-credentials-rbac.sql
     - include:
           file: db/changelog/9-hs-global/950-credentials/9519-hs-credentials-test-data.sql
-          context: "!without-test-data"
+          context: "!only-prod-schema and !without-test-data"
 
     - include:
           file: db/changelog/9-hs-global/960-integrations/9600-hs-integration-schema.sql

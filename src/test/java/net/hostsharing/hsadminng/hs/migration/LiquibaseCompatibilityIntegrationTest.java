@@ -24,9 +24,9 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
  * <p>The test works as follows:</p>
  *
  * <ol>
- *     <li>the database is initialized by `db/released-only-office-schema-with-test-data.sql` from the test-resources</li>
- *     <li>the current Liquibase-migrations (only-office but with-test-data) are performed</li>
- *     <li>a new dump is written to `db/released-only-office-schema-with-test-data.sql` in the build-directory</li>
+ *     <li>the database is initialized by `db/released-only-prod-schema-with-test-data.sql` from the test-resources</li>
+ *     <li>the current Liquibase-migrations (only-prod-schema but with-test-data) are performed</li>
+ *     <li>a new dump is written to `db/released-only-prod-schema-with-test-data.sql` in the build-directory</li>
  *     <li>an extra Liquibase-changeset (liquibase-migration-test) is applied</li>
  *     <li>it's asserted that the extra changeset got applied</li>
  * </ol>
@@ -43,7 +43,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @DirtiesContext
 @ActiveProfiles("liquibase-migration-test")
 @Import(LiquibaseConfig.class)
-@Sql(value = "/db/released-only-office-schema-with-test-data.sql", executionPhase = BEFORE_TEST_CLASS) // release-schema
+@Sql(value = "/db/released-only-prod-schema-with-test-data.sql", executionPhase = BEFORE_TEST_CLASS) // release-schema
 public class LiquibaseCompatibilityIntegrationTest {
 
     private static final String EXPECTED_CHANGESET_ONLY_AFTER_NEW_MIGRATION = "hs-global-liquibase-migration-test";
@@ -62,8 +62,8 @@ public class LiquibaseCompatibilityIntegrationTest {
                 EXPECTED_LIQUIBASE_CHANGELOGS_IN_PROD_SCHEMA_DUMP, EXPECTED_CHANGESET_ONLY_AFTER_NEW_MIGRATION);
 
         // run the current migrations and dump the result to the build-directory
-        liquibase.runWithContexts("only-office", "with-test-data");
-        PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-only-office-schema-with-test-data.sql"));
+        liquibase.runWithContexts("only-prod-schema", "with-test-data");
+        PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-only-prod-schema-with-test-data.sql"));
 
         // then add another migration and assert if it was applied
         liquibase.runWithContexts("liquibase-migration-test");

@@ -13,11 +13,12 @@ create table hs_credentials.credentials
     person_uuid      uuid not null references hs_office.person(uuid),
 
     active           bool,
+    last_used        timestamp,
     global_uid       int unique,     -- w/o
     global_gid       int unique,     -- w/o
-    onboarding_token text,           -- w/o
+    onboarding_token text,           -- w/o, but can be set to null to invalidate
 
-    two_factor_auth  text,
+    totp_secret      text,
     phone_password   text,
     email_address    text,
     sms_number       text

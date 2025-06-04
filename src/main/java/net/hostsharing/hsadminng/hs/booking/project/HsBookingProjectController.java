@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 @RestController
-@Profile("!only-office")
+@Profile("!only-prod-schema")
 @SecurityRequirement(name = "casTicket")
 public class HsBookingProjectController implements HsBookingProjectsApi {
 

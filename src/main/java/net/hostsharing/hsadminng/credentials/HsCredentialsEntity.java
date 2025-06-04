@@ -9,6 +9,7 @@ import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 // import net.hostsharing.hsadminng.rbac.RbacSubjectEntity; // Assuming RbacSubjectEntity exists for the FK relationship
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -29,7 +30,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     protected static Stringify<HsCredentialsEntity> stringify = stringify(HsCredentialsEntity.class, "credentials")
             .withProp(HsCredentialsEntity::isActive)
             .withProp(HsCredentialsEntity::getEmailAddress)
-            .withProp(HsCredentialsEntity::getTwoFactorAuth)
+            .withProp(HsCredentialsEntity::getTotpSecret)
             .withProp(HsCredentialsEntity::getPhonePassword)
             .withProp(HsCredentialsEntity::getSmsNumber)
             .quotedValues(false);
@@ -50,6 +51,9 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     private int version;
 
     @Column
+    private LocalDateTime lastUsed;
+
+    @Column
     private boolean active;
 
     @Column
@@ -62,7 +66,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     private String onboardingToken;
 
     @Column
-    private String twoFactorAuth;
+    private String totpSecret;
 
     @Column
     private String phonePassword;

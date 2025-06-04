@@ -33,13 +33,13 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
 
     private static final Boolean INITIAL_ACTIVE = true;
     private static final String INITIAL_EMAIL_ADDRESS = "initial@example.com";
-    private static final String INITIAL_TWO_FACTOR_AUTH = "initial_2fa";
+    private static final String INITIAL_TOTP_SECRET = "initial_2fa";
     private static final String INITIAL_SMS_NUMBER = "initial_sms";
     private static final String INITIAL_PHONE_PASSWORD = "initial_phone_pw";
 
     private static final Boolean PATCHED_ACTIVE = false;
     private static final String PATCHED_EMAIL_ADDRESS = "patched@example.com";
-    private static final String PATCHED_TWO_FACTOR_AUTH = "patched_2fa";
+    private static final String PATCHED_TOTP_SECRET = "patched_2fa";
     private static final String PATCHED_SMS_NUMBER = "patched_sms";
     private static final String PATCHED_PHONE_PASSWORD = "patched_phone_pw";
 
@@ -102,7 +102,7 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
         entity.setUuid(INITIAL_CREDENTIALS_UUID);
         entity.setActive(INITIAL_ACTIVE);
         entity.setEmailAddress(INITIAL_EMAIL_ADDRESS);
-        entity.setTwoFactorAuth(INITIAL_TWO_FACTOR_AUTH);
+        entity.setTotpSecret(INITIAL_TOTP_SECRET);
         entity.setSmsNumber(INITIAL_SMS_NUMBER);
         entity.setPhonePassword(INITIAL_PHONE_PASSWORD);
         // Ensure loginContexts is a mutable set for the patcher
@@ -137,11 +137,11 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
                         HsCredentialsEntity::setEmailAddress,
                         PATCHED_EMAIL_ADDRESS),
                 new JsonNullableProperty<>(
-                        "twoFactorAuth",
-                        CredentialsPatchResource::setTwoFactorAuth,
-                        PATCHED_TWO_FACTOR_AUTH,
-                        HsCredentialsEntity::setTwoFactorAuth,
-                        PATCHED_TWO_FACTOR_AUTH),
+                        "totpSecret",
+                        CredentialsPatchResource::setTotpSecret,
+                        PATCHED_TOTP_SECRET,
+                        HsCredentialsEntity::setTotpSecret,
+                        PATCHED_TOTP_SECRET),
                 new JsonNullableProperty<>(
                         "smsNumber",
                         CredentialsPatchResource::setSmsNumber,

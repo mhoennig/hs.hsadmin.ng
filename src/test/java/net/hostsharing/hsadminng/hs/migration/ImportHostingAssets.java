@@ -138,7 +138,7 @@ public class ImportHostingAssets extends CsvDataImport {
     @Autowired
     LiquibaseMigration liquibase;
 
-    @Value("${HSADMINNG_OFFICE_DATA_SQL_FILE:/db/released-only-office-schema-with-import-test-data.sql}")
+    @Value("${HSADMINNG_OFFICE_DATA_SQL_FILE:/db/released-only-prod-schema-with-import-test-data.sql}")
     String officeSchemaAndDataSqlFile;
 
     @Test

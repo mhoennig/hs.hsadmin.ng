@@ -1,7 +1,11 @@
 package net.hostsharing.hsadminng.credentials;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,6 +27,8 @@ import jakarta.persistence.EntityNotFoundException;
 @RestController
 @SecurityRequirement(name = "casTicket")
 public class HsCredentialsController implements CredentialsApi {
+
+    private static DateTimeFormatter FULL_TIMESTAMP_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     @Autowired
     private Context context;
@@ -67,7 +73,7 @@ public class HsCredentialsController implements CredentialsApi {
                         messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", personUuid)
                 )
 
-        ); // FIXME: use proper exception
+        );
         final var credentials = credentialsRepo.findByPerson(person);
         final var result = mapper.mapList(credentials, CredentialsResource.class);
         return ResponseEntity.ok(result);
@@ -113,4 +119,25 @@ public class HsCredentialsController implements CredentialsApi {
         final var mapped = mapper.map(saved, CredentialsResource.class);
         return ResponseEntity.ok(mapped);
     }
+
+    @Override
+    @Timed("app.credentials.credentials.credentialsUsed")
+    public ResponseEntity<CredentialsResource> credentialsUsed(
+            final String assumedRoles,
+            final UUID credentialsUuid) {
+        context.assumeRoles(assumedRoles);
+
+        final var current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
+
+        current.setOnboardingToken(null);
+        current.setLastUsed(LocalDateTime.now());
+
+        final var saved = credentialsRepo.save(current);
+        final var mapped = mapper.map(saved, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        return ResponseEntity.ok(mapped);
+    }
+
+    final BiConsumer<HsCredentialsEntity, CredentialsResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        resource.setLastUsed(entity.getLastUsed().atOffset(ZoneOffset.UTC));
+    };
 }

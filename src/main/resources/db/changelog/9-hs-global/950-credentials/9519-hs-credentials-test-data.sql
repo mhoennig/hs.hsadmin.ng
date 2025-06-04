@@ -51,7 +51,7 @@ begin
 --     call rbac.grantRoleToRole(hs_credentials.context_REFERRER(context_MATRIX_internal), rbac.global_ADMIN());
 
     -- Add test credentials (linking to assumed rbac.subject UUIDs)
-    INSERT INTO hs_credentials.credentials (uuid, version, person_uuid, active, global_uid, global_gid, onboarding_token, two_factor_auth, phone_password, email_address, sms_number) VALUES
+    INSERT INTO hs_credentials.credentials (uuid, version, person_uuid, active, global_uid, global_gid, onboarding_token, totp_secret, phone_password, email_address, sms_number) VALUES
         ( superuserAlexSubjectUuid, 0, personAlexUuid, true, 1001, 1001, 'token-abc', 'otp-secret-1', 'phone-pw-1', 'alex@example.com', '111-222-3333'),
         ( superuserFranSubjectUuid, 0, personFranUuid, true, 1002, 1002, 'token-def', 'otp-secret-2', 'phone-pw-2', 'fran@example.com', '444-555-6666');
 

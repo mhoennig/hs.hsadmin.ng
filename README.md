@@ -674,13 +674,13 @@ howto
 Add `--args='--spring.profiles.active=...` with the wanted profile selector:
 
 ```sh
-gw bootRun --args='--spring.profiles.active=fakeCasAuthenticator,external-db,only-office,without-test-data'
+gw bootRun --args='--spring.profiles.active=fakeCasAuthenticator,external-db,only-prod-schema,without-test-data'
 ```
 
 These profiles mean:
 
 - **external-db**: an external PostgreSQL database is used with the PostgreSQL users already created as specified in the environment
-- **only-office**: only the Office module is started, but neither the Booking nor the Hosting modules
+- **only-prod-schema**: only the Office module is started, but neither the Booking nor the Hosting modules
 - **without-test-data**: no test-data is inserted
 
 

@@ -32,7 +32,7 @@ import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
-@Profile("!only-office")
+@Profile("!only-prod-schema")
 @SecurityRequirement(name = "casTicket")
 public class HsBookingItemController implements HsBookingItemsApi {
 

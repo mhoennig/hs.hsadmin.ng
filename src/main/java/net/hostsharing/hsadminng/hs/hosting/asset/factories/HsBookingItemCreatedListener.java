@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("!only-office")
+@Profile("!only-prod-schema")
 public class HsBookingItemCreatedListener implements ApplicationListener<BookingItemCreatedAppEvent> {
 
     @Autowired

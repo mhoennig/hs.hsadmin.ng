@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Profile("!only-office")
+@Profile("!only-prod-schema")
 public interface HsBookingDebitorRepository  extends Repository<HsBookingDebitorEntity, UUID> {
 
     @Timed("app.booking.debitor.repo.findByUuid")

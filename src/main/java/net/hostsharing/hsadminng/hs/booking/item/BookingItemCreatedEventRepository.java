@@ -6,7 +6,7 @@ import org.springframework.data.repository.Repository;
 
 import java.util.UUID;
 
-@Profile("!only-office")
+@Profile("!only-prod-schema")
 public interface BookingItemCreatedEventRepository extends Repository<BookingItemCreatedEventEntity, UUID> {
 
     @Timed("app.booking.items.repo.save")

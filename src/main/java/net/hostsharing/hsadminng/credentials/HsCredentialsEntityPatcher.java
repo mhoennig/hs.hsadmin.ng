@@ -31,8 +31,8 @@ public class HsCredentialsEntityPatcher implements EntityPatcher<CredentialsPatc
         }
         OptionalFromJson.of(resource.getEmailAddress())
                 .ifPresent(entity::setEmailAddress);
-        OptionalFromJson.of(resource.getTwoFactorAuth())
-                .ifPresent(entity::setTwoFactorAuth);
+        OptionalFromJson.of(resource.getTotpSecret())
+                .ifPresent(entity::setTotpSecret);
         OptionalFromJson.of(resource.getSmsNumber())
                 .ifPresent(entity::setSmsNumber);
         OptionalFromJson.of(resource.getPhonePassword())
