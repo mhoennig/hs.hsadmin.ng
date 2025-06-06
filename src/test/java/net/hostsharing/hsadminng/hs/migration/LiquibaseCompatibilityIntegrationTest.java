@@ -43,11 +43,11 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @DirtiesContext
 @ActiveProfiles("liquibase-migration-test")
 @Import(LiquibaseConfig.class)
-@Sql(value = "/db/released-only-prod-schema-with-test-data.sql", executionPhase = BEFORE_TEST_CLASS) // release-schema
+@Sql(value = "/db/released-prod-schema-with-test-data.sql", executionPhase = BEFORE_TEST_CLASS) // release-schema
 public class LiquibaseCompatibilityIntegrationTest {
 
     private static final String EXPECTED_CHANGESET_ONLY_AFTER_NEW_MIGRATION = "hs-global-liquibase-migration-test";
-    private static final int EXPECTED_LIQUIBASE_CHANGELOGS_IN_PROD_SCHEMA_DUMP = 287;
+    private static final int EXPECTED_LIQUIBASE_CHANGELOGS_IN_PROD_SCHEMA_DUMP = 299;
 
     @Value("${spring.datasource.url}")
     private String jdbcUrl;
@@ -63,7 +63,7 @@ public class LiquibaseCompatibilityIntegrationTest {
 
         // run the current migrations and dump the result to the build-directory
         liquibase.runWithContexts("only-prod-schema", "with-test-data");
-        PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-only-prod-schema-with-test-data.sql"));
+        PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-prod-schema-with-test-data.sql"));
 
         // then add another migration and assert if it was applied
         liquibase.runWithContexts("liquibase-migration-test");

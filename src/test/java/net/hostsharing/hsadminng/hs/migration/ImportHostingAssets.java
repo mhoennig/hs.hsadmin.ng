@@ -40,6 +40,7 @@ import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -138,7 +139,7 @@ public class ImportHostingAssets extends CsvDataImport {
     @Autowired
     LiquibaseMigration liquibase;
 
-    @Value("${HSADMINNG_OFFICE_DATA_SQL_FILE:/db/released-only-prod-schema-with-import-test-data.sql}")
+    @Value("${HSADMINNG_OFFICE_DATA_SQL_FILE:/db/released-prod-schema-with-import-test-data.sql}")
     String officeSchemaAndDataSqlFile;
 
     @Test
@@ -148,6 +149,7 @@ public class ImportHostingAssets extends CsvDataImport {
         executeSqlScript(officeSchemaAndDataSqlFile);
         liquibase.assertReferenceStatusAfterRestore(286, "hs-booking-SCHEMA");
         makeSureThatTheImportAdminUserExists();
+        PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-prod-schema-with-import-test-data.sql"));
         liquibase.runWithContexts("migration", "without-test-data");
         liquibase.assertThatCurrentMigrationsGotApplied(331, "hs-booking-SCHEMA");
     }

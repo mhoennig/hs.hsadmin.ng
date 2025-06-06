@@ -9,18 +9,15 @@
 --
 
 CREATE ROLE postgres;
-
 CREATE ROLE admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
 CREATE ROLE restricted;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO restricted;
 
 --
 -- PostgreSQL database dump
 --
 
 -- Dumped from database version 15.5 (Debian 15.5-1.pgdg120+1)
--- Dumped by pg_dump version 16.6 (Ubuntu 16.6-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -278,6 +275,19 @@ CREATE CAST (character varying AS hs_office.persontype) WITH INOUT AS IMPLICIT;
 
 CREATE CAST (character varying AS hs_office.relationtype) WITH INOUT AS IMPLICIT;
 
+
+--
+-- Name: add_if_not_null(anyarray, anyelement); Type: FUNCTION; Schema: base; Owner: test
+--
+
+CREATE FUNCTION base.add_if_not_null(arr anyarray, val anyelement) RETURNS anyarray
+    LANGUAGE sql
+    AS '
+    SELECT CASE WHEN val IS NULL THEN arr ELSE arr || val END
+';
+
+
+ALTER FUNCTION base.add_if_not_null(arr anyarray, val anyelement) OWNER TO test;
 
 --
 -- Name: asserttrue(boolean, text); Type: FUNCTION; Schema: base; Owner: postgres
@@ -708,6 +718,8 @@ CREATE PROCEDURE base.tx_create_historicization(IN basetable character varying)
     LANGUAGE plpgsql
     AS '
 declare
+    baseSchemaName     varchar;
+    baseTableName      varchar;
     createHistTableSql varchar;
     createTriggerSQL   varchar;
     viewName           varchar;
@@ -717,13 +729,18 @@ declare
 begin
 
     
+    SELECT split_part(basetable, ''.'', 1),
+           split_part(basetable, ''.'', 2)
+        INTO baseSchemaName, baseTableName;
+
+    
     createHistTableSql = '''' ||
-                         ''CREATE TABLE '' || baseTable || ''_ex ('' ||
+                         ''CREATE TABLE '' || basetable || ''_ex ('' ||
                          ''   version_id serial PRIMARY KEY,'' ||
                          ''   txid xid8 NOT NULL REFERENCES base.tx_context(txid),'' ||
                          ''   trigger_op base.tx_operation NOT NULL,'' ||
                          ''   alive boolean not null,'' ||
-                         ''   LIKE '' || baseTable ||
+                         ''   LIKE '' || basetable ||
                          ''       EXCLUDING CONSTRAINTS'' ||
                          ''       EXCLUDING STATISTICS'' ||
                          '')'';
@@ -731,12 +748,12 @@ begin
     execute createHistTableSql;
 
     
-    viewName = baseTable || ''_hv'';
-    exVersionsTable = baseTable || ''_ex'';
+    viewName = basetable || ''_hv'';
+    exVersionsTable = basetable || ''_ex'';
     baseCols = (select string_agg(quote_ident(column_name), '', '')
                     from information_schema.columns
-                    where table_schema = ''public''
-                      and table_name = baseTable);
+                    where table_schema = baseSchemaName
+                      and table_name = baseTableName);
 
     createViewSQL = format(
             ''CREATE OR REPLACE VIEW %1$s AS'' ||
@@ -762,7 +779,7 @@ begin
 
     
     createTriggerSQL = ''CREATE TRIGGER tx_9_historicize_tg'' ||
-                       '' AFTER INSERT OR DELETE OR UPDATE ON '' || baseTable ||
+                       '' AFTER INSERT OR DELETE OR UPDATE ON '' || basetable ||
                        ''   FOR EACH ROW EXECUTE PROCEDURE base.tx_historicize_tf()'';
     execute createTriggerSQL;
 
@@ -872,16 +889,24 @@ declare
     curTask text;
     curTxId xid8;
     tableSchemaAndName text;
+    next_timestamp timestamp;
 begin
     curTask := base.currentTask();
     curTxId := pg_current_xact_id();
     tableSchemaAndName := base.combine_table_schema_and_name(tg_table_schema, tg_table_name);
 
+    next_timestamp = ''1970-01-01'';
     insert
         into base.tx_context (txId, txTimestamp, currentSubject, assumedRoles, currentTask, currentRequest)
             values ( curTxId, now(),
                      base.currentSubject(), base.assumedRoles(), curTask, base.currentRequest())
-        on conflict do nothing;
+        on conflict do nothing
+        returning txTimestamp into next_timestamp;
+
+    
+    if next_timestamp <> ''1970-01-01'' then
+        PERFORM pg_notify (''tx_context_inserted'', CONCAT(curTxId, '','', extract(epoch from next_timestamp), '','', curTask));
+    end if;
 
     case tg_op
         when ''INSERT'' then insert
@@ -906,6 +931,19 @@ end; ';
 
 
 ALTER FUNCTION base.tx_journal_trigger() OWNER TO postgres;
+
+--
+-- Name: without_null_values(anyarray); Type: FUNCTION; Schema: base; Owner: test
+--
+
+CREATE FUNCTION base.without_null_values(arr anyarray) RETURNS anyarray
+    LANGUAGE sql
+    AS '
+    SELECT array_agg(e) FROM unnest(arr) AS e WHERE e IS NOT NULL
+';
+
+
+ALTER FUNCTION base.without_null_values(arr anyarray) OWNER TO test;
 
 SET default_tablespace = '';
 
@@ -1588,31 +1626,6 @@ CREATE FUNCTION hs_office.contact_uuid_by_id_name(givenidname character varying)
 ALTER FUNCTION hs_office.contact_uuid_by_id_name(givenidname character varying) OWNER TO postgres;
 
 --
--- Name: coopassetstx_check_positive_total(uuid, numeric); Type: FUNCTION; Schema: hs_office; Owner: postgres
---
-
-CREATE FUNCTION hs_office.coopassetstx_check_positive_total(formembershipuuid uuid, newassetvalue numeric) RETURNS boolean
-    LANGUAGE plpgsql
-    AS '
-declare
-    currentAssetValue numeric(12,2);
-    totalAssetValue numeric(12,2);
-begin
-    select sum(cat.assetValue)
-        from hs_office.coopassettx cat
-        where cat.membershipUuid = forMembershipUuid
-        into currentAssetValue;
-    totalAssetValue := currentAssetValue + newAssetValue;
-    if totalAssetValue::numeric < 0 then
-        raise exception ''[400] coop assets transaction would result in a negative balance of assets'';
-    end if;
-    return true;
-end; ';
-
-
-ALTER FUNCTION hs_office.coopassetstx_check_positive_total(formembershipuuid uuid, newassetvalue numeric) OWNER TO postgres;
-
---
 -- Name: coopassettx; Type: TABLE; Schema: hs_office; Owner: postgres
 --
 
@@ -1626,8 +1639,7 @@ CREATE TABLE hs_office.coopassettx (
     reference character varying(48) NOT NULL,
     revertedassettxuuid uuid,
     assetadoptiontxuuid uuid,
-    comment character varying(512),
-    CONSTRAINT check_positive_total CHECK (hs_office.coopassetstx_check_positive_total(membershipuuid, assetvalue))
+    comment character varying(512)
 );
 
 
@@ -1760,6 +1772,33 @@ end; ';
 
 
 ALTER FUNCTION hs_office.coopassettx_delete_legacy_id_mapping_tf() OWNER TO postgres;
+
+--
+-- Name: coopassettx_enforce_positive_total(); Type: FUNCTION; Schema: hs_office; Owner: test
+--
+
+CREATE FUNCTION hs_office.coopassettx_enforce_positive_total() RETURNS trigger
+    LANGUAGE plpgsql
+    AS '
+
+declare
+    currentAssetValue numeric(12,2);
+    totalAssetValue numeric(12,2);
+begin
+    select sum(cat.assetValue)
+        from hs_office.coopassettx cat
+        where cat.membershipUuid = NEW.membershipUuid
+        into currentAssetValue;
+    totalAssetValue := currentAssetValue + NEW.assetValue;
+    if totalAssetValue::numeric < 0 then
+        raise exception ''[400] coop assets transaction would result in a negative balance of assets'';
+    end if;
+    return NEW;
+end;
+';
+
+
+ALTER FUNCTION hs_office.coopassettx_enforce_positive_total() OWNER TO test;
 
 --
 -- Name: coopassettx_grants_insert_to_membership_tf(); Type: FUNCTION; Schema: hs_office; Owner: postgres
@@ -2004,31 +2043,6 @@ CREATE FUNCTION hs_office.coopassettx_uuid_by_id_name(givenidname character vary
 ALTER FUNCTION hs_office.coopassettx_uuid_by_id_name(givenidname character varying) OWNER TO postgres;
 
 --
--- Name: coopsharestx_check_positive_total(uuid, integer); Type: FUNCTION; Schema: hs_office; Owner: postgres
---
-
-CREATE FUNCTION hs_office.coopsharestx_check_positive_total(formembershipuuid uuid, newsharecount integer) RETURNS boolean
-    LANGUAGE plpgsql
-    AS '
-declare
-    currentShareCount integer;
-    totalShareCount integer;
-begin
-    select sum(cst.shareCount)
-    from hs_office.coopsharetx cst
-    where cst.membershipUuid = forMembershipUuid
-    into currentShareCount;
-    totalShareCount := currentShareCount + newShareCount;
-    if totalShareCount < 0 then
-        raise exception ''[400] coop shares transaction would result in a negative number of shares'';
-    end if;
-    return true;
-end; ';
-
-
-ALTER FUNCTION hs_office.coopsharestx_check_positive_total(formembershipuuid uuid, newsharecount integer) OWNER TO postgres;
-
---
 -- Name: coopsharetx; Type: TABLE; Schema: hs_office; Owner: postgres
 --
 
@@ -2042,7 +2056,6 @@ CREATE TABLE hs_office.coopsharetx (
     reference character varying(48) NOT NULL,
     revertedsharetxuuid uuid,
     comment character varying(512),
-    CONSTRAINT check_positive_total_shares_count CHECK (hs_office.coopsharestx_check_positive_total(membershipuuid, sharecount)),
     CONSTRAINT reverse_entry_missing CHECK ((((transactiontype = 'REVERSAL'::hs_office.coopsharestransactiontype) AND (revertedsharetxuuid IS NOT NULL)) OR ((transactiontype <> 'REVERSAL'::hs_office.coopsharestransactiontype) AND (revertedsharetxuuid IS NULL))))
 );
 
@@ -2170,6 +2183,33 @@ end; ';
 
 
 ALTER FUNCTION hs_office.coopsharetx_delete_legacy_id_mapping_tf() OWNER TO postgres;
+
+--
+-- Name: coopsharetx_enforce_positive_total(); Type: FUNCTION; Schema: hs_office; Owner: test
+--
+
+CREATE FUNCTION hs_office.coopsharetx_enforce_positive_total() RETURNS trigger
+    LANGUAGE plpgsql
+    AS '
+
+declare
+    currentShareCount integer;
+    totalShareCount integer;
+begin
+    select sum(cst.shareCount)
+    from hs_office.coopsharetx cst
+    where cst.membershipUuid = NEW.membershipUuid
+    into currentShareCount;
+    totalShareCount := currentShareCount + NEW.shareCount;
+    if totalShareCount < 0 then
+        raise exception ''[400] coop shares transaction would result in a negative number of shares'';
+    end if;
+    return NEW;
+end;
+';
+
+
+ALTER FUNCTION hs_office.coopsharetx_enforce_positive_total() OWNER TO test;
 
 --
 -- Name: coopsharetx_grants_insert_to_membership_tf(); Type: FUNCTION; Schema: hs_office; Owner: postgres
@@ -2979,6 +3019,40 @@ end; ';
 
 
 ALTER PROCEDURE hs_office.membership_create_test_data(IN forpartnernumber numeric, IN newmembernumbersuffix character) OWNER TO postgres;
+
+--
+-- Name: membership_create_test_data(numeric, character, daterange, hs_office.hsofficemembershipstatus); Type: PROCEDURE; Schema: hs_office; Owner: test
+--
+
+CREATE PROCEDURE hs_office.membership_create_test_data(IN forpartnernumber numeric, IN newmembernumbersuffix character, IN newvalidity daterange, IN newstatus hs_office.hsofficemembershipstatus)
+    LANGUAGE plpgsql
+    AS '
+declare
+    relatedPartner          hs_office.partner;
+begin
+    select partner.* from hs_office.partner partner
+                     where partner.partnerNumber = forPartnerNumber into relatedPartner;
+
+    raise notice ''creating test Membership: M-% %'', forPartnerNumber, newMemberNumberSuffix;
+    raise notice ''- using partner (%): %'', relatedPartner.uuid, relatedPartner;
+    if not exists (select true
+                from hs_office.membership
+                where partneruuid = relatedPartner.uuid and memberNumberSuffix = newMemberNumberSuffix)
+    then
+        insert into hs_office.membership (uuid, partneruuid, memberNumberSuffix, validity, status)
+               values (uuid_generate_v4(), relatedPartner.uuid, newMemberNumberSuffix,
+                       newValidity, newStatus);
+    else
+        update hs_office.membership
+            set memberNumberSuffix = newMemberNumberSuffix,
+                validity = newValidity,
+                status = newStatus
+            where partneruuid = relatedPartner.uuid;
+    end if;
+end; ';
+
+
+ALTER PROCEDURE hs_office.membership_create_test_data(IN forpartnernumber numeric, IN newmembernumbersuffix character, IN newvalidity daterange, IN newstatus hs_office.hsofficemembershipstatus) OWNER TO test;
 
 --
 -- Name: membership_grants_insert_to_global_tf(); Type: FUNCTION; Schema: hs_office; Owner: postgres
@@ -4539,6 +4613,31 @@ end; ';
 ALTER PROCEDURE hs_office.relation_create_test_data(IN holderpersonname character varying, IN relationtype hs_office.relationtype, IN anchorpersonname character varying, IN contactcaption character varying, IN mark character varying) OWNER TO postgres;
 
 --
+-- Name: relation_enforce_debitor_anchor_partner(); Type: FUNCTION; Schema: hs_office; Owner: test
+--
+
+CREATE FUNCTION hs_office.relation_enforce_debitor_anchor_partner() RETURNS trigger
+    LANGUAGE plpgsql
+    AS '
+declare
+    countPartner integer;
+begin
+    if NEW.type = ''DEBITOR'' then
+        SELECT COUNT(*) FROM hs_office.relation r
+            WHERE r.type = ''PARTNER'' AND r.holderuuid = NEW.anchorUuid
+            INTO countPartner;
+        if countPartner < 1 then
+            raise exception ''[400] invalid debitor relation: anchor person must have a PARTNER relation'';
+        end if;
+    end if;
+    return NEW;
+end;
+';
+
+
+ALTER FUNCTION hs_office.relation_enforce_debitor_anchor_partner() OWNER TO test;
+
+--
 -- Name: relation_grants_insert_to_person_tf(); Type: FUNCTION; Schema: hs_office; Owner: postgres
 --
 
@@ -4655,6 +4754,8 @@ CREATE FUNCTION hs_office.relation_instead_of_update_tf() RETURNS trigger
                 if old.uuid in (select rbac.queryAccessibleObjectUuidsOfSubjectIds(''UPDATE'', ''hs_office.relation'', rbac.currentSubjectOrAssumedRolesUuids())) then
                     update hs_office.relation
                         set 
+        anchorUuid = new.anchorUuid,
+        holderUuid = new.holderUuid,
         contactUuid = new.contactUuid
     
                         where uuid = old.uuid;
@@ -4751,7 +4852,9 @@ CREATE PROCEDURE hs_office.relation_update_rbac_system(IN old hs_office.relation
     AS '
 begin
 
-    if NEW.contactUuid is distinct from OLD.contactUuid then
+    if NEW.holderUuid is distinct from OLD.holderUuid
+    or NEW.anchorUuid is distinct from OLD.anchorUuid
+    or NEW.contactUuid is distinct from OLD.contactUuid then
         delete from rbac.grant g where g.grantedbytriggerof = OLD.uuid;
         call hs_office.relation_build_rbac_system(NEW);
     end if;
@@ -5216,6 +5319,53 @@ CREATE FUNCTION hs_office.sepamandate_uuid_by_id_name(givenidname character vary
 
 
 ALTER FUNCTION hs_office.sepamandate_uuid_by_id_name(givenidname character varying) OWNER TO postgres;
+
+--
+-- Name: validate_membership_validity(); Type: FUNCTION; Schema: hs_office; Owner: test
+--
+
+CREATE FUNCTION hs_office.validate_membership_validity() RETURNS trigger
+    LANGUAGE plpgsql
+    AS '
+DECLARE
+    partnerNumber int;
+BEGIN
+    IF EXISTS (
+        SELECT 1
+            FROM hs_office.membership
+            WHERE partnerUuid = NEW.partnerUuid
+              AND uuid <> NEW.uuid
+              AND NEW.validity && validity
+    ) THEN
+        SELECT p.partnerNumber INTO partnerNumber
+            FROM hs_office.partner AS p
+            WHERE p.uuid = NEW.partnerUuid;
+        RAISE EXCEPTION ''Membership validity ranges overlap for partnerUuid %, partnerNumber %'', NEW.partnerUuid, partnerNumber;
+    END IF;
+
+    RETURN NEW;
+END;
+';
+
+
+ALTER FUNCTION hs_office.validate_membership_validity() OWNER TO test;
+
+--
+-- Name: set_next_sequential_txid(); Type: FUNCTION; Schema: public; Owner: test
+--
+
+CREATE FUNCTION public.set_next_sequential_txid() RETURNS trigger
+    LANGUAGE plpgsql
+    AS '
+BEGIN
+    LOCK TABLE base.tx_context IN EXCLUSIVE MODE;
+    SELECT COALESCE(MAX(seqTxId)+1, 0) INTO NEW.seqTxId FROM base.tx_context;
+    RETURN NEW;
+END;
+';
+
+
+ALTER FUNCTION public.set_next_sequential_txid() OWNER TO test;
 
 --
 -- Name: validate_transaction_type(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -6132,7 +6282,7 @@ begin
     
     newColumns := ''new.'' || replace(columnNames, '', '', '', new.'');
     sql := format($sql$
-    create function %1$s_instead_of_insert_tf()
+    create or replace function %1$s_instead_of_insert_tf()
         returns trigger
         language plpgsql as $f$
     declare
@@ -6149,7 +6299,7 @@ begin
 
     
     sql := format($sql$
-        create trigger instead_of_insert_tg
+        create or replace trigger instead_of_insert_tg
             instead of insert
             on %1$s_rv
             for each row
@@ -6159,7 +6309,7 @@ begin
 
     
     sql := format($sql$
-        create function %1$s_instead_of_delete_tf()
+        create or replace function %1$s_instead_of_delete_tf()
             returns trigger
             language plpgsql as $f$
         begin
@@ -6174,7 +6324,7 @@ begin
 
     
     sql := format($sql$
-        create trigger instead_of_delete_tg
+        create or replace trigger instead_of_delete_tg
             instead of delete
             on %1$s_rv
             for each row
@@ -6185,7 +6335,7 @@ begin
     
     if columnUpdates is not null then
         sql := format($sql$
-            create function %1$s_instead_of_update_tf()
+            create or replace function %1$s_instead_of_update_tf()
                 returns trigger
                 language plpgsql as $f$
             begin
@@ -6202,7 +6352,7 @@ begin
 
         
         sql = format($sql$
-            create trigger instead_of_update_tg
+            create or replace trigger instead_of_update_tg
                 instead of update
                 on %1$s_rv
                 for each row
@@ -6386,6 +6536,19 @@ select ''rbac.global'', (select uuid from rbac.object where objectTable = ''rbac
 
 
 ALTER FUNCTION rbac.global_admin(assumed boolean) OWNER TO postgres;
+
+--
+-- Name: global_guest(boolean); Type: FUNCTION; Schema: rbac; Owner: test
+--
+
+CREATE FUNCTION rbac.global_guest(assumed boolean DEFAULT true) RETURNS rbac.roledescriptor
+    LANGUAGE sql STABLE STRICT
+    AS '
+select ''rbac.global'', (select uuid from rbac.object where objectTable = ''rbac.global''), ''GUEST''::rbac.RoleType, assumed;
+';
+
+
+ALTER FUNCTION rbac.global_guest(assumed boolean) OWNER TO test;
 
 --
 -- Name: global_id_name_by_uuid(uuid); Type: FUNCTION; Schema: rbac; Owner: postgres
@@ -8436,7 +8599,8 @@ CREATE TABLE base.tx_context (
     currentsubject character varying(63) NOT NULL,
     assumedroles character varying(1023) NOT NULL,
     currenttask character varying(127) NOT NULL,
-    currentrequest text NOT NULL
+    currentrequest text NOT NULL,
+    seqtxid bigint
 );
 
 
@@ -8458,11 +8622,12 @@ CREATE TABLE base.tx_journal (
 ALTER TABLE base.tx_journal OWNER TO postgres;
 
 --
--- Name: tx_journal_v; Type: VIEW; Schema: base; Owner: postgres
+-- Name: tx_journal_v; Type: VIEW; Schema: base; Owner: test
 --
 
 CREATE VIEW base.tx_journal_v AS
- SELECT txc.txid,
+ SELECT txc.seqtxid,
+    txc.txid,
     txc.txtimestamp,
     txc.currentsubject,
     txc.assumedroles,
@@ -8477,7 +8642,7 @@ CREATE VIEW base.tx_journal_v AS
   ORDER BY txc.txtimestamp;
 
 
-ALTER VIEW base.tx_journal_v OWNER TO postgres;
+ALTER VIEW base.tx_journal_v OWNER TO test;
 
 --
 -- Name: partner_legacy_id; Type: TABLE; Schema: hs_office; Owner: postgres
@@ -10141,34 +10306,36 @@ ALTER TABLE ONLY rbac.object ALTER COLUMN serialid SET DEFAULT nextval('rbac.obj
 -- Data for Name: tx_context; Type: TABLE DATA; Schema: base; Owner: postgres
 --
 
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('893', '2025-01-27 15:34:16.493475', '', '{}', 'initializing table "rbac.global"', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('895', '2025-01-27 15:34:16.51038', '', '{}', 'creating role:rbac.global#global:ADMIN', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('897', '2025-01-27 15:34:16.52367', '', '{}', 'creating role:rbac.global#global:guest', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('899', '2025-01-27 15:34:16.535071', '', '{}', 'creating fake test-realm admin users', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('912', '2025-01-27 15:34:16.640067', '', '{}', 'create INSERT INTO rbactest.customer permissions for pre-exising rbac.global rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('925', '2025-01-27 15:34:16.741443', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating RBAC test customer', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('946', '2025-01-27 15:34:16.878576', '', '{}', 'create INSERT INTO rbactest.package permissions for pre-exising rbactest.customer rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('961', '2025-01-27 15:34:16.96811', 'superuser-fran@hostsharing.net', '{rbactest.customer#xxx:ADMIN}', 'creating RBAC test package', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1000', '2025-01-27 15:34:17.109844', '', '{}', 'create INSERT INTO rbactest.domain permissions for pre-exising rbactest.package rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1021', '2025-01-27 15:34:17.217541', 'pac-admin-xxx00@xxx.example.com', '{}', 'creating RBAC test domain', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1108', '2025-01-27 15:34:17.598661', '', '{}', 'creating contact test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1164', '2025-01-27 15:34:17.804113', '', '{}', 'creating person test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1219', '2025-01-27 15:34:18.054056', '', '{}', 'create INSERT INTO hs_office.relation permissions for pre-exising hs_office.person rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1244', '2025-01-27 15:34:18.154226', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating relation test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1309', '2025-01-27 15:34:18.512909', '', '{}', 'create INSERT INTO hs_office.partner permissions for pre-exising rbac.global rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1326', '2025-01-27 15:34:18.59541', '', '{}', 'create INSERT INTO hs_office.partner_details permissions for pre-exising rbac.global rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1350', '2025-01-27 15:34:18.739242', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating partner test-data ', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1398', '2025-01-27 15:34:18.872672', '', '{}', 'creating bankaccount test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1438', '2025-01-27 15:34:19.007502', '', '{}', 'create INSERT INTO hs_office.debitor permissions for pre-exising rbac.global rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1451', '2025-01-27 15:34:19.070763', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating debitor test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1472', '2025-01-27 15:34:19.177715', '', '{}', 'create INSERT INTO hs_office.sepamandate permissions for pre-exising hs_office.relation rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1500', '2025-01-27 15:34:19.354187', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating SEPA-mandate test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1521', '2025-01-27 15:34:19.507316', '', '{}', 'create INSERT INTO hs_office.membership permissions for pre-exising rbac.global rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1534', '2025-01-27 15:34:19.578193', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating Membership test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1559', '2025-01-27 15:34:19.779312', '', '{}', 'create INSERT INTO hs_office.coopsharetx permissions for pre-exising hs_office.membership rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1585', '2025-01-27 15:34:19.925386', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating coopSharesTransaction test-data', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1625', '2025-01-27 15:34:20.11469', '', '{}', 'create INSERT INTO hs_office.coopassettx permissions for pre-exising hs_office.membership rows', '');
-INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest) VALUES ('1651', '2025-01-27 15:34:20.285257', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating coopAssetsTransaction test-data', '');
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('893', '2025-01-27 15:34:16.493475', '', '{}', 'initializing table "rbac.global"', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('895', '2025-01-27 15:34:16.51038', '', '{}', 'creating role:rbac.global#global:ADMIN', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('897', '2025-01-27 15:34:16.52367', '', '{}', 'creating role:rbac.global#global:guest', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('899', '2025-01-27 15:34:16.535071', '', '{}', 'creating fake test-realm admin users', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('912', '2025-01-27 15:34:16.640067', '', '{}', 'create INSERT INTO rbactest.customer permissions for pre-exising rbac.global rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('925', '2025-01-27 15:34:16.741443', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating RBAC test customer', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('946', '2025-01-27 15:34:16.878576', '', '{}', 'create INSERT INTO rbactest.package permissions for pre-exising rbactest.customer rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('961', '2025-01-27 15:34:16.96811', 'superuser-fran@hostsharing.net', '{rbactest.customer#xxx:ADMIN}', 'creating RBAC test package', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1000', '2025-01-27 15:34:17.109844', '', '{}', 'create INSERT INTO rbactest.domain permissions for pre-exising rbactest.package rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1021', '2025-01-27 15:34:17.217541', 'pac-admin-xxx00@xxx.example.com', '{}', 'creating RBAC test domain', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1108', '2025-01-27 15:34:17.598661', '', '{}', 'creating contact test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1164', '2025-01-27 15:34:17.804113', '', '{}', 'creating person test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1219', '2025-01-27 15:34:18.054056', '', '{}', 'create INSERT INTO hs_office.relation permissions for pre-exising hs_office.person rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1244', '2025-01-27 15:34:18.154226', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating relation test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1309', '2025-01-27 15:34:18.512909', '', '{}', 'create INSERT INTO hs_office.partner permissions for pre-exising rbac.global rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1326', '2025-01-27 15:34:18.59541', '', '{}', 'create INSERT INTO hs_office.partner_details permissions for pre-exising rbac.global rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1350', '2025-01-27 15:34:18.739242', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating partner test-data ', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1398', '2025-01-27 15:34:18.872672', '', '{}', 'creating bankaccount test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1438', '2025-01-27 15:34:19.007502', '', '{}', 'create INSERT INTO hs_office.debitor permissions for pre-exising rbac.global rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1451', '2025-01-27 15:34:19.070763', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating debitor test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1472', '2025-01-27 15:34:19.177715', '', '{}', 'create INSERT INTO hs_office.sepamandate permissions for pre-exising hs_office.relation rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1500', '2025-01-27 15:34:19.354187', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating SEPA-mandate test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1521', '2025-01-27 15:34:19.507316', '', '{}', 'create INSERT INTO hs_office.membership permissions for pre-exising rbac.global rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1534', '2025-01-27 15:34:19.578193', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating Membership test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1559', '2025-01-27 15:34:19.779312', '', '{}', 'create INSERT INTO hs_office.coopsharetx permissions for pre-exising hs_office.membership rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1585', '2025-01-27 15:34:19.925386', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating coopSharesTransaction test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1625', '2025-01-27 15:34:20.11469', '', '{}', 'create INSERT INTO hs_office.coopassettx permissions for pre-exising hs_office.membership rows', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('1651', '2025-01-27 15:34:20.285257', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating coopAssetsTransaction test-data', '', NULL);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('770', '2025-06-06 10:23:06.618306', '', '{}', 'creating person test-data', '', 0);
+INSERT INTO base.tx_context (txid, txtimestamp, currentsubject, assumedroles, currenttask, currentrequest, seqtxid) VALUES ('816', '2025-06-06 10:23:07.65524', 'superuser-alex@hostsharing.net', '{rbac.global#global:ADMIN}', 'creating Membership test-data', '', 1);
 
 
 --
@@ -11943,6 +12110,7 @@ INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelt
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'rbac.permission', '2e074648-b51b-4782-b283-fb401f6ee1bc', 'INSERT', '{"op": "SELECT", "uuid": "2e074648-b51b-4782-b283-fb401f6ee1bc", "objectuuid": "2ead4c75-3e6a-405a-8e53-64c210372611", "optablename": null}');
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'rbac.grant', 'b985b606-b9cc-45a7-a6b1-037f4b5d22d3', 'INSERT', '{"uuid": "b985b606-b9cc-45a7-a6b1-037f4b5d22d3", "assumed": true, "ascendantuuid": "35628825-27df-48e2-979c-63619d535ec7", "descendantuuid": "2e074648-b51b-4782-b283-fb401f6ee1bc", "grantedbyroleuuid": null, "grantedbytriggerof": "2ead4c75-3e6a-405a-8e53-64c210372611"}');
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'rbac.permission', '7f5f0fce-71c5-4f53-9d87-a43c1623ed86', 'INSERT', '{"op": "UPDATE", "uuid": "7f5f0fce-71c5-4f53-9d87-a43c1623ed86", "objectuuid": "2ead4c75-3e6a-405a-8e53-64c210372611", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.object', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'INSERT', '{"uuid": "31e75384-0f88-4630-89f3-1d93ac8f7382", "serialid": 130, "objecttable": "hs_office.person"}');
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'rbac.grant', 'b81493bb-a54c-44c8-bed1-8006d3cf3fdb', 'INSERT', '{"uuid": "b81493bb-a54c-44c8-bed1-8006d3cf3fdb", "assumed": true, "ascendantuuid": "e81132af-026a-4333-82b2-fae091761e55", "descendantuuid": "7f5f0fce-71c5-4f53-9d87-a43c1623ed86", "grantedbyroleuuid": null, "grantedbytriggerof": "2ead4c75-3e6a-405a-8e53-64c210372611"}');
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'hs_office.coopassettx', '2ead4c75-3e6a-405a-8e53-64c210372611', 'INSERT', '{"uuid": "2ead4c75-3e6a-405a-8e53-64c210372611", "comment": "some reversal", "version": 0, "reference": "ref 1000202-3", "valuedate": "2023-12-31", "assetvalue": 192.00, "membershipuuid": "bed3c145-aa55-425f-9211-be9f5e9f4ebe", "transactiontype": "ADOPTION", "assetadoptiontxuuid": null, "revertedassettxuuid": null}');
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'rbac.object', 'f345fb37-7603-4ca7-934a-517dd801ae63', 'INSERT', '{"uuid": "f345fb37-7603-4ca7-934a-517dd801ae63", "serialid": 123, "objecttable": "hs_office.coopassettx"}');
@@ -11980,6 +12148,80 @@ INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelt
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'rbac.permission', '038c505b-0145-4943-8835-ed64861fe269', 'INSERT', '{"op": "UPDATE", "uuid": "038c505b-0145-4943-8835-ed64861fe269", "objectuuid": "7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60", "optablename": null}');
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'rbac.grant', '88f42463-fc14-47c2-89fc-cb6676329cc8', 'INSERT', '{"uuid": "88f42463-fc14-47c2-89fc-cb6676329cc8", "assumed": true, "ascendantuuid": "c8ca51cb-a2b6-453c-8f90-4ef7c1d2d5d9", "descendantuuid": "038c505b-0145-4943-8835-ed64861fe269", "grantedbyroleuuid": null, "grantedbytriggerof": "7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60"}');
 INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('1651', 'hs_office.coopassettx', '7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60', 'INSERT', '{"uuid": "7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60", "comment": "some reversal", "version": 0, "reference": "ref 1000303-3", "valuedate": "2023-12-31", "assetvalue": 192.00, "membershipuuid": "a42d61c5-7dad-4379-9dd9-39a8d21ddc32", "transactiontype": "ADOPTION", "assetadoptiontxuuid": null, "revertedassettxuuid": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.subject', '57b796ca-f74b-4255-9224-235a0a32a0b1', 'INSERT', '{"name": "person-HostmasterAlex@example.com", "uuid": "57b796ca-f74b-4255-9224-235a0a32a0b1"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.object', 'b93ce259-715c-4e8c-ae42-011adabff871', 'INSERT', '{"uuid": "b93ce259-715c-4e8c-ae42-011adabff871", "serialid": 129, "objecttable": "hs_office.person"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '268cb462-2ba2-4910-be8e-62c9e5154191', 'INSERT', '{"uuid": "268cb462-2ba2-4910-be8e-62c9e5154191", "roletype": "OWNER", "objectuuid": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', 'cc577d4c-20c8-4f24-8d8f-f9dfb58220c4', 'INSERT', '{"op": "DELETE", "uuid": "cc577d4c-20c8-4f24-8d8f-f9dfb58220c4", "objectuuid": "b93ce259-715c-4e8c-ae42-011adabff871", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'a9b3d27f-c665-4e36-9bf9-26eecaaef677', 'INSERT', '{"uuid": "a9b3d27f-c665-4e36-9bf9-26eecaaef677", "assumed": true, "ascendantuuid": "268cb462-2ba2-4910-be8e-62c9e5154191", "descendantuuid": "cc577d4c-20c8-4f24-8d8f-f9dfb58220c4", "grantedbyroleuuid": null, "grantedbytriggerof": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '453eb766-346f-4c57-8009-569439ea9066', 'INSERT', '{"uuid": "453eb766-346f-4c57-8009-569439ea9066", "assumed": true, "ascendantuuid": "afc6a14a-f8c7-4c17-9b91-b615833bc002", "descendantuuid": "268cb462-2ba2-4910-be8e-62c9e5154191", "grantedbyroleuuid": null, "grantedbytriggerof": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '5da034d3-1117-400c-870b-50ab1c54ef8a', 'INSERT', '{"uuid": "5da034d3-1117-400c-870b-50ab1c54ef8a", "assumed": true, "ascendantuuid": "57b796ca-f74b-4255-9224-235a0a32a0b1", "descendantuuid": "268cb462-2ba2-4910-be8e-62c9e5154191", "grantedbyroleuuid": "268cb462-2ba2-4910-be8e-62c9e5154191", "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '999308b7-757b-419c-805a-6d4beb0b63b5', 'INSERT', '{"uuid": "999308b7-757b-419c-805a-6d4beb0b63b5", "roletype": "ADMIN", "objectuuid": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '0d07e1e7-a443-427c-b633-398503222db7', 'INSERT', '{"op": "UPDATE", "uuid": "0d07e1e7-a443-427c-b633-398503222db7", "objectuuid": "b93ce259-715c-4e8c-ae42-011adabff871", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'a0dc4f3a-674a-471c-85c0-c3e8b504e8e9', 'INSERT', '{"uuid": "a0dc4f3a-674a-471c-85c0-c3e8b504e8e9", "assumed": true, "ascendantuuid": "999308b7-757b-419c-805a-6d4beb0b63b5", "descendantuuid": "0d07e1e7-a443-427c-b633-398503222db7", "grantedbyroleuuid": null, "grantedbytriggerof": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'c29df78e-dca2-45d1-91b1-3f5d2094266f', 'INSERT', '{"uuid": "c29df78e-dca2-45d1-91b1-3f5d2094266f", "assumed": true, "ascendantuuid": "268cb462-2ba2-4910-be8e-62c9e5154191", "descendantuuid": "999308b7-757b-419c-805a-6d4beb0b63b5", "grantedbyroleuuid": null, "grantedbytriggerof": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '009c23f1-54bd-4494-a1cf-38d814755d97', 'INSERT', '{"uuid": "009c23f1-54bd-4494-a1cf-38d814755d97", "roletype": "REFERRER", "objectuuid": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '7c5ee62a-1c61-4e79-ad24-da18e3f013a7', 'INSERT', '{"op": "SELECT", "uuid": "7c5ee62a-1c61-4e79-ad24-da18e3f013a7", "objectuuid": "b93ce259-715c-4e8c-ae42-011adabff871", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '2b850c3c-6988-4494-a1b3-cd3b0cccff57', 'INSERT', '{"uuid": "2b850c3c-6988-4494-a1b3-cd3b0cccff57", "assumed": true, "ascendantuuid": "009c23f1-54bd-4494-a1cf-38d814755d97", "descendantuuid": "7c5ee62a-1c61-4e79-ad24-da18e3f013a7", "grantedbyroleuuid": null, "grantedbytriggerof": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'c66d6988-0d8c-4ac0-a631-808346da090c', 'INSERT', '{"uuid": "c66d6988-0d8c-4ac0-a631-808346da090c", "assumed": true, "ascendantuuid": "999308b7-757b-419c-805a-6d4beb0b63b5", "descendantuuid": "009c23f1-54bd-4494-a1cf-38d814755d97", "grantedbyroleuuid": null, "grantedbytriggerof": "b93ce259-715c-4e8c-ae42-011adabff871"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', 'e0114dfa-e7b4-4913-b34b-d4669d6392af', 'INSERT', '{"op": "INSERT", "uuid": "e0114dfa-e7b4-4913-b34b-d4669d6392af", "objectuuid": "b93ce259-715c-4e8c-ae42-011adabff871", "optablename": "hs_office.relation"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'b344ab66-b207-4498-940f-67223108878e', 'INSERT', '{"uuid": "b344ab66-b207-4498-940f-67223108878e", "assumed": true, "ascendantuuid": "999308b7-757b-419c-805a-6d4beb0b63b5", "descendantuuid": "e0114dfa-e7b4-4913-b34b-d4669d6392af", "grantedbyroleuuid": null, "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'hs_office.person', 'b93ce259-715c-4e8c-ae42-011adabff871', 'INSERT', '{"uuid": "b93ce259-715c-4e8c-ae42-011adabff871", "title": null, "version": 0, "givenname": "Alex", "tradename": null, "familyname": "Hostmaster", "persontype": "NP", "salutation": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.subject', 'd5546ccd-e41f-4aa0-8edb-de4f8b1df748', 'INSERT', '{"name": "person-HostmasterFran@example.com", "uuid": "d5546ccd-e41f-4aa0-8edb-de4f8b1df748"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', 'INSERT', '{"uuid": "574ed5f9-a824-4e7c-9b4e-cf7497a2fa88", "roletype": "OWNER", "objectuuid": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', 'c95116d5-c6b1-4d2c-943c-c4e90850ee75', 'INSERT', '{"op": "DELETE", "uuid": "c95116d5-c6b1-4d2c-943c-c4e90850ee75", "objectuuid": "31e75384-0f88-4630-89f3-1d93ac8f7382", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '7e2a32c4-651d-44a1-b60a-e22e4c255221', 'INSERT', '{"uuid": "7e2a32c4-651d-44a1-b60a-e22e4c255221", "assumed": true, "ascendantuuid": "574ed5f9-a824-4e7c-9b4e-cf7497a2fa88", "descendantuuid": "c95116d5-c6b1-4d2c-943c-c4e90850ee75", "grantedbyroleuuid": null, "grantedbytriggerof": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '759583b1-f392-4b0d-92fa-b1e75711b4a9', 'INSERT', '{"uuid": "759583b1-f392-4b0d-92fa-b1e75711b4a9", "assumed": true, "ascendantuuid": "afc6a14a-f8c7-4c17-9b91-b615833bc002", "descendantuuid": "574ed5f9-a824-4e7c-9b4e-cf7497a2fa88", "grantedbyroleuuid": null, "grantedbytriggerof": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '557919d6-1a17-4377-8daa-898f7707b8e3', 'INSERT', '{"uuid": "557919d6-1a17-4377-8daa-898f7707b8e3", "assumed": true, "ascendantuuid": "d5546ccd-e41f-4aa0-8edb-de4f8b1df748", "descendantuuid": "574ed5f9-a824-4e7c-9b4e-cf7497a2fa88", "grantedbyroleuuid": "574ed5f9-a824-4e7c-9b4e-cf7497a2fa88", "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', 'f2067171-80b8-4b1a-ab37-0de8081dc034', 'INSERT', '{"uuid": "f2067171-80b8-4b1a-ab37-0de8081dc034", "roletype": "ADMIN", "objectuuid": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', 'f407f14a-7adb-4de9-b326-0eea55b9b183', 'INSERT', '{"op": "UPDATE", "uuid": "f407f14a-7adb-4de9-b326-0eea55b9b183", "objectuuid": "31e75384-0f88-4630-89f3-1d93ac8f7382", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '7e47123f-86ef-4f19-bdcd-2e5291b75edf', 'INSERT', '{"uuid": "7e47123f-86ef-4f19-bdcd-2e5291b75edf", "assumed": true, "ascendantuuid": "f2067171-80b8-4b1a-ab37-0de8081dc034", "descendantuuid": "f407f14a-7adb-4de9-b326-0eea55b9b183", "grantedbyroleuuid": null, "grantedbytriggerof": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '169d348e-fbc6-4ea8-b5e4-c0765510a9c8', 'INSERT', '{"uuid": "169d348e-fbc6-4ea8-b5e4-c0765510a9c8", "assumed": true, "ascendantuuid": "574ed5f9-a824-4e7c-9b4e-cf7497a2fa88", "descendantuuid": "f2067171-80b8-4b1a-ab37-0de8081dc034", "grantedbyroleuuid": null, "grantedbytriggerof": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7', 'INSERT', '{"uuid": "4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7", "roletype": "REFERRER", "objectuuid": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', 'b86a23c2-753a-4d42-9859-25263d5313f2', 'INSERT', '{"op": "SELECT", "uuid": "b86a23c2-753a-4d42-9859-25263d5313f2", "objectuuid": "31e75384-0f88-4630-89f3-1d93ac8f7382", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '77a6c694-005e-41a8-882c-518586ea2e04', 'INSERT', '{"uuid": "77a6c694-005e-41a8-882c-518586ea2e04", "assumed": true, "ascendantuuid": "4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7", "descendantuuid": "b86a23c2-753a-4d42-9859-25263d5313f2", "grantedbyroleuuid": null, "grantedbytriggerof": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '0fa3a1d5-6ae5-486f-a4af-982c17d6c60f', 'INSERT', '{"uuid": "0fa3a1d5-6ae5-486f-a4af-982c17d6c60f", "assumed": true, "ascendantuuid": "f2067171-80b8-4b1a-ab37-0de8081dc034", "descendantuuid": "4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7", "grantedbyroleuuid": null, "grantedbytriggerof": "31e75384-0f88-4630-89f3-1d93ac8f7382"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '5f304d8e-dbde-4e43-8038-e96023063473', 'INSERT', '{"op": "INSERT", "uuid": "5f304d8e-dbde-4e43-8038-e96023063473", "objectuuid": "31e75384-0f88-4630-89f3-1d93ac8f7382", "optablename": "hs_office.relation"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '7a6d6956-2740-4ab2-b614-9a6096c8bb4c', 'INSERT', '{"uuid": "7a6d6956-2740-4ab2-b614-9a6096c8bb4c", "assumed": true, "ascendantuuid": "f2067171-80b8-4b1a-ab37-0de8081dc034", "descendantuuid": "5f304d8e-dbde-4e43-8038-e96023063473", "grantedbyroleuuid": null, "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'hs_office.person', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'INSERT', '{"uuid": "31e75384-0f88-4630-89f3-1d93ac8f7382", "title": null, "version": 0, "givenname": "Fran", "tradename": null, "familyname": "Hostmaster", "persontype": "NP", "salutation": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.subject', '8eece937-d4fa-4334-8bbe-f488336684b6', 'INSERT', '{"name": "person-UserDrew@example.com", "uuid": "8eece937-d4fa-4334-8bbe-f488336684b6"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.object', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'INSERT', '{"uuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb", "serialid": 131, "objecttable": "hs_office.person"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '77c3dd90-b6a8-41fd-ad38-ab860766d0b0', 'INSERT', '{"uuid": "77c3dd90-b6a8-41fd-ad38-ab860766d0b0", "roletype": "OWNER", "objectuuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '5d1f9d39-65ec-445b-bc4a-ea8ca8deda7b', 'INSERT', '{"op": "DELETE", "uuid": "5d1f9d39-65ec-445b-bc4a-ea8ca8deda7b", "objectuuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '6e3932a6-7630-472a-9bbe-8087cb9bf4d4', 'INSERT', '{"uuid": "6e3932a6-7630-472a-9bbe-8087cb9bf4d4", "assumed": true, "ascendantuuid": "77c3dd90-b6a8-41fd-ad38-ab860766d0b0", "descendantuuid": "5d1f9d39-65ec-445b-bc4a-ea8ca8deda7b", "grantedbyroleuuid": null, "grantedbytriggerof": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '2a18c28b-9586-468b-9fb0-bc0c96e0e010', 'INSERT', '{"uuid": "2a18c28b-9586-468b-9fb0-bc0c96e0e010", "assumed": true, "ascendantuuid": "afc6a14a-f8c7-4c17-9b91-b615833bc002", "descendantuuid": "77c3dd90-b6a8-41fd-ad38-ab860766d0b0", "grantedbyroleuuid": null, "grantedbytriggerof": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'bb698100-ea44-4dff-83fe-07bcc26465df', 'INSERT', '{"uuid": "bb698100-ea44-4dff-83fe-07bcc26465df", "assumed": true, "ascendantuuid": "8eece937-d4fa-4334-8bbe-f488336684b6", "descendantuuid": "77c3dd90-b6a8-41fd-ad38-ab860766d0b0", "grantedbyroleuuid": "77c3dd90-b6a8-41fd-ad38-ab860766d0b0", "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '8a447eae-77f8-4a69-ae9e-48a7120f9df9', 'INSERT', '{"uuid": "8a447eae-77f8-4a69-ae9e-48a7120f9df9", "roletype": "ADMIN", "objectuuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '4674d9d5-3567-400e-b750-e9e1a50e72ef', 'INSERT', '{"op": "UPDATE", "uuid": "4674d9d5-3567-400e-b750-e9e1a50e72ef", "objectuuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'b1364a89-9188-4bb4-bf7d-8213e890e7ba', 'INSERT', '{"uuid": "b1364a89-9188-4bb4-bf7d-8213e890e7ba", "assumed": true, "ascendantuuid": "8a447eae-77f8-4a69-ae9e-48a7120f9df9", "descendantuuid": "4674d9d5-3567-400e-b750-e9e1a50e72ef", "grantedbyroleuuid": null, "grantedbytriggerof": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '2f23174d-38cf-44d2-bb92-532c822ae5c2', 'INSERT', '{"uuid": "2f23174d-38cf-44d2-bb92-532c822ae5c2", "assumed": true, "ascendantuuid": "77c3dd90-b6a8-41fd-ad38-ab860766d0b0", "descendantuuid": "8a447eae-77f8-4a69-ae9e-48a7120f9df9", "grantedbyroleuuid": null, "grantedbytriggerof": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '7939df21-5401-4544-8b9d-c6a517187092', 'INSERT', '{"uuid": "7939df21-5401-4544-8b9d-c6a517187092", "roletype": "REFERRER", "objectuuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', 'eac22245-9ba0-4da1-a143-02e68bdbc071', 'INSERT', '{"op": "SELECT", "uuid": "eac22245-9ba0-4da1-a143-02e68bdbc071", "objectuuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'a96fc591-55db-4d15-91fa-70dbce27840e', 'INSERT', '{"uuid": "a96fc591-55db-4d15-91fa-70dbce27840e", "assumed": true, "ascendantuuid": "7939df21-5401-4544-8b9d-c6a517187092", "descendantuuid": "eac22245-9ba0-4da1-a143-02e68bdbc071", "grantedbyroleuuid": null, "grantedbytriggerof": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '875a339a-00ba-4c38-a777-84ba06f84667', 'INSERT', '{"uuid": "875a339a-00ba-4c38-a777-84ba06f84667", "assumed": true, "ascendantuuid": "8a447eae-77f8-4a69-ae9e-48a7120f9df9", "descendantuuid": "7939df21-5401-4544-8b9d-c6a517187092", "grantedbyroleuuid": null, "grantedbytriggerof": "c8a8b54b-0911-4803-b21b-7f59d883c9fb"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '4f9687d4-94ac-4f76-92a5-8aa3a38a30c1', 'INSERT', '{"op": "INSERT", "uuid": "4f9687d4-94ac-4f76-92a5-8aa3a38a30c1", "objectuuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb", "optablename": "hs_office.relation"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '620e078b-b132-4b2c-9c1d-649a85a1f27a', 'INSERT', '{"uuid": "620e078b-b132-4b2c-9c1d-649a85a1f27a", "assumed": true, "ascendantuuid": "8a447eae-77f8-4a69-ae9e-48a7120f9df9", "descendantuuid": "4f9687d4-94ac-4f76-92a5-8aa3a38a30c1", "grantedbyroleuuid": null, "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'hs_office.person', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'INSERT', '{"uuid": "c8a8b54b-0911-4803-b21b-7f59d883c9fb", "title": null, "version": 0, "givenname": "Drew", "tradename": null, "familyname": "User", "persontype": "NP", "salutation": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.subject', 'd29d59ff-3a49-48df-b265-99c913b428f5', 'INSERT', '{"name": "person-UserTest@example.com", "uuid": "d29d59ff-3a49-48df-b265-99c913b428f5"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.object', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'INSERT', '{"uuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e", "serialid": 132, "objecttable": "hs_office.person"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '91f083fc-dbec-4ce2-8761-10993bc09fe8', 'INSERT', '{"uuid": "91f083fc-dbec-4ce2-8761-10993bc09fe8", "roletype": "OWNER", "objectuuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '6f70a61f-fb49-42bf-9a64-c54267e18e94', 'INSERT', '{"op": "DELETE", "uuid": "6f70a61f-fb49-42bf-9a64-c54267e18e94", "objectuuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '4ceb406b-2f7a-4f88-83be-ee3f1721e8ef', 'INSERT', '{"uuid": "4ceb406b-2f7a-4f88-83be-ee3f1721e8ef", "assumed": true, "ascendantuuid": "91f083fc-dbec-4ce2-8761-10993bc09fe8", "descendantuuid": "6f70a61f-fb49-42bf-9a64-c54267e18e94", "grantedbyroleuuid": null, "grantedbytriggerof": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '730b3c27-3bb9-4d47-879b-73bc28e6d3dc', 'INSERT', '{"uuid": "730b3c27-3bb9-4d47-879b-73bc28e6d3dc", "assumed": true, "ascendantuuid": "afc6a14a-f8c7-4c17-9b91-b615833bc002", "descendantuuid": "91f083fc-dbec-4ce2-8761-10993bc09fe8", "grantedbyroleuuid": null, "grantedbytriggerof": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'a5e8901c-fb79-4725-8364-b0acac8f4ac4', 'INSERT', '{"uuid": "a5e8901c-fb79-4725-8364-b0acac8f4ac4", "assumed": true, "ascendantuuid": "d29d59ff-3a49-48df-b265-99c913b428f5", "descendantuuid": "91f083fc-dbec-4ce2-8761-10993bc09fe8", "grantedbyroleuuid": "91f083fc-dbec-4ce2-8761-10993bc09fe8", "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '409fb0cf-7c00-4180-8bd0-2f8b00625e41', 'INSERT', '{"uuid": "409fb0cf-7c00-4180-8bd0-2f8b00625e41", "roletype": "ADMIN", "objectuuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '3bf2f19a-1283-46a0-9868-1493c8a740e7', 'INSERT', '{"op": "UPDATE", "uuid": "3bf2f19a-1283-46a0-9868-1493c8a740e7", "objectuuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', 'f49eba98-5a6a-421c-a443-f06683b60c28', 'INSERT', '{"uuid": "f49eba98-5a6a-421c-a443-f06683b60c28", "assumed": true, "ascendantuuid": "409fb0cf-7c00-4180-8bd0-2f8b00625e41", "descendantuuid": "3bf2f19a-1283-46a0-9868-1493c8a740e7", "grantedbyroleuuid": null, "grantedbytriggerof": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '0c64fa1e-85ed-4feb-8e46-a63c3ef045c2', 'INSERT', '{"uuid": "0c64fa1e-85ed-4feb-8e46-a63c3ef045c2", "assumed": true, "ascendantuuid": "91f083fc-dbec-4ce2-8761-10993bc09fe8", "descendantuuid": "409fb0cf-7c00-4180-8bd0-2f8b00625e41", "grantedbyroleuuid": null, "grantedbytriggerof": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.role', '7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d', 'INSERT', '{"uuid": "7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d", "roletype": "REFERRER", "objectuuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '564cb7ff-7288-4d74-845d-3084b0246be6', 'INSERT', '{"op": "SELECT", "uuid": "564cb7ff-7288-4d74-845d-3084b0246be6", "objectuuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e", "optablename": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '082823dc-fe7b-41a3-a525-9a8caf00432b', 'INSERT', '{"uuid": "082823dc-fe7b-41a3-a525-9a8caf00432b", "assumed": true, "ascendantuuid": "7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d", "descendantuuid": "564cb7ff-7288-4d74-845d-3084b0246be6", "grantedbyroleuuid": null, "grantedbytriggerof": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '41dd9636-d5bd-4665-94c4-6e99201aa447', 'INSERT', '{"uuid": "41dd9636-d5bd-4665-94c4-6e99201aa447", "assumed": true, "ascendantuuid": "409fb0cf-7c00-4180-8bd0-2f8b00625e41", "descendantuuid": "7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d", "grantedbyroleuuid": null, "grantedbytriggerof": "1a66c5e8-5f47-4204-97c9-f607ee9c336e"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.permission', '49257b61-bd21-4673-a2b3-45384d142829', 'INSERT', '{"op": "INSERT", "uuid": "49257b61-bd21-4673-a2b3-45384d142829", "objectuuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e", "optablename": "hs_office.relation"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'rbac.grant', '3b70db96-9607-4eb7-b661-f3128e89dbdb', 'INSERT', '{"uuid": "3b70db96-9607-4eb7-b661-f3128e89dbdb", "assumed": true, "ascendantuuid": "409fb0cf-7c00-4180-8bd0-2f8b00625e41", "descendantuuid": "49257b61-bd21-4673-a2b3-45384d142829", "grantedbyroleuuid": null, "grantedbytriggerof": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('770', 'hs_office.person', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'INSERT', '{"uuid": "1a66c5e8-5f47-4204-97c9-f607ee9c336e", "title": null, "version": 0, "givenname": "Test", "tradename": null, "familyname": "User", "persontype": "NP", "salutation": null}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('816', 'hs_office.membership', '4330e211-e36c-45ec-9332-f7593ff42811', 'UPDATE', '{"status": "CANCELLED", "validity": "[2022-10-01,2024-12-31)"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('816', 'hs_office.membership', 'bed3c145-aa55-425f-9211-be9f5e9f4ebe', 'UPDATE', '{"status": "CANCELLED"}');
+INSERT INTO base.tx_journal (txid, targettable, targetuuid, targetop, targetdelta) VALUES ('816', 'hs_office.membership', 'a42d61c5-7dad-4379-9dd9-39a8d21ddc32', 'UPDATE', '{}');
 
 
 --
@@ -12129,8 +12371,8 @@ INSERT INTO hs_office.debitor (uuid, version, debitornumbersuffix, debitorreluui
 -- Data for Name: membership; Type: TABLE DATA; Schema: hs_office; Owner: postgres
 --
 
-INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('4330e211-e36c-45ec-9332-f7593ff42811', 0, 'c27d1b0c-7e43-4b64-ae69-4317f51023ba', '01', '[2022-10-01,2025-01-01)', 'ACTIVE', true);
-INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('bed3c145-aa55-425f-9211-be9f5e9f4ebe', 0, '11583dae-da71-4786-a61d-d70f51ce988e', '02', '[2022-10-01,2026-01-01)', 'ACTIVE', true);
+INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('4330e211-e36c-45ec-9332-f7593ff42811', 0, 'c27d1b0c-7e43-4b64-ae69-4317f51023ba', '01', '[2022-10-01,2024-12-31)', 'CANCELLED', true);
+INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('bed3c145-aa55-425f-9211-be9f5e9f4ebe', 0, '11583dae-da71-4786-a61d-d70f51ce988e', '02', '[2022-10-01,2026-01-01)', 'CANCELLED', true);
 INSERT INTO hs_office.membership (uuid, version, partneruuid, membernumbersuffix, validity, status, membershipfeebillable) VALUES ('a42d61c5-7dad-4379-9dd9-39a8d21ddc32', 0, '7fe704c0-2e54-463e-891e-533f0274da76', '03', '[2022-10-01,)', 'ACTIVE', true);
 
 
@@ -12184,6 +12426,10 @@ INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, 
 INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, title, givenname, familyname) VALUES ('eea4f215-2c8a-4d14-a9e7-82860faa5a42', 0, 'NP', NULL, NULL, NULL, 'Anita', 'Bessler');
 INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, title, givenname, familyname) VALUES ('6d1a20f7-2fd0-4c62-a304-1fc1eeedb59d', 0, 'NP', NULL, NULL, NULL, 'Bert', 'Bessler');
 INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, title, givenname, familyname) VALUES ('195ef8b7-3c56-4ef4-8db6-47b4cf15d572', 0, 'NP', NULL, NULL, NULL, 'Paul', 'Winkler');
+INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, title, givenname, familyname) VALUES ('b93ce259-715c-4e8c-ae42-011adabff871', 0, 'NP', NULL, NULL, NULL, 'Alex', 'Hostmaster');
+INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, title, givenname, familyname) VALUES ('31e75384-0f88-4630-89f3-1d93ac8f7382', 0, 'NP', NULL, NULL, NULL, 'Fran', 'Hostmaster');
+INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, title, givenname, familyname) VALUES ('c8a8b54b-0911-4803-b21b-7f59d883c9fb', 0, 'NP', NULL, NULL, NULL, 'Drew', 'User');
+INSERT INTO hs_office.person (uuid, version, persontype, tradename, salutation, title, givenname, familyname) VALUES ('1a66c5e8-5f47-4204-97c9-f607ee9c336e', 0, 'NP', NULL, NULL, NULL, 'Test', 'User');
 
 
 --
@@ -12248,12 +12494,9 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-OPERATION-TYPE', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-01-27 15:34:15.364482', 18, 'EXECUTED', '9:c0876a331d8559a47e56c386c44a766c', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-TX-CONTEXT-TABLE', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-01-27 15:34:15.39412', 19, 'EXECUTED', '9:203f45b5021e65040704071a01aead4c', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-TX-JOURNAL-TABLE', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-01-27 15:34:15.422001', 20, 'EXECUTED', '9:534f075b40b1d50fcf273c448c5c2703', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-TX-JOURNAL-VIEW', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-01-27 15:34:15.436154', 21, 'EXECUTED', '9:b0633c27d7b16fab52029b65ba883213', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-TX-JOURNAL-TRIGGER', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-01-27 15:34:15.454022', 22, 'EXECUTED', '9:414f25221a87a701087b3b7bb4868865', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-CREATE-JOURNAL-LOG', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-01-27 15:34:15.466927', 23, 'EXECUTED', '9:c6559436bc007f797d5c4b4bfdb68f18', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-historization-tx-history-txid', 'michael.hoennig', 'db/changelog/0-base/030-historization.sql', '2025-01-27 15:34:15.480597', 24, 'EXECUTED', '9:c736085285073ed50bf00997240e616d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-historization-tx-historicize-tf', 'michael.hoennig', 'db/changelog/0-base/030-historization.sql', '2025-01-27 15:34:15.494595', 25, 'EXECUTED', '9:345716cca165c108edbab1771c3619c1', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-historization-tx-create-historicization', 'michael.hoennig', 'db/changelog/0-base/030-historization.sql', '2025-01-27 15:34:15.511278', 26, 'EXECUTED', '9:5b127ea60101bf0fa368cf4c0077a6cf', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-SCHEMA', 'michael.hoennig', 'db/changelog/1-rbac/1000-rbac-schema.sql', '2025-01-27 15:34:15.522768', 27, 'EXECUTED', '9:f08498d55a283e30a44ba6a59728e5a8', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-REFERENCE', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-27 15:34:15.5467', 28, 'EXECUTED', '9:84d675573e2e88733ee10c4c09b015ce', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-SUBJECT', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-27 15:34:15.581317', 29, 'EXECUTED', '9:10f7dc267fdd8b001809507858f9d44e', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12279,16 +12522,13 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-context-current-subject-ID', 'michael.hoennig', 'db/changelog/1-rbac/1054-rbac-context.sql', '2025-01-27 15:34:16.053507', 50, 'EXECUTED', '9:763774fe9bf9d9d453feef641c685e71', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-context-CURRENT-SUBJECT-UUIDS', 'michael.hoennig', 'db/changelog/1-rbac/1054-rbac-context.sql', '2025-01-27 15:34:16.070604', 51, 'EXECUTED', '9:d43c6fb58da7532a2821f82800618a4d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-ROLE-ENHANCED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.089426', 52, 'EXECUTED', '9:fbc2f7166cebb5d0211736da2d522ef1', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-ROLE-RESTRICTED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.103787', 53, 'EXECUTED', '9:cf0b8bfb094b852b639d21b624ac9576', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-GRANT-ENHANCED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.12543', 54, 'EXECUTED', '9:b1d4a50e1525a300bcda9916d6c49d1c', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-GRANT-RESTRICTED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.141272', 55, 'EXECUTED', '9:e2840e3f1fabbc91d2476894e1a40764', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-GRANTS-RV-INSERT-TRIGGER', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.154367', 56, 'EXECUTED', '9:b809276f65f12a861e50b04a0507d5ee', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-GRANTS-RV-DELETE-TRIGGER', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.166794', 57, 'EXECUTED', '9:acc6fde38d60effa54128d9462484d04', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-USER-ENHANCED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.180332', 58, 'EXECUTED', '9:12662bbb1b705dc0392ff681501488bf', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-USER-RESTRICTED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.197375', 59, 'EXECUTED', '9:13148aa24511cb9e5b7737ac32b78eae', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-USER-RV-INSERT-TRIGGER', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.211988', 60, 'EXECUTED', '9:c286e7c287522d0cb1c5f0c9f2bd2967', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-USER-RV-DELETE-TRIGGER', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.225864', 61, 'EXECUTED', '9:03a4e6989597a284bad81440870eed4f', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-OWN-GRANTED-PERMISSIONS-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.241107', 62, 'EXECUTED', '9:5c702b2aa8819205d8c25efce99b1bbd', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-GRANTED-PERMISSIONS', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-01-27 15:34:16.262632', 63, 'EXECUTED', '9:fb1576f4d379e7cb66b93a9d53de45b2', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-trigger-context-ENTER', 'michael.hoennig', 'db/changelog/1-rbac/1056-rbac-trigger-context.sql', '2025-01-27 15:34:16.285097', 64, 'EXECUTED', '9:e891b11a112193e9316148a42a8f3525', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-trigger-context-CURRENT-ID', 'michael.hoennig', 'db/changelog/1-rbac/1056-rbac-trigger-context.sql', '2025-01-27 15:34:16.299409', 65, 'EXECUTED', '9:975b972288f0de5d8052248f6084c200', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12297,22 +12537,18 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-generators-RELATED-OBJECT', 'michael.hoennig', 'db/changelog/1-rbac/1058-rbac-generators.sql', '2025-01-27 15:34:16.338754', 68, 'EXECUTED', '9:0006cac3f0c7a57ddea68f8080214b56', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-generators-ROLE-DESCRIPTORS', 'michael.hoennig', 'db/changelog/1-rbac/1058-rbac-generators.sql', '2025-01-27 15:34:16.351413', 69, 'EXECUTED', '9:3bc9635289e427a065bbeb4118a041fe', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-generators-IDENTITY-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1058-rbac-generators.sql', '2025-01-27 15:34:16.367241', 70, 'EXECUTED', '9:3bc394e73ca91776450708efe5ae213a', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-generators-RESTRICTED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1058-rbac-generators.sql', '2025-01-27 15:34:16.388527', 71, 'EXECUTED', '9:a486bfc49e34405ba5da0d97e496d909', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-statistics', 'michael.hoennig', 'db/changelog/1-rbac/1059-rbac-statistics.sql', '2025-01-27 15:34:16.403513', 72, 'EXECUTED', '9:b6919db9e9815057048fe612bd431d68', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-OBJECT', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.436687', 73, 'EXECUTED', '9:288acb3380a2a0bcb4ddfd120c08d3a9', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-IS-GLOBAL-ADMIN', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.447046', 74, 'EXECUTED', '9:59f9cde6ee354642d62addebeedf9f05', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-HAS-GLOBAL-ADMIN-ROLE', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.458667', 75, 'EXECUTED', '9:8c449086f4dd8ce63b32d28c16b1a723', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-HAS-GLOBAL-PERMISSION', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.472416', 76, 'EXECUTED', '9:b39359e1f60917b2ee5f373333654f80', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-IDENTITY-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.487865', 77, 'EXECUTED', '9:fd11fbd2509564a48b40394e46ff3920', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-PSEUDO-OBJECT', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.506534', 78, 'EXECUTED', '9:f1a0139f0f049753fbd26092ec00b4e2', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-ADMIN-ROLE', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.519765', 79, 'EXECUTED', '9:b8ce7d33d7b7469614010953ee05ab83', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-GUEST-ROLE', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.531131', 80, 'EXECUTED', '9:f5f124a1d50c7b3b9816b554fbd12d11', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-ROLE-RESTRICTED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-06-06 10:23:06.045627', 297, 'RERAN', '9:d3ae4f43e67f2c249c5b91880da20ee6', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-ADMIN-USERS', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-27 15:34:16.550896', 81, 'EXECUTED', '9:defcefd72b25de449be69d3e3df7134b', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-SCHEMA', 'michael.hoennig', 'db/changelog/2-rbactest/200-rbactest-schema.sql', '2025-01-27 15:34:16.567832', 83, 'EXECUTED', '9:d3ac51d27712286855b340c8a8966231', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('test-customer-MAIN-TABLE', 'michael.hoennig', 'db/changelog/2-rbactest/201-rbactest-customer/2010-rbactest-customer.sql', '2025-01-27 15:34:16.601918', 84, 'EXECUTED', '9:c99c30902fec715c651b38cb2208aab4', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-01-27 15:34:16.614128', 85, 'EXECUTED', '9:fc4c1dd970025e35cb8f01ad15e979f9', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-01-27 15:34:16.625228', 86, 'EXECUTED', '9:67799ab25eb0e05f61bd0eceeb6e3d9c', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-01-27 15:34:16.636006', 87, 'EXECUTED', '9:68c49363f0cf1f86e73ce8d32b975321', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-01-27 15:34:16.652253', 88, 'EXECUTED', '9:d26e94936c25c1602bbf9b5f1a4ee257', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-01-27 15:34:16.662623', 89, 'EXECUTED', '9:119f0509d140c723342b28a5056b75ad', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-01-27 15:34:16.673499', 90, 'EXECUTED', '9:5c06eb501b643f87c63d98d7d1837fcb', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
@@ -12323,8 +12559,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('test-package-MAIN-TABLE', 'michael.hoennig', 'db/changelog/2-rbactest/202-rbactest-package/2020-rbactest-package.sql', '2025-01-27 15:34:16.822468', 95, 'EXECUTED', '9:b1207c3cbeec15b17583a560d497db8e', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-01-27 15:34:16.833303', 96, 'EXECUTED', '9:fe2229e14382e520e6b059929696d807', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-01-27 15:34:16.844928', 97, 'EXECUTED', '9:ecd086a55811cec0ed3661c041542fa1', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-01-27 15:34:16.86014', 98, 'EXECUTED', '9:77738b7734868c70dad1ff4e4413b4bc', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-01-27 15:34:16.874588', 99, 'EXECUTED', '9:9fe9d3fdb0a100a95317e751b6f331ac', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-01-27 15:34:16.893307', 100, 'EXECUTED', '9:2e1b24f4168dbf50608f012f0864a043', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-01-27 15:34:16.90556', 101, 'EXECUTED', '9:9c3bedfb1f3994c89bfb4b11c2add36b', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-01-27 15:34:16.917551', 102, 'EXECUTED', '9:fa6b1290dcfcd0dd889a77b5e474d684', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
@@ -12335,8 +12569,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('test-domain-MAIN-TABLE', 'michael.hoennig', 'db/changelog/2-rbactest/203-rbactest-domain/2030-rbactest-domain.sql', '2025-01-27 15:34:17.058062', 107, 'EXECUTED', '9:53f4d2582458bb388217e7b5ab0e9664', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-01-27 15:34:17.067272', 108, 'EXECUTED', '9:d204bab1152a2efaed1e5dc05e7369c8', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-01-27 15:34:17.078943', 109, 'EXECUTED', '9:2a0a0dc7c11bfd5974cf5d446a39a51a', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-01-27 15:34:17.091641', 110, 'EXECUTED', '9:87af80188676c50bf296dc67528a2364', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-01-27 15:34:17.106025', 111, 'EXECUTED', '9:01d80772c124a78c5a1288bc704b9977', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-01-27 15:34:17.124224', 112, 'EXECUTED', '9:06a1011f8b783fef17e9fd48a1a9ca49', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-01-27 15:34:17.135259', 113, 'EXECUTED', '9:b6e2a6fa8c27365969393661debb4101', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-01-27 15:34:17.1464', 114, 'EXECUTED', '9:5e0146fd8331675fbbb81e7e2826016b', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
@@ -12349,7 +12581,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/501-contact/5010-hs-office-contact.sql', '2025-01-27 15:34:17.404077', 121, 'EXECUTED', '9:53c099cb757a95e71a86f8f5211c9c2f', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql', '2025-01-27 15:34:17.414019', 122, 'EXECUTED', '9:e8a20b6295686c71c125d77f579194f2', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql', '2025-01-27 15:34:17.440228', 123, 'EXECUTED', '9:87dae05d3dfb3030a7c56927a4da7f45', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql', '2025-01-27 15:34:17.459322', 124, 'EXECUTED', '9:0bcfe1779f0ffbacab92db389872e096', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql', '2025-01-27 15:34:17.480526', 125, 'EXECUTED', '9:97aa885eefed9ed6a62a9b9888838431', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-rbac-RESTRICTED-VIEW', 'RbacRestrictedViewGenerator', 'db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql', '2025-01-27 15:34:17.504423', 126, 'EXECUTED', '9:093e1b9419923dc0055110229adaee14', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-rbac-rebuild', 'RbacRbacSystemRebuildGenerator', 'db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql', '2025-01-27 15:34:17.515162', 127, 'EXECUTED', '9:eb2ad24e9d7090e2a8f876a597beeff8', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12365,7 +12596,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/502-person/5020-hs-office-person.sql', '2025-01-27 15:34:17.72441', 137, 'EXECUTED', '9:06b9a35487c7405e08d13753df1818c4', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql', '2025-01-27 15:34:17.733609', 138, 'EXECUTED', '9:7271b4a8bee2993867280c01973b1038', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql', '2025-01-27 15:34:17.743383', 139, 'EXECUTED', '9:febbde4cf2b9ae6b0492bc0f8683878d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql', '2025-01-27 15:34:17.753954', 140, 'EXECUTED', '9:a2b9fcf71c677f27b8336373a43769f3', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql', '2025-01-27 15:34:17.764215', 141, 'EXECUTED', '9:996ec48861e791fcc446495368290e4d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-rbac-RESTRICTED-VIEW', 'RbacRestrictedViewGenerator', 'db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql', '2025-01-27 15:34:17.781331', 142, 'EXECUTED', '9:46d217d0f46a225e463b77ee32320efe', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-rbac-rebuild', 'RbacRbacSystemRebuildGenerator', 'db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql', '2025-01-27 15:34:17.791669', 143, 'EXECUTED', '9:204efdb868707ac9a7f358ca84e64d7b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12376,12 +12606,9 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/503-relation/5030-hs-office-relation.sql', '2025-01-27 15:34:18.010933', 148, 'EXECUTED', '9:13f528e4b745751dfcf6e0aa8b31a86e', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.019423', 149, 'EXECUTED', '9:62d3835be0ca79ae9a5c397ba36ccf18', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.028098', 150, 'EXECUTED', '9:8f604a50201fcc189ef4ad6465b0f87d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.040127', 151, 'EXECUTED', '9:8d3b3682fd4f331d560f9609e9df3611', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.050591', 152, 'EXECUTED', '9:843a2d517a737612f679b586b22dfa1f', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.069291', 153, 'EXECUTED', '9:16a25331076d4fe2529906937e513eb0', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.078684', 154, 'EXECUTED', '9:6b8fb2185819dac7871c748fec67c19c', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.089887', 155, 'EXECUTED', '9:837d545cc3a79d543491e2d76ae76918', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-RESTRICTED-VIEW', 'RbacRestrictedViewGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.118397', 156, 'EXECUTED', '9:5350c22ca984311f09a102000551a06a', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-rebuild', 'RbacRbacSystemRebuildGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-01-27 15:34:18.136279', 157, 'EXECUTED', '9:aef36d49fbfd9e9e6b44408a56e0dc4e', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-TEST-DATA-GENERATOR', 'michael.hoennig', 'db/changelog/5-hs-office/503-relation/5038-hs-office-relation-test-data.sql', '2025-01-27 15:34:18.149677', 158, 'EXECUTED', '9:a606bdf3b74daaf68e89b771ab5a5f83', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-TEST-DATA-GENERATION', 'michael.hoennig', 'db/changelog/5-hs-office/503-relation/5038-hs-office-relation-test-data.sql', '2025-01-27 15:34:18.388711', 159, 'EXECUTED', '9:444d28cfb2fa8234930dc9912f7dbf97', 'sql', '', NULL, '4.29.2', '!without-test-data AND !without-test-data', NULL, '7988454941');
@@ -12392,8 +12619,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/504-partner/5040-hs-office-partner.sql', '2025-01-27 15:34:18.464591', 164, 'EXECUTED', '9:5d9a0eab674f574b199594f056bd0b32', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.474039', 165, 'EXECUTED', '9:99fb95a8e62697841e58a1bb4b10c949', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.484245', 166, 'EXECUTED', '9:133005f2f871355ae47a9f648fe9c12f', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.496875', 167, 'EXECUTED', '9:fae9a12e3dc592bb62711b8d1770ce46', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.509124', 168, 'EXECUTED', '9:5f673c674692de67315c230c74de1cbf', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.522231', 169, 'EXECUTED', '9:7828179bad8fd8a82a54075753da17a7', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.531521', 170, 'EXECUTED', '9:3efc4e4a17da6e225c808c6fcc159603', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.540662', 171, 'EXECUTED', '9:97c7a6e0462732c51130e1b3fb8bdb81', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12401,7 +12626,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-rebuild', 'RbacRbacSystemRebuildGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-01-27 15:34:18.564296', 173, 'EXECUTED', '9:e7ac0d2761e29703e7d6da089962ac89', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-details-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql', '2025-01-27 15:34:18.573483', 174, 'EXECUTED', '9:100aa26a8e93898e56c1779a7453fb67', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-details-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql', '2025-01-27 15:34:18.582218', 175, 'EXECUTED', '9:9529764d7ae47527e87aac4b5ad58c7d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-details-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql', '2025-01-27 15:34:18.591737', 176, 'EXECUTED', '9:96cf3d4a24ca5d100282c7f788d43b3b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-details-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql', '2025-01-27 15:34:18.604268', 177, 'EXECUTED', '9:8f57444b7ba0dce36772c994af77e49f', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-details-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql', '2025-01-27 15:34:18.614494', 178, 'EXECUTED', '9:e690b91d50d17b6bb41cfb27766066b0', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-details-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql', '2025-01-27 15:34:18.626105', 179, 'EXECUTED', '9:79e0da7d5107ed61f17ea4e165dc8945', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12418,7 +12642,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('raw', 'includeAll', 'db/changelog/5-hs-office/505-bankaccount/5050-hs-office-bankaccount.sql', '2025-01-27 15:34:18.797254', 190, 'EXECUTED', '9:00022f725212f8ae1909262841948bb1', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-bankaccount-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql', '2025-01-27 15:34:18.805762', 191, 'EXECUTED', '9:7b14c584ffa7061a57ff5142dbc851f4', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-bankaccount-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql', '2025-01-27 15:34:18.815797', 192, 'EXECUTED', '9:26e78f0ccb9239d8ba1be81f48293fcd', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-bankaccount-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql', '2025-01-27 15:34:18.826176', 193, 'EXECUTED', '9:f09c1aa5e54888fe71cc6f38d6e6d1dc', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-bankaccount-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql', '2025-01-27 15:34:18.835541', 194, 'EXECUTED', '9:b1409959b111083b3cf0e3c669f5024b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-bankaccount-rbac-RESTRICTED-VIEW', 'RbacRestrictedViewGenerator', 'db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql', '2025-01-27 15:34:18.847885', 195, 'EXECUTED', '9:6915edcb6fda80537e3876ce890b021a', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-bankaccount-rbac-rebuild', 'RbacRbacSystemRebuildGenerator', 'db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql', '2025-01-27 15:34:18.858942', 196, 'EXECUTED', '9:912589683b5a8710bd01c70f3ae91e7b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12429,8 +12652,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/506-debitor/5060-hs-office-debitor.sql', '2025-01-27 15:34:18.966468', 201, 'EXECUTED', '9:942a0ffeb44c31900d60a854c8e21529', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-01-27 15:34:18.974945', 202, 'EXECUTED', '9:097db1b8d04268c1c8e472b318d6198f', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-01-27 15:34:18.983369', 203, 'EXECUTED', '9:4ff230a43a56670eb11167f26095fd00', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-01-27 15:34:18.995026', 204, 'EXECUTED', '9:5833902da14fd902bdd61f962ddc4d89', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-01-27 15:34:19.00435', 205, 'EXECUTED', '9:0417bc8650f40e08ff8325c211d6a4db', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-01-27 15:34:19.014843', 206, 'EXECUTED', '9:0bbd61a430bd2857a0aa8b8efbc811f3', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-01-27 15:34:19.023829', 207, 'EXECUTED', '9:4f767b3b03c431b83259c199b2d4214b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-01-27 15:34:19.034368', 208, 'EXECUTED', '9:e7a4ecf70b9d0427ba4aea1f1cc3f5f0', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12442,7 +12663,6 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/507-sepamandate/5070-hs-office-sepamandate.sql', '2025-01-27 15:34:19.141123', 214, 'EXECUTED', '9:7b387b6dbaeac43b2c33445a6709b2c7', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql', '2025-01-27 15:34:19.149294', 215, 'EXECUTED', '9:be4e6cdfc4ad11a7e025bf38651f34d1', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql', '2025-01-27 15:34:19.160418', 216, 'EXECUTED', '9:44b3251af2898fde9813eb7398b906a3', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql', '2025-01-27 15:34:19.174175', 217, 'EXECUTED', '9:17cb0a4439da270ab15600fed60b257d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql', '2025-01-27 15:34:19.188297', 218, 'EXECUTED', '9:83f68f08d1b37c3bd228a8d322ab3fe7', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql', '2025-01-27 15:34:19.199018', 219, 'EXECUTED', '9:3cb7b97d9ac43a2fc1a46873af943d78', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql', '2025-01-27 15:34:19.208974', 220, 'EXECUTED', '9:77bc5f87dd7cc5757e2e3eccd9e8ba90', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12460,21 +12680,18 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/510-membership/5100-hs-office-membership.sql', '2025-01-27 15:34:19.470019', 232, 'EXECUTED', '9:ebca1dd23c9ebcd49f948628a04eab96', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.480397', 233, 'EXECUTED', '9:38e75a8432730f0abb7eb57bcac7d15d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.490628', 234, 'EXECUTED', '9:9f9dc3a42a2c807edb65d9c8e689c227', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.502994', 235, 'EXECUTED', '9:d35b18a0737ac5278f837ebcc96f0083', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassets-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql', '2025-01-27 15:34:20.05149', 266, 'EXECUTED', '9:13ee6812125cb02968ada8a92af47c75', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.518459', 236, 'EXECUTED', '9:31da52dd1bb16e3c6fcbb843c0b9806b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.530157', 237, 'EXECUTED', '9:fefecd0ba599565d22076b6841661401', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.542281', 238, 'EXECUTED', '9:5f2dd8c715fdf8e9ef499ee80fcea24b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-RESTRICTED-VIEW', 'RbacRestrictedViewGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.555932', 239, 'EXECUTED', '9:79db5ea41b711b2607b92ac0ea1d569a', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-rebuild', 'RbacRbacSystemRebuildGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-01-27 15:34:19.565461', 240, 'EXECUTED', '9:8baae4dbdd21b162cd3ca7c8a939223d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-TEST-DATA-GENERATOR', 'michael.hoennig', 'db/changelog/5-hs-office/510-membership/5108-hs-office-membership-test-data.sql', '2025-01-27 15:34:19.574825', 241, 'EXECUTED', '9:37c578f9a81df435f496dc7e7e5c6200', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-TEST-DATA-GENERATION', 'michael.hoennig', 'db/changelog/5-hs-office/510-membership/5108-hs-office-membership-test-data.sql', '2025-01-27 15:34:19.615573', 242, 'EXECUTED', '9:d1d9cb1a678983f3860e4865362fcffc', 'sql', '', NULL, '4.29.2', '!without-test-data AND !without-test-data', NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopshares-MAIN-TABLE', 'michael.hoennig', 'db/changelog/5-hs-office/511-coopshares/5110-hs-office-coopshares.sql', '2025-01-27 15:34:19.661147', 243, 'EXECUTED', '9:dd5642d53c66a58f6b90d5e8f0b2eefd', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopshares-BUSINESS-RULES', 'michael.hoennig', 'db/changelog/5-hs-office/511-coopshares/5110-hs-office-coopshares.sql', '2025-01-27 15:34:19.690938', 244, 'EXECUTED', '9:be3db6ea2b92031072765cdcc1c0ad38', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopshares-SHARE-COUNT-CONSTRAINT', 'michael.hoennig', 'db/changelog/5-hs-office/511-coopshares/5110-hs-office-coopshares.sql', '2025-01-27 15:34:19.715923', 245, 'EXECUTED', '9:d8433344adbc9d103f77a152bfe150c0', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopshares-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/511-coopshares/5110-hs-office-coopshares.sql', '2025-01-27 15:34:19.735879', 246, 'EXECUTED', '9:5e302243d9bfabf507630b5e074ac4ec', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopsharetx-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql', '2025-01-27 15:34:19.750382', 247, 'EXECUTED', '9:d3421993f41f43c4b99cb1afbb614d39', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopsharetx-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql', '2025-01-27 15:34:19.762559', 248, 'EXECUTED', '9:48097391a78abef6b3b3bfec2a92b338', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopsharetx-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql', '2025-01-27 15:34:19.775511', 249, 'EXECUTED', '9:dca08c5d3d8f82e02438878022b1f81d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopsharetx-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql', '2025-01-27 15:34:19.788863', 250, 'EXECUTED', '9:50469fbd535cd90ae0eacb79083067e3', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopsharetx-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql', '2025-01-27 15:34:19.798411', 251, 'EXECUTED', '9:dff51f901834806905f0a032960b3da3', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopsharetx-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql', '2025-01-27 15:34:19.8084', 252, 'EXECUTED', '9:324a03d0c8858aff81b457aff02feeb4', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12491,10 +12708,8 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassets-MAIN-TABLE', 'michael.hoennig', 'db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql', '2025-01-27 15:34:20.015459', 263, 'EXECUTED', '9:5157878ebca481817b080219de4ec9d0', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassets-BUSINESS-RULES', 'michael.hoennig', 'db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql', '2025-01-27 15:34:20.028111', 264, 'EXECUTED', '9:008c73cb2883353bfad0a7b4b91ec16d', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassets-ASSET-VALUE-CONSTRAINT', 'michael.hoennig', 'db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql', '2025-01-27 15:34:20.039904', 265, 'EXECUTED', '9:cf831a455813de1d54dbaaea5f0588fc', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassets-MAIN-TABLE-JOURNAL', 'michael.hoennig', 'db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql', '2025-01-27 15:34:20.05149', 266, 'EXECUTED', '9:13ee6812125cb02968ada8a92af47c75', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassettx-rbac-OBJECT', 'RbacObjectGenerator', 'db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql', '2025-01-27 15:34:20.066171', 267, 'EXECUTED', '9:571ffbd8c6ce5070fa72e25434e2d819', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassettx-rbac-ROLE-DESCRIPTORS', 'RbacRoleDescriptorsGenerator', 'db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql', '2025-01-27 15:34:20.084751', 268, 'EXECUTED', '9:81ea7ebfba6746f9b82c4dc4b2cd247b', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassettx-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql', '2025-01-27 15:34:20.106357', 269, 'EXECUTED', '9:bc0a4b78b806fbe53c62425612812467', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassettx-rbac-GRANTING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql', '2025-01-27 15:34:20.131703', 270, 'EXECUTED', '9:72c95623dd7b39dd7ee9cf8f4557a182', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassettx-rbac-CHECKING-INSERT-PERMISSION', 'InsertTriggerGenerator', 'db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql', '2025-01-27 15:34:20.142594', 271, 'EXECUTED', '9:d76e9461931e5143dafe96cd88335bb2', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassettx-rbac-IDENTITY-VIEW', 'RbacIdentityViewGenerator', 'db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql', '2025-01-27 15:34:20.155694', 272, 'EXECUTED', '9:2fcdd71e8c918eda052e10fbde75278e', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
@@ -12514,8 +12729,51 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-znuny', 'timotheus.pokorra', 'db/changelog/9-hs-global/9130-integration-mlmmj.sql', '2025-01-27 15:34:20.432305', 286, 'EXECUTED', '9:df6c8a724cfdd0c0aa013ba996655ed1', 'sql', '', NULL, '4.29.2', NULL, NULL, '7988454941');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hash', 'michael.hoennig', 'db/changelog/0-base/009-check-environment.sql', '2025-01-29 16:04:51.601962', 287, 'RERAN', '9:034a82679cf5cf1be4b9729c55621158', 'sql', '', NULL, '4.29.2', NULL, NULL, '8163091421');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-base-PGSQL-ROLES', 'michael.hoennig', 'db/changelog/1-rbac/1050-rbac-base.sql', '2025-01-29 16:04:51.636353', 288, 'RERAN', '9:a50fd61a191459e25fb01f5fc079f3e7', 'sql', '', NULL, '4.29.2', '!external-db', NULL, '8163091421');
-INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-TEST', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-01-29 16:04:51.686383', 289, 'RERAN', '9:8e3fd77650d35f24e56b99ae54ba77f1', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '8163091421');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-mlmmj', 'timotheus.pokorra', 'db/changelog/9-hs-global/9130-integration-mlmmj.sql', '2025-01-29 16:04:51.747314', 290, 'EXECUTED', '9:df6c8a724cfdd0c0aa013ba996655ed1', 'sql', '', NULL, '4.29.2', NULL, NULL, '8163091421');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-TX-CONTEXT-TABLE-COLUMN-SEQUENTIAL-TX-ID', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-06-06 10:23:05.748447', 291, 'EXECUTED', '9:c93458b5eceaf28516649c145b671ccf', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-TX-JOURNAL-VIEW', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-06-06 10:23:05.825452', 292, 'RERAN', '9:ad2576ab9e7ddc16b97f0656d8485290', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('audit-TX-JOURNAL-TRIGGER', 'michael.hoennig', 'db/changelog/0-base/020-audit-log.sql', '2025-06-06 10:23:05.894941', 293, 'RERAN', '9:341eefd91df31fbbb9f526eeadb39f09', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-historization-tx-create-historicization', 'michael.hoennig', 'db/changelog/0-base/030-historization.sql', '2025-06-06 10:23:05.95136', 294, 'RERAN', '9:e3035906d4d5a237a07b10a8a3f088fa', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('base-array-functions-WITHOUT-NULL-VALUES', 'michael.hoennig', 'db/changelog/0-base/040-array-functions.sql', '2025-06-06 10:23:05.992443', 295, 'EXECUTED', '9:df78e31e1f57c164682f96ff74b8304a', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('base-array-functions-ADD-IF-NOT-NULLCREATE', 'michael.hoennig', 'db/changelog/0-base/040-array-functions.sql', '2025-06-06 10:23:06.016346', 296, 'EXECUTED', '9:86b8a982abbf4f66c9b04ae8c2725d4e', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-USER-RESTRICTED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-06-06 10:23:06.074787', 298, 'RERAN', '9:6b3a6c6218caf9e4c268ca3b6610ffeb', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-views-OWN-GRANTED-PERMISSIONS-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1055-rbac-views.sql', '2025-06-06 10:23:06.115579', 299, 'RERAN', '9:3fb767cefdbebff43652313702edcfa1', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-generators-RESTRICTED-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1058-rbac-generators.sql', '2025-06-06 10:23:06.17343', 300, 'RERAN', '9:39387ae431339fe7ceeafb182adf80c6', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-OBJECT', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-06-06 10:23:06.206609', 301, 'RERAN', '9:4b78313b13cd72a22adb67eafcc0af3a', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-IDENTITY-VIEW', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-06-06 10:23:06.236207', 302, 'RERAN', '9:d080bed873073bb05f609628ed3ba392', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-GUEST-ROLE', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-06-06 10:23:06.280587', 303, 'RERAN', '9:1debfae5c87a6b2daa14e2d265a889ee', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbac-global-TEST', 'michael.hoennig', 'db/changelog/1-rbac/1080-rbac-global.sql', '2025-06-06 10:23:06.319936', 304, 'RERAN', '9:8e3fd77650d35f24e56b99ae54ba77f1', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-customer-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql', '2025-06-06 10:23:06.354389', 305, 'RERAN', '9:10bfb19f7f9ba36549cca3612d69a59c', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-06-06 10:23:06.429503', 306, 'RERAN', '9:3b4664dfb6e2d3e47b5b3e00353d18e9', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-package-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql', '2025-06-06 10:23:06.469123', 307, 'RERAN', '9:b5f0307fdaf11ba8da772756b5dd1ccd', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-06-06 10:23:06.503298', 308, 'RERAN', '9:4c46eb94f876f9c4e89a1aed0f4cd7da', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('rbactest-domain-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql', '2025-06-06 10:23:06.53273', 309, 'RERAN', '9:4d2cdd1bc08df6985622d0c5953bf4ba', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-contact-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql', '2025-06-06 10:23:06.581665', 310, 'RERAN', '9:b29cf6087a2225d235637a187b5946c2', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql', '2025-06-06 10:23:06.611557', 311, 'RERAN', '9:9adfbff372bce3de87410eb7582869f2', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-person-TEST-DATA-GENERATION-FOR-CREDENTIALS', 'michael.hoennig', 'db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data-for-credentials.sql', '2025-06-06 10:23:06.727793', 312, 'EXECUTED', '9:cf05c4705d539d4ea7b0199921f8cc78', 'sql', '', NULL, '4.29.2', '!without-test-data AND !without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-debitor-anchor-CONSTRAINT-BY-TRIGGER', 'marc.sandlus', 'db/changelog/5-hs-office/503-relation/5030-hs-office-relation.sql', '2025-06-06 10:23:06.759158', 313, 'EXECUTED', '9:0623a018f7494b53f87b01d88bc3fa41', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-06-06 10:23:06.7945', 314, 'RERAN', '9:6fc1a046dcd803edfb0ce77cd127b576', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-06-06 10:23:06.835025', 315, 'RERAN', '9:6737dfa739a4b9036f3e9e8224019276', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-relation-rbac-RESTRICTED-VIEW', 'RbacRestrictedViewGenerator', 'db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql', '2025-06-06 10:23:06.937529', 316, 'RERAN', '9:5b17d8b6f29c29468fc2e6f8d3db272b', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-06-06 10:23:07.037586', 317, 'RERAN', '9:2f5acf511e4c4ade7df5ccf45bdeef4a', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql', '2025-06-06 10:23:07.093423', 318, 'RERAN', '9:2b50eddbf13dc27225870f46b71d9f24', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-partner-details-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql', '2025-06-06 10:23:07.138161', 319, 'RERAN', '9:390d1d64cb613be6bc32ce11e8bb2adc', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-bankaccount-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql', '2025-06-06 10:23:07.18449', 320, 'RERAN', '9:24badd6359ad90334feb979c191ccaa9', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-06-06 10:23:07.264228', 321, 'RERAN', '9:6f9607bf12c83a5e2a27068b285336ad', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-debitor-rbac-update-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql', '2025-06-06 10:23:07.303382', 322, 'RERAN', '9:1baf8f2d47fc8d900e3e8b30bf2fccc9', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-sepamandate-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql', '2025-06-06 10:23:07.419072', 323, 'RERAN', '9:8ca310521c4abee5dd1a9838335a3825', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-SINGLE-MEMBERSHIP-CHECK', 'michael.hoennig', 'db/changelog/5-hs-office/510-membership/5100-hs-office-membership.sql', '2025-06-06 10:23:07.53212', 324, 'EXECUTED', '9:e294e99608fe2331659a2cdf393f1c83', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql', '2025-06-06 10:23:07.597126', 325, 'RERAN', '9:25bd38f58d1b8bd9f38a13bba7bcb338', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-TEST-DATA-GENERATOR', 'michael.hoennig', 'db/changelog/5-hs-office/510-membership/5108-hs-office-membership-test-data.sql', '2025-06-06 10:23:07.639444', 326, 'RERAN', '9:499e15d0d594a82c1e0a078e987efeaa', 'sql', '', NULL, '4.29.2', '!without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-membership-TEST-DATA-GENERATION', 'michael.hoennig', 'db/changelog/5-hs-office/510-membership/5108-hs-office-membership-test-data.sql', '2025-06-06 10:23:07.738716', 327, 'RERAN', '9:7c724f03ed805f90f55c0bbdd25cd355', 'sql', '', NULL, '4.29.2', '!without-test-data AND !without-test-data', NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopshares-SHARE-COUNT-CONSTRAINT-BY-TRIGGER', 'marc.sandlus', 'db/changelog/5-hs-office/511-coopshares/5110-hs-office-coopshares.sql', '2025-06-06 10:23:07.777894', 328, 'EXECUTED', '9:6e64678b4f20c8b11464489ea14ff521', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopsharetx-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql', '2025-06-06 10:23:07.824742', 329, 'RERAN', '9:9d5d7bc8a9d8466812799bfacc98ff94', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassets-ASSET-VALUE-CONSTRAINT-BY-TRIGGER', 'marc.sandlus', 'db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql', '2025-06-06 10:23:07.861403', 330, 'EXECUTED', '9:d5778a541abbe5b3ed6d9702b2e7542f', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-office-coopassettx-rbac-insert-trigger', 'RolesGrantsAndPermissionsGenerator', 'db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql', '2025-06-06 10:23:07.90233', 331, 'RERAN', '9:e22cabe6a9672640e7f7c2e2399d464f', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-integration-SCHEMA', 'timotheus.pokorra', 'db/changelog/9-hs-global/960-integrations/9600-hs-integration-schema.sql', '2025-06-06 10:23:07.949907', 332, 'EXECUTED', '9:c7ef62e3679e748b43426a9ea2afb6ad', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-kimai', 'timotheus.pokorra', 'db/changelog/9-hs-global/960-integrations/9610-integration-kimai.sql', '2025-06-06 10:23:08.013586', 333, 'EXECUTED', '9:56e481a555f86b471b74aaceacc4b520', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-znuny', 'timotheus.pokorra', 'db/changelog/9-hs-global/960-integrations/9620-integration-znuny.sql', '2025-06-06 10:23:08.161601', 334, 'EXECUTED', '9:48685a4882797575f8bb8c83d5fc9380', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('hs-global-integration-mlmmj', 'timotheus.pokorra', 'db/changelog/9-hs-global/960-integrations/9630-integration-mlmmj.sql', '2025-06-06 10:23:08.218463', 335, 'EXECUTED', '9:df6c8a724cfdd0c0aa013ba996655ed1', 'sql', '', NULL, '4.29.2', NULL, NULL, '9198184942');
 
 
 --
@@ -13421,6 +13679,38 @@ INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendant
 INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('80dd58ae-ddf7-4aa6-8ac9-1786efe01993', 'c7ef7757-abff-4f30-a234-62ff69f8d032', NULL, 'c8ca51cb-a2b6-453c-8f90-4ef7c1d2d5d9', '64406a89-05c6-403c-a33f-3ebb75e3af1a', true);
 INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('54a144a6-d90c-411d-8a2f-732a927c8213', '7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60', NULL, '07993766-fac8-4c89-8efa-d3f21a5d7931', 'adb92385-51b4-4662-b916-4c67082c5176', true);
 INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('88f42463-fc14-47c2-89fc-cb6676329cc8', '7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60', NULL, 'c8ca51cb-a2b6-453c-8f90-4ef7c1d2d5d9', '038c505b-0145-4943-8835-ed64861fe269', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('a9b3d27f-c665-4e36-9bf9-26eecaaef677', 'b93ce259-715c-4e8c-ae42-011adabff871', NULL, '268cb462-2ba2-4910-be8e-62c9e5154191', 'cc577d4c-20c8-4f24-8d8f-f9dfb58220c4', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('453eb766-346f-4c57-8009-569439ea9066', 'b93ce259-715c-4e8c-ae42-011adabff871', NULL, 'afc6a14a-f8c7-4c17-9b91-b615833bc002', '268cb462-2ba2-4910-be8e-62c9e5154191', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('5da034d3-1117-400c-870b-50ab1c54ef8a', NULL, '268cb462-2ba2-4910-be8e-62c9e5154191', '57b796ca-f74b-4255-9224-235a0a32a0b1', '268cb462-2ba2-4910-be8e-62c9e5154191', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('a0dc4f3a-674a-471c-85c0-c3e8b504e8e9', 'b93ce259-715c-4e8c-ae42-011adabff871', NULL, '999308b7-757b-419c-805a-6d4beb0b63b5', '0d07e1e7-a443-427c-b633-398503222db7', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('c29df78e-dca2-45d1-91b1-3f5d2094266f', 'b93ce259-715c-4e8c-ae42-011adabff871', NULL, '268cb462-2ba2-4910-be8e-62c9e5154191', '999308b7-757b-419c-805a-6d4beb0b63b5', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('2b850c3c-6988-4494-a1b3-cd3b0cccff57', 'b93ce259-715c-4e8c-ae42-011adabff871', NULL, '009c23f1-54bd-4494-a1cf-38d814755d97', '7c5ee62a-1c61-4e79-ad24-da18e3f013a7', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('c66d6988-0d8c-4ac0-a631-808346da090c', 'b93ce259-715c-4e8c-ae42-011adabff871', NULL, '999308b7-757b-419c-805a-6d4beb0b63b5', '009c23f1-54bd-4494-a1cf-38d814755d97', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('b344ab66-b207-4498-940f-67223108878e', NULL, NULL, '999308b7-757b-419c-805a-6d4beb0b63b5', 'e0114dfa-e7b4-4913-b34b-d4669d6392af', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('7e2a32c4-651d-44a1-b60a-e22e4c255221', '31e75384-0f88-4630-89f3-1d93ac8f7382', NULL, '574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', 'c95116d5-c6b1-4d2c-943c-c4e90850ee75', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('759583b1-f392-4b0d-92fa-b1e75711b4a9', '31e75384-0f88-4630-89f3-1d93ac8f7382', NULL, 'afc6a14a-f8c7-4c17-9b91-b615833bc002', '574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('557919d6-1a17-4377-8daa-898f7707b8e3', NULL, '574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', 'd5546ccd-e41f-4aa0-8edb-de4f8b1df748', '574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('7e47123f-86ef-4f19-bdcd-2e5291b75edf', '31e75384-0f88-4630-89f3-1d93ac8f7382', NULL, 'f2067171-80b8-4b1a-ab37-0de8081dc034', 'f407f14a-7adb-4de9-b326-0eea55b9b183', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('169d348e-fbc6-4ea8-b5e4-c0765510a9c8', '31e75384-0f88-4630-89f3-1d93ac8f7382', NULL, '574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', 'f2067171-80b8-4b1a-ab37-0de8081dc034', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('77a6c694-005e-41a8-882c-518586ea2e04', '31e75384-0f88-4630-89f3-1d93ac8f7382', NULL, '4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7', 'b86a23c2-753a-4d42-9859-25263d5313f2', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('0fa3a1d5-6ae5-486f-a4af-982c17d6c60f', '31e75384-0f88-4630-89f3-1d93ac8f7382', NULL, 'f2067171-80b8-4b1a-ab37-0de8081dc034', '4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('7a6d6956-2740-4ab2-b614-9a6096c8bb4c', NULL, NULL, 'f2067171-80b8-4b1a-ab37-0de8081dc034', '5f304d8e-dbde-4e43-8038-e96023063473', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('6e3932a6-7630-472a-9bbe-8087cb9bf4d4', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', NULL, '77c3dd90-b6a8-41fd-ad38-ab860766d0b0', '5d1f9d39-65ec-445b-bc4a-ea8ca8deda7b', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('2a18c28b-9586-468b-9fb0-bc0c96e0e010', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', NULL, 'afc6a14a-f8c7-4c17-9b91-b615833bc002', '77c3dd90-b6a8-41fd-ad38-ab860766d0b0', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('bb698100-ea44-4dff-83fe-07bcc26465df', NULL, '77c3dd90-b6a8-41fd-ad38-ab860766d0b0', '8eece937-d4fa-4334-8bbe-f488336684b6', '77c3dd90-b6a8-41fd-ad38-ab860766d0b0', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('b1364a89-9188-4bb4-bf7d-8213e890e7ba', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', NULL, '8a447eae-77f8-4a69-ae9e-48a7120f9df9', '4674d9d5-3567-400e-b750-e9e1a50e72ef', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('2f23174d-38cf-44d2-bb92-532c822ae5c2', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', NULL, '77c3dd90-b6a8-41fd-ad38-ab860766d0b0', '8a447eae-77f8-4a69-ae9e-48a7120f9df9', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('a96fc591-55db-4d15-91fa-70dbce27840e', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', NULL, '7939df21-5401-4544-8b9d-c6a517187092', 'eac22245-9ba0-4da1-a143-02e68bdbc071', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('875a339a-00ba-4c38-a777-84ba06f84667', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', NULL, '8a447eae-77f8-4a69-ae9e-48a7120f9df9', '7939df21-5401-4544-8b9d-c6a517187092', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('620e078b-b132-4b2c-9c1d-649a85a1f27a', NULL, NULL, '8a447eae-77f8-4a69-ae9e-48a7120f9df9', '4f9687d4-94ac-4f76-92a5-8aa3a38a30c1', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('4ceb406b-2f7a-4f88-83be-ee3f1721e8ef', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', NULL, '91f083fc-dbec-4ce2-8761-10993bc09fe8', '6f70a61f-fb49-42bf-9a64-c54267e18e94', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('730b3c27-3bb9-4d47-879b-73bc28e6d3dc', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', NULL, 'afc6a14a-f8c7-4c17-9b91-b615833bc002', '91f083fc-dbec-4ce2-8761-10993bc09fe8', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('a5e8901c-fb79-4725-8364-b0acac8f4ac4', NULL, '91f083fc-dbec-4ce2-8761-10993bc09fe8', 'd29d59ff-3a49-48df-b265-99c913b428f5', '91f083fc-dbec-4ce2-8761-10993bc09fe8', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('f49eba98-5a6a-421c-a443-f06683b60c28', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', NULL, '409fb0cf-7c00-4180-8bd0-2f8b00625e41', '3bf2f19a-1283-46a0-9868-1493c8a740e7', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('0c64fa1e-85ed-4feb-8e46-a63c3ef045c2', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', NULL, '91f083fc-dbec-4ce2-8761-10993bc09fe8', '409fb0cf-7c00-4180-8bd0-2f8b00625e41', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('082823dc-fe7b-41a3-a525-9a8caf00432b', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', NULL, '7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d', '564cb7ff-7288-4d74-845d-3084b0246be6', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('41dd9636-d5bd-4665-94c4-6e99201aa447', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', NULL, '409fb0cf-7c00-4180-8bd0-2f8b00625e41', '7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d', true);
+INSERT INTO rbac."grant" (uuid, grantedbytriggerof, grantedbyroleuuid, ascendantuuid, descendantuuid, assumed) VALUES ('3b70db96-9607-4eb7-b661-f3128e89dbdb', NULL, NULL, '409fb0cf-7c00-4180-8bd0-2f8b00625e41', '49257b61-bd21-4673-a2b3-45384d142829', true);
 
 
 --
@@ -13555,6 +13845,10 @@ INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('890e8afe-1dcd-424
 INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('1478a182-927f-44fe-9da0-1e09108a7d7e', 126, 'hs_office.coopassettx');
 INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('c7ef7757-abff-4f30-a234-62ff69f8d032', 127, 'hs_office.coopassettx');
 INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60', 128, 'hs_office.coopassettx');
+INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('b93ce259-715c-4e8c-ae42-011adabff871', 129, 'hs_office.person');
+INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('31e75384-0f88-4630-89f3-1d93ac8f7382', 130, 'hs_office.person');
+INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('c8a8b54b-0911-4803-b21b-7f59d883c9fb', 131, 'hs_office.person');
+INSERT INTO rbac.object (uuid, serialid, objecttable) VALUES ('1a66c5e8-5f47-4204-97c9-f607ee9c336e', 132, 'hs_office.person');
 
 
 --
@@ -13953,6 +14247,22 @@ INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('2c6af4f
 INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('64406a89-05c6-403c-a33f-3ebb75e3af1a', 'c7ef7757-abff-4f30-a234-62ff69f8d032', 'UPDATE', NULL);
 INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('adb92385-51b4-4662-b916-4c67082c5176', '7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60', 'SELECT', NULL);
 INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('038c505b-0145-4943-8835-ed64861fe269', '7c86e357-7d6a-4f5a-a3cc-d4f6958dbf60', 'UPDATE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('cc577d4c-20c8-4f24-8d8f-f9dfb58220c4', 'b93ce259-715c-4e8c-ae42-011adabff871', 'DELETE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('0d07e1e7-a443-427c-b633-398503222db7', 'b93ce259-715c-4e8c-ae42-011adabff871', 'UPDATE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('7c5ee62a-1c61-4e79-ad24-da18e3f013a7', 'b93ce259-715c-4e8c-ae42-011adabff871', 'SELECT', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('e0114dfa-e7b4-4913-b34b-d4669d6392af', 'b93ce259-715c-4e8c-ae42-011adabff871', 'INSERT', 'hs_office.relation');
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('c95116d5-c6b1-4d2c-943c-c4e90850ee75', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'DELETE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('f407f14a-7adb-4de9-b326-0eea55b9b183', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'UPDATE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('b86a23c2-753a-4d42-9859-25263d5313f2', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'SELECT', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('5f304d8e-dbde-4e43-8038-e96023063473', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'INSERT', 'hs_office.relation');
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('5d1f9d39-65ec-445b-bc4a-ea8ca8deda7b', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'DELETE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('4674d9d5-3567-400e-b750-e9e1a50e72ef', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'UPDATE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('eac22245-9ba0-4da1-a143-02e68bdbc071', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'SELECT', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('4f9687d4-94ac-4f76-92a5-8aa3a38a30c1', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'INSERT', 'hs_office.relation');
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('6f70a61f-fb49-42bf-9a64-c54267e18e94', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'DELETE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('3bf2f19a-1283-46a0-9868-1493c8a740e7', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'UPDATE', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('564cb7ff-7288-4d74-845d-3084b0246be6', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'SELECT', NULL);
+INSERT INTO rbac.permission (uuid, objectuuid, op, optablename) VALUES ('49257b61-bd21-4673-a2b3-45384d142829', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'INSERT', 'hs_office.relation');
 
 
 --
@@ -14654,6 +14964,38 @@ INSERT INTO rbac.reference (uuid, type) VALUES ('2c6af4ff-0644-4df6-97a0-69c8af1
 INSERT INTO rbac.reference (uuid, type) VALUES ('64406a89-05c6-403c-a33f-3ebb75e3af1a', 'rbac.permission');
 INSERT INTO rbac.reference (uuid, type) VALUES ('adb92385-51b4-4662-b916-4c67082c5176', 'rbac.permission');
 INSERT INTO rbac.reference (uuid, type) VALUES ('038c505b-0145-4943-8835-ed64861fe269', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('57b796ca-f74b-4255-9224-235a0a32a0b1', 'rbac.subject');
+INSERT INTO rbac.reference (uuid, type) VALUES ('268cb462-2ba2-4910-be8e-62c9e5154191', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('cc577d4c-20c8-4f24-8d8f-f9dfb58220c4', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('999308b7-757b-419c-805a-6d4beb0b63b5', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('0d07e1e7-a443-427c-b633-398503222db7', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('009c23f1-54bd-4494-a1cf-38d814755d97', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('7c5ee62a-1c61-4e79-ad24-da18e3f013a7', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('e0114dfa-e7b4-4913-b34b-d4669d6392af', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('d5546ccd-e41f-4aa0-8edb-de4f8b1df748', 'rbac.subject');
+INSERT INTO rbac.reference (uuid, type) VALUES ('574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('c95116d5-c6b1-4d2c-943c-c4e90850ee75', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('f2067171-80b8-4b1a-ab37-0de8081dc034', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('f407f14a-7adb-4de9-b326-0eea55b9b183', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('b86a23c2-753a-4d42-9859-25263d5313f2', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('5f304d8e-dbde-4e43-8038-e96023063473', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('8eece937-d4fa-4334-8bbe-f488336684b6', 'rbac.subject');
+INSERT INTO rbac.reference (uuid, type) VALUES ('77c3dd90-b6a8-41fd-ad38-ab860766d0b0', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('5d1f9d39-65ec-445b-bc4a-ea8ca8deda7b', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('8a447eae-77f8-4a69-ae9e-48a7120f9df9', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('4674d9d5-3567-400e-b750-e9e1a50e72ef', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('7939df21-5401-4544-8b9d-c6a517187092', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('eac22245-9ba0-4da1-a143-02e68bdbc071', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('4f9687d4-94ac-4f76-92a5-8aa3a38a30c1', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('d29d59ff-3a49-48df-b265-99c913b428f5', 'rbac.subject');
+INSERT INTO rbac.reference (uuid, type) VALUES ('91f083fc-dbec-4ce2-8761-10993bc09fe8', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('6f70a61f-fb49-42bf-9a64-c54267e18e94', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('409fb0cf-7c00-4180-8bd0-2f8b00625e41', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('3bf2f19a-1283-46a0-9868-1493c8a740e7', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d', 'rbac.role');
+INSERT INTO rbac.reference (uuid, type) VALUES ('564cb7ff-7288-4d74-845d-3084b0246be6', 'rbac.permission');
+INSERT INTO rbac.reference (uuid, type) VALUES ('49257b61-bd21-4673-a2b3-45384d142829', 'rbac.permission');
 
 
 --
@@ -14914,6 +15256,18 @@ INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('35628825-27df-48e2-9
 INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('643b3b80-5ad3-4bfc-be99-f0a931ea601a', 'a42d61c5-7dad-4379-9dd9-39a8d21ddc32', 'OWNER');
 INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('c8ca51cb-a2b6-453c-8f90-4ef7c1d2d5d9', 'a42d61c5-7dad-4379-9dd9-39a8d21ddc32', 'ADMIN');
 INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('07993766-fac8-4c89-8efa-d3f21a5d7931', 'a42d61c5-7dad-4379-9dd9-39a8d21ddc32', 'AGENT');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('268cb462-2ba2-4910-be8e-62c9e5154191', 'b93ce259-715c-4e8c-ae42-011adabff871', 'OWNER');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('999308b7-757b-419c-805a-6d4beb0b63b5', 'b93ce259-715c-4e8c-ae42-011adabff871', 'ADMIN');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('009c23f1-54bd-4494-a1cf-38d814755d97', 'b93ce259-715c-4e8c-ae42-011adabff871', 'REFERRER');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('574ed5f9-a824-4e7c-9b4e-cf7497a2fa88', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'OWNER');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('f2067171-80b8-4b1a-ab37-0de8081dc034', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'ADMIN');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('4ea19fa4-4eac-4c4a-94f0-36b05b35c2b7', '31e75384-0f88-4630-89f3-1d93ac8f7382', 'REFERRER');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('77c3dd90-b6a8-41fd-ad38-ab860766d0b0', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'OWNER');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('8a447eae-77f8-4a69-ae9e-48a7120f9df9', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'ADMIN');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('7939df21-5401-4544-8b9d-c6a517187092', 'c8a8b54b-0911-4803-b21b-7f59d883c9fb', 'REFERRER');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('91f083fc-dbec-4ce2-8761-10993bc09fe8', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'OWNER');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('409fb0cf-7c00-4180-8bd0-2f8b00625e41', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'ADMIN');
+INSERT INTO rbac.role (uuid, objectuuid, roletype) VALUES ('7f6973f3-a5f3-4ce8-84a0-e1b9aa24b42d', '1a66c5e8-5f47-4204-97c9-f607ee9c336e', 'REFERRER');
 
 
 --
@@ -14969,6 +15323,10 @@ INSERT INTO rbac.subject (uuid, name) VALUES ('7f239c0c-707e-486d-b38b-e39d51a84
 INSERT INTO rbac.subject (uuid, name) VALUES ('b502c841-3b77-4a4f-b979-e3e0a708022c', 'bankaccount-admin@MelBessler.example.com');
 INSERT INTO rbac.subject (uuid, name) VALUES ('8891a19d-c2c7-4dd5-baff-60bad149012f', 'bankaccount-admin@AnitaBessler.example.com');
 INSERT INTO rbac.subject (uuid, name) VALUES ('0594c065-f593-4f3f-acb1-f372bd4346f3', 'bankaccount-admin@PaulWinkler.example.com');
+INSERT INTO rbac.subject (uuid, name) VALUES ('57b796ca-f74b-4255-9224-235a0a32a0b1', 'person-HostmasterAlex@example.com');
+INSERT INTO rbac.subject (uuid, name) VALUES ('d5546ccd-e41f-4aa0-8edb-de4f8b1df748', 'person-HostmasterFran@example.com');
+INSERT INTO rbac.subject (uuid, name) VALUES ('8eece937-d4fa-4334-8bbe-f488336684b6', 'person-UserDrew@example.com');
+INSERT INTO rbac.subject (uuid, name) VALUES ('d29d59ff-3a49-48df-b265-99c913b428f5', 'person-UserTest@example.com');
 
 
 --
@@ -15058,7 +15416,7 @@ SELECT pg_catalog.setval('hs_office.sepamandate_legacy_id_seq', 1000000002, true
 -- Name: object_serialid_seq; Type: SEQUENCE SET; Schema: rbac; Owner: postgres
 --
 
-SELECT pg_catalog.setval('rbac.object_serialid_seq', 128, true);
+SELECT pg_catalog.setval('rbac.object_serialid_seq', 132, true);
 
 
 --
@@ -15505,6 +15863,13 @@ CREATE INDEX permission_objectuuid_op_idx ON rbac.permission USING btree (object
 --
 
 CREATE INDEX permission_optablename_op_idx ON rbac.permission USING btree (optablename, op);
+
+
+--
+-- Name: tx_context set_commit_order_trigger; Type: TRIGGER; Schema: base; Owner: postgres
+--
+
+CREATE TRIGGER set_commit_order_trigger BEFORE INSERT ON base.tx_context FOR EACH ROW EXECUTE FUNCTION public.set_next_sequential_txid();
 
 
 --
@@ -16117,6 +16482,27 @@ CREATE TRIGGER partner_insert_permission_check_tg BEFORE INSERT ON hs_office.par
 
 
 --
+-- Name: coopassettx positive_total_assets_count_tg; Type: TRIGGER; Schema: hs_office; Owner: postgres
+--
+
+CREATE TRIGGER positive_total_assets_count_tg BEFORE INSERT ON hs_office.coopassettx FOR EACH ROW EXECUTE FUNCTION hs_office.coopassettx_enforce_positive_total();
+
+
+--
+-- Name: coopsharetx positive_total_shares_count_tg; Type: TRIGGER; Schema: hs_office; Owner: postgres
+--
+
+CREATE TRIGGER positive_total_shares_count_tg BEFORE INSERT ON hs_office.coopsharetx FOR EACH ROW EXECUTE FUNCTION hs_office.coopsharetx_enforce_positive_total();
+
+
+--
+-- Name: relation relation_enforce_debitor_anchor_partner_tg; Type: TRIGGER; Schema: hs_office; Owner: postgres
+--
+
+CREATE TRIGGER relation_enforce_debitor_anchor_partner_tg BEFORE INSERT ON hs_office.relation FOR EACH ROW EXECUTE FUNCTION hs_office.relation_enforce_debitor_anchor_partner();
+
+
+--
 -- Name: relation relation_insert_permission_check_tg; Type: TRIGGER; Schema: hs_office; Owner: postgres
 --
 
@@ -16142,6 +16528,13 @@ CREATE TRIGGER sepamandate_insert_permission_check_tg BEFORE INSERT ON hs_office
 --
 
 CREATE TRIGGER sepamandate_z_grants_after_insert_tg AFTER INSERT ON hs_office.relation FOR EACH ROW EXECUTE FUNCTION hs_office.sepamandate_grants_insert_to_relation_tf();
+
+
+--
+-- Name: membership trg_validate_membership_validity; Type: TRIGGER; Schema: hs_office; Owner: postgres
+--
+
+CREATE TRIGGER trg_validate_membership_validity BEFORE INSERT OR UPDATE ON hs_office.membership FOR EACH ROW EXECUTE FUNCTION hs_office.validate_membership_validity();
 
 
 --
