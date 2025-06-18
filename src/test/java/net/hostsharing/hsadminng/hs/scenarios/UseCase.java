@@ -46,6 +46,7 @@ import static org.junit.platform.commons.util.StringUtils.isNotBlank;
 public abstract class UseCase<T extends UseCase<?>> {
 
     private static final HttpClient client = HttpClient.newHttpClient();
+    private static final int HTTP_TIMEOUT_SECONDS = 20; // FIXME: configurable in environment
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     protected final ScenarioTest testSuite;
@@ -160,7 +161,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
-                .timeout(seconds(10))
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.GET, uriPath, null, response);
@@ -175,7 +176,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
-                .timeout(seconds(10))
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.POST, uriPath, requestBody, response);
@@ -190,7 +191,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
-                .timeout(seconds(10))
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.PATCH, uriPath, requestBody, response);
@@ -204,7 +205,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
-                .timeout(seconds(10))
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.DELETE, uriPath, null, response);

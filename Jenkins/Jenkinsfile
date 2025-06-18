@@ -1,0 +1,138 @@
+pipeline {
+    parameters {
+        string(name: 'AGENT_CPUS', defaultValue: '2.5', description: 'CPU limit for the build agent')
+        string(name: 'AGENT_NETWORK', defaultValue: 'host', description: 'Network to be used for build agent')
+        booleanParam(name: 'QUICK_RUN', defaultValue: false, description: 'false: all stages but slow, true: just some stages and fast')
+    }
+    agent {
+        dockerfile {
+            filename 'Jenkins/agent/Dockerfile'
+            args """--user root --network ${params.AGENT_NETWORK}
+                    --volume /var/run/docker.sock:/var/run/docker.sock
+                    --memory=8g --cpus=${params.AGENT_CPUS}"""
+       }
+    }
+
+    environment {
+        GRADLE_USER_HOME = "${env.WORKSPACE}/.gradle-cache"
+        DOCKER_HOST = 'unix:///var/run/docker.sock'
+        HSADMINNG_POSTGRES_ADMIN_USERNAME = 'admin'
+        HSADMINNG_POSTGRES_RESTRICTED_USERNAME = 'restricted'
+        HSADMINNG_MIGRATION_DATA_PATH = 'migration'
+        TESTCONTAINERS_RYUK_DISABLED = true
+        TESTCONTAINERS_LOG_LEVEL = "DEBUG"
+    }
+
+    triggers {
+        pollSCM('H/1 * * * *')
+    }
+
+    stages {
+        stage('Detect Docker Environment') {
+            steps {
+                sh '''#!/bin/bash +x
+                    if command -v docker >/dev/null 2>&1; then
+                      if docker info --format '{{.SecurityOptions}}' 2>/dev/null | grep -q 'rootless'; then
+                        echo "🟡 Docker daemon is running in ROOTLESS mode"
+                      else
+                        echo "🟢 Docker daemon is running in ROOTFUL mode"
+                      fi
+                    else
+                      echo "❌ Docker CLI not found"
+                    fi'''
+            }
+        }
+
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                sh './gradlew clean processSpring compileJava compileTestJava --no-daemon --console=plain'
+            }
+        }
+
+        stage('Tests') {
+            parallel {
+                stage('Other Tests') {
+                    stages {
+                        stage('Unit-Tests') {
+                            steps {
+                                sh './gradlew unitTest --no-daemon --console=plain'
+                            }
+                        }
+                        stage('Migration-Tests') {
+                            steps {
+                                sh './gradlew migrationTest --no-daemon --console=plain'
+                            }
+                        }
+                        stage('Scenario-Tests') {
+                            steps {
+                                sh './gradlew scenarioTest --no-daemon --console=plain'
+                            }
+                        }
+                        stage('General-Tests') {
+                            when {
+                                expression { !params.QUICK_RUN }
+                            }
+                            steps {
+                                sh './gradlew generalIntegrationTest --no-daemon --console=plain'
+                            }
+                        }
+                        stage('Booking+Hosting-Tests') {
+                            when {
+                                expression { !params.QUICK_RUN}
+                            }
+                            steps {
+                                sh './gradlew bookingIntegrationTest hostingIntegrationTest --no-daemon --console=plain'
+                            }
+                        }
+                    }
+                }
+
+                // in parallel because these tests take about as much time as all others combined
+                stage('Office-Tests') {
+                    when {
+                        expression { !params.QUICK_RUN }
+                    }
+                    steps {
+                        sh './gradlew officeIntegrationTest --no-daemon --console=plain --fail-fast'
+                    }
+                }
+
+            }
+        }
+
+        stage ('Checks') {
+            steps {
+                sh './gradlew check -x pitest -x test -x dependencyCheckAnalyze --no-daemon'
+            }
+        }
+    }
+
+    post {
+        always {
+            // archive test results
+            junit testResults: 'build/test-results/*/*.xml', allowEmptyResults: true, checksName: '', skipPublishingChecks: true
+
+            // archive the JaCoCo coverage report
+            // recordCoverage tools: [jacoco(pattern: 'build/reports/jacoco/test/jacocoTestReport.xml')]
+            sh 'find build -name jacocoTestReport.xml'
+            archiveArtifacts artifacts: 'build/reports/jacoco/**/jacocoTestReport.xml', allowEmptyArchive: true
+
+            // archive scenario-test reports in HTML format
+            sh './gradlew convertMarkdownToHtml'
+            archiveArtifacts artifacts:
+                    'build/doc/scenarios/*.html, ' +
+                    'build/reports/dependency-license/dependencies-without-allowed-license.json',
+                allowEmptyArchive: true
+
+            // cleanup workspace
+            cleanWs()
+        }
+    }
+}

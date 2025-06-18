@@ -21,10 +21,18 @@
             "moduleVersion": "1.0.0",
             "moduleName": "org.jspecify:jspecify"
         },
+        {
+            "moduleLicense": null,
+            "#moduleLicense": "BSD 3-clause",
+            "moduleVersion": "4.13.0",
+            "moduleName": "org.antlr:antlr4-runtime"
+        },
 
         { "moduleLicense": "BSD License" },
         { "moduleLicense": "BSD-2-Clause" },
+        { "moduleLicense": "The 2-Clause BSD License" },
         { "moduleLicense": "BSD-3-Clause" },
+        { "moduleLicense": "The 3-Clause BSD License" },
         { "moduleLicense": "The BSD License" },
 
         { "moduleLicense": "The New BSD License" },
@@ -45,6 +53,8 @@
 
         { "moduleLicense": "GNU Library General Public License v2.1 or later" },
         { "moduleLicense": "GNU General Public License, version 2 with the GNU Classpath Exception" },
+        { "moduleLicense": "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1" },
+
         { "moduleLicense": "GPL2 w/ CPE" },
 
         { "moduleLicense": "LGPL, version 2.1"},
@@ -57,11 +67,8 @@
 
         { "moduleLicense": "WTFPL" },
 
-        {
-            "moduleLicense": "Public Domain, per Creative Commons CC0",
-            "moduleVersion": "2.0.3"
-        }
-
-
+        { "moduleLicense":  "Creative Commons Legal Code" },
+        { "moduleLicense":  "PUBLIC DOMAIN" },
+        { "moduleLicense": "Public Domain, per Creative Commons CC0" }
     ]
 }

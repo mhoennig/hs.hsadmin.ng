@@ -89,6 +89,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.springframework.util.FileCopyUtils.copyToByteArray;
 
+@Tag("migrationTest")
 @Tag("importHostingAssets")
 @DataJpaTest(properties = {
         "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///importHostingAssetsTC}",

@@ -34,7 +34,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
  * <p>During a release, the generated dump has to be committed to git and will be used in future test-runs
  * until it gets replaced with a new dump at the next release.</p>
  */
-@Tag("officeIntegrationTest")
+@Tag("migrationTest")
 @DataJpaTest(properties = {
         "spring.datasource.url=jdbc:tc:postgresql:15.5-bookworm:///liquibaseMigrationTestTC",
         "hsadminng.superuser=${HSADMINNG_SUPERUSER:import-superuser@hostsharing.net}",

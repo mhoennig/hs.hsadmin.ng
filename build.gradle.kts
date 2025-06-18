@@ -151,7 +151,7 @@ tasks.named<Test>("test") {
         excludeTestsMatching("net.hostsharing.hsadminng.**.generated.**")
         // Add more exclude patterns if needed
     }
-    finalizedBy(tasks.named("jacocoTestReport")) // generate report after tests
+    finalizedBy(tasks.named("jacocoTestReport")) // generate a report after tests
 }
 
 // OpenAPI Source Code Generation
@@ -425,9 +425,14 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
 tasks.register<Test>("unitTest") {
     useJUnitPlatform {
         excludeTags(
-            "importHostingAssets", "scenarioTest", "generalIntegrationTest",
+            "importHostingAssets", "scenarioTest", "migrationTest", "generalIntegrationTest",
             "officeIntegrationTest", "bookingIntegrationTest", "hostingIntegrationTest"
         )
+    }
+
+    testLogging {
+        events("passed", "skipped", "failed", "standardOut", "standardError")
+        showStandardStreams = true
     }
 
     group = "verification"
@@ -436,7 +441,7 @@ tasks.register<Test>("unitTest") {
     mustRunAfter(tasks.named("spotlessJava"))
 }
 
-// HOWTO: run all integration tests which are not specific to a module, like base, rbac, config etc.
+// HOWTO: run all integration tests that are not specific to a module, like base, rbac, config etc.
 tasks.register<Test>("generalIntegrationTest") {
     useJUnitPlatform {
         includeTags("generalIntegrationTest")
@@ -480,6 +485,17 @@ tasks.register<Test>("hostingIntegrationTest") {
 
     group = "verification"
     description = "runs integration tests of the hosting module"
+
+    mustRunAfter(tasks.named("spotlessJava"))
+}
+
+tasks.register<Test>("migrationTest") {
+    useJUnitPlatform {
+        includeTags("migrationTest")
+    }
+
+    group = "verification"
+    description = "run database migration tests"
 
     mustRunAfter(tasks.named("spotlessJava"))
 }
@@ -574,13 +590,21 @@ tasks.register("convertMarkdownToHtml") {
 
     // Define the template file using project.file
     val templateFile = project.file("doc/scenarios/.template.html")
-    // Define input directory using layout property
-    val inputDir = layout.buildDirectory.dir("doc/scenarios")
-
-    // Use inputs and outputs for better up-to-date checks
     inputs.file(templateFile).withPathSensitivity(PathSensitivity.NONE)
-    inputs.dir(inputDir).withPathSensitivity(PathSensitivity.RELATIVE)
+
+    // Define input+output directory using layout property
+    val inputDir = layout.buildDirectory.dir("doc/scenarios")
     outputs.dir(inputDir) // Output HTMLs will be in the same directory
+
+    onlyIf {
+        val dir = inputDir.get().asFile
+        if (!dir.exists()) {
+            logger.lifecycle("Skipping convertMarkdownToHtml because ${dir} does not exist (scenarioTest skipped).")
+            false
+        } else {
+            true
+        }
+    }
 
     doFirst {
         // Check if pandoc is installed using exec and capturing output/errors
@@ -598,21 +622,9 @@ tasks.register("convertMarkdownToHtml") {
         if (!templateFile.exists()) {
             throw GradleException("Template file '$templateFile' not found.")
         }
-        // Ensure input directory exists (Gradle handles this implicitly usually, but explicit check is fine)
-        if (!inputDir.get().asFile.exists()) {
-            logger.warn("Input directory ${inputDir.get().asFile} does not exist, skipping Pandoc conversion.")
-            // Potentially disable the task or skip doLast if input dir missing
-            enabled = false // Example: disable task if input dir doesn't exist yet
-        }
     }
 
     doLast {
-        // Check if input dir exists again, in case it was created between doFirst and doLast
-        if (!inputDir.get().asFile.exists()) {
-            logger.warn("Input directory ${inputDir.get().asFile} still does not exist, skipping Pandoc conversion.")
-            return@doLast // Skip execution
-        }
-
         // Gather all Markdown files in the input directory
         project.fileTree(inputDir) {
             include("*.md")
