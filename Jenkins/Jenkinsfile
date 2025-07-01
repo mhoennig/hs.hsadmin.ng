@@ -6,7 +6,7 @@ pipeline {
     }
     agent {
         dockerfile {
-            filename 'Jenkins/agent/Dockerfile'
+            filename 'Jenkins/jenkins-agent/Dockerfile'
             args """--user root --network ${params.AGENT_NETWORK}
                     --volume /var/run/docker.sock:/var/run/docker.sock
                     --memory=8g --cpus=${params.AGENT_CPUS}"""

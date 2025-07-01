@@ -1,0 +1,11 @@
+[Unit]
+Description=Run cert renew Make target at ~5 AM daily
+
+[Timer]
+OnCalendar=05:05
+RandomizedDelaySec=20m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+

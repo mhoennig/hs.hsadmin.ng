@@ -1,0 +1,8 @@
+[Unit]
+Description=Renew Let's Encrypt certs via Make
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/hs.hsadmin.ng/Jenkins
+ExecStart=/usr/bin/make nginx-letsencrypt-renew
+
