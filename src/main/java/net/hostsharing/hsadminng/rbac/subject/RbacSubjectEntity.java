@@ -16,6 +16,7 @@ import java.util.UUID;
 @Table(schema = "rbac", name = "subject_rv")
 @Getter
 @Setter
+@Builder
 @ToString
 @Immutable
 @NoArgsConstructor

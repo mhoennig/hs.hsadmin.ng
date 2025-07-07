@@ -45,7 +45,7 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
             rbacSubjectEntity.setUuid(UUID.randomUUID());
         }
         insert(rbacSubjectEntity);
-        return rbacSubjectEntity;
+        return rbacSubjectEntity; // Not yet attached to EM!
     }
 
     @Timed("app.rbac.subjects.repo.deleteByUuid")

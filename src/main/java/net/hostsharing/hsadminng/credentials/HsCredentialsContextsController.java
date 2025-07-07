@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.credentials.generated.api.v1.model.ContextResou
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,6 +27,7 @@ public class HsCredentialsContextsController implements ContextsApi {
     private HsCredentialsContextRbacRepository contextRepo;
 
     @Override
+    @Transactional(readOnly = true)
     @Timed("app.credentials.contexts.getListOfLoginContexts")
     public ResponseEntity<List<ContextResource>> getListOfContexts(final String assumedRoles) {
         context.assumeRoles(assumedRoles);

@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.credentials;
 
 import jakarta.persistence.*;
 import lombok.*;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity; // Assuming BaseEntity exists
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.repr.Stringify;
@@ -45,7 +45,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "person_uuid", nullable = false, updatable = false, referencedColumnName = "uuid")
-    private HsOfficePersonRealEntity person;
+    private HsOfficePersonRbacEntity person;
 
     @Version
     private int version;
@@ -90,6 +90,11 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
             loginContexts = new HashSet<>();
         }
         return loginContexts;
+    }
+
+    public void setSubject(final RbacSubjectEntity subject) {
+        this.uuid = subject.getUuid();
+        this.subject = subject;
     }
 
     @Override

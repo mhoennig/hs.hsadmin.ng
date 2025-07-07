@@ -117,7 +117,8 @@ class HsCredentialsEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @Override
     protected HsCredentialsEntityPatcher createPatcher(final HsCredentialsEntity entity) {
-        return new HsCredentialsEntityPatcher(em, mock(MessageTranslator.class), entity);
+        final var contextMapper = new CredentialContextResourceToEntityMapper(em, mock(MessageTranslator.class));
+        return new HsCredentialsEntityPatcher(contextMapper, entity);
     }
 
     @Override

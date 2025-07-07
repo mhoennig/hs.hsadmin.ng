@@ -1,9 +1,6 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
-import net.hostsharing.hsadminng.lambda.Reducer;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver;
@@ -58,15 +55,11 @@ public abstract class ScenarioTest extends ContextBasedTest {
     Integer port;
 
     @Autowired
-    HsOfficePersonRbacRepository personRepo;
-
-    @Autowired
-    JpaAttempt jpaAttempt;
+    protected JpaAttempt jpaAttempt;
 
     @SneakyThrows
     @BeforeEach
-    void beforeScenario(final TestInfo testInfo) {
-        createHostsharingPerson();
+    protected void beforeScenario(final TestInfo testInfo) {
         try {
             testInfo.getTestMethod().ifPresent(currentTestMethod -> {
                 callRequiredProducers(currentTestMethod);
@@ -84,20 +77,6 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
         properties.clear();
         testReport.close();
-    }
-
-    private void createHostsharingPerson() {
-        jpaAttempt.transacted(() ->
-                {
-                    context.define("superuser-alex@hostsharing.net");
-                    putAlias(
-                            "Person: Hostsharing eG",
-                            personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream()
-                                            .map(HsOfficePersonRbacEntity::getUuid)
-                                            .reduce(Reducer::toSingleElement).orElseThrow()
-                    );
-                }
-        );
     }
 
     @SneakyThrows
@@ -200,15 +179,15 @@ public abstract class ScenarioTest extends ContextBasedTest {
         return alias;
     }
 
-    static void putAlias(final String name, final UUID value) {
+    protected static void putAlias(final String name, final UUID value) {
         aliases.put(name, value);
     }
 
-    static void putProperty(final String name, final Object value) {
+    protected static void putProperty(final String name, final Object value) {
         properties.put(name, (value instanceof String string) ? resolveTyped(string) : value);
     }
 
-    static void removeProperty(final String propName) {
+    protected static void removeProperty(final String propName) {
         properties.remove(propName);
     }
 

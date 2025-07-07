@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.credentials;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -51,8 +51,8 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     private RbacSubjectEntity alexSubject;
     private RbacSubjectEntity drewSubject;
     private RbacSubjectEntity testUserSubject;
-    private HsOfficePersonRealEntity drewPerson;
-    private HsOfficePersonRealEntity testUserPerson;
+    private HsOfficePersonRbacEntity drewPerson;
+    private HsOfficePersonRbacEntity testUserPerson;
 
     @BeforeEach
     void setUp() {
@@ -218,13 +218,13 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
         }
     }
 
-    private HsOfficePersonRealEntity fetchPersonByGivenName(final String givenName) {
-        final String jpql = "SELECT p FROM HsOfficePersonRealEntity p WHERE p.givenName = :givenName";
-        final Query query = em.createQuery(jpql, HsOfficePersonRealEntity.class);
+    private HsOfficePersonRbacEntity fetchPersonByGivenName(final String givenName) {
+        final String jpql = "SELECT p FROM HsOfficePersonRbacEntity p WHERE p.givenName = :givenName";
+        final Query query = em.createQuery(jpql, HsOfficePersonRbacEntity.class);
         query.setParameter("givenName", givenName);
         try {
             context(SUPERUSER_ALEX_SUBJECT_NAME);
-            return notNull((HsOfficePersonRealEntity) query.getSingleResult());
+            return notNull((HsOfficePersonRbacEntity) query.getSingleResult());
         } catch (final NoResultException e) {
             throw new AssertionError(
                     "Failed to find person with name '" + givenName + "'. Ensure test data is present.", e);

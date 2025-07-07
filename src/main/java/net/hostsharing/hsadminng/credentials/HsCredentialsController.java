@@ -2,7 +2,6 @@ package net.hostsharing.hsadminng.credentials;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -15,20 +14,26 @@ import net.hostsharing.hsadminng.credentials.generated.api.v1.api.CredentialsApi
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsInsertResource;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsPatchResource;
 import net.hostsharing.hsadminng.credentials.generated.api.v1.model.CredentialsResource;
+import net.hostsharing.hsadminng.credentials.generated.api.v1.model.HsOfficePersonResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import jakarta.persistence.EntityNotFoundException;
+
+import static java.util.Optional.ofNullable;
+import static java.util.Optional.of;
 
 @RestController
 @SecurityRequirement(name = "casTicket")
 public class HsCredentialsController implements CredentialsApi {
-
-    private static DateTimeFormatter FULL_TIMESTAMP_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     @Autowired
     private Context context;
@@ -40,15 +45,22 @@ public class HsCredentialsController implements CredentialsApi {
     private StrictMapper mapper;
 
     @Autowired
+    private RbacSubjectRepository subjectRepo;
+
+    @Autowired
+    private CredentialContextResourceToEntityMapper contextMapper;
+
+    @Autowired
     private MessageTranslator messageTranslator;
 
     @Autowired
-    private HsOfficePersonRbacRepository personRepo;
+    private HsOfficePersonRbacRepository rbacPersonRepo;
 
     @Autowired
     private HsCredentialsRepository credentialsRepo;
 
     @Override
+    @Transactional(readOnly = true)
     @Timed("app.credentials.credentials.getSingleCredentialsByUuid")
     public ResponseEntity<CredentialsResource> getSingleCredentialsByUuid(
             final String assumedRoles,
@@ -56,11 +68,16 @@ public class HsCredentialsController implements CredentialsApi {
         context.assumeRoles(assumedRoles);
 
         final var credentials = credentialsRepo.findByUuid(credentialsUuid);
-        final var result = mapper.map(credentials, CredentialsResource.class);
+        if (credentials.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        final var result = mapper.map(
+                credentials.get(), CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(result);
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Timed("app.credentials.credentials.getListOfCredentialsByPersonUuid")
     public ResponseEntity<List<CredentialsResource>> getListOfCredentialsByPersonUuid(
             final String assumedRoles,
@@ -68,18 +85,20 @@ public class HsCredentialsController implements CredentialsApi {
     ) {
         context.assumeRoles(assumedRoles);
 
-        final var person = personRepo.findByUuid(personUuid).orElseThrow(
+        final var person = rbacPersonRepo.findByUuid(personUuid).orElseThrow(
                 () -> new EntityNotFoundException(
                         messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", personUuid)
                 )
 
         );
         final var credentials = credentialsRepo.findByPerson(person);
-        final var result = mapper.mapList(credentials, CredentialsResource.class);
+        final var result = mapper.mapList(
+                credentials, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(result);
     }
 
     @Override
+    @Transactional
     @Timed("app.credentials.credentials.postNewCredentials")
     public ResponseEntity<CredentialsResource> postNewCredentials(
             final String assumedRoles,
@@ -87,13 +106,28 @@ public class HsCredentialsController implements CredentialsApi {
     ) {
         context.assumeRoles(assumedRoles);
 
-        final var newCredentialsEntity = mapper.map(body, HsCredentialsEntity.class);
-        final var savedCredentialsEntity = credentialsRepo.save(newCredentialsEntity);
-        final var newCredentialsResource = mapper.map(savedCredentialsEntity, CredentialsResource.class);
-        return ResponseEntity.ok(newCredentialsResource);
+        // first create and save the subject to get its UUID
+        final var newlySavedSubject = createSubject(body.getNickname());
+
+        // afterward, create and save the credentials entity with the subject's UUID
+        final var newCredentialsEntity = mapper.map(
+                body, HsCredentialsEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
+        newCredentialsEntity.setSubject(newlySavedSubject);
+        em.persist(newCredentialsEntity); // newCredentialsEntity.uuid == newlySavedSubject.uuid => do not use repository!
+
+        // return the new credentials as a resource
+        final var uri =
+                MvcUriComponentsBuilder.fromController(getClass())
+                        .path("/api/hs/credentials/credentials/{id}")
+                        .buildAndExpand(newCredentialsEntity.getUuid())
+                        .toUri();
+        final var newCredentialsResource = mapper.map(
+                newCredentialsEntity, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        return ResponseEntity.created(uri).body(newCredentialsResource);
     }
 
     @Override
+    @Transactional
     @Timed("app.credentials.credentials.deleteCredentialsByUuid")
     public ResponseEntity<Void> deleteCredentialsByUuid(final String assumedRoles, final UUID credentialsUuid) {
         context.assumeRoles(assumedRoles);
@@ -103,6 +137,7 @@ public class HsCredentialsController implements CredentialsApi {
     }
 
     @Override
+    @Transactional
     @Timed("app.credentials.credentials.patchCredentials")
     public ResponseEntity<CredentialsResource> patchCredentials(
             final String assumedRoles,
@@ -113,10 +148,11 @@ public class HsCredentialsController implements CredentialsApi {
 
         final var current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
 
-        new HsCredentialsEntityPatcher(em, messageTranslator, current).apply(body);
+        new HsCredentialsEntityPatcher(contextMapper, current).apply(body);
 
         final var saved = credentialsRepo.save(current);
-        final var mapped = mapper.map(saved, CredentialsResource.class);
+        final var mapped = mapper.map(
+                saved, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
@@ -137,7 +173,38 @@ public class HsCredentialsController implements CredentialsApi {
         return ResponseEntity.ok(mapped);
     }
 
+    private RbacSubjectEntity createSubject(final String nickname) {
+        final var newRbacSubject = subjectRepo.create(new RbacSubjectEntity(null, nickname));
+        if(context.fetchCurrentSubject() == null) {
+            context.define("activate newly created self-servie subject", null, nickname, null);
+        }
+        return subjectRepo.findByUuid(newRbacSubject.getUuid()); // attached to EM
+    }
+
     final BiConsumer<HsCredentialsEntity, CredentialsResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
-        resource.setLastUsed(entity.getLastUsed().atOffset(ZoneOffset.UTC));
+        ofNullable(entity.getLastUsed()).ifPresent(
+            dt -> resource.setLastUsed(dt.atOffset(ZoneOffset.UTC)));
+        of(entity.getSubject()).ifPresent(
+                subject -> resource.setNickname(subject.getName())
+        );
+        of(entity.getPerson()).ifPresent(
+                person -> resource.setPerson(
+                        mapper.map(person, HsOfficePersonResource.class)
+                )
+        );
+    };
+
+    final BiConsumer<CredentialsInsertResource, HsCredentialsEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+
+        // TODO.impl: we need to make sure that the current subject is OWNER (or ADMIN?) of the person
+        final var person = rbacPersonRepo.findByUuid(resource.getPersonUuid()).orElseThrow(
+                () -> new EntityNotFoundException(
+                        messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", resource.getPersonUuid())
+                )
+        );
+
+        entity.setLoginContexts(contextMapper.mapCredentialsToContextEntities(resource.getContexts()));
+
+        entity.setPerson(person);
     };
 }

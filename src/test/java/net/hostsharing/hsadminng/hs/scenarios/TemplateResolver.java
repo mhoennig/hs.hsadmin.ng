@@ -5,14 +5,18 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 
 public class TemplateResolver {
+
+    public static final String JSON_NULL_VALUE_TO_KEEP = "NULL";
 
     public enum Resolver {
         DROP_COMMENTS,  // deletes comments ('#{whatever}' -> '')
@@ -42,6 +46,12 @@ public class TemplateResolver {
             @Override
             String convert(final Object value, final Resolver resolver) {
                 return value != null ? URLEncoder.encode(value.toString(), StandardCharsets.UTF_8) : "";
+            }
+        },
+        JSON_ARRAY('@'){
+            @Override
+            String convert(final Object value, final Resolver resolver) {
+                return jsonArray(value);
             }
         },
         COMMENT('#'){
@@ -102,13 +112,14 @@ public class TemplateResolver {
                 .collect(Collectors.joining("\n"));
     }
 
+
     private static boolean keepLine(final String line) {
         final var trimmed = line.trim();
         return !trimmed.endsWith("null,") && !trimmed.endsWith("null");
     }
 
     private static String keptNullValues(final String line) {
-        return line.replace(": NULL", ": null");
+        return line.replace(": "+ JSON_NULL_VALUE_TO_KEEP, ": null");
     }
 
     private String copy() {
@@ -163,12 +174,10 @@ public class TemplateResolver {
                 // => last alternative element in expression was null and not optional
                 throw new IllegalStateException("Missing required value in property-chain: " + nameExpression);
             });
+        } else if (properties.containsKey(nameExpression)) {
+            return properties.get(nameExpression);
         } else {
-            final var val = properties.get(nameExpression);
-            if (val == null) {
-                throw new IllegalStateException("Missing required property: " + nameExpression);
-            }
-            return val;
+            throw new IllegalStateException("Missing required property: " + nameExpression);
         }
     }
 
@@ -212,19 +221,40 @@ public class TemplateResolver {
 
     private static String jsonQuoted(final Object value) {
         return switch (value) {
-            case null -> null;
+            case null -> "null";
             case Boolean bool -> bool.toString();
             case Number number -> number.toString();
             case String string -> "\"" + string.replace("\n", "\\n") + "\"";
-            default -> "\"" + value + "\"";
+            case UUID uuid -> "\"" + uuid + "\"";
+            default -> jsonObject(value);
         };
     }
 
     private static String jsonObject(final Object value) {
         return switch (value) {
-            case null -> null;
+            case null -> "null";
+            case Map<?, ?> map -> "{" + map.entrySet().stream()
+                    .map(entry -> "\"" + entry.getKey() + "\": " + jsonQuoted(entry.getValue()))
+                    .collect(Collectors.joining(", ")) + "}";
             case String string -> "{" + string.replace("\n", " ") + "}";
             default -> throw new IllegalArgumentException("can not format " + value.getClass() + " (" + value + ") as JSON object");
         };
     }
+
+    private static String jsonArray(final Object value) {
+        return switch (value) {
+            case null -> "null";
+            case Object[] array -> "[" + Arrays.stream(array)
+                    .filter(Objects::nonNull)
+                    .map(TemplateResolver::jsonQuoted)
+                    .collect(Collectors.joining(", ")) + "]";
+            case Collection<?> collection -> "[" + collection.stream()
+                    .filter(Objects::nonNull)
+                    .map(TemplateResolver::jsonQuoted)
+                    .collect(Collectors.joining(", ")) + "]";
+            case String string -> "[" + string.replace("\n", " ") + "]";
+            default -> throw new IllegalArgumentException("Cannot format " + value.getClass() + " (" + value + ") as JSON array");
+        };
+    }
+
 }

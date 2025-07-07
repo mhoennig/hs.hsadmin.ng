@@ -4,9 +4,13 @@ import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import org.hamcrest.CustomMatcher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +41,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class HsCredentialsControllerRestTest {
 
+    private static final UUID PERSON_UUID = UUID.randomUUID();
+
     @Autowired
     MockMvc mockMvc;
 
@@ -54,13 +60,22 @@ class HsCredentialsControllerRestTest {
     EntityManagerFactory emf;
 
     @MockitoBean
-    HsOfficePersonRbacRepository personRbacRepo;
+    RbacSubjectRepository subjectRepo;
+
+    @MockitoBean
+    HsOfficePersonRealRepository realPersonRepo;
+
+    @MockitoBean
+    HsOfficePersonRbacRepository rbacPersonRepo;
 
     @MockitoBean
     HsCredentialsContextRbacRepository loginContextRbacRepo;
 
     @MockitoBean
     HsCredentialsRepository credentialsRepo;
+
+    @MockitoBean
+    CredentialContextResourceToEntityMapper contextMapper;
 
     @Test
     void patchCredentialsUsed() throws Exception {
@@ -70,6 +85,8 @@ class HsCredentialsControllerRestTest {
         when(credentialsRepo.findByUuid(givenCredentialsUuid)).thenReturn(Optional.of(
                 HsCredentialsEntity.builder()
                         .uuid(givenCredentialsUuid)
+                        .person(HsOfficePersonRbacEntity.builder().uuid(PERSON_UUID).build())
+                        .subject(RbacSubjectEntity.builder().name("some-nickname").build())
                         .lastUsed(null)
                         .onboardingToken("fake-onboarding-token")
                         .build()

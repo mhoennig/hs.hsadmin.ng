@@ -50,6 +50,7 @@ public class ArchitectureTest {
                     "..test.dom",
                     "..context",
                     "..credentials",
+                    "..credentials.scenarios",
                     "..hash",
                     "..lambda",
                     "..journal",

@@ -449,7 +449,7 @@ class RbacSubjectControllerAcceptanceTest {
     RbacSubjectEntity givenANewUser() {
         final var givenUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
         final var givenUser = jpaAttempt.transacted(() -> {
-            context.define(null);
+            context.define("superuser-alex@hostsharing.net");
             return rbacSubjectRepository.create(new RbacSubjectEntity(UUID.randomUUID(), givenUserName));
         }).assumeSuccessful().returnedValue();
         assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
