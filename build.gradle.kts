@@ -216,11 +216,11 @@ openapiProcessor {
         targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
     }
 
-    process("springCredentials") {
+    process("springAccounts") {
         processorName("spring")
         processor("io.openapiprocessor:openapi-processor-spring:2022.5")
-        apiPath(project.file("src/main/resources/api-definition/credentials/api-paths.yaml").path)
-        prop("mapping", project.file("src/main/resources/api-definition/credentials/api-mappings.yaml").path)
+        apiPath(project.file("src/main/resources/api-definition/accounts/api-paths.yaml").path)
+        prop("mapping", project.file("src/main/resources/api-definition/accounts/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
         targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
@@ -245,7 +245,7 @@ val processSpring = tasks.register("processSpring") {
         "processSpringHsOffice",
         "processSpringHsBooking",
         "processSpringHsHosting",
-        "processSpringCredentials"
+        "processSpringAccounts"
     )
 }
 

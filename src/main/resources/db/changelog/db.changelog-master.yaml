@@ -103,7 +103,7 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data.sql
         context: "!without-test-data"
     - include:
-        file: db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data-for-credentials.sql
+        file: db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data-for-accounts.sql
         context: "!without-test-data"
     - include:
         file: db/changelog/5-hs-office/503-relation/5030-hs-office-relation.sql
@@ -218,16 +218,16 @@ databaseChangeLog:
         context: "!only-prod-schema"
 
     - include:
-          file: db/changelog/9-hs-global/950-credentials/9500-hs-credentials-schema.sql
+          file: db/changelog/9-hs-global/950-accounts/9500-hs-accounts-schema.sql
           context: "!only-prod-schema"
     - include:
-          file: db/changelog/9-hs-global/950-credentials/9510-hs-credentials.sql
+          file: db/changelog/9-hs-global/950-accounts/9510-hs-accounts.sql
           context: "!only-prod-schema"
     #    TODO_impl: RBAC rules for _rv do not yet work properly
     #    - include:
-    #          file: db/changelog/9-hs-global/950-credentials/9513-hs-credentials-rbac.sql
+    #          file: db/changelog/9-hs-global/950-accounts/9513-hs-accounts-context-rbac.sql
     - include:
-          file: db/changelog/9-hs-global/950-credentials/9519-hs-credentials-test-data.sql
+          file: db/changelog/9-hs-global/950-accounts/9519-hs-accounts-test-data.sql
           context: "!only-prod-schema and !without-test-data"
 
     - include:

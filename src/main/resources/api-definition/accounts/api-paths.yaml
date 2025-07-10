@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Hostsharing hsadmin-ng API
+  version: v0
+servers:
+  - url: http://localhost:8080
+    description: Local development default URL.
+
+paths:
+
+  # Contexts
+
+  /api/hs/accounts/contexts:
+    $ref: "contexts.yaml"
+
+
+  # Credentials
+
+  /api/hs/accounts/credentials/{credentialsUuid}/used:
+    $ref: "credentials-with-uuid-used.yaml"
+
+  /api/hs/accounts/credentials/{credentialsUuid}:
+    $ref: "credentials-with-uuid.yaml"
+
+  /api/hs/accounts/credentials:
+    $ref: "credentials.yaml"
+
