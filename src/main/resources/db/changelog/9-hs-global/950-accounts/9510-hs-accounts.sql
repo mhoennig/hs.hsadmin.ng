@@ -32,11 +32,13 @@ create table hs_accounts.credentials
 
 create table hs_accounts.context
 (
-    uuid            uuid PRIMARY KEY,
-    version         int not null default 0,
+    uuid                        uuid PRIMARY KEY,
+    version                     int not null default 0,
 
-    type            varchar(16),
-    qualifier       varchar(80),
+    type                        varchar(16),
+    qualifier                   varchar(80),
+
+    only_for_natural_persons    boolean default false,
 
     unique (type, qualifier)
 );

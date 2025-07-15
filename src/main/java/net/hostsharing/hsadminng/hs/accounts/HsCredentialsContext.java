@@ -50,6 +50,9 @@ public abstract class HsCredentialsContext implements Stringifyable, BaseEntity<
     @Column(name = "qualifier", length = 80)
     private String qualifier;
 
+    @Column(name = "only_for_natural_persons")
+    private boolean onlyForNaturalPersons;
+
     @Override
     public String toShortString() {
         return toString();

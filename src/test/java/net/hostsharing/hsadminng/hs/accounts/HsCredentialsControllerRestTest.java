@@ -27,8 +27,10 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL_PERSON;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -76,6 +78,49 @@ class HsCredentialsControllerRestTest {
 
     @MockitoBean
     CredentialContextResourceToEntityMapper contextMapper;
+
+    @Test
+    void shouldFilterInvalidContextsRegardingNonNaturalPerson() throws Exception {
+        // given
+        final var givenCredentialsUuid = UUID.randomUUID();
+        final var contextForNP = HsCredentialsContextRealEntity.builder()
+                .uuid(UUID.randomUUID())
+                .type("HSADMIN")
+                .qualifier("prod")
+                .onlyForNaturalPersons(true)
+                .build();
+        final var contextForAll = HsCredentialsContextRealEntity.builder()
+                .uuid(UUID.randomUUID())
+                .type("SSH")
+                .qualifier("prod")
+                .onlyForNaturalPersons(false)
+                .build();
+        final var credentialsEntity = HsCredentialsEntity.builder()
+                .uuid(givenCredentialsUuid)
+                .person(HsOfficePersonRbacEntity.builder()
+                        .uuid(PERSON_UUID)
+                        .personType(LEGAL_PERSON)
+                        .build())
+                .subject(RbacSubjectEntity.builder().name("some-nickname").build())
+                .loginContexts(Set.of(contextForNP, contextForAll))
+                .build();
+        when(credentialsRepo.findByUuid(givenCredentialsUuid))
+                .thenReturn(Optional.of(credentialsEntity));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/accounts/credentials/" + givenCredentialsUuid)
+                        .header("Authorization", "Bearer test")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contexts.length()").value(1))
+                .andExpect(jsonPath("$.contexts[0].type").value("SSH"))
+                .andExpect(jsonPath("$.contexts[0].qualifier").value("prod"))
+                .andExpect(jsonPath("$.contexts[0].onlyForNaturalPersons").value(false));
+    }
 
     @Test
     void patchCredentialsUsed() throws Exception {

@@ -17,6 +17,7 @@ import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CredentialsPatc
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CredentialsResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.HsOfficePersonResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
@@ -190,11 +191,20 @@ public class HsCredentialsController implements CredentialsApi {
         );
         of(entity.getPerson()).ifPresent(
                 person -> resource.setPerson(
-                        mapper.map(person, HsOfficePersonResource.class)
-                )
+                    mapper.map(person, HsOfficePersonResource.class)
+            )
         );
-        resource.setContexts(mapper.mapList(entity.getLoginContexts().stream().toList(), ContextResource.class));
+
+        resource.setContexts(mapToValidContextResources(entity));
     };
+
+    private List<ContextResource> mapToValidContextResources(final HsCredentialsEntity entity) {
+        var allContexts = mapper.mapList(entity.getLoginContexts().stream().toList(), ContextResource.class);
+        return allContexts.stream()
+            .filter(context -> !context.getOnlyForNaturalPersons() ||
+                          entity.getPerson().getPersonType() == HsOfficePersonType.NATURAL_PERSON)
+        .toList();
+    }
 
     final BiConsumer<CredentialsInsertResource, HsCredentialsEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
 

@@ -60,7 +60,7 @@ class HsCredentialsContextRealRepositoryIntegrationTest extends ContextBasedTest
         final var rowsAfter = query.getResultList();
 
         // then
-        assertThat(rowsAfter).as("hs_accounts.context_hv should now contain the test-data rows for the current timestamp").hasSize(3);
+        assertThat(rowsAfter).as("hs_accounts.context_hv should now contain the test-data rows for the current timestamp").hasSize(4);
     }
 
     @Test
