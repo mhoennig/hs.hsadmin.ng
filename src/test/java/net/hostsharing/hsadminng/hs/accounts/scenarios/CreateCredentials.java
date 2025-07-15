@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import static io.restassured.http.ContentType.JSON;
 import static org.springframework.http.HttpStatus.OK;
 
-public class CreateCredentials extends UseCase<CreateCredentials> {
+public class CreateCredentials extends BaseCredentialsUseCase<CreateCredentials> {
 
     public CreateCredentials(final ScenarioTest testSuite) {
         super(testSuite);
@@ -26,9 +26,8 @@ public class CreateCredentials extends UseCase<CreateCredentials> {
                 "In real situations we have more precise measures to find the related person."
         );
 
-
-        obtain("CredentialsContexts", () ->
-                httpGet("/api/hs/accounts/contexts").expecting(OK).expecting(JSON)
+        given("resolvedContexts",
+            fetchContextResourcesByDescriptorPairs("contexts")
         );
 
         return obtain("newCredentials", () ->
@@ -37,12 +36,14 @@ public class CreateCredentials extends UseCase<CreateCredentials> {
                      "person.uuid": ${Person: %{personGivenName} %{personFamilyName}},
                      "nickname": ${nickname},
                      "active": %{active},
+                     "totpSecrets": @{totpSecrets},
                      "emailAddress": ${emailAddress},
-                     "telephonePassword": ${telephonePassword},
+                     "phonePassword": ${phonePassword},
                      "smsNumber": ${smsNumber},
+                     "onboardingToken": ${onboardingToken},
                      "globalUid": %{globalUid},
                      "globalGid": %{globalGid},
-                     "contexts": @{contexts}
+                     "contexts": @{resolvedContexts}
                 }
                 """))
                 .expecting(HttpStatus.CREATED).expecting(ContentType.JSON)
@@ -57,7 +58,9 @@ public class CreateCredentials extends UseCase<CreateCredentials> {
                         .expecting(OK).expecting(JSON),
                 path("uuid").contains("%{newCredentials}"),
                 path("nickname").contains("%{nickname}"),
-                path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}")
+                path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}"),
+                path("totpSecrets").contains("@{totpSecrets}"),
+                path("onboardingToken").contains("%{onboardingToken}")
         );
     }
 }

@@ -4,10 +4,12 @@ import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import net.hostsharing.hsadminng.hs.scenarios.Produces;
+import net.hostsharing.hsadminng.hs.scenarios.Requires;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.test.IgnoreOnFailureExtension;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.MethodOrderer;
@@ -21,8 +23,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.Map;
 
 @Tag("scenarioTest")
 @SpringBootTest(
@@ -45,6 +45,7 @@ class CredentialsScenarioTests extends ScenarioTest {
     protected void beforeScenario(final TestInfo testInfo) {
         super.beforeScenario(testInfo);
     }
+
     @Nested
     @Order(10)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -62,22 +63,38 @@ class CredentialsScenarioTests extends ScenarioTest {
                     .given("nickname", "firby-susan")
                     // initial credentials
                     .given("active", true)
+                    .given("totpSecrets", Array.of("initialSecret"))
                     .given("emailAddress", "susan.firby@example.com")
-                    .given("telephonePassword", "securePass123")
+                    .given("phonePassword", "securePass123")
                     .given("smsNumber", "+49123456789")
                     .given("globalUid", 21011)
                     .given("globalGid", 21011)
                     .given("contexts", Array.of(
-                            Map.ofEntries(
-                                    // a hardcoded context from test-data
-                                    // TODO.impl: the uuid should be determined within CreateCredentials just by (HSDAMIN,prod)
-                                    Map.entry("uuid", "11111111-1111-1111-1111-111111111111"),
-                                    Map.entry("type", "HSADMIN"),
-                                    Map.entry("qualifier", "prod")
-                            )
+                            Pair.of("HSADMIN", "prod")
                     ))
+                    .given("onboardingToken", "fake-unboarding-token")
                     .doRun()
                     .keep();
+        }
+
+        @Test
+        @Order(1020)
+        @Requires("Credentials@hsadmin: firby-susan")
+        void shouldUpdateCredentials() {
+            new UpdateCredentials(scenarioTest)
+                    // the credentials to update
+                    .given("credentialsUuid", "%{Credentials@hsadmin: firby-susan}")
+                    // updated credentials
+                    .given("active", false)
+                    .given("totpSecrets", Array.of("initialSecret", "additionalSecret"))
+                    .given("emailAddress", "susan.firby@example.org")
+                    .given("phonePassword", "securePass987")
+                    .given("smsNumber", "+49987654321")
+                    .given("contexts", Array.of(
+                            Pair.of("HSADMIN", "prod"),
+                            Pair.of("SSH", "internal")
+                    ))
+                    .doRun();
         }
     }
 }

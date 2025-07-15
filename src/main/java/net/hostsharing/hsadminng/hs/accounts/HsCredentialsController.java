@@ -8,6 +8,7 @@ import java.util.function.BiConsumer;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ContextResource;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.api.CredentialsApi;
@@ -67,12 +68,12 @@ public class HsCredentialsController implements CredentialsApi {
             final UUID credentialsUuid) {
         context.assumeRoles(assumedRoles);
 
-        final var credentials = credentialsRepo.findByUuid(credentialsUuid);
-        if (credentials.isEmpty()) {
+        final var credentialsEntity = credentialsRepo.findByUuid(credentialsUuid);
+        if (credentialsEntity.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         final var result = mapper.map(
-                credentials.get(), CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+                credentialsEntity.get(), CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(result);
     }
 
@@ -192,6 +193,7 @@ public class HsCredentialsController implements CredentialsApi {
                         mapper.map(person, HsOfficePersonResource.class)
                 )
         );
+        resource.setContexts(mapper.mapList(entity.getLoginContexts().stream().toList(), ContextResource.class));
     };
 
     final BiConsumer<CredentialsInsertResource, HsCredentialsEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {

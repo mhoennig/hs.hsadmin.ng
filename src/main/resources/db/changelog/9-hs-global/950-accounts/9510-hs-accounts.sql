@@ -18,7 +18,7 @@ create table hs_accounts.credentials
     global_gid       int unique,     -- w/o
     onboarding_token text,           -- w/o, but can be set to null to invalidate
 
-    totp_secret      text,
+    totp_secrets     text[],
     phone_password   text,
     email_address    text,
     sms_number       text

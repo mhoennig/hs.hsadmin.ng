@@ -47,7 +47,7 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     private static final HttpClient client = HttpClient.newHttpClient();
     private static final int HTTP_TIMEOUT_SECONDS = 20; // FIXME: configurable in environment
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    protected final ObjectMapper objectMapper = new ObjectMapper();
 
     protected final ScenarioTest testSuite;
     private final TestReport testReport;

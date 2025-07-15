@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URLEncoder;
@@ -17,6 +19,7 @@ import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.D
 public class TemplateResolver {
 
     public static final String JSON_NULL_VALUE_TO_KEEP = "NULL";
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public enum Resolver {
         DROP_COMMENTS,  // deletes comments ('#{whatever}' -> '')
@@ -230,6 +233,7 @@ public class TemplateResolver {
         };
     }
 
+    @SneakyThrows
     private static String jsonObject(final Object value) {
         return switch (value) {
             case null -> "null";
@@ -237,7 +241,7 @@ public class TemplateResolver {
                     .map(entry -> "\"" + entry.getKey() + "\": " + jsonQuoted(entry.getValue()))
                     .collect(Collectors.joining(", ")) + "}";
             case String string -> "{" + string.replace("\n", " ") + "}";
-            default -> throw new IllegalArgumentException("can not format " + value.getClass() + " (" + value + ") as JSON object");
+            default -> OBJECT_MAPPER.writeValueAsString(value);
         };
     }
 

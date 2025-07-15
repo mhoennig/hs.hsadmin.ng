@@ -11,6 +11,7 @@ import net.hostsharing.hsadminng.repr.Stringifyable;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     protected static Stringify<HsCredentialsEntity> stringify = stringify(HsCredentialsEntity.class, "credentials")
             .withProp(HsCredentialsEntity::isActive)
             .withProp(HsCredentialsEntity::getEmailAddress)
-            .withProp(HsCredentialsEntity::getTotpSecret)
+            .withProp(HsCredentialsEntity::getTotpSecrets)
             .withProp(HsCredentialsEntity::getPhonePassword)
             .withProp(HsCredentialsEntity::getSmsNumber)
             .quotedValues(false);
@@ -66,7 +67,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     private String onboardingToken;
 
     @Column
-    private String totpSecret;
+    private List<String> totpSecrets;
 
     @Column
     private String phonePassword;
@@ -106,4 +107,5 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     public String toString() {
         return stringify.apply(this);
     }
+
 }

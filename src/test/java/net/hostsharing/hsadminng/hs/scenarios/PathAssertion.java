@@ -18,12 +18,13 @@ public class PathAssertion {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Consumer<UseCase.HttpResponse> contains(final String resolvableValue) {
+        final var resolvedValue = ScenarioTest.resolve(resolvableValue, DROP_COMMENTS);
         return response -> {
             try {
-                response.path(path).isEqualTo(ScenarioTest.resolve(resolvableValue, DROP_COMMENTS));
+                response.path(path).isEqualTo(resolvedValue);
             } catch (final AssertionError e) {
                 // without this, the error message is often lacking important context
-                fail(e.getMessage() + " in `path(\"" + path +  "\").contains(\"" + resolvableValue + "\")`" );
+                fail(e.getMessage() + " in `path(\"" + path +  "\").contains(\"" + resolvedValue + "\")`" );
             }
         };
     }

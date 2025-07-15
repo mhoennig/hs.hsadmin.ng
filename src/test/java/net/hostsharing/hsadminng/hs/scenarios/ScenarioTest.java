@@ -66,13 +66,13 @@ public abstract class ScenarioTest extends ContextBasedTest {
                 keepProducesAlias(currentTestMethod);
             });
             testReport.createTestLogMarkdownFile(testInfo);
-        } catch (Exception exc) {
+        } catch (final Exception exc) {
             throw exc;
         }
     }
 
     @AfterEach
-    void afterScenario(final TestInfo testInfo) { // final TestInfo testInfo
+    void afterScenario(final TestInfo testInfo) {
         verifyProduceDeclaration(testInfo);
 
         properties.clear();
@@ -191,7 +191,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
         properties.remove(propName);
     }
 
-    static Map<String, Object> knowVariables() {
+    public static Map<String, Object> knowVariables() {
         final var map = new LinkedHashMap<String, Object>();
         map.putAll(ScenarioTest.aliases);
         map.putAll(ScenarioTest.properties);
@@ -223,4 +223,13 @@ public abstract class ScenarioTest extends ContextBasedTest {
         return (T) resolvedValue;
     }
 
+    public static <T> T getTypedVariable(final String varName, final Class<T> expectedValueClass) {
+        final var value = knowVariables().get(varName);
+        if (value != null && !expectedValueClass.isAssignableFrom(value.getClass())) {
+            throw new IllegalArgumentException("variable '" + varName + "'" +
+                    " expected to be of type " + expectedValueClass + " " +
+                    " but got " + value.getClass());
+        }
+        return (T) value;
+    }
 }
