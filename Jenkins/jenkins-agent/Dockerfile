@@ -1,4 +1,10 @@
 FROM eclipse-temurin:21-jdk
+
+# create mount point for jenkins_home
+RUN mkdir -p /var/jenkins_home && \
+    chmod 755 /var/jenkins_home
+
+# install required packages
 RUN apt-get update && \
     apt-get install -y \
         postgresql-client \
@@ -7,3 +13,6 @@ RUN apt-get update && \
         pandoc && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# continue with the same uid as the user 'jenkins' from the Jenkins Dockerfile
+USER 1000

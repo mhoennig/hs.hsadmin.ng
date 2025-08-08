@@ -1,16 +1,25 @@
+def JENKINS_UID = 1000  // UID of jenkins user from Jenkins container
+
 pipeline {
+
     parameters {
         string(name: 'AGENT_CPUS', defaultValue: '2.5', description: 'CPU limit for the build agent')
         string(name: 'AGENT_NETWORK', defaultValue: 'host', description: 'Network to be used for build agent')
         booleanParam(name: 'QUICK_RUN', defaultValue: false, description: 'false: all stages but slow, true: just some stages and fast')
     }
+
     agent {
         dockerfile {
             filename 'Jenkins/jenkins-agent/Dockerfile'
-            args """--user root --network ${params.AGENT_NETWORK}
-                    --volume /var/run/docker.sock:/var/run/docker.sock
-                    --memory=8g --cpus=${params.AGENT_CPUS}"""
-       }
+            args """--user ${JENKINS_UID} --network ${params.AGENT_NETWORK}
+                --volume /var/run/docker.sock:/var/run/docker.sock
+                --memory=8g --cpus=${params.AGENT_CPUS}
+                --security-opt apparmor=unconfined"""
+        }
+    }
+
+    options {
+        disableConcurrentBuilds()
     }
 
     environment {
@@ -24,7 +33,7 @@ pipeline {
     }
 
     triggers {
-        pollSCM('H/1 * * * *')
+        pollSCM('H/2 * * * *')
     }
 
     stages {
@@ -32,6 +41,7 @@ pipeline {
             steps {
                 sh '''#!/bin/bash +x
                     if command -v docker >/dev/null 2>&1; then
+                      docker info --format '{{.SecurityOptions}}'
                       if docker info --format '{{.SecurityOptions}}' 2>/dev/null | grep -q 'rootless'; then
                         echo "🟡 Docker daemon is running in ROOTLESS mode"
                       else
