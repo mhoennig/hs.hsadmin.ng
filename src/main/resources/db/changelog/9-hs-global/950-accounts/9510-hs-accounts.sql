@@ -40,6 +40,8 @@ create table hs_accounts.context
 
     only_for_natural_persons    boolean default false,
 
+    public_access               boolean default false,
+
     unique (type, qualifier)
 );
 --//

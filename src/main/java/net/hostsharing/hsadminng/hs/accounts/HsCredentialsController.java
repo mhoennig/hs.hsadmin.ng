@@ -81,19 +81,15 @@ public class HsCredentialsController implements CredentialsApi {
     @Override
     @Transactional(readOnly = true)
     @Timed("app.credentials.credentials.getListOfCredentialsByPersonUuid")
-    public ResponseEntity<List<CredentialsResource>> getListOfCredentialsByPersonUuid(
+    public ResponseEntity<List<CredentialsResource>> getListOfCredentials(
             final String assumedRoles,
             final UUID personUuid
     ) {
         context.assumeRoles(assumedRoles);
 
-        final var person = rbacPersonRepo.findByUuid(personUuid).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", personUuid)
-                )
-
-        );
-        final var credentials = credentialsRepo.findByPerson(person);
+        final var credentials = personUuid == null
+                ? credentialsRepo.findByCurrentSubject()
+                : findByPersonUuid(personUuid);
         final var result = mapper.mapList(
                 credentials, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(result);
@@ -181,6 +177,16 @@ public class HsCredentialsController implements CredentialsApi {
             context.define("activate newly created self-servie subject", null, nickname, null);
         }
         return subjectRepo.findByUuid(newRbacSubject.getUuid()); // attached to EM
+    }
+
+    private List<HsCredentialsEntity> findByPersonUuid(final UUID personUuid) {
+        final var person = rbacPersonRepo.findByUuid(personUuid).orElseThrow(
+                () -> new EntityNotFoundException(
+                        messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", personUuid)
+                )
+
+        );
+        return credentialsRepo.findByPerson(person);
     }
 
     final BiConsumer<HsCredentialsEntity, CredentialsResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {

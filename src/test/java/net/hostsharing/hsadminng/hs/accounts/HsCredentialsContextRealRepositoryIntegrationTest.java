@@ -52,7 +52,9 @@ class HsCredentialsContextRealRepositoryIntegrationTest extends ContextBasedTest
         final var rowsBefore = query.getResultList();
 
         // then
-        assertThat(rowsBefore).as("hs_accounts.context_hv only contain no rows for a timestamp before test data creation").hasSize(0);
+        assertThat(rowsBefore)
+                .as("hs_accounts.context_hv only contain no rows for a timestamp before test data creation")
+                .hasSize(0);
 
         // and when
         historicalContext(Timestamp.from(ZonedDateTime.now().toInstant()));
@@ -60,7 +62,9 @@ class HsCredentialsContextRealRepositoryIntegrationTest extends ContextBasedTest
         final var rowsAfter = query.getResultList();
 
         // then
-        assertThat(rowsAfter).as("hs_accounts.context_hv should now contain the test-data rows for the current timestamp").hasSize(4);
+        assertThat(rowsAfter)
+                .as("hs_accounts.context_hv should now contain the test-data rows for the current timestamp")
+                .hasSize(7);
     }
 
     @Test
@@ -87,7 +91,7 @@ class HsCredentialsContextRealRepositoryIntegrationTest extends ContextBasedTest
 
         // then
         assertThat(foundEntityOptional).isPresent();
-        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(HSADMIN:prod)");
+        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(HSADMIN:prod:NP-ONLY:PUBLIC)");
     }
 
     @Test
@@ -99,7 +103,7 @@ class HsCredentialsContextRealRepositoryIntegrationTest extends ContextBasedTest
 
         // then
         assertThat(foundEntityOptional).isPresent();
-        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(SSH:internal)");
+        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(SSH:internal:NP-ONLY:INTERNAL)");
     }
 
     @Test

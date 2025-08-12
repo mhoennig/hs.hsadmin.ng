@@ -17,7 +17,11 @@ components:
                     maxLength: 80
                 onlyForNaturalPersons:
                     type: boolean
+                publicAccess:
+                    type: boolean
             required:
                 - uuid
                 - type
                 - qualifier
+                - onlyForNaturalPersons
+                - publicAccess

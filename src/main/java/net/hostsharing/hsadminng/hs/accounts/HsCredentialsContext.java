@@ -19,6 +19,7 @@ import net.hostsharing.hsadminng.repr.Stringifyable;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.repr.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Symbol.symbol;
 
 @Getter
 @Setter
@@ -31,6 +32,10 @@ public abstract class HsCredentialsContext implements Stringifyable, BaseEntity<
     private static Stringify<HsCredentialsContext> stringify = stringify(HsCredentialsContext.class, "loginContext")
             .withProp(HsCredentialsContext::getType)
             .withProp(HsCredentialsContext::getQualifier)
+            .withProp(HsCredentialsContext::isOnlyForNaturalPersons, 
+        value -> value ? symbol("NP-ONLY") : null)
+            .withProp(HsCredentialsContext::isPublicAccess, 
+        value -> value ? symbol("PUBLIC") : symbol("INTERNAL"))
             .quotedValues(false)
             .withSeparator(":");
 
@@ -52,6 +57,9 @@ public abstract class HsCredentialsContext implements Stringifyable, BaseEntity<
 
     @Column(name = "only_for_natural_persons")
     private boolean onlyForNaturalPersons;
+
+    @Column(name = "public_access")
+    private boolean publicAccess;
 
     @Override
     public String toShortString() {

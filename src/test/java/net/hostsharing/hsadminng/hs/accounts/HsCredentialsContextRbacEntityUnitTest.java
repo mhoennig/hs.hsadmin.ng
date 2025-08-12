@@ -14,7 +14,8 @@ class HsCredentialsContextRbacEntityUnitTest {
                 .uuid(UUID.randomUUID())
                 .type("SSH")
                 .qualifier("prod")
+                .publicAccess(true)
                 .build();
-        assertEquals("loginContext(SSH:prod)", entity.toShortString());
+        assertEquals("loginContext(SSH:prod:PUBLIC)", entity.toShortString());
     }
 }

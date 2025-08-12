@@ -125,7 +125,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
         assertThat(foundEntity.getGlobalUid()).isEqualTo(2001);
 
         assertThat(foundEntity.getLoginContexts()).hasSize(1)
-                .map(HsCredentialsContextRealEntity::toString).contains("loginContext(HSADMIN:prod)");
+                .map(HsCredentialsContextRealEntity::toString).contains("loginContext(HSADMIN:prod:NP-ONLY:PUBLIC)");
     }
 
     @Test

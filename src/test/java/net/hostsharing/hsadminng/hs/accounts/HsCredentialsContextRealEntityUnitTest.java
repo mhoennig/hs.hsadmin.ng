@@ -14,7 +14,8 @@ class HsCredentialsContextRealEntityUnitTest {
                 .uuid(UUID.randomUUID())
                 .type("testType")
                 .qualifier("testQualifier")
+                .onlyForNaturalPersons(true)
                 .build();
-        assertEquals("loginContext(testType:testQualifier)", entity.toShortString());
+        assertEquals("loginContext(testType:testQualifier:NP-ONLY:INTERNAL)", entity.toShortString());
     }
 }

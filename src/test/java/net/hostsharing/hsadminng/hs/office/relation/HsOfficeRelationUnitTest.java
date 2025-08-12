@@ -28,7 +28,7 @@ class HsOfficeRelationUnitTest {
                 .holder(holder)
                 .build();
 
-        assertThat(given.toString()).isEqualTo("rel(anchor='LP some trade name', type='SUBSCRIBER', mark='members-announce', holder='NP Meier, Mellie')");
+        assertThat(given.toString()).isEqualTo("rel(anchor='LP some trade name', type=SUBSCRIBER, mark='members-announce', holder='NP Meier, Mellie')");
     }
 
     @Test
@@ -39,7 +39,7 @@ class HsOfficeRelationUnitTest {
                 .holder(holder)
                 .build();
 
-        assertThat(given.toShortString()).isEqualTo("rel(anchor='LP some trade name', type='REPRESENTATIVE', holder='NP Meier, Mellie')");
+        assertThat(given.toShortString()).isEqualTo("rel(anchor='LP some trade name', type=REPRESENTATIVE, holder='NP Meier, Mellie')");
     }
 
     @Test

@@ -15,7 +15,9 @@ declare
 
     context_HSADMIN_prod    hs_accounts.context;
     context_SSH_internal    hs_accounts.context;
+    context_SSH_external    hs_accounts.context;
     context_MATRIX_internal hs_accounts.context;
+    context_MATRIX_external hs_accounts.context;
 
 begin
     call base.defineContext('creating booking-project test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
@@ -26,17 +28,25 @@ begin
     personFranUuid = (SELECT uuid FROM hs_office.person WHERE givenName='Fran');
 
     -- Add test contexts
-    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons) VALUES
-        ('11111111-1111-1111-1111-111111111111', 'HSADMIN', 'prod', true)
+    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons, public_access) VALUES
+        ('11111111-1111-1111-1111-111111111111', 'HSADMIN', 'prod', true, true)
         RETURNING * INTO context_HSADMIN_prod;
-    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons) VALUES
-        ('22222222-2222-2222-2222-222222222222', 'SSH', 'internal', true)
-           RETURNING * INTO context_SSH_internal;
-    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons) VALUES
-        ('33333333-3333-3333-3333-333333333333', 'MATRIX', 'internal', true)
-           RETURNING * INTO context_MATRIX_internal;
-    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons) VALUES
-        ('44444444-4444-4444-4444-444444444444', 'MASTODON', 'external', false);
+    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons, public_access) VALUES
+        ('22222222-2222-2222-2222-222222222222', 'SSH', 'internal', true, false)
+       RETURNING * INTO context_SSH_internal;
+    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons, public_access) VALUES
+        ('33333333-3333-3333-3333-333333333333', 'SSH', 'external', false, true)
+       RETURNING * INTO context_SSH_external;
+    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons, public_access) VALUES
+        ('44444444-4444-4444-4444-444444444444', 'MATRIX', 'internal', true, false)
+       RETURNING * INTO context_MATRIX_internal;
+    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons, public_access) VALUES
+        ('55555555-5555-5555-5555-555555555555', 'MATRIX', 'external', true, true)
+       RETURNING * INTO context_MATRIX_external;
+    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons, public_access) VALUES
+        ('66666666-6666-6666-6666-666666666666', 'MASTODON', 'external', false, true);
+    INSERT INTO hs_accounts.context (uuid, type, qualifier, only_for_natural_persons, public_access) VALUES
+        ('77777777-7777-7777-7777-777777777777', 'BBB', 'external', false, true);
 
 -- grant general access to public credential contexts
 -- TODO_impl: RBAC rules for _rv do not yet work properly
@@ -59,12 +69,12 @@ begin
 
     -- Map credentials to contexts
     INSERT INTO hs_accounts.context_mapping (credentials_uuid, context_uuid) VALUES
-        (superuserAlexSubjectUuid, '11111111-1111-1111-1111-111111111111'), -- HSADMIN context
-        (superuserFranSubjectUuid, '11111111-1111-1111-1111-111111111111'), -- HSADMIN context
-        (superuserAlexSubjectUuid, '22222222-2222-2222-2222-222222222222'), -- SSH context
-        (superuserFranSubjectUuid, '22222222-2222-2222-2222-222222222222'), -- SSH context
-        (superuserAlexSubjectUuid, '33333333-3333-3333-3333-333333333333'), -- MATRIX context
-        (superuserFranSubjectUuid, '33333333-3333-3333-3333-333333333333'); -- MATRIX context
+        (superuserAlexSubjectUuid, context_HSADMIN_prod.uuid),
+        (superuserFranSubjectUuid, context_HSADMIN_prod.uuid),
+        (superuserAlexSubjectUuid, context_SSH_internal.uuid),
+        (superuserFranSubjectUuid, context_SSH_internal.uuid),
+        (superuserAlexSubjectUuid, context_MATRIX_internal.uuid),
+        (superuserFranSubjectUuid, context_MATRIX_internal.uuid);
 
 end; $$;
 --//

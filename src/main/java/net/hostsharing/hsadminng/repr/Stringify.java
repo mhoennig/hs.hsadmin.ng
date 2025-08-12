@@ -1,5 +1,8 @@
 package net.hostsharing.hsadminng.repr;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Value;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 
 import jakarta.validation.constraints.NotNull;
@@ -11,14 +14,13 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
 public final class Stringify<B> {
 
     private final String name;
     private Function<? extends B, ?> idProp;
-    private final List<Property<B>> props = new ArrayList<>();
+    private final List<Property<B, ?>> props = new ArrayList<>();
     private String separator = ", ";
     private Boolean quotedValues = null;
 
@@ -28,18 +30,6 @@ public final class Stringify<B> {
 
     public static <B> Stringify<B> stringify(final Class<B> clazz) {
         return new Stringify<>(clazz, null);
-    }
-
-    public <T extends B> Stringify<T> using(final Class<T> subClass) {
-        //noinspection unchecked
-        final var stringify = new Stringify<T>(subClass, null)
-                .withIdProp(cast(idProp))
-                .withProps(cast(props))
-                .withSeparator(separator);
-        if (quotedValues != null) {
-            stringify.quotedValues(quotedValues);
-        }
-        return stringify;
     }
 
     private Stringify(final Class<B> clazz, final String name) {
@@ -55,31 +45,30 @@ public final class Stringify<B> {
         }
     }
 
-    public Stringify<B> withIdProp(final Function<? extends B, ?> getter) {
+    public <V> Stringify<B> withIdProp(final Function<? extends B, V> getter) {
         idProp = getter;
         return this;
     }
 
-    public Stringify<B> withProp(final String propName, final Function<B, ?> getter) {
+    public <V> Stringify<B> withProp(final String propName, final Function<B, V> getter) {
         props.add(new Property<>(propName, getter));
         return this;
     }
 
-    public Stringify<B> withProp(final Function<B, ?> getter) {
+    public <V> Stringify<B> withProp(final Function<B, V> getter) {
         props.add(new Property<>(null, getter));
         return this;
     }
 
-    private Stringify<B> withProps(final List<Property<B>> props) {
-        this.props.addAll(props);
+    public <V> Stringify<B> withProp(final Function<B, V> getter, final Function<V, ?> mapper) {
+        props.add(new Property<>(null, getter, mapper));
         return this;
     }
 
     public String apply(@NotNull B object) {
         final var propValues = props.stream()
-                .map(prop -> PropertyValue.of(prop, prop.getter.apply(object)))
-                .filter(Objects::nonNull)
-                .filter(PropertyValue::nonEmpty)
+                .map(prop -> new PropertyValue<>(object, prop))
+                .filter(PropertyValue::notNullAndNotEmpty)
                 .map(propVal -> propName(propVal, "=") + optionallyQuoted(propVal))
                 .collect(Collectors.joining(separator));
         return idProp != null
@@ -92,24 +81,36 @@ public final class Stringify<B> {
         return this;
     }
 
-    private String propName(final PropertyValue<B> propVal, final String delimiter) {
+    private <V> String propName(final PropertyValue<B, V> propVal, final String delimiter) {
         return ofNullable(propVal.prop.name).map(v -> v + delimiter).orElse("");
     }
 
-    private String optionallyQuoted(final PropertyValue<B> propVal) {
+    private <B, V> String optionallyQuoted(final PropertyValue<B, V> propVal) {
         if (quotedValues == null)
-            return quotedQuotedValueType(propVal)
-                    ? ("'" + propVal.value + "'")
-                    : propVal.value;
-        return TRUE == quotedValues
-                ? ("'" + propVal.value + "'")
-                : propVal.value;
+            return quotableValueType(propVal.getValue())
+                    ? ("'" + propVal.stringValue + "'")
+                    : propVal.stringValue;
+        return quotedValues
+                ? ("'" + propVal.stringValue + "'")
+                : propVal.stringValue;
     }
 
-    private static <B> boolean quotedQuotedValueType(final PropertyValue<B> propVal) {
-        return !(propVal.rawValue instanceof Number || propVal.rawValue instanceof Boolean);
+    private <V> boolean quotableValueType(final V rawValue) {
+        return !(rawValue instanceof Enum) &&
+                !(rawValue instanceof Symbol) &&
+                !(rawValue instanceof Number) &&
+                !(rawValue instanceof Boolean);
     }
 
+    /**
+     *  Specifies whether the values should be quoted (true) or not (false).
+     *
+     *  If not specified, Enum, Symbol, Number and Boolean values are not quoted;
+     *  other value types are quoted.
+     *
+     * @param quotedValues
+     * @return
+     */
     public Stringify<B> quotedValues(final boolean quotedValues) {
         this.quotedValues = quotedValues;
         return this;
@@ -120,23 +121,48 @@ public final class Stringify<B> {
         return (T)object;
     }
 
-    private record Property<B>(String name, Function<B, ?> getter) {}
+    @Value
+    @AllArgsConstructor
+    private class Property<B, V> {
+        String name;
+        Function<B, V> getter;
+        Function<V, ?> mapper; // FIXME: better generics?
 
-    private record PropertyValue<B>(Property<B> prop, Object rawValue, String value) {
-
-        static <B> PropertyValue<B> of(Property<B> prop, Object rawValue) {
-            return rawValue != null ? new PropertyValue<>(prop, rawValue, toStringOrShortString(rawValue)) : null;
+        Property(String name, Function<B, V> getter) {
+            this(name, getter, v -> v);
         }
 
-        private static String toStringOrShortString(final Object rawValue) {
-            return rawValue instanceof Stringifyable stringifyable ? stringifyable.toShortString() : rawValue.toString();
+        Object getValue(final B object) {
+            return ofNullable(getter.apply(object))
+                .map(mapper)
+                .orElse(null);
+        }
+    }
+
+    @Getter
+    private class PropertyValue<B, V> {
+        private Property<B, V> prop;
+        private V value;
+        private String stringValue;
+
+        @SuppressWarnings("unchecked")
+        PropertyValue(final B object, final Property<B, ?> prop) {
+            // FIXME: simplify
+            final var typedProp = (Property<B, V>) prop;
+            final var value = typedProp.getValue(object);
+            final var stringifiedValue = value instanceof Stringifyable stringifyable
+                    ? stringifyable.toShortString()
+                    : Objects.toString(value);
+            this.prop = typedProp;
+            this.value = (V) value;
+            this.stringValue = stringifiedValue;
         }
 
-        boolean nonEmpty() {
-            return rawValue != null &&
-                    (!(rawValue instanceof Collection<?> c) || !c.isEmpty()) &&
-                    (!(rawValue instanceof Map<?,?> m) || !m.isEmpty()) &&
-                    (!(rawValue instanceof String s) || !s.isEmpty());
+        boolean notNullAndNotEmpty() {
+            return value != null &&
+                    (!(value instanceof Collection<?> c) || !c.isEmpty()) &&
+                    (!(value instanceof Map<?,?> m) || !m.isEmpty()) &&
+                    (!(value instanceof String s) || !s.isEmpty());
         }
     }
 }

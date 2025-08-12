@@ -77,7 +77,7 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
 
         // then
         assertThat(foundEntityOptional).isPresent();
-        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(HSADMIN:prod)");
+        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(HSADMIN:prod:NP-ONLY:PUBLIC)");
     }
 
     @Test
@@ -89,7 +89,7 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
 
         // then
         assertThat(foundEntityOptional).isPresent();
-        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(SSH:internal)");
+        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(SSH:internal:NP-ONLY:INTERNAL)");
     }
 
     @Test
