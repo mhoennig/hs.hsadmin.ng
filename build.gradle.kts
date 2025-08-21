@@ -669,3 +669,13 @@ tasks.register("compile") {
     description = "Compiles main and test Java sources."
     dependsOn("compileJava", "compileTestJava")
 }
+
+
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    // Enable debug when the debug property is set
+    if (project.hasProperty("debug")) {
+        jvmArgs = listOf("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
+    }
+    // Or always enable debug (remove the if condition)
+    // jvmArgs = listOf("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
+}

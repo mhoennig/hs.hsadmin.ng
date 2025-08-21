@@ -44,6 +44,11 @@ public class Context {
     }
 
     @Transactional(propagation = MANDATORY)
+    public void define() {
+        define(SecurityContextHolder.getContext().getAuthentication().getName(), null);
+    }
+
+    @Transactional(propagation = MANDATORY)
     public void define(final String currentSubject, final String assumedRoles) {
         define(toTask(request), toCurl(request), currentSubject, assumedRoles);
     }
@@ -86,12 +91,16 @@ public class Context {
         return (UUID) em.createNativeQuery("select rbac.currentSubjectUuid()", UUID.class).getSingleResult();
     }
 
-    public String[] fetchAssumedRoles() {
+    public String[] fetchAssumedRolesNames() {
         return (String[]) em.createNativeQuery("select base.assumedRoles() as roles", String[].class).getSingleResult();
     }
 
     public UUID[] fetchCurrentSubjectOrAssumedRolesUuids() {
         return (UUID[]) em.createNativeQuery("select rbac.currentSubjectOrAssumedRolesUuids() as uuids", UUID[].class).getSingleResult();
+    }
+
+    public boolean isGlobalAdmin() {
+        return (boolean) em.createNativeQuery("select rbac.isGlobalAdmin()", boolean.class).getSingleResult();
     }
 
     public static String getCallerMethodNameFromStackFrame(final int skipFrames) {

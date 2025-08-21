@@ -35,10 +35,13 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     @Timed("app.office.persons.api.getListOfPersons")
     public ResponseEntity<List<HsOfficePersonResource>> getListOfPersons(
             final String assumedRoles,
-            final String name) {
+            final String name,
+            final UUID representedByPersonUuid) {
         context.assumeRoles(assumedRoles);
 
-        final var entities = personRepo.findPersonByOptionalNameLike(name);
+        final var entities = representedByPersonUuid != null
+            ? personRepo.findPersonsrepresentedByPersonWithUuid(representedByPersonUuid)
+            : personRepo.findPersonByOptionalNameLike(name);
 
         final var resources = mapper.mapList(entities, HsOfficePersonResource.class);
         return ResponseEntity.ok(resources);

@@ -12,6 +12,30 @@ get:
           schema:
               type: string
           description: Prefix of caption to filter the results.
+        - name: representedByPersonUuid
+          in: query
+          required: false
+          schema:
+              type: string
+              format: uuid
+          description: if given, if only persons represented given person uuid should be returned
+    x-parameter-dependencies:
+        oneOf:
+            - properties:
+                  name:
+                      type: string
+                  not:
+                      required: [ representedByPersonUuid ]
+            - properties:
+                  representedByPersonUuid:
+                      type: string
+                      format: uuid
+                  not:
+                      required: [ name ]
+            - not:
+                  anyOf:
+                      - required: [ name ]
+                      - required: [ representedByPersonUuid ]
     responses:
         "200":
             description: OK

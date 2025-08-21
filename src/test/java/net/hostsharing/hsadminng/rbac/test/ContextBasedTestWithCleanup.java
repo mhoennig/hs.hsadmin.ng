@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test;
 
+import net.hostsharing.hsadminng.persistence.ImmutableBaseEntity;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantEntity;
@@ -52,7 +53,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    private TreeMap<UUID, Class<? extends BaseEntity>> entitiesToCleanup = new TreeMap<>();
+    private TreeMap<UUID, Class<? extends ImmutableBaseEntity>> entitiesToCleanup = new TreeMap<>();
 
     private static Long latestIntialTestDataSerialId;
     private static boolean countersInitialized = false;
@@ -67,19 +68,19 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
     private TestInfo testInfo;
 
-    public <T extends BaseEntity> T refresh(final T entity) {
+    public <T extends ImmutableBaseEntity> T refresh(final T entity) {
         final var merged = em.merge(entity);
         em.refresh(merged);
         return merged;
     }
 
-    public UUID toCleanup(final Class<? extends BaseEntity> entityClass, final UUID uuidToCleanup) {
+    public UUID toCleanup(final Class<? extends ImmutableBaseEntity> entityClass, final UUID uuidToCleanup) {
         out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup + ")");
         entitiesToCleanup.put(uuidToCleanup, entityClass);
         return uuidToCleanup;
     }
 
-    public <E extends BaseEntity> E toCleanup(final E entity) {
+    public <E extends ImmutableBaseEntity> E toCleanup(final E entity) {
         out.println("toCleanup(" + entity.getClass() + ", " + entity.getUuid());
         if ( entity.getUuid() == null ) {
             throw new IllegalArgumentException("only persisted entities with valid uuid allowed");

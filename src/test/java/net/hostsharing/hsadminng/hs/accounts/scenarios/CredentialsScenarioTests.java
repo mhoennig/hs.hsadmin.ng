@@ -49,6 +49,42 @@ class CredentialsScenarioTests extends ScenarioTest {
     @Nested
     @Order(10)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class RbacContextScenarios {
+
+        @Test
+        @Order(1010)
+        @Produces("RBAC Context")
+        void shouldFetchRbacContext() {
+            new FetchRbacContext(scenarioTest)
+                    .given("subjectName", "superuser-fran@hostsharing.net")
+                    .given("assumedRoles", "rbactest.package#xxx00:ADMIN;rbactest.package#yyy00:ADMIN")
+                    .given("expectedToBeGlobalAdmin", true)
+                    .doRun()
+                    .keep();
+        }
+    }
+
+    @Nested
+    @Order(20)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class CurrentLoginUserScenarios {
+
+        @Test
+        @Order(2010)
+        @Produces("Current Login User")
+        void shouldFetchCurrentLoginUser() {
+            new CurrentLoginUser(scenarioTest)
+                    .given("subjectName", "superuser-fran@hostsharing.net")
+                    .given("personGivenName", "Fran")
+                    .given("expectedToBeGlobalAdmin", true)
+                    .doRun()
+                    .keep();
+        }
+    }
+
+    @Nested
+    @Order(30)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class CredentialScenarios {
 
         @Test

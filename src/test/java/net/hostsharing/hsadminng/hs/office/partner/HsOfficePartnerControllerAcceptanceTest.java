@@ -413,7 +413,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var newPartnerPersonUuid = givenPartner.getPartnerRel().getHolder().getUuid();
             assertThat(relationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(newPartnerPersonUuid, EX_PARTNER, null, null, null))
                     .map(HsOfficeRelation::toShortString)
-                    .contains("rel(anchor='NP Winkler, Paul', type='EX_PARTNER', holder='UF Erben Bessler')");
+                    .contains("rel(anchor='NP Winkler, Paul', type=EX_PARTNER, holder='UF Erben Bessler')");
         }
 
         @Test

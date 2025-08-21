@@ -155,16 +155,24 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
-    public final HttpResponse httpGet(final String uriPathWithPlaceholders) {
-        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
-        final var request = HttpRequest.newBuilder()
+    public final HttpResponse httpGet(
+            final String uriPathWithPlaceholder,
+            final Function<HttpRequest.Builder, HttpRequest.Builder> requestCustomizer) {
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholder, DROP_COMMENTS);
+        final var requestBuilder = HttpRequest.newBuilder()
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
-                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
-                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
-                .build();
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS));
+        final var customizedRequestBuilder = requestCustomizer.apply(requestBuilder);
+        final var request = customizedRequestBuilder.build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.GET, uriPath, null, response);
+    }
+
+    @SneakyThrows
+    public final HttpResponse httpGet(final String uriPathWithPlaceholders) {
+       return httpGet(uriPathWithPlaceholders,
+               req -> req.header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER));
     }
 
     @SneakyThrows

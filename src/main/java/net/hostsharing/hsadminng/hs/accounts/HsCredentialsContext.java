@@ -32,9 +32,9 @@ public abstract class HsCredentialsContext implements Stringifyable, BaseEntity<
     private static Stringify<HsCredentialsContext> stringify = stringify(HsCredentialsContext.class, "loginContext")
             .withProp(HsCredentialsContext::getType)
             .withProp(HsCredentialsContext::getQualifier)
-            .withProp(HsCredentialsContext::isOnlyForNaturalPersons, 
+            .withProp(HsCredentialsContext::isOnlyForNaturalPersons,
         value -> value ? symbol("NP-ONLY") : null)
-            .withProp(HsCredentialsContext::isPublicAccess, 
+            .withProp(HsCredentialsContext::isPublicAccess,
         value -> value ? symbol("PUBLIC") : symbol("INTERNAL"))
             .quotedValues(false)
             .withSeparator(":");

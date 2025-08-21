@@ -8,6 +8,11 @@ servers:
 
 paths:
 
+  # current
+
+  /api/hs/accounts/current:
+    $ref: "current.yaml"
+
   # Contexts
 
   /api/hs/accounts/contexts:

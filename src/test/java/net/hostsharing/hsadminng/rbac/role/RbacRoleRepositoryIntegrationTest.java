@@ -177,6 +177,31 @@ class RbacRoleRepositoryIntegrationTest {
         }
     }
 
+    @Nested
+    class FetchAssumedRoles {
+
+        @Test
+        void someSubject_withoutAssumedRole_fetchesNoAssumedRoles() {
+            context.define("customer-admin@xxx.example.com");
+
+            final var result = rbacRoleRepository.fetchAssumedRoles();
+
+            assertThat(result).isNotNull().hasSize(0);
+        }
+
+        @Test
+        void someSubject_withAssumedRoles_fetchesAssumedRoles() {
+            context.define("customer-admin@xxx.example.com",
+                    "rbactest.package#xxx00:OWNER;rbactest.package#xxx01:OWNER;rbactest.package#xxx02:OWNER");
+
+            final var result = rbacRoleRepository.fetchAssumedRoles();
+
+            assertThat(result).isNotNull().hasSize(3)
+                    .extracting(RbacRoleEntity::getRoleName)
+                    .contains("rbactest.package#xxx00:OWNER", "rbactest.package#xxx01:OWNER", "rbactest.package#xxx02:OWNER");
+        }
+    }
+
     void exactlyTheseRbacRolesAreReturned(final List<RbacRoleEntity> actualResult, final String... expectedRoleNames) {
         assertThat(actualResult)
                 .extracting(RbacRoleEntity::getRoleName)

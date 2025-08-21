@@ -21,7 +21,3 @@ components:
                     type: boolean
             required:
                 - uuid
-                - type
-                - qualifier
-                - onlyForNaturalPersons
-                - publicAccess

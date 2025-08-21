@@ -100,6 +100,6 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
         final var targetObject = (UUID) em.createNativeQuery("SELECT uuid FROM hs_office.coopassettx WHERE reference='ref 1000101-1'").getSingleResult();
         final var graph = grantsMermaidService.allGrantsFrom(targetObject, "view", EnumSet.of(Include.USERS));
 
-        RbacGrantsDiagramService.writeToFile(join(";", context.fetchAssumedRoles()), graph, "doc/all-grants.md");
+        RbacGrantsDiagramService.writeToFile(join(";", context.fetchAssumedRolesNames()), graph, "doc/all-grants.md");
     }
 }

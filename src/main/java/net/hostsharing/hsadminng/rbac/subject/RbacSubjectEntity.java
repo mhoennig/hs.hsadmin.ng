@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import lombok.*;
+import net.hostsharing.hsadminng.persistence.ImmutableBaseEntity;
 import org.springframework.data.annotation.Immutable;
 
 import jakarta.persistence.Entity;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @Immutable
 @NoArgsConstructor
 @AllArgsConstructor
-public class RbacSubjectEntity {
+public class RbacSubjectEntity implements ImmutableBaseEntity<RbacSubjectEntity> {
 
     private static final int MAX_VALIDITY_DAYS = 21;
     private static DateTimeFormatter DATE_FORMAT_WITH_FULLHOUR = DateTimeFormatter.ofPattern("MM-dd-yyyy HH");

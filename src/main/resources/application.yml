@@ -72,6 +72,9 @@ metrics:
 logging:
     level:
         org.springframework.security: info
+        org.springframework.web: DEBUG
+        org.springframework.web.method.annotation: DEBUG
+        org.springframework.validation: DEBUG
 # HOWTO configure logging, e.g. logging to a separate file, see:
 #   https://docs.spring.io/spring-boot/reference/features/logging.html
 

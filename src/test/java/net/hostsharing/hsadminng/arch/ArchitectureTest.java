@@ -83,6 +83,7 @@ public class ArchitectureTest {
                     "..mapper",
                     "..ping",
                     "..rbac",
+                    "..rbac.context",
                     "..rbac.generator",
                     "..rbac.subject",
                     "..rbac.grant",
@@ -238,7 +239,8 @@ public class ArchitectureTest {
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
                     "..hs.migration..",
-                    "..hs.hosting.asset.."
+                    "..hs.hosting.asset..",
+                    "..hs.accounts.."
                     );
 
     @ArchTest

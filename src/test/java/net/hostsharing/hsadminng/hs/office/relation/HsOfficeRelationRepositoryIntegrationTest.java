@@ -126,7 +126,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             final var stored = relationRbacRepo.findByUuid(result.returnedValue().getUuid());
             assertThat(stored).isNotEmpty().map(HsOfficeRelation::toString).get()
                     .isEqualTo(
-                            "rel(anchor='UF Erben Bessler', type='SUBSCRIBER', mark='operations-announce', holder='NP Winkler, Paul', contact='fourth contact')");
+                            "rel(anchor='UF Erben Bessler', type=SUBSCRIBER, mark='operations-announce', holder='NP Winkler, Paul', contact='fourth contact')");
         }
 
         @Test
@@ -213,9 +213,9 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // then
             allTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
-                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
-                    "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')");
+                    "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='NP Smith, Peter', contact='sixth contact')",
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type=REPRESENTATIVE, holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='IF Third OHG', type=SUBSCRIBER, mark='members-announce', holder='NP Smith, Peter', contact='third contact')");
         }
 
         @Test
@@ -237,10 +237,10 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // then:
             exactlyTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
-                    "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')",
-                    "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
-                    "rel(anchor='NP Smith, Peter', type='DEBITOR', holder='NP Smith, Peter', contact='third contact')");
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type=REPRESENTATIVE, holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='IF Third OHG', type=SUBSCRIBER, mark='members-announce', holder='NP Smith, Peter', contact='third contact')",
+                    "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='NP Smith, Peter', contact='sixth contact')",
+                    "rel(anchor='NP Smith, Peter', type=DEBITOR, holder='NP Smith, Peter', contact='third contact')");
         }
     }
 

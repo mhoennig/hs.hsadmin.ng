@@ -1,9 +1,14 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
-import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.hibernate.TransientObjectException;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,15 +27,18 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.REPRESENTATIVE;
+import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 @DataJpaTest
 @Tag("generalIntegrationTest")
 @Import({ Context.class, JpaAttempt.class })
-class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
+class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     private static final String SUPERUSER_ALEX_SUBJECT_NAME = "superuser-alex@hostsharing.net";
+    private static final String SUPERUSER_FRAN_SUBJECT_NAME = "superuser-fran@hostsharing.net";
     private static final String USER_DREW_SUBJECT_NAME = "selfregistered-user-drew@hostsharing.org";
     private static final String TEST_USER_SUBJECT_NAME = "selfregistered-test-user@hostsharing.org";
 
@@ -40,6 +48,9 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     //  If, e.g. for validators, the current user or assumed roles are needed, the values need to be mocked.
     @MockitoBean
     HttpServletRequest request;
+
+    @Autowired
+    private HsOfficePersonRealRepository personRepo;
 
     @Autowired
     private HsCredentialsRepository credentialsRepository;
@@ -74,7 +85,9 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
         final var rowsBefore = query.getResultList();
 
         // then
-        assertThat(rowsBefore).as("hs_accounts.credentials_hv only contain no rows for a timestamp before test data creation").hasSize(0);
+        assertThat(rowsBefore)
+                .as("hs_accounts.credentials_hv only contain no rows for a timestamp before test data creation")
+                .hasSize(0);
 
         // and when
         historicalContext(Timestamp.from(ZonedDateTime.now().toInstant()));
@@ -82,7 +95,53 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
         final var rowsAfter = query.getResultList();
 
         // then
-        assertThat(rowsAfter).as("hs_accounts.credentials_hv should now contain the test-data rows for the current timestamp").hasSize(2);
+        assertThat(rowsAfter)
+                .as("hs_accounts.credentials_hv should now contain the test-data rows for the current timestamp")
+                .hasSize(3);
+    }
+
+    @Test
+    void representativeShouldFindOwnAndRepresentedCredentialsByCurrentSubject() {
+        // given
+        final var firstGmbHPerson = givenPerson("First GmbH");
+        givenRelation(REPRESENTATIVE)
+                .withAnchorPersonLike(firstGmbHPerson)
+                .withHolder(drewPerson)
+                .withContact("some test contact");
+        givenCredentials()
+                .forSubject("first-gmbh")
+                .forPerson(firstGmbHPerson)
+                .withEMailAddress("first-gmbh@example.com");
+
+        // when
+        final var foundCredentials = attempt(
+                em, () -> {
+                    context(USER_DREW_SUBJECT_NAME);
+                    return credentialsRepository.findByCurrentSubject();
+                })
+                .assertNotNull().returnedValue();
+
+        // then
+        assertThat(foundCredentials).hasSize(2)
+                .map(HsCredentialsEntity::getEmailAddress)
+                .containsExactlyInAnyOrder("drew@example.org", "first-gmbh@example.com");
+    }
+
+    @Test
+    void globalAdminShouldFindOnlyOwnCredentialsByCurrentSubject() {
+
+        // when
+        final var foundCredentials = attempt(
+                em, () -> {
+                    context(SUPERUSER_FRAN_SUBJECT_NAME);
+                    return credentialsRepository.findByCurrentSubject();
+                })
+                .assertNotNull().returnedValue();
+
+        // then
+        assertThat(foundCredentials).hasSize(1)
+                .map(HsCredentialsEntity::getEmailAddress)
+                .containsExactlyInAnyOrder("fran@example.com");
     }
 
     @Test
@@ -101,28 +160,28 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
         final var existingContext = loginContextRealRepo.findByTypeAndQualifier("HSADMIN", "prod")
                 .orElseThrow();
         final var newCredentials = HsCredentialsEntity.builder()
-                .subject(drewSubject)
-                .person(drewPerson)
+                .subject(testUserSubject)
+                .person(testUserPerson)
                 .active(true)
-                .emailAddress("drew.new@example.com")
-                .globalUid(2001)
-                .globalGid(2001)
+                .emailAddress("test-user@example.com")
+                .globalUid(2011)
+                .globalGid(2011)
                 .loginContexts(mutableSetOf(existingContext))
                 .build();
 
         // when
-        credentialsRepository.save(newCredentials);
+        toCleanup(credentialsRepository.save(newCredentials));
         em.flush();
         em.clear();
 
         // then
-        final var foundEntityOptional = credentialsRepository.findByUuid(drewSubject.getUuid());
+        final var foundEntityOptional = credentialsRepository.findByUuid(testUserSubject.getUuid());
         assertThat(foundEntityOptional).isPresent();
         final var foundEntity = foundEntityOptional.get();
-        assertThat(foundEntity.getEmailAddress()).isEqualTo("drew.new@example.com");
+        assertThat(foundEntity.getEmailAddress()).isEqualTo("test-user@example.com");
         assertThat(foundEntity.isActive()).isTrue();
         assertThat(foundEntity.getVersion()).isEqualTo(0); // Initial version
-        assertThat(foundEntity.getGlobalUid()).isEqualTo(2001);
+        assertThat(foundEntity.getGlobalUid()).isEqualTo(2011);
 
         assertThat(foundEntity.getLoginContexts()).hasSize(1)
                 .map(HsCredentialsContextRealEntity::toString).contains("loginContext(HSADMIN:prod:NP-ONLY:PUBLIC)");
@@ -239,5 +298,89 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTest {
     @SafeVarargs
     private <T> Set<T> mutableSetOf(final T... elements) {
         return new HashSet<T>(Set.of(elements));
+    }
+
+    private HsOfficePersonRealEntity givenPerson(String personName) {
+        return personRepo.findPersonByOptionalNameLike(personName).getFirst();
+    }
+
+    private RelationBuilder givenRelation(HsOfficeRelationType relationType) {
+        return new RelationBuilder(relationType);
+    }
+
+    private CredentialsBuilder givenCredentials() {
+        return new CredentialsBuilder();
+    }
+
+    private class RelationBuilder {
+        private final HsOfficeRelationType relationType;
+        private HsOfficePersonRealEntity anchorPerson;
+        private HsOfficePersonRbacEntity holderPerson;
+        private HsOfficeContactRealEntity contact;
+
+        public RelationBuilder(HsOfficeRelationType relationType) {
+            this.relationType = relationType;
+        }
+
+        public RelationBuilder withAnchorPersonLike(HsOfficePersonRealEntity anchorPerson) {
+            this.anchorPerson = anchorPerson;
+            return this;
+        }
+
+        public RelationBuilder withHolder(HsOfficePersonRbacEntity holderPerson) {
+            this.holderPerson = holderPerson;
+            return this;
+        }
+
+        public HsOfficeRelationRealEntity withContact(String caption) {
+            this.contact = HsOfficeContactRealEntity.builder()
+                    .caption(caption)
+                    .build();
+            em.persist(contact);
+
+            final var relation = HsOfficeRelationRealEntity.builder()
+                    .type(relationType)
+                    .anchor(anchorPerson)
+                    .holder(em.getReference(HsOfficePersonRealEntity.class, holderPerson.getUuid()))
+                    .contact(contact)
+                    .build();
+            em.persist(relation);
+            em.flush();
+            return relation;
+        }
+    }
+
+    private class CredentialsBuilder {
+        private RbacSubjectEntity subject;
+        private HsOfficePersonRealEntity person;
+
+        public CredentialsBuilder forSubject(String subjectName) {
+            this.subject = RbacSubjectEntity.builder()
+                    .name(subjectName)
+                    .build();
+            em.persist(subject);
+            toCleanup(subject);
+            return this;
+        }
+
+        public CredentialsBuilder forPerson(HsOfficePersonRealEntity person) {
+            this.person = person;
+            return this;
+        }
+
+        public HsCredentialsEntity withEMailAddress(String emailAddress) {
+
+            final var credentials = HsCredentialsEntity.builder()
+                    .uuid(subject.getUuid())
+                    .subject(subject)
+                    .person(em.find(HsOfficePersonRbacEntity.class, person.getUuid()))
+                    .emailAddress(emailAddress)
+                    .active(true)
+                    .build();
+            em.persist(credentials);
+            toCleanup(credentials);
+            em.flush();
+            return credentials;
+        }
     }
 }

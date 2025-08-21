@@ -1,0 +1,17 @@
+get:
+    summary: Currently logged in user data.
+    description: Returns information about the currently logged in user.
+    tags:
+        - credentials
+    operationId: getCurrentLoginUser
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'credentials-schemas.yaml#/components/schemas/CurrentLoginUser'
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

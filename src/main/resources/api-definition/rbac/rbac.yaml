@@ -8,6 +8,9 @@ servers:
 
 paths:
 
+    /api/rbac/context:
+        $ref: 'rbac-context.yaml'
+
     /api/rbac/subjects:
         $ref: 'rbac-subjects.yaml'
 

@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.role;
 
 import io.micrometer.core.annotation.Timed;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 import java.util.List;
@@ -22,4 +23,12 @@ public interface RbacRoleRepository extends Repository<RbacRoleEntity, UUID> {
 
     @Timed("app.rbac.roles.repo.findByRoleName")
     RbacRoleEntity findByRoleName(String roleName);
+
+    @Timed("app.rbac.roles.repo.fetchAssumedRoles")
+    @Query(value = """
+        SELECT rev.*, rev.objectTable||'#'||rev.objectIdName||':'||rev.roleType AS roleName
+        FROM rbac.role_ev rev
+        WHERE rev.uuid = ANY(rbac.currentSubjectOrAssumedRolesUuids())
+        """, nativeQuery = true)
+    List<RbacRoleEntity> fetchAssumedRoles();
 }

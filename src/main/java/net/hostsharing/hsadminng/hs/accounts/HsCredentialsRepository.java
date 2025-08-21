@@ -19,30 +19,22 @@ public interface HsCredentialsRepository extends Repository<HsCredentialsEntity,
 
     @Timed("app.login.credentials.repo.findByCurrentSubject")
     @Query(nativeQuery = true, value = """
-            WITH RECURSIVE owned_persons AS (
-                -- Start with the person linked to current subject's credentials
-                SELECT p.uuid AS person_uuid
-                FROM hs_accounts.credentials c
-                JOIN hs_office.person p ON p.uuid = c.person_uuid
-                WHERE c.uuid = rbac.currentSubjectUuid()
-                
-                UNION
-                
-                -- Add persons where the current person has OWNER role
-                SELECT p.uuid AS person_uuid
-                FROM owned_persons op
-                CROSS JOIN hs_office.person p
-                WHERE rbac.isGranted(
-                    rbac.currentSubjectUuid(),
-                    rbac.findRoleId(
-                        rbac.roleDescriptorOf('hs_office.person', p.uuid, 'OWNER'::rbac.RoleType, false)
-                    )
+             WITH RECURSIVE
+                same_person AS (
+                    SELECT own_credentials.person_uuid
+                    FROM hs_accounts.credentials own_credentials
+                    WHERE own_credentials.uuid = rbac.currentSubjectUuid()
+                ),
+                represented_persons AS (
+                    SELECT relation.anchorUuid person_uuid
+                    FROM hs_office.relation relation
+                    WHERE relation.type = 'REPRESENTATIVE'
+                      AND relation.holderUuid IN (SELECT person_uuid FROM same_person)
                 )
-            )
-            SELECT DISTINCT c.*
-            FROM hs_accounts.credentials c
-            WHERE c.uuid = rbac.currentSubjectUuid()  -- Include current subject's own credentials
-               OR c.person_uuid IN (SELECT person_uuid FROM owned_persons)  -- Include credentials of owned persons
+            SELECT DISTINCT credentials.*
+            FROM hs_accounts.credentials credentials
+            WHERE credentials.person_uuid IN (SELECT person_uuid FROM same_person)
+               OR credentials.person_uuid IN (SELECT person_uuid FROM represented_persons)
             """)
     List<HsCredentialsEntity> findByCurrentSubject();
 

@@ -40,7 +40,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     private UUID uuid;
 
     @MapsId
-    @OneToOne(optional = false, fetch = FetchType.LAZY)
+    @OneToOne(optional = false, fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "uuid", nullable = false, updatable = false, referencedColumnName = "uuid")
     private RbacSubjectEntity subject;
 
@@ -78,7 +78,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
     @Column
     private String smsNumber;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = { MERGE, REFRESH }, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = { MERGE, REFRESH })
     @JoinTable(
             name = "context_mapping", schema = "hs_accounts",
             joinColumns = @JoinColumn(name = "credentials_uuid", referencedColumnName = "uuid"),

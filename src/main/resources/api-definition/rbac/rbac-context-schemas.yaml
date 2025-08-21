@@ -1,0 +1,16 @@
+
+components:
+
+  schemas:
+
+    RbacContext:
+      type: object
+      properties:
+        subject:
+          $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+        assumedRoles:
+          type: array
+          items:
+            $ref: 'rbac-role-schemas.yaml#/components/schemas/RbacRole'
+        globalAdmin:
+          type: boolean

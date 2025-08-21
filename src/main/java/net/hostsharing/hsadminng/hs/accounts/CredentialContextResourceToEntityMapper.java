@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.accounts;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ContextResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +55,8 @@ public class CredentialContextResourceToEntityMapper {
                             messageTranslator.translate("{0} \"{1}\" not found or not accessible",
                                     "credentials uuid", resource.getUuid()));
                 }
-                if (!existingContextEntity.getType().equals(resource.getType()) &&
-                    !existingContextEntity.getQualifier().equals(resource.getQualifier())) {
+                if ((resource.getType() != null && !existingContextEntity.getType().equals(resource.getType())) ||
+                    (resource.getQualifier() != null && !existingContextEntity.getQualifier().equals(resource.getQualifier()))) {
                     throw new EntityNotFoundException(
                             messageTranslator.translate("existing {0} does not match given resource {1}",
                                     existingContextEntity, resource));

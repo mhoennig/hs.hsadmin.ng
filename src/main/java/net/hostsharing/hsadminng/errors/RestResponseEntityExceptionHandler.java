@@ -34,7 +34,7 @@ import static net.hostsharing.hsadminng.errors.CustomErrorResponse.*;
 
 @ControllerAdvice
 @RequiredArgsConstructor
-// HOWTO handle exceptions to produce specific http error codes and sensible error messages
+// HOWTO error handler mapping exceptions to specific http error codes and sensible error messages
 public class RestResponseEntityExceptionHandler
         extends ResponseEntityExceptionHandler {
 

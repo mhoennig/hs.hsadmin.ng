@@ -144,6 +144,7 @@ class HsOfficePersonEntityUnitTest {
 
         assertThat(actualDisplay).isEqualTo("person(salutation='Herr', title='Prof. Dr.', familyName='some family name', givenName='some given name')");
     }
+
     @Test
     void toStringWithSalutationAndWithoutTitleSkipsTitle() {
         final var givenPersonEntity = HsOfficePersonRbacEntity.builder()

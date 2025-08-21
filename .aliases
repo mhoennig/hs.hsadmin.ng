@@ -74,8 +74,11 @@ function importLegacyData() {
 alias gw-importHostingAssets='importLegacyData importHostingAssets'
 
 function gradlewBootRun() {
-    echo gw bootRun --args="--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=${1:-8080}"
-    ./gradlew bootRun --args="--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=${1:-8080}"
+    local port=${1:-8080}
+    shift
+    local additional_args="$@"
+    echo gw bootRun --args="--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=${port} ${additional_args}"
+    ./gradlew bootRun --args="--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=${port} ${additional_args}"
 }
 alias gw-bootRun=gradlewBootRun
 
@@ -155,4 +158,3 @@ source .environment
 
 alias scenario-reports-upload='./gradlew scenarioTest convertMarkdownToHtml && ssh hsh03-hsngdev@hsh03.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@hsh03.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
 alias scenario-reports-open='open https://hsngdev.hs-example.de/scenarios/office'
-

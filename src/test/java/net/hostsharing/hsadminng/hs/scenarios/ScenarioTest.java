@@ -1,9 +1,11 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +19,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
@@ -159,7 +162,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
                         assertThat(knowVariables().containsKey(declaredAlias))
                                 .as("@Producer method " + currentTestMethod.getName() +
                                         " did declare but not produce \"" + declaredAlias + "\"")
-                                .isTrue() );
+                                .isTrue());
             }
         });
     }
@@ -201,6 +204,14 @@ public abstract class ScenarioTest extends ContextBasedTest {
     public static String resolve(final String text, final Resolver resolver) {
         final var resolved = new TemplateResolver(text, ScenarioTest.knowVariables()).resolve(resolver);
         return resolved;
+    }
+
+    @SneakyThrows
+    public static List<Map<String, Object>> resolveJsonArray(final String text) {
+        return new ObjectMapper().readValue(
+                resolve(text, DROP_COMMENTS),
+                new TypeReference<>() {}
+        );
     }
 
     public static Object resolveTyped(final String resolvableText) {

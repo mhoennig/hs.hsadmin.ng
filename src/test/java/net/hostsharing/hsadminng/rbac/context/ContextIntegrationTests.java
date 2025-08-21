@@ -68,7 +68,7 @@ class ContextIntegrationTests {
 
         assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
 
-        assertThat(context.fetchAssumedRoles()).isEmpty();
+        assertThat(context.fetchAssumedRolesNames()).isEmpty();
 
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
                 .containsExactly(context.fetchCurrentSubjectUuid());
@@ -90,7 +90,7 @@ class ContextIntegrationTests {
 
         assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
 
-        assertThat(context.fetchAssumedRoles()).isEqualTo(Array.of("rbactest.package#yyy00:ADMIN"));
+        assertThat(context.fetchAssumedRolesNames()).isEqualTo(Array.of("rbactest.package#yyy00:ADMIN"));
 
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
                 .containsExactly(context.fetchCurrentSubjectOrAssumedRolesUuids());
@@ -133,7 +133,7 @@ class ContextIntegrationTests {
         assertThat(currentSubject).isEqualTo("superuser-alex@hostsharing.net");
 
         // then
-        assertThat(context.fetchAssumedRoles())
+        assertThat(context.fetchAssumedRolesNames())
                 .isEqualTo(Array.of("rbactest.customer#xxx:OWNER", "rbactest.customer#yyy:OWNER"));
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids()).hasSize(2);
     }

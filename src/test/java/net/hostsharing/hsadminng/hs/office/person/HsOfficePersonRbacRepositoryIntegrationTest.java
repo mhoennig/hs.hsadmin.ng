@@ -259,13 +259,30 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
     }
 
     @Test
+    public void findPersonsrepresentedByPersonWithUuid() {
+
+        // given
+        context("superuser-alex@hostsharing.net");
+        final var personUuid = personRbacRepo.findPersonByOptionalNameLike("Fouler").getFirst().getUuid();
+
+        // when
+        @SuppressWarnings("unchecked") final List<HsOfficePersonRbacEntity> representedPersons = personRbacRepo.findPersonsrepresentedByPersonWithUuid(personUuid);
+
+        // then
+        assertThat(representedPersons).map(Object::toString).containsExactlyInAnyOrder(
+                "person(personType=NP, familyName='Fouler', givenName='Ellie')",
+                "person(personType=LP, tradeName='Fourth eG')"
+        );
+    }
+
+    @Test
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'tradename', targetdelta->>'lastname'
                     from base.tx_journal_v
                     where targettable = 'hs_office.person';
-                    """);
+                """);
 
         // when
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();

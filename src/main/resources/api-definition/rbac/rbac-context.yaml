@@ -1,0 +1,18 @@
+get:
+    tags:
+        - rbac-context
+    description: Information about the current subject.
+    operationId: getContext
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+    responses:
+        '200':
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'rbac-context-schemas.yaml#/components/schemas/RbacContext'
+        '401':
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        '403':
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

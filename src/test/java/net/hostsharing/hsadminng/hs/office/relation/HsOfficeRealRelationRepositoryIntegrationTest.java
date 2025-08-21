@@ -62,10 +62,10 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
             exactlyTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
-                    "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
-                    "rel(anchor='NP Smith, Peter', type='DEBITOR', holder='NP Smith, Peter', contact='third contact')",
-                    "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')"
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type=REPRESENTATIVE, holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='NP Smith, Peter', contact='sixth contact')",
+                    "rel(anchor='NP Smith, Peter', type=DEBITOR, holder='NP Smith, Peter', contact='third contact')",
+                    "rel(anchor='IF Third OHG', type=SUBSCRIBER, mark='members-announce', holder='NP Smith, Peter', contact='third contact')"
             );
         }
 
@@ -81,7 +81,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
             exactlyTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')"
+                    "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type=REPRESENTATIVE, holder='NP Smith, Peter', contact='second contact')"
             );
         }
     }

@@ -23,6 +23,22 @@ public interface HsOfficePersonRbacRepository extends Repository<HsOfficePersonR
     @Timed("app.office.persons.repo.findPersonByOptionalNameLike.rbac")
     List<HsOfficePersonRbacEntity> findPersonByOptionalNameLike(String name);
 
+    @Query(value = """
+            WITH RECURSIVE
+                represented_persons AS (
+                    SELECT relation.anchorUuid person_uuid
+                    FROM hs_office.relation relation
+                    WHERE relation.type = 'REPRESENTATIVE'
+                      AND relation.holderUuid = :personUuid
+                )
+            SELECT person.*
+                FROM hs_office.person person
+                WHERE person.uuid IN (SELECT person_uuid FROM represented_persons)
+                        OR person.uuid = :personUuid
+            """, nativeQuery = true)
+    @Timed("app.office.persons.repo.findRepresentedPersons.rbac")
+    List<HsOfficePersonRbacEntity> findPersonsrepresentedByPersonWithUuid(UUID personUuid);
+
     @Timed("app.office.persons.repo.save.rbac")
     HsOfficePersonRbacEntity save(final HsOfficePersonRbacEntity entity);
 
