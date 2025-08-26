@@ -113,20 +113,37 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
-    void accessToApiWithoutTokenShouldBeDenied() {
+    void accessToPingApiWithoutTokenShouldBePermitted() {
         final var result = this.restTemplate.getForEntity(
                 "http://localhost:" + this.serverPort + "/api/ping", String.class);
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
-    void accessToApiWithInvalidTokenShouldBeDenied() {
+    void accessToPongApiWithValidTokenShouldBePermitted() {
         // given
         givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
 
         // when
         final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/ping",
+                "http://localhost:" + this.serverPort + "/api/pong",
+                HttpMethod.GET,
+                httpHeaders(entry("Authorization", "Bearer ST-fake-cas-ticket")),
+                String.class
+        );
+
+        // then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void accessToPongApiWithInvalidTokenShouldBeDenied() {
+        // given
+        givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
+
+        // when
+        final var result = restTemplate.exchange(
+                "http://localhost:" + this.serverPort + "/api/pong",
                 HttpMethod.GET,
                 httpHeaders(entry("Authorization", "Bearer ST-WRONG-cas-ticket")),
                 String.class

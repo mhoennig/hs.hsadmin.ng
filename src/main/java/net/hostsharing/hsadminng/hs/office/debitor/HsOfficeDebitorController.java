@@ -17,6 +17,7 @@ import org.apache.commons.lang3.Validate;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
@@ -33,6 +34,7 @@ import static net.hostsharing.hsadminng.hs.validation.UuidResolver.resolve;
 import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 

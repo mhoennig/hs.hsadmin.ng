@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,6 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true) // Add this annotation
 // TODO.impl: securitySchemes should work in OpenAPI yaml, but the Spring templates seem not to support it
 @SecurityScheme(type = SecuritySchemeType.HTTP, name = "casTicket", scheme = "bearer", bearerFormat = "CAS ticket", description = "CAS ticket", in = SecuritySchemeIn.HEADER)
 public class WebSecurityConfig {
@@ -35,12 +37,13 @@ public class WebSecurityConfig {
         return http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
+                                // only list endpoints implemented in libraries here
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/actuator/**",
-                                "/api/hs/hosting/asset-types/**"
+                                "/actuator/**"
+                                // otherwise use @PreAuthorize annotation at the controller class / endpoint method level
                         ).permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/**").permitAll() // controlled at method level
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(authenticationFilter, AuthenticationFilter.class)

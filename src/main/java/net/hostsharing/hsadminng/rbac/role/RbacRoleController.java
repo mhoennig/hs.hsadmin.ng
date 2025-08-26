@@ -8,12 +8,14 @@ import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacRolesApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class RbacRoleController implements RbacRolesApi {
 

@@ -20,6 +20,7 @@ import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.repository.Repository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.annotation.PostConstruct;
@@ -371,6 +372,32 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
+    static final ArchRule everyRestControllerShouldRequireAuthentication =
+            classes()
+                    .that().areAnnotatedWith(RestController.class)
+                    .should(havePreAuthorizeWithValue("isAuthenticated()"))
+                    .because("Every REST controller should require authentication by default, use @PreAuthorize(...) to override this at the endpoint method level.");
+
+    private static ArchCondition<JavaClass> havePreAuthorizeWithValue(String expectedValue) {
+        return new ArchCondition<>("have @PreAuthorize(\"" + expectedValue + "\")") {
+            @Override
+            public void check(JavaClass javaClass, ConditionEvents events) {
+                boolean satisfied = javaClass.tryGetAnnotationOfType(PreAuthorize.class)
+                        .map(annotation -> expectedValue.equals(annotation.value()))
+                        .orElse(false);
+
+                String message = javaClass.getDescription() +
+                        (satisfied ? " has @PreAuthorize(\"" + expectedValue + "\")"
+                                : " does not have @PreAuthorize(\"" + expectedValue + "\")");
+
+                events.add(new SimpleConditionEvent(javaClass, satisfied, message));
+            }
+        };
+    }
+
+
+    @ArchTest
+    @SuppressWarnings("unused")
     static final ArchRule restControllerMethods = classes()
             .that().areAnnotatedWith(RestController.class)
             .and().resideOutsideOfPackages("net.hostsharing.hsadminng.rbac.test", "net.hostsharing.hsadminng.rbac.test.*")
@@ -397,7 +424,6 @@ public class ArchitectureTest {
                 // .and().haveNameNotMatching(".*RealEntity") TODO.test: check rules for RealEntity vs. RbacEntity
                 .should(haveTableNameEndingWith_rv())
                 .because("it's required that the table names of RBAC entities end with '_rv'");
-
 
     private static DescribedPredicate<JavaMethod> hasStaticMethodNamed(final String expectedName) {
         return new DescribedPredicate<>("rbac entity") {

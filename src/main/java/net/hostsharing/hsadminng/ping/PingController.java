@@ -1,26 +1,38 @@
 package net.hostsharing.hsadminng.ping;
 
+import io.micrometer.core.annotation.Timed;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.generated.api.v1.api.TestApi;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
-
-@Controller
-public class PingController {
+@RestController
+@PreAuthorize("isAuthenticated()")
+@SecurityRequirement(name = "casTicket")
+public class PingController implements TestApi {
 
     @Autowired
     private MessageTranslator messageTranslator;
 
-    @ResponseBody
-    @RequestMapping(value = "/api/ping", method = RequestMethod.GET)
-    public String ping() {
+    @PreAuthorize("permitAll()")
+    @Timed("app.api.ping")
+    public ResponseEntity<String> ping() {
         final var userName = SecurityContextHolder.getContext().getAuthentication().getName();
         // HOWTO translate text with placeholders - also see in resource files i18n/messages_*.properties.
         final var translatedMessage = messageTranslator.translate("pong {0} - in English", userName);
-        return translatedMessage + "\n";
+        return ResponseEntity.ok(translatedMessage + "\n");
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @Timed("app.api.pong")
+    public ResponseEntity<String> pong() {
+        final var userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        // HOWTO translate text with placeholders - also see in resource files i18n/messages_*.properties.
+        final var translatedMessage = messageTranslator.translate("ping {0} - in English", userName);
+        return ResponseEntity.ok(translatedMessage + "\n");
     }
 }

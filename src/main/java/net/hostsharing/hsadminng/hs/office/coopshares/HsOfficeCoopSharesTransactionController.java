@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
@@ -29,6 +30,7 @@ import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOffic
 import static net.hostsharing.hsadminng.hs.validation.UuidResolver.resolve;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopSharesApi {
 

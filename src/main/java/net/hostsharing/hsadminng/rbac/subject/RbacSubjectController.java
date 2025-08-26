@@ -9,6 +9,7 @@ import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectPermissi
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class RbacSubjectController implements RbacSubjectsApi {
 
@@ -31,6 +33,7 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
     @Override
     @Transactional
+    @PreAuthorize("permitAll()")
     @Timed("app.rbac.subjects.api.postNewSubject")
     public ResponseEntity<RbacSubjectResource> postNewSubject(
             final RbacSubjectResource body

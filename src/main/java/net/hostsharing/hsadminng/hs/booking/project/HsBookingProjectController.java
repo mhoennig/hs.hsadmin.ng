@@ -12,6 +12,7 @@ import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
@@ -23,6 +24,7 @@ import java.util.function.BiConsumer;
 
 @RestController
 @Profile("!only-prod-schema")
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class HsBookingProjectController implements HsBookingProjectsApi {
 

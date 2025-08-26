@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePerson
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class HsOfficePersonController implements HsOfficePersonsApi {
 

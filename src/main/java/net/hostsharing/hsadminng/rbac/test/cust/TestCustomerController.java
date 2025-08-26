@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.test.generated.api.v1.api.TestCustomersApi;
 import net.hostsharing.hsadminng.test.generated.api.v1.model.TestCustomerResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
@@ -16,6 +17,7 @@ import jakarta.persistence.PersistenceContext;
 import java.util.List;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class TestCustomerController implements TestCustomersApi {
 

@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetP
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -15,10 +16,12 @@ import java.util.Map;
 
 @RestController
 @Profile("!only-prod-schema")
+@PreAuthorize("isAuthenticated()")
 @NoSecurityRequirement
 public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
 
     @Override
+    @PreAuthorize("permitAll()")
     @Timed("app.hosting.assets.api.getListOfHostingAssetTypes")
     public ResponseEntity<List<String>> getListOfHostingAssetTypes() {
         final var resource = HostingAssetEntityValidatorRegistry.types().stream()
@@ -28,6 +31,7 @@ public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
     }
 
     @Override
+    @PreAuthorize("permitAll()")
     @Timed("app.hosting.assets.api.getListOfHostingAssetTypeProps")
     public ResponseEntity<List<Object>> getListOfHostingAssetTypeProps(
             final HsHostingAssetTypeResource assetType) {

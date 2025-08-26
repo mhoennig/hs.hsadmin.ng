@@ -14,6 +14,7 @@ import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "casTicket")
 public class RbacContextController implements RbacContextApi {
 

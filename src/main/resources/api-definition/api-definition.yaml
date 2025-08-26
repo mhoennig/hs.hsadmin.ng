@@ -17,6 +17,19 @@ paths:
                 "200":
                     description: OK
                     content:
-                        'application/json':
+                        'text/plain':
+                            schema:
+                                type: string
+
+    /api/pong:
+        get:
+            tags:
+                - test
+            operationId: pong
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        'text/plain':
                             schema:
                                 type: string
