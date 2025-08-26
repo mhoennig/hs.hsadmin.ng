@@ -156,7 +156,7 @@ public class RestResponseEntityExceptionHandler
     }
 
     private Function<FieldError, String> toEnrichedFieldErrorMessage() {
-        final var translatedButIsLiteral = messageTranslator.translate("but is");
+        final var translatedButIsLiteral = messageTranslator.translate("general.but-is");
         // TODO.i18n: the following does not work in all languages, e.g. not in right-to-left languages
         return fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage() +
                 " " + translatedButIsLiteral + " " + optionallyQuoted(fieldError.getRejectedValue());

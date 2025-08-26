@@ -38,8 +38,8 @@ class PingControllerRestTest {
 
     @RequiredArgsConstructor
     enum I18nTestCases {
-        EN("en", "pong anonymousUser - in English"),
-        DE("de", "pong anonymousUser - auf Deutsch");
+        EN("en", "pinged - in English"),
+        DE("de", "pinged - auf Deutsch");
 
         final String language;
         final String expectedTranslation;

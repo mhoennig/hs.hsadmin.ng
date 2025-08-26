@@ -57,7 +57,7 @@ public class RealCasAuthenticator implements CasAuthenticator {
 
     private Document verifyServiceTicket(final String serviceTicket) throws SAXException, IOException, ParserConfigurationException {
         if ( !serviceTicket.startsWith("ST-") ) {
-            throwBadCredentialsException("unknown authorization ticket");
+            throwBadCredentialsException("auth.unknown-authorization-ticket");
         }
 
         final var url = casServerUrl + "/cas/p3/serviceValidate" +
@@ -74,7 +74,7 @@ public class RealCasAuthenticator implements CasAuthenticator {
     private String extractUserName(final Document verification) {
 
         if (verification.getElementsByTagName("cas:authenticationSuccess").getLength() == 0) {
-            throwBadCredentialsException("CAS service-ticket could not be verified");
+            throwBadCredentialsException("auth.cas-service-ticket-could-not-be-verified");
         }
         return verification.getElementsByTagName("cas:user").item(0).getTextContent();
     }

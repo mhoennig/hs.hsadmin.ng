@@ -129,7 +129,8 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
             final ArrayList<String> violations) {
         if (requestBody.getTransactionType() == SUBSCRIPTION
                 && requestBody.getShareCount() < 0) {
-            violations.add(messageTranslator.translate("for transactionType={0}, shareCount must be positive but is {1}",
+            violations.add(messageTranslator.translate(
+                    "office.coop-shares.for-transactiontype-{0}-sharecount-must-be-positive-but-is-{1}",
                     requestBody.getTransactionType(), requestBody.getShareCount()));
         }
     }
@@ -139,7 +140,8 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
             final ArrayList<String> violations) {
         if (requestBody.getTransactionType() == CANCELLATION
                 && requestBody.getShareCount() > 0) {
-            violations.add(messageTranslator.translate("for transactionType={0}, shareCount must be negative but is {1}",
+            violations.add(messageTranslator.translate(
+                    "office.coop-shares.for-transactiontype-{0}-sharecount-must-be-negative-but-is-{1}",
                     requestBody.getTransactionType(), requestBody.getShareCount()));
         }
     }
@@ -148,7 +150,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
             final HsOfficeCoopSharesTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (requestBody.getShareCount() == 0) {
-            violations.add(messageTranslator.translate("shareCount must not be 0"));
+            violations.add(messageTranslator.translate("office.coop-shares.sharecount-must-not-be-0"));
         }
     }
 

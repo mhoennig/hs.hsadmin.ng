@@ -52,13 +52,15 @@ public class CredentialContextResourceToEntityMapper {
                 final var existingContextEntity = em.find(HsCredentialsContextRealEntity.class, resource.getUuid());
                 if (existingContextEntity == null) {
                     throw new EntityNotFoundException(
-                            messageTranslator.translate("{0} \"{1}\" not found or not accessible",
+                            messageTranslator.translate(
+                                    "general.{0}-{1}-not-found-or-not-accessible",
                                     "credentials uuid", resource.getUuid()));
                 }
                 if ((resource.getType() != null && !existingContextEntity.getType().equals(resource.getType())) ||
                     (resource.getQualifier() != null && !existingContextEntity.getQualifier().equals(resource.getQualifier()))) {
                     throw new EntityNotFoundException(
-                            messageTranslator.translate("existing {0} does not match given resource {1}",
+                            messageTranslator.translate(
+                                    "credentials.existing-{0}-does-not-match-given-resource-{1}",
                                     existingContextEntity, resource));
                 }
                 entities.add(existingContextEntity);

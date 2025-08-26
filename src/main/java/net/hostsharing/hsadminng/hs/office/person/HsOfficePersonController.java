@@ -42,7 +42,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
         context.assumeRoles(assumedRoles);
 
         final var entities = representedByPersonUuid != null
-            ? personRepo.findPersonsrepresentedByPersonWithUuid(representedByPersonUuid)
+            ? personRepo.findPersonsRepresentedByPersonWithUuid(representedByPersonUuid)
             : personRepo.findPersonByOptionalNameLike(name);
 
         final var resources = mapper.mapList(entities, HsOfficePersonResource.class);

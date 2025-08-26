@@ -73,7 +73,7 @@ CREATE TRIGGER enforce_transaction_constraints
 --//
 
 -- ============================================================================
---changeset marc.sandlus:hs-office-coopassets-ASSET-VALUE-CONSTRAINT-BY-TRIGGER endDelimiter:--//
+--changeset marc.sandlus:hs-office-coopassets-ASSET-VALUE-CONSTRAINT-BY-TRIGGER runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 alter table hs_office.coopassettx
@@ -83,7 +83,6 @@ drop function if exists hs_office.coopassetstx_check_positive_total cascade;
 
 create or replace function hs_office.coopassettx_enforce_positive_total()
 returns trigger as $$
-
 declare
     currentAssetValue numeric(12,2);
     totalAssetValue numeric(12,2);
@@ -94,11 +93,13 @@ begin
         into currentAssetValue;
     totalAssetValue := currentAssetValue + NEW.assetValue;
     if totalAssetValue::numeric < 0 then
-        raise exception '[400] coop assets transaction would result in a negative balance of assets';
+        raise exception '[400] office.coop-assets.transaction-would-result-in-a-negative-balance-of-assets';
     end if;
     return NEW;
 end;
 $$ LANGUAGE plpgsql;;
+
+drop trigger if exists positive_total_assets_count_tg on hs_office.coopassettx;
 
 create trigger positive_total_assets_count_tg before insert
     on hs_office.coopassettx

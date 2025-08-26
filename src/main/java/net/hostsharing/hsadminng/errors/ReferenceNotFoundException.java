@@ -8,7 +8,7 @@ import static java.util.Locale.ENGLISH;
 
 public class ReferenceNotFoundException extends RuntimeException {
 
-    private final String TRANSLATABLE_MESSAGE = "{0} \"{1}\" not found";
+    private final String TRANSLATABLE_MESSAGE = "general.{0}-{1}-not-found";
 
     private final MessageTranslator translator;
 

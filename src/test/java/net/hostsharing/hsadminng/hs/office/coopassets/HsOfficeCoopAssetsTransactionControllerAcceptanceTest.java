@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -36,7 +37,7 @@ import static org.hamcrest.Matchers.startsWith;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class,
-                    MessageTranslator.class}
+                    MessagesResourceConfig.class, MessageTranslator.class}
 )
 @ActiveProfiles("test")
 @Transactional

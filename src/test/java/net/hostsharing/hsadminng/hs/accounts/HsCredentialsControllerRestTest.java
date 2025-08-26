@@ -190,7 +190,7 @@ class HsCredentialsControllerRestTest {
         given(rbacPersonRepo.findByUuid(personUuid)).willReturn(Optional.of(
                 HsOfficePersonRbacEntity.builder().uuid(personUuid).personType(NATURAL_PERSON).build()
         ));
-        given(rbacPersonRepo.findPersonsrepresentedByPersonWithUuid(personUuid)).willReturn(List.of(
+        given(rbacPersonRepo.findPersonsRepresentedByPersonWithUuid(personUuid)).willReturn(List.of(
                 // some persons, but not the one from the login-user itself
                 HsOfficePersonRbacEntity.builder().uuid(UUID.randomUUID()).personType(NATURAL_PERSON).build(),
                 HsOfficePersonRbacEntity.builder().uuid(UUID.randomUUID()).personType(LEGAL_PERSON).build()

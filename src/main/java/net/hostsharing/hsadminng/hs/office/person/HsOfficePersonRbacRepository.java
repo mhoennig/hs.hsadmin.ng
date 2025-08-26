@@ -37,7 +37,7 @@ public interface HsOfficePersonRbacRepository extends Repository<HsOfficePersonR
                         OR person.uuid = :personUuid
             """, nativeQuery = true)
     @Timed("app.office.persons.repo.findRepresentedPersons.rbac")
-    List<HsOfficePersonRbacEntity> findPersonsrepresentedByPersonWithUuid(UUID personUuid);
+    List<HsOfficePersonRbacEntity> findPersonsRepresentedByPersonWithUuid(UUID personUuid);
 
     @Timed("app.office.persons.repo.save.rbac")
     HsOfficePersonRbacEntity save(final HsOfficePersonRbacEntity entity);

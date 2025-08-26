@@ -11,6 +11,8 @@ public class MessagesResourceConfig {
         final var source = new ResourceBundleMessageSource();
         source.setBasenames("i18n/messages");
         source.setDefaultEncoding("UTF-8");
+        source.setFallbackToSystemLocale(false);
+        source.setUseCodeAsDefaultMessage(false);
         return source;
     }
 

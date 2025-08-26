@@ -21,9 +21,8 @@ public class PingController implements TestApi {
     @PreAuthorize("permitAll()")
     @Timed("app.api.ping")
     public ResponseEntity<String> ping() {
-        final var userName = SecurityContextHolder.getContext().getAuthentication().getName();
         // HOWTO translate text with placeholders - also see in resource files i18n/messages_*.properties.
-        final var translatedMessage = messageTranslator.translate("pong {0} - in English", userName);
+        final var translatedMessage = messageTranslator.translate("test.pinged--in-your-language");
         return ResponseEntity.ok(translatedMessage + "\n");
     }
 

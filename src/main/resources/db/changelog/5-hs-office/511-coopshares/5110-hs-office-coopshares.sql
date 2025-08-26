@@ -33,7 +33,7 @@ alter table hs_office.coopsharetx
 --//
 
 -- ============================================================================
---changeset marc.sandlus:hs-office-coopshares-SHARE-COUNT-CONSTRAINT-BY-TRIGGER endDelimiter:--//
+--changeset marc.sandlus:hs-office-coopshares-SHARE-COUNT-CONSTRAINT-BY-TRIGGER runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 alter table hs_office.coopsharetx drop constraint if exists check_positive_total_shares_count;
@@ -42,7 +42,6 @@ drop function if exists hs_office.coopsharestx_check_positive_total cascade;
 
 create or replace function hs_office.coopsharetx_enforce_positive_total()
 returns trigger as $$
-
 declare
     currentShareCount integer;
     totalShareCount integer;
@@ -53,12 +52,13 @@ begin
     into currentShareCount;
     totalShareCount := currentShareCount + NEW.shareCount;
     if totalShareCount < 0 then
-        raise exception '[400] coop shares transaction would result in a negative number of shares';
+        raise exception '[400] office.coop-shares.transaction-would-result-in-a-negative-number-of-shares';
     end if;
     return NEW;
 end;
 $$ LANGUAGE plpgsql;;
 
+drop trigger if exists positive_total_shares_count_tg on hs_office.coopsharetx;
 
 create trigger positive_total_shares_count_tg before insert
     on hs_office.coopsharetx

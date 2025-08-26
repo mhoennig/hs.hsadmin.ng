@@ -16,7 +16,7 @@ public class HsCoopShareTranslations implements RetroactiveTranslator {
 
     @Override
     public boolean canTranslate(final String message) {
-        return message.equals("ERROR: [400] coop shares transaction would result in a negative number of shares");
+        return message.equals("ERROR: [400] office.coop-shares.transaction-would-result-in-a-negative-number-of-shares");
     }
 
     @Override

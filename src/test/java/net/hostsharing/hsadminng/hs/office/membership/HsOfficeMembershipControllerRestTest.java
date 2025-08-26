@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.membership;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRbacEntity;
@@ -41,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeMembershipController.class)
-@Import({StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class})
+@Import({ StrictMapper.class, DisableSecurityConfig.class, MessagesResourceConfig.class, MessageTranslator.class})
 @ActiveProfiles("test")
 public class HsOfficeMembershipControllerRestTest {
 

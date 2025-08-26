@@ -67,14 +67,14 @@ class WebSecurityConfigIntegrationTest {
 
         // http request
         final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/ping",
+                "http://localhost:" + this.serverPort + "/api/pong",
                 HttpMethod.GET,
                 httpHeaders(entry("Authorization", "Bearer ST-fake-cas-ticket")),
                 String.class
         );
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).startsWith("pong fake-user-name");
+        assertThat(result.getBody()).startsWith("ponged fake-user-name");
     }
 
     @Test
@@ -85,18 +85,18 @@ class WebSecurityConfigIntegrationTest {
 
         // http request
         final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/ping",
+                "http://localhost:" + this.serverPort + "/api/pong",
                 HttpMethod.GET,
                 httpHeaders(entry("Authorization", "Bearer TGT-fake-cas-ticket")),
                 String.class
         );
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).startsWith("pong fake-user-name");
+        assertThat(result.getBody()).startsWith("ponged fake-user-name");
     }
 
     @Test
-    void accessToApiWithInvalidTicketGrantingTicketShouldBePermitted() {
+    void accessToOpenApiWithInvalidTicketGrantingTicketShouldBePermitted() {
         // given
         givenCasServiceTicketForTicketGrantingTicket("TGT-fake-cas-ticket", "ST-fake-cas-ticket");
         givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
@@ -113,14 +113,14 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
-    void accessToPingApiWithoutTokenShouldBePermitted() {
+    void accessToOpenApiWithoutTokenShouldBePermitted() {
         final var result = this.restTemplate.getForEntity(
                 "http://localhost:" + this.serverPort + "/api/ping", String.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
-    void accessToPongApiWithValidTokenShouldBePermitted() {
+    void accessToProtectedApiWithValidTokenShouldBePermitted() {
         // given
         givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
 
@@ -137,7 +137,7 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
-    void accessToPongApiWithInvalidTokenShouldBeDenied() {
+    void accessToProtectedApiWithInvalidTokenShouldBeDenied() {
         // given
         givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
 

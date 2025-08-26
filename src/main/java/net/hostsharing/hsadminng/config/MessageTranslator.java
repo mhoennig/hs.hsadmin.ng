@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.config;
 
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import java.util.Locale;
 
 @Service
 @RequestScope
+@Slf4j
 public class MessageTranslator {
 
     @Autowired
@@ -21,17 +24,24 @@ public class MessageTranslator {
     public String translateTo(final Locale locale, final String messageKey, final Object... args) {
         try {
             // we don't use the method which also takes a default message right away ...
-            final var translatedMessage = messageSource.getMessage(messageKey, args, locale);
+            val translatedMessage = messageSource.getMessage(messageKey, args, locale);
             return translatedMessage;
         } catch (final Exception e) {
-            final var defaultMessage = messageKey.replace("'", "''");
-            final var translatedMessage = messageSource.getMessage(messageKey, args, defaultMessage, locale);
-            if (locale != Locale.ENGLISH) {
-                // ... because we want to add a hint that the translation is missing, even if placeholders got replaced
-                return translatedMessage + " [" + locale + " translation missing]";
-            }
-            return translatedMessage;
+            // ... but log the missing translation ...
+            log.error("Missing translation for message key '{}' in locale '{}'", messageKey, locale, e);
+
+            // and decorate the default message to mark it as not really translated:
+            val defaultMessage = messageKey.substring(messageKey.indexOf('.') + 1)
+                    .replaceAll("--+", " - ")
+                    .replaceAll("(?<! )-(?! )", " ")
+                    .replace("'", "''");
+            val fallbackMessage = messageSource.getMessage(messageKey, args, defaultMessage, Locale.ENGLISH);
+            return decorateMissingTranslation(fallbackMessage);
         }
+    }
+
+    private static String decorateMissingTranslation(final String translatedMessage) {
+        return "【⍰" + translatedMessage + "⍰】";
     }
 
     public String translate(final String messageKey, final Object... args) {

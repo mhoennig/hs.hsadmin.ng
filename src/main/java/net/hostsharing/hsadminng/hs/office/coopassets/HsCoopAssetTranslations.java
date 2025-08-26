@@ -17,7 +17,7 @@ public class HsCoopAssetTranslations implements RetroactiveTranslator {
 
     @Override
     public boolean canTranslate(final String message) {
-        return message.equals("ERROR: [400] coop assets transaction would result in a negative balance of assets");
+        return message.equals("ERROR: [400] office.coop-assets.transaction-would-result-in-a-negative-balance-of-assets");
     }
 
     @Override
@@ -26,7 +26,7 @@ public class HsCoopAssetTranslations implements RetroactiveTranslator {
         // and in this case it's just one
         return ERROR_400_PREFIX + messageTranslator.translate(message.substring(ERROR_400_PREFIX.length()));
 
-        // HOWTO extract variable parts from a messages which got created without i18n support:
+        // HOWTO extract variable parts from messages which got created without i18n support:
         //  final var regex = "(?<propertyName>[^ ]+) (?<propertyValue>.+) not found";
         //  final var pattern = Pattern.compile(regex);
         //  final var matcher = pattern.matcher(message);

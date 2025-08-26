@@ -69,7 +69,7 @@ class CasAuthenticationFilterIntegrationTest {
 
         // when
         final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/ping",
+                "http://localhost:" + this.serverPort + "/api/pong",
                 HttpMethod.GET,
                 new HttpEntity<>(null, headers(entry("Authorization", "ST-valid"))),
                 String.class
@@ -77,7 +77,7 @@ class CasAuthenticationFilterIntegrationTest {
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).startsWith("pong " + username);
+        assertThat(result.getBody()).startsWith("ponged " + username);
         // HOWTO assert log messages
         assertThat(capturedOutput.getOut()).containsPattern(
                 LogbackLogPattern.of(LogLevel.DEBUG, RealCasAuthenticator.class, "CAS-user: " + username));

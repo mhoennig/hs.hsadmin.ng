@@ -259,14 +259,14 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
     }
 
     @Test
-    public void findPersonsrepresentedByPersonWithUuid() {
+    public void findPersonsRepresentedByPersonWithUuid() {
 
         // given
         context("superuser-alex@hostsharing.net");
         final var personUuid = personRbacRepo.findPersonByOptionalNameLike("Fouler").getFirst().getUuid();
 
         // when
-        @SuppressWarnings("unchecked") final List<HsOfficePersonRbacEntity> representedPersons = personRbacRepo.findPersonsrepresentedByPersonWithUuid(personUuid);
+        @SuppressWarnings("unchecked") final List<HsOfficePersonRbacEntity> representedPersons = personRbacRepo.findPersonsRepresentedByPersonWithUuid(personUuid);
 
         // then
         assertThat(representedPersons).map(Object::toString).containsExactlyInAnyOrder(

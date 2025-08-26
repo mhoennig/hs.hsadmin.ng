@@ -203,12 +203,12 @@ public class HsCredentialsController implements CredentialsApi {
     private void validate(final HsCredentialsEntity newCredentialsEntity) {
         // the referenced person must be represented by currently logged in person
         final var personUuid = newCredentialsEntity.getPerson().getUuid();
-        final var representedPersonUuids = rbacPersonRepo.findPersonsrepresentedByPersonWithUuid(personUuid)
+        final var representedPersonUuids = rbacPersonRepo.findPersonsRepresentedByPersonWithUuid(personUuid)
                 .stream().map(HsOfficePerson::getUuid).toList();
         if ( !representedPersonUuids.contains(personUuid)) {
             throw new ValidationException(
                     messageTranslator.translate(
-                            "access-denied-personUuid-{0}-not-represented-by-currently-logged-in-person",
+                            "credentials.access-denied-person-uuid-{0}-not-represented-by-currently-logged-in-person",
                             personUuid));
         }
     }
@@ -224,7 +224,7 @@ public class HsCredentialsController implements CredentialsApi {
     private List<HsCredentialsEntity> findByPersonUuid(final UUID personUuid) {
         final var person = rbacPersonRepo.findByUuid(personUuid).orElseThrow(
                 () -> new EntityNotFoundException(
-                        messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", personUuid)
+                        messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", personUuid)
                 )
 
         );
@@ -269,7 +269,7 @@ public class HsCredentialsController implements CredentialsApi {
     final BiConsumer<CredentialsInsertResource, HsCredentialsEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         final var person = rbacPersonRepo.findByUuid(resource.getPersonUuid()).orElseThrow(
                 () -> new EntityNotFoundException(
-                        messageTranslator.translate("{0} \"{1}\" not found or not accessible", "personUuid", resource.getPersonUuid())
+                        messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", resource.getPersonUuid())
                 )
         );
 
