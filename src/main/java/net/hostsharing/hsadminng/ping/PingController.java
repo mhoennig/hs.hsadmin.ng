@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.ping;
 
 import io.micrometer.core.annotation.Timed;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.config.NoSecurityRequirement;
 import net.hostsharing.hsadminng.generated.api.v1.api.TestApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@NoSecurityRequirement
 public class PingController implements TestApi {
 
     @Autowired

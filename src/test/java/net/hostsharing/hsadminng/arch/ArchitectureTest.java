@@ -2,8 +2,10 @@ package net.hostsharing.hsadminng.arch;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaModifier;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -29,6 +31,9 @@ import jakarta.persistence.Table;
 import java.lang.annotation.Annotation;
 
 import static com.tngtech.archunit.core.domain.JavaModifier.PUBLIC;
+import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
+import static com.tngtech.archunit.core.importer.ImportOption.Predefined.DO_NOT_INCLUDE_TESTS;
+import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static java.lang.String.format;
@@ -37,6 +42,10 @@ import static java.lang.String.format;
 public class ArchitectureTest {
 
     public static final String NET_HOSTSHARING_HSADMINNG = "net.hostsharing.hsadminng";
+
+    private static final JavaClasses PRODUCTION_CLASSES = new ClassFileImporter()
+            .withImportOption(DO_NOT_INCLUDE_TESTS)
+            .importPackages(NET_HOSTSHARING_HSADMINNG);
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -363,18 +372,17 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    static final ArchRule restControllerSecurityRequirement =
-            // TODO.impl: seems that the Spring templates for the OpenAPI generator don't support this,
-            //  thus we need this annotation to support Swagger UI authorization.
-            classes().that().areAnnotatedWith(RestController.class).should()
-                    .beAnnotatedWith(SecurityRequirement.class).orShould()
-                    .beAnnotatedWith(NoSecurityRequirement.class);
+    static final ArchRule restControllerSecurityRequirement = classes()
+            .that(belongToProductionClasses().and(are(annotatedWith(RestController.class))))
+            .should()
+            .beAnnotatedWith(SecurityRequirement.class).orShould()
+            .beAnnotatedWith(NoSecurityRequirement.class);
 
     @ArchTest
     @SuppressWarnings("unused")
     static final ArchRule everyRestControllerShouldRequireAuthentication =
-            classes()
-                    .that().areAnnotatedWith(RestController.class)
+            classes().that(belongToProductionClasses()
+                    .and(are(annotatedWith(RestController.class))))
                     .should(havePreAuthorizeWithValue("isAuthenticated()"))
                     .because("Every REST controller should require authentication by default, use @PreAuthorize(...) to override this at the endpoint method level.");
 
@@ -395,11 +403,10 @@ public class ArchitectureTest {
         };
     }
 
-
     @ArchTest
     @SuppressWarnings("unused")
-    static final ArchRule restControllerMethods = classes()
-            .that().areAnnotatedWith(RestController.class)
+    static final ArchRule restControllerMethods = classes().that(belongToProductionClasses())
+            .and(are(annotatedWith(RestController.class)))
             .and().resideOutsideOfPackages("net.hostsharing.hsadminng.rbac.test", "net.hostsharing.hsadminng.rbac.test.*")
             .should(haveAllPublicMethodsAnnotatedWith(Timed.class));
 
@@ -410,8 +417,8 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    static final ArchRule repositoryMethods = classes()
-            .that().areAssignableTo(Repository.class)
+    static final ArchRule repositoryMethods = classes().that(belongToProductionClasses())
+            .and().areAssignableTo(Repository.class)
             .and().resideOutsideOfPackages("net.hostsharing.hsadminng.rbac.test", "net.hostsharing.hsadminng.rbac.test.*")
             .should(haveAllPublicMethodsAnnotatedWith(Timed.class));
 
@@ -483,4 +490,20 @@ public class ArchitectureTest {
         // this is a heuristic, ideally we can determine all methods with generated database calls
         return item.isAssignableTo(Repository.class) && !method.getModifiers().contains(JavaModifier.ABSTRACT);
     }
+
+    private static DescribedPredicate<JavaClass> belongToProductionClasses() {
+        return new DescribedPredicate<>("belong to production classes") {
+            @Override
+            public boolean test(JavaClass javaClass) {
+                // Check if this exact class is in our production classes
+                for (JavaClass prodClass : PRODUCTION_CLASSES) {
+                    if (prodClass.getName().equals(javaClass.getName())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
+    }
+
 }

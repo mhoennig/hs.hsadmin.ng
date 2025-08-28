@@ -16,6 +16,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -43,6 +44,14 @@ public class RestResponseEntityExceptionHandler
 
     @Autowired(required = false)
     private final List<RetroactiveTranslator> retroactiveTranslators;
+
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<CustomErrorResponse> handleAccessDeniedException(
+            final AccessDeniedException exc, final WebRequest request) {
+        final var fullMaybeLocalizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
+        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(fullMaybeLocalizedMessage);
+        return errorResponse(request, HttpStatus.UNAUTHORIZED, sprippedMaybeLocalizedMessage);
+    }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<CustomErrorResponse> handleConflict(
