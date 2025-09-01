@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -19,7 +20,9 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -42,6 +45,12 @@ class RbacSubjectControllerRestTest {
     @MockitoBean
     EntityManagerWrapper em;
 
+    @BeforeEach
+    void beforeEach() {
+        given(rbacSubjectRepository.create(any())).willAnswer(invocation ->
+            invocation.<RbacSubjectEntity>getArgument(0)
+        );
+    }
 
     @Test
     void postNewSubjectUsesGivenUuid() throws Exception {

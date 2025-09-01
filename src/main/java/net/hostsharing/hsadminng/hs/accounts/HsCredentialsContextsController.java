@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.accounts;
 import java.util.List;
 
 import io.micrometer.core.annotation.Timed;
+import lombok.val;
 import net.hostsharing.hsadminng.config.NoSecurityRequirement;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.api.ContextsApi;
@@ -37,7 +38,10 @@ public class HsCredentialsContextsController implements ContextsApi {
         if (SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
             context.assumeRoles(assumedRoles);
         }
-        final var loginContexts = contextRepo.findAll();
+        val isGlobalAdmin = context.isGlobalAdmin();
+        final var loginContexts = contextRepo.findAll().stream().filter(
+                context -> context.isPublicAccess() || isGlobalAdmin
+        ).toList();
         final var result = mapper.mapList(loginContexts, ContextResource.class);
         return ResponseEntity.ok(result);
     }

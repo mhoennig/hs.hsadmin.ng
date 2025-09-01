@@ -5,9 +5,11 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.val;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ContextResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CurrentLoginUserResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.RbacSubjectResource;
@@ -19,7 +21,7 @@ import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CredentialsPatc
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CredentialsResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.HsOfficePersonResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
@@ -62,7 +64,7 @@ public class HsCredentialsController implements CredentialsApi {
     private MessageTranslator messageTranslator;
 
     @Autowired
-    private HsOfficePersonRbacRepository rbacPersonRepo;
+    private HsOfficePersonRealRepository realPersonRepo;
 
     @Autowired
     private HsCredentialsRepository credentialsRepo;
@@ -77,11 +79,11 @@ public class HsCredentialsController implements CredentialsApi {
 
         context.define(); // without assumed roles, otherwise we cannot access the subject anymore
 
-        final var credentialsEntity = credentialsRepo.findByUuid(credentialsUuid);
+        val credentialsEntity = credentialsRepo.findByUuid(credentialsUuid);
         if (credentialsEntity.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        final var result = mapper.map(
+        val result = mapper.map(
                 credentialsEntity.get(), CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(result);
     }
@@ -95,10 +97,10 @@ public class HsCredentialsController implements CredentialsApi {
     ) {
         context.assumeRoles(assumedRoles);
 
-        final var credentials = personUuid == null
+        val credentials = personUuid == null
                 ? credentialsRepo.findByCurrentSubject()
                 : findByPersonUuid(personUuid);
-        final var result = mapper.mapList(
+        val result = mapper.mapList(
                 credentials, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(result);
     }
@@ -112,22 +114,25 @@ public class HsCredentialsController implements CredentialsApi {
         context.define(); // without assumed roles, otherwise we cannot access the subject anymore
 
         // first create and save the subject to get its UUID
-        final var newlySavedSubject = createSubject(body.getNickname());
+        val newlySavedSubject = createSubject(body.getNickname());
 
         // afterward, create and save the credentials entity with the subject's UUID
-        final var newCredentialsEntity = mapper.map(
+        val newCredentialsEntity = mapper.map(
                 body, HsCredentialsEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
-        validate(newCredentialsEntity);
-        newCredentialsEntity.setSubject(newlySavedSubject);
+        validateOnCreate(newCredentialsEntity);
+
+        // switch to the new subject to get access to its own subject RBAC object
+        context.define("activate newly created self-service subject", null, body.getNickname(), null);
+        newCredentialsEntity.setSubject(em.merge(newlySavedSubject)); // attached to EM by the new subject
         em.persist(newCredentialsEntity); // newCredentialsEntity.uuid == newlySavedSubject.uuid => do not use repository!
 
         // return the new credentials as a resource
-        final var uri =
+        val uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/accounts/credentials/{id}")
                         .buildAndExpand(newCredentialsEntity.getUuid())
                         .toUri();
-        final var newCredentialsResource = mapper.map(
+        val newCredentialsResource = mapper.map(
                 newCredentialsEntity, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(newCredentialsResource);
     }
@@ -137,8 +142,9 @@ public class HsCredentialsController implements CredentialsApi {
     @Timed("app.credentials.credentials.deleteCredentialsByUuid")
     public ResponseEntity<Void> deleteCredentialsByUuid(final UUID credentialsUuid) {
         context.define(); // without assumed roles, otherwise we cannot access the subject anymore
-        final var credentialsEntity = em.getReference(HsCredentialsEntity.class, credentialsUuid);
+        val credentialsEntity = em.getReference(HsCredentialsEntity.class, credentialsUuid);
         credentialsEntity.getLoginContexts().clear();
+        validateOnDelete(credentialsEntity);
         em.flush();
         em.remove(credentialsEntity);
         em.remove(credentialsEntity.getSubject());
@@ -154,12 +160,13 @@ public class HsCredentialsController implements CredentialsApi {
     ) {
         context.define(); // without assumed roles, otherwise we cannot access the subject anymore
 
-        final var current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
+        val current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
 
         new HsCredentialsEntityPatcher(contextMapper, current).apply(body);
+        validateOnUpdate(current);
 
-        final var saved = credentialsRepo.save(current);
-        final var mapped = mapper.map(
+        val saved = credentialsRepo.save(current);
+        val mapped = mapper.map(
                 saved, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
@@ -173,56 +180,129 @@ public class HsCredentialsController implements CredentialsApi {
         context.define();
 
         // fetch the data
-        final var currentSubjectUuid = context.fetchCurrentSubjectUuid();
-        final var currentSubject = rbacSubjectRepo.findByUuid(currentSubjectUuid);
+        val currentSubjectUuid = context.fetchCurrentSubjectUuid();
+        val currentSubject = rbacSubjectRepo.findByUuid(currentSubjectUuid);
+        val person = credentialsRepo.findByUuid(currentSubjectUuid).orElseThrow().getPerson();
+
         final boolean isGlobalAdmin = context.isGlobalAdmin();
-        final var person = credentialsRepo.findByUuid(currentSubjectUuid).orElseThrow().getPerson();
 
         // finally, return the result
-        final var result = currentLoginUserResponse(currentSubject, person, isGlobalAdmin);
+        val result = currentLoginUserResponse(currentSubject, person, isGlobalAdmin);
         return ResponseEntity.ok(result);
     }
 
     @Override
+    @Transactional
     @Timed("app.credentials.credentials.credentialsUsed")
-    public ResponseEntity<CredentialsResource> credentialsUsed(
-            final String assumedRoles,
-            final UUID credentialsUuid) {
-        context.assumeRoles(assumedRoles);
+    public ResponseEntity<CredentialsResource> credentialsUsed(final UUID credentialsUuid) {
+        context.define();
 
-        final var current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
+        val current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
 
         current.setOnboardingToken(null);
         current.setLastUsed(LocalDateTime.now());
 
-        final var saved = credentialsRepo.save(current);
-        final var mapped = mapper.map(saved, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        val saved = credentialsRepo.save(current);
+        val mapped = mapper.map(saved, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
-    private void validate(final HsCredentialsEntity newCredentialsEntity) {
-        // the referenced person must be represented by currently logged in person
-        final var personUuid = newCredentialsEntity.getPerson().getUuid();
-        final var representedPersonUuids = rbacPersonRepo.findPersonsRepresentedByPersonWithUuid(personUuid)
+    private void validateOnCreate(final HsCredentialsEntity newCredentialsEntity) {
+        validateReferencedPersonToBeRepresentedByLoginUserPerson(newCredentialsEntity);
+        validateNormalUsersOnlyAccessPublicContexts(newCredentialsEntity);
+        validateNaturalPersonRequirementOfContexts(newCredentialsEntity);
+    }
+
+    private void validateOnUpdate(final HsCredentialsEntity current) {
+        validateNormalUsersOnlyAccessPublicContexts(current);
+        validateNaturalPersonRequirementOfContexts(current);
+        validateOwnHsadminCredentialsMustNotBeRemoved(current);
+    }
+
+    private void validateOnDelete(final HsCredentialsEntity credentialsEntity) {
+        validateOwnHsadminCredentialsMustNotBeRemoved(credentialsEntity);
+    }
+
+    private void validateReferencedPersonToBeRepresentedByLoginUserPerson(final HsCredentialsEntity newCredentialsEntity) {
+        if (context.isGlobalAdmin()) {
+            return;
+        }
+        val referredPersonUuid = newCredentialsEntity.getPerson().getUuid();
+        val currentSubjectUuid = context.fetchCurrentSubjectUuid();
+        val loginPersonUuid = credentialsRepo.findByUuid(currentSubjectUuid)
+                .map(HsCredentialsEntity::getPerson)
+                .map(HsOfficePerson::getUuid)
+                .orElseThrow();
+        val representedPersonUuids = realPersonRepo.findPersonsRepresentedByPersonWithUuid(loginPersonUuid)
                 .stream().map(HsOfficePerson::getUuid).toList();
-        if ( !representedPersonUuids.contains(personUuid)) {
+        if ( !representedPersonUuids.contains(referredPersonUuid)) {
             throw new ValidationException(
                     messageTranslator.translate(
-                            "credentials.access-denied-person-uuid-{0}-not-represented-by-currently-logged-in-person",
-                            personUuid));
+                            "credentials.access-denied-to-person-with-uuid-{0}-not-represented-by-currently-logged-in-person",
+                            loginPersonUuid));
         }
+    }
+
+    private void validateNormalUsersOnlyAccessPublicContexts(final HsCredentialsEntity newCredentialsEntity) {
+        val forbiddenContexts = newCredentialsEntity.getLoginContexts().stream()
+                .filter(c -> !c.isPublicAccess() && !context.isGlobalAdmin() )
+                .toList();
+        if (!forbiddenContexts.isEmpty()) {
+            throw new ValidationException(
+                    messageTranslator.translate(
+                            "credentials.access-denied-for-contexts-{0}",
+                            toDisplay(forbiddenContexts)
+                    ));
+        }
+    }
+
+    private void validateNaturalPersonRequirementOfContexts(final HsCredentialsEntity newCredentialsEntity) {
+        if (newCredentialsEntity.getPerson().getPersonType().equals(HsOfficePersonType.NATURAL_PERSON)) {
+            return;
+        }
+        val contextsWhichRequireNaturalPerson = newCredentialsEntity.getLoginContexts().stream()
+                .filter(HsCredentialsContext::isOnlyForNaturalPersons)
+                .toList();
+        if (!contextsWhichRequireNaturalPerson.isEmpty()) {
+            throw new ValidationException(
+                    messageTranslator.translate(
+                            "credentials.context-requires-natural-person-{0}",
+                            toDisplay(contextsWhichRequireNaturalPerson)
+                    ));
+        }
+    }
+
+    private void validateOwnHsadminCredentialsMustNotBeRemoved(final HsCredentialsEntity newCredentialsEntity) {
+        if (!newCredentialsEntity.getSubject().getUuid().equals(context.fetchCurrentSubjectUuid())) {
+            return;
+        }
+        val hsadminCredentialsContext = newCredentialsEntity.getLoginContexts().stream()
+                .filter(HsCredentialsContext::isHsadminContext)
+                .toList();
+        if (hsadminCredentialsContext.isEmpty()) {
+            throw new ValidationException(
+                    messageTranslator.translate(
+                            "credentials.own-hsadmin-credentials-must-not-be-removed"
+                    ));
+        }
+    }
+
+    private static String toDisplay(final List<HsCredentialsContextRealEntity> contextsWhichRequireNaturalPerson) {
+        return contextsWhichRequireNaturalPerson.stream()
+                .map(HsCredentialsContext::toShortString)
+                .sorted()
+                .map(s -> "'" + s + "'")
+                .collect(Collectors.joining(", "));
     }
 
     private RbacSubjectEntity createSubject(final String nickname) {
-        final var newRbacSubject = subjectRepo.create(new RbacSubjectEntity(null, nickname));
-        if(context.fetchCurrentSubject() == null) {
-            context.define("activate newly created self-service subject", null, nickname, null);
-        }
-        return subjectRepo.findByUuid(newRbacSubject.getUuid()); // now attached to EM
+        val rbacSubjectEntity = new RbacSubjectEntity(null, nickname);
+        val newRbacSubject = subjectRepo.create(rbacSubjectEntity);
+        return newRbacSubject;
     }
 
     private List<HsCredentialsEntity> findByPersonUuid(final UUID personUuid) {
-        final var person = rbacPersonRepo.findByUuid(personUuid).orElseThrow(
+        val person = realPersonRepo.findByUuid(personUuid).orElseThrow(
                 () -> new EntityNotFoundException(
                         messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", personUuid)
                 )
@@ -236,7 +316,7 @@ public class HsCredentialsController implements CredentialsApi {
             final RbacSubjectEntity currentSubject,
             final HsOfficePerson<?> person,
             final boolean isGlobalAdmin) {
-        final var result = new CurrentLoginUserResource();
+        val result = new CurrentLoginUserResource();
         result.setSubject(mapper.map(currentSubject, RbacSubjectResource.class));
         result.setPerson(mapper.map(person, HsOfficePersonResource.class));
         result.setGlobalAdmin(isGlobalAdmin);
@@ -267,7 +347,7 @@ public class HsCredentialsController implements CredentialsApi {
     }
 
     final BiConsumer<CredentialsInsertResource, HsCredentialsEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        final var person = rbacPersonRepo.findByUuid(resource.getPersonUuid()).orElseThrow(
+        val person = realPersonRepo.findByUuid(resource.getPersonUuid()).orElseThrow(
                 () -> new EntityNotFoundException(
                         messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", resource.getPersonUuid())
                 )

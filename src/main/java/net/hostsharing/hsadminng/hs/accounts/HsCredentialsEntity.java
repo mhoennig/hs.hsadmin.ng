@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.accounts;
 
 import jakarta.persistence.*;
 import lombok.*;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity; // Assuming BaseEntity exists
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.repr.Stringify;
@@ -46,7 +46,7 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "person_uuid", nullable = false, updatable = false, referencedColumnName = "uuid")
-    private HsOfficePersonRbacEntity person;
+    private HsOfficePersonRealEntity person; // TODO.impl: add RBAC-Support to CredentialsEntity, see Story #
 
     @Version
     private int version;

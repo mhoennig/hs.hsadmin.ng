@@ -53,7 +53,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    private TreeMap<UUID, Class<? extends ImmutableBaseEntity>> entitiesToCleanup = new TreeMap<>();
+    private LinkedHashMap<UUID, Class<? extends ImmutableBaseEntity>> entitiesToCleanup = new LinkedHashMap<>();
 
     private static Long latestIntialTestDataSerialId;
     private static boolean countersInitialized = false;
@@ -101,6 +101,10 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         final var rvTableName = tableName.endsWith("_rv")
                 ? tableName.substring(0, tableName.length() - "_rv".length())
                 : tableName;
+
+        final var rawTableName = rvTableName.endsWith("_rv") 
+        ? rvTableName.substring(0, rvTableName.length() - "_rv".length())
+        : rvTableName;
 
         allRbacObjects().stream()
                 .filter(o -> o.startsWith(rvTableName + ":"))
@@ -191,11 +195,11 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
             context.define("superuser-alex@hostsharing.net", null);
             entitiesToCleanup.reversed().forEach((uuid, entityClass) -> {
                 final var rvTableName = entityClass.getAnnotation(Table.class).name();
-                if ( !rvTableName.endsWith("_rv") ) {
-                    throw new IllegalStateException();
-                }
-                final var rawTableName = rvTableName.substring(0, rvTableName.length() - "_rv".length());
-                final var deletedRows = em.createNativeQuery("DELETE FROM " + rawTableName + " WHERE uuid=:uuid")
+                final var scope = entityClass.getAnnotation(Table.class).schema();
+                final var rawTableName = rvTableName.endsWith("_rv")
+                        ? rvTableName.substring(0, rvTableName.length() - "_rv".length())
+                        : rvTableName;
+                final var deletedRows = em.createNativeQuery("DELETE FROM " + scope + "." + rawTableName + " WHERE uuid=:uuid")
                         .setParameter("uuid", uuid).executeUpdate();
                 out.println("DELETING temporary " + entityClass.getSimpleName() + "#" + uuid + " deleted " + deletedRows + " rows");
             });
@@ -264,6 +268,9 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         assertThat(after).isNotNull();
         final SetUtils.SetView<String> difference = difference(before, after);
         assertThat(difference).as("missing entities (deleted initial test data)").isEmpty();
+        difference(after, before).stream().iterator().forEachRemaining(e -> {
+            em.remove(e);
+        });
         assertThat(difference(after, before)).as("spurious entities (test data not cleaned up by this test)").isEmpty();
     }
 

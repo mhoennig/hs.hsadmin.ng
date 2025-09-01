@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-
 public class EntityManagerWrapperFake extends EntityManagerWrapper {
 
     private Map<Class<?>, Map<Object, Object>> entityClasses = new HashMap<>();

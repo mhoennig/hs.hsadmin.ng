@@ -43,8 +43,7 @@ public class RbacSubjectController implements RbacSubjectsApi {
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
         }
-        final var saved = mapper.map(body, RbacSubjectEntity.class);
-        rbacSubjectRepository.create(saved);
+        final var saved = rbacSubjectRepository.create(mapper.map(body, RbacSubjectEntity.class));
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/rbac/subjects/{id}")

@@ -45,6 +45,10 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
             rbacSubjectEntity.setUuid(UUID.randomUUID());
         }
         insert(rbacSubjectEntity);
+        // RbacSubjectEntity binds to 'rbac.subject_rv',
+        // but the current user might not be allowed to read the newly created row from the restricted view,
+        // only the newly created subject (or a global admin) is allowed to read the new subject.
+        // Thus, the code which calls this method needs to switch the login user and fetch an attached entity.
         return rbacSubjectEntity; // Not yet attached to EM!
     }
 

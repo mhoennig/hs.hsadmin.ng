@@ -151,13 +151,46 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
     }
 
     @Test
+    public void findPersonsRepresentedByPersonWithUuid() {
+
+        // given
+        context("superuser-alex@hostsharing.net");
+        final var personUuid = personRealRepo.findPersonByOptionalNameLike("Fouler").getFirst().getUuid();
+
+        // when
+        @SuppressWarnings("unchecked") final List<HsOfficePersonRealEntity> representedPersons = personRealRepo.findPersonsRepresentedByPersonWithUuid(personUuid);
+
+        // then
+        assertThat(representedPersons).map(Object::toString).containsExactlyInAnyOrder(
+                "person(personType=NP, familyName='Fouler', givenName='Ellie')",
+                "person(personType=LP, tradeName='Fourth eG')"
+        );
+    }
+
+    @Test
+    public void findPersonsRepresentedByPersonWithUuidDrew() {
+
+        // given
+        context("superuser-alex@hostsharing.net");
+        final var personUuid = personRealRepo.findPersonByOptionalNameLike("Drew").getFirst().getUuid();
+
+        // when
+        @SuppressWarnings("unchecked") final List<HsOfficePersonRealEntity> representedPersons = personRealRepo.findPersonsRepresentedByPersonWithUuid(personUuid);
+
+        // then
+        assertThat(representedPersons).map(Object::toString).containsExactlyInAnyOrder(
+                "person(personType=NP, familyName='User', givenName='Drew')"
+        );
+    }
+
+    @Test
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'tradename', targetdelta->>'lastname'
                     from base.tx_journal_v
                     where targettable = 'hs_office.person';
-                    """);
+                """);
 
         // when
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();

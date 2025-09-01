@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
+import static java.util.Collections.emptyList;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ class HsCredentialsContextsControllerRestTest {
     Context contextMock;
 
     @Autowired
-    @SuppressWarnings("unused") // not used in test, but in controller class
+    @SuppressWarnings("unused") // not used in test but in controller class
     StrictMapper mapper;
 
     @MockitoBean
@@ -59,15 +60,12 @@ class HsCredentialsContextsControllerRestTest {
     @MockitoBean
     HsCredentialsContextRbacRepository loginContextRbacRepo;
 
-
     @TestConfiguration
     public static class TestConfig {
-
         @Bean
         public EntityManager entityManager() {
             return mock(EntityManager.class);
         }
-
     }
 
     @BeforeEach
@@ -82,18 +80,27 @@ class HsCredentialsContextsControllerRestTest {
     void getListOfLoginContextsReturnsOkWithEmptyList() throws Exception {
 
         // given
-        when(loginContextRbacRepo.findAll()).thenReturn(List.of(
-                HsCredentialsContextRbacEntity.builder()
-                        .uuid(UUID.randomUUID())
-                        .type("HSADMIN")
-                        .qualifier("prod")
-                        .build(),
-                HsCredentialsContextRbacEntity.builder()
-                        .uuid(UUID.randomUUID())
-                        .type("SSH")
-                        .qualifier("prod")
-                        .build()
-        ));
+        givenNoContextsInTheRepository();
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/accounts/contexts")
+                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void getListOfLoginContextsReturnsAllContextsForGlobalAdmin() throws Exception {
+
+        // given
+        givenSomeContextsInTheRepository();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -107,16 +114,92 @@ class HsCredentialsContextsControllerRestTest {
                 .andExpect(jsonPath(
                         "$", lenientlyEquals("""
                                 [
-                                    {
-                                      "type": "HSADMIN",
-                                      "qualifier": "prod"
-                                    },
-                                    {
-                                      "type": "SSH",
-                                      "qualifier": "prod"
-                                    }
+                                   {
+                                     "type": "HSADMIN",
+                                     "qualifier": "prod",
+                                     "onlyForNaturalPersons": true,
+                                     "publicAccess": true
+                                   },
+                                   {
+                                     "type": "SSH",
+                                     "qualifier": "public",
+                                     "onlyForNaturalPersons": false,
+                                     "publicAccess": true
+                                   },
+                                   {
+                                     "type": "SSH",
+                                     "qualifier": "internal",
+                                     "onlyForNaturalPersons": false,
+                                     "publicAccess": false
+                                   }
                                 ]
                                 """
                 )));
+    }
+
+    @Test
+    void getListOfLoginContextsReturnsOnlyPublicContextsForNormalUser() throws Exception {
+
+        // given
+        givenSomeContextsInTheRepository();
+        when(contextMock.isGlobalAdmin()).thenReturn(false);
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/accounts/contexts")
+                        .header("Authorization", "Bearer drew@hostsharing.org")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$", lenientlyEquals("""
+                                [
+                                   {
+                                     "type": "HSADMIN",
+                                     "qualifier": "prod",
+                                     "onlyForNaturalPersons": true,
+                                     "publicAccess": true
+                                   },
+                                   {
+                                     "type": "SSH",
+                                     "qualifier": "public",
+                                     "onlyForNaturalPersons": false,
+                                     "publicAccess": true
+                                   }
+                                ]
+                                """
+                        )));
+    }
+
+    private void givenNoContextsInTheRepository() {
+        when(loginContextRbacRepo.findAll()).thenReturn(emptyList());
+    }
+
+    private void givenSomeContextsInTheRepository() {
+        when(loginContextRbacRepo.findAll()).thenReturn(List.of(
+                HsCredentialsContextRbacEntity.builder()
+                        .uuid(UUID.randomUUID())
+                        .type("HSADMIN")
+                        .qualifier("prod")
+                        .publicAccess(true)
+                        .onlyForNaturalPersons(true)
+                        .build(),
+                HsCredentialsContextRbacEntity.builder()
+                        .uuid(UUID.randomUUID())
+                        .type("SSH")
+                        .qualifier("public")
+                        .publicAccess(true)
+                        .onlyForNaturalPersons(false)
+                        .build(),
+                HsCredentialsContextRbacEntity.builder()
+                        .uuid(UUID.randomUUID())
+                        .type("SSH")
+                        .qualifier("internal")
+                        .publicAccess(false)
+                        .onlyForNaturalPersons(false)
+                        .build()
+        ));
     }
 }

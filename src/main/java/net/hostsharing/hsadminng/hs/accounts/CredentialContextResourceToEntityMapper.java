@@ -60,7 +60,7 @@ public class CredentialContextResourceToEntityMapper {
                     (resource.getQualifier() != null && !existingContextEntity.getQualifier().equals(resource.getQualifier()))) {
                     throw new EntityNotFoundException(
                             messageTranslator.translate(
-                                    "credentials.existing-{0}-does-not-match-given-resource-{1}",
+                                    "credentials.existing-credentials-context-{0}-does-not-match-given-resource-{1}",
                                     existingContextEntity, resource));
                 }
                 entities.add(existingContextEntity);

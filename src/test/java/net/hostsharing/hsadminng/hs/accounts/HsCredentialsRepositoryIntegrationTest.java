@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.accounts;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
@@ -62,8 +62,8 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     private RbacSubjectEntity alexSubject;
     private RbacSubjectEntity drewSubject;
     private RbacSubjectEntity testUserSubject;
-    private HsOfficePersonRbacEntity drewPerson;
-    private HsOfficePersonRbacEntity testUserPerson;
+    private HsOfficePersonRealEntity drewPerson;
+    private HsOfficePersonRealEntity testUserPerson;
 
     @BeforeEach
     void setUp() {
@@ -277,13 +277,13 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         }
     }
 
-    private HsOfficePersonRbacEntity fetchPersonByGivenName(final String givenName) {
-        final String jpql = "SELECT p FROM HsOfficePersonRbacEntity p WHERE p.givenName = :givenName";
-        final Query query = em.createQuery(jpql, HsOfficePersonRbacEntity.class);
+    private HsOfficePersonRealEntity fetchPersonByGivenName(final String givenName) {
+        final String jpql = "SELECT p FROM HsOfficePersonRealEntity p WHERE p.givenName = :givenName";
+        final Query query = em.createQuery(jpql, HsOfficePersonRealEntity.class);
         query.setParameter("givenName", givenName);
         try {
             context(SUPERUSER_ALEX_SUBJECT_NAME);
-            return notNull((HsOfficePersonRbacEntity) query.getSingleResult());
+            return notNull((HsOfficePersonRealEntity) query.getSingleResult());
         } catch (final NoResultException e) {
             throw new AssertionError(
                     "Failed to find person with name '" + givenName + "'. Ensure test data is present.", e);
@@ -315,7 +315,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     private class RelationBuilder {
         private final HsOfficeRelationType relationType;
         private HsOfficePersonRealEntity anchorPerson;
-        private HsOfficePersonRbacEntity holderPerson;
+        private HsOfficePersonRealEntity holderPerson;
         private HsOfficeContactRealEntity contact;
 
         public RelationBuilder(HsOfficeRelationType relationType) {
@@ -327,7 +327,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             return this;
         }
 
-        public RelationBuilder withHolder(HsOfficePersonRbacEntity holderPerson) {
+        public RelationBuilder withHolder(HsOfficePersonRealEntity holderPerson) {
             this.holderPerson = holderPerson;
             return this;
         }
@@ -373,7 +373,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             final var credentials = HsCredentialsEntity.builder()
                     .uuid(subject.getUuid())
                     .subject(subject)
-                    .person(em.find(HsOfficePersonRbacEntity.class, person.getUuid()))
+                    .person(em.find(HsOfficePersonRealEntity.class, person.getUuid()))
                     .emailAddress(emailAddress)
                     .active(true)
                     .build();

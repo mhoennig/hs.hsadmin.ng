@@ -61,9 +61,13 @@ public abstract class HsCredentialsContext implements Stringifyable, BaseEntity<
     @Column(name = "public_access")
     private boolean publicAccess;
 
+    public boolean isHsadminContext() {
+        return "HSADMIN".equals(type);
+    }
+
     @Override
     public String toShortString() {
-        return toString();
+        return type + (qualifier != null ? ":" + qualifier : "");
     }
 
     @Override

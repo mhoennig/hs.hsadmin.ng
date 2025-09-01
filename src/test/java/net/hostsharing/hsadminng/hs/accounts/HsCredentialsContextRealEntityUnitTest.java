@@ -9,13 +9,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class HsCredentialsContextRealEntityUnitTest {
 
     @Test
-    void toShortString() {
+    void toShortStringContainsJustTypeAndQualifier() {
         final var entity = HsCredentialsContextRealEntity.builder()
                 .uuid(UUID.randomUUID())
-                .type("testType")
-                .qualifier("testQualifier")
-                .onlyForNaturalPersons(true)
+                .type("SSH")
+                .qualifier("prod")
+                .publicAccess(true)
                 .build();
-        assertEquals("loginContext(testType:testQualifier:NP-ONLY:INTERNAL)", entity.toShortString());
+        assertEquals("SSH:prod", entity.toShortString());
+    }
+
+    @Test
+    void toStringContainsAllNonNullFields() {
+        final var entity = HsCredentialsContextRealEntity.builder()
+                .uuid(UUID.randomUUID())
+                .type("SSH")
+                .qualifier("prod")
+                .publicAccess(true)
+                .build();
+        assertEquals("loginContext(SSH:prod:PUBLIC)", entity.toString());
     }
 }
