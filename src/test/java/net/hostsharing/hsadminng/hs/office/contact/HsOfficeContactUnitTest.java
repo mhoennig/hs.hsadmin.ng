@@ -3,6 +3,9 @@ package net.hostsharing.hsadminng.hs.office.contact;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
+import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeContactUnitTest {
@@ -14,9 +17,31 @@ class HsOfficeContactUnitTest {
     }
 
     @Test
-    void toStringReturnsCaption() {
-        final var givenContact = HsOfficeContactRbacEntity.builder().caption("given caption").build();
-        assertThat("" + givenContact).isEqualTo("contact(caption='given caption')");
+    void toStringDescribesAllDomainProperties() {
+        final var givenContact = HsOfficeContactRbacEntity.builder()
+                .caption("given caption")
+                .postalAddress(Map.ofEntries(
+                        entry("department", "Rechnungsabteilung"),
+                        entry("street", "Teststraße 11"),
+                        entry("zipcode", "D-12345"),
+                        entry("city", "Berlin")
+                ))
+                .emailAddresses(Map.ofEntries(
+                        Map.entry("main", "main@example.org"),
+                        Map.entry("sender", "sender@example.org")
+                ))
+                .build();
+        assertThat("" + givenContact).isEqualTo("""
+                contact(caption='given caption', postalAddress='{
+                  "city" : "Berlin",
+                  "department" : "Rechnungsabteilung",
+                  "street" : "Teststraße 11",
+                  "zipcode" : "D-12345"
+                }', emailAddresses='{
+                  "main" : "main@example.org",
+                  "sender" : "sender@example.org"
+                }')
+                """.trim());
     }
 
     @Test

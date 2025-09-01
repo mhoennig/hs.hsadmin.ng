@@ -42,6 +42,7 @@ public class HsOfficeContact implements Stringifyable, BaseEntity<HsOfficeContac
 
     private static Stringify<HsOfficeContact> toString = stringify(HsOfficeContact.class, "contact")
             .withProp(Fields.caption, HsOfficeContact::getCaption)
+            .withProp(Fields.postalAddress, HsOfficeContact::getPostalAddress)
             .withProp(Fields.emailAddresses, HsOfficeContact::getEmailAddresses);
 
     @Id
@@ -59,6 +60,7 @@ public class HsOfficeContact implements Stringifyable, BaseEntity<HsOfficeContac
     @Setter(AccessLevel.NONE)
     @Type(JsonType.class)
     @Column(name = "postaladdress")
+    // Map can contain keys like: "department", "street", "zipcode", "city", "country", etc.
     private Map<String, String> postalAddress = new HashMap<>();
 
     @Transient

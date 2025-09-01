@@ -119,6 +119,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given(
                             "postalAddress", """
                                             "firm": "Test AG",
+                                            "department": "Geschäftsleitung",
                                             "street": "Shanghai-Allee 1",
                                             "zipcode": "20123",
                                             "city": "Hamburg",
@@ -261,8 +262,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("newContactCaption", "Test AG - China")
                     .given(
                             "newPostalAddress", """
-                                             "firm": "Test AG",
-                                             "name": "Fi Zhong-Kha",
+                                             "department": "Executive Board",
                                              "building": "Thi Chi Koh Building",
                                              "street": "No.2 Commercial Second Street",
                                              "district": "Niushan Wei Wu",
