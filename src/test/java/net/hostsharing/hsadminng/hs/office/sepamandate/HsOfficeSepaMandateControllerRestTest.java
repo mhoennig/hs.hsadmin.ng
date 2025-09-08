@@ -1,15 +1,15 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.time.LocalDate;
 import java.util.List;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -31,8 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeSepaMandateController.class)
-@Import({ StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({ StrictMapper.class, MessageTranslator.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class HsOfficeSepaMandateControllerRestTest {
 
     @MockitoBean
@@ -85,7 +87,7 @@ class HsOfficeSepaMandateControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/sepamandates?iban=DE123")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON))
 

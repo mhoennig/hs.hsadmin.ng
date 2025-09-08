@@ -92,6 +92,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
     implementation("com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.11.0")
     implementation("org.postgresql:postgresql")
@@ -346,6 +347,9 @@ configure<JacocoPluginExtension> {
 
 tasks.named<JacocoReport>("jacocoTestReport") {
     dependsOn(tasks.named("test")) // Depends on the main test task
+    dependsOn(tasks.named("compileJava")) // Add explicit dependency on compileJava
+    dependsOn(tasks.named("openApiGenerate")) // Add explicit dependency on openApiGenerate
+    
     reports {
         xml.required.set(true) // Common requirement for CI/CD
         csv.required.set(false)

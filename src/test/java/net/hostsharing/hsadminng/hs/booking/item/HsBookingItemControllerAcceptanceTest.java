@@ -12,7 +12,6 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.Dns;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.ClassOrderer;
@@ -36,6 +35,7 @@ import java.util.UUID;
 
 import static java.util.Map.entry;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
@@ -43,14 +43,13 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
 
+@Tag("bookingIntegrationTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class}
-)
-@ActiveProfiles("test")
-@Transactional
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 @TestClassOrder(ClassOrderer.OrderAnnotation.class) // fail early on fetching problems
-@Tag("bookingIntegrationTest")
+@Transactional
 class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
@@ -87,7 +86,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items?projectUuid=" + givenProject.getUuid())
@@ -151,7 +150,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(ContentType.JSON)
                         .body("""
                             {
@@ -201,7 +200,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .contentType(ContentType.JSON)
                     .body("""
                                 {
@@ -271,7 +270,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
@@ -361,7 +360,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
@@ -454,7 +453,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -488,7 +487,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -506,7 +505,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "hs_booking.project#D-1000313-D-1000313defaultproject:ADMIN")
                     .port(port)
                 .when()
@@ -550,7 +549,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -605,7 +604,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())
@@ -624,7 +623,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())

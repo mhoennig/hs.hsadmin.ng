@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;

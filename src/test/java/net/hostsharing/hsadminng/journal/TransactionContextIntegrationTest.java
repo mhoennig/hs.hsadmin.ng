@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.journal;
 
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.rbac.test.cust.TestCustomerEntity;

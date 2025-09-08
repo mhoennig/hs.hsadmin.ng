@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
 import static java.util.Collections.emptyList;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -13,12 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +39,11 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.SynchronizationType;
 
 @WebMvcTest(HsCredentialsContextsController.class)
-@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class, MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({ StrictMapper.class,
+          MessageTranslator.class,
+          JsonObjectMapperConfiguration.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class HsCredentialsContextsControllerRestTest {
 
     @Autowired
@@ -85,7 +90,7 @@ class HsCredentialsContextsControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/accounts/contexts")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
 
@@ -105,7 +110,7 @@ class HsCredentialsContextsControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                 .get("/api/hs/accounts/contexts")
-                .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                .header("Authorization", bearer("Bearer superuser-alex@hostsharing.net"))
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
 
@@ -147,7 +152,7 @@ class HsCredentialsContextsControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/accounts/contexts")
-                        .header("Authorization", "Bearer drew@hostsharing.org")
+                        .header("Authorization", bearer("drew@hostsharing.org"))
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
 

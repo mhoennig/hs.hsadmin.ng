@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.scenarios;
 
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.AddPhoneNumberToContactData;
@@ -43,39 +42,16 @@ import net.hostsharing.hsadminng.hs.scenarios.Produces;
 import net.hostsharing.hsadminng.hs.scenarios.Requires;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.lambda.Reducer;
-import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
-import net.hostsharing.hsadminng.test.IgnoreOnFailureExtension;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestClassOrder;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
-@Tag("scenarioTest")
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class },
-        properties = {
-                "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///scenariosTC}",
-                "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
-                "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
-                "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
-        }
-)
-@ActiveProfiles("test")
-@TestClassOrder(ClassOrderer.OrderAnnotation.class)
-@ExtendWith(IgnoreOnFailureExtension.class)
 class HsOfficeScenarioTests extends ScenarioTest {
 
     @Autowired
@@ -702,7 +678,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
         @Test
         @Order(6010)
-        @Requires("Debitor: D-3101100 - Michelle Matthieu") // which should also get updated
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+            // which should also get updated
         void shouldReplaceDeceasedPartnerByCommunityOfHeirs() {
             new ReplaceDeceasedPartnerWithCommunityOfHeirs(scenarioTest)
                     .given("partnerNumber", "P-31011")

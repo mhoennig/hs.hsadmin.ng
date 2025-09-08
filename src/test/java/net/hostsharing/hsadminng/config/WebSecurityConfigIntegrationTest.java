@@ -1,12 +1,9 @@
 package net.hostsharing.hsadminng.config;
 
-import java.util.Map;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
-import org.junit.jupiter.api.BeforeEach;
+import lombok.val;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,134 +15,57 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import java.util.Map;
+
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = {"management.port=0", "server.port=0", "hsadminng.cas.server=http://localhost:8088"})
-@ActiveProfiles({"wiremock", "realCasAuthenticator"}) // IMPORTANT: To test prod config, do NOT use test profile!
 @Tag("generalIntegrationTest")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = { "management.port=0", "server.port=0" })
+@ActiveProfiles("fake-jwt") // IMPORTANT: In this test, want to test the prod config, do NOT use test profile!
 class WebSecurityConfigIntegrationTest {
 
+    public static final String GIVEN_FAKE_SUBJECT = "fake-user-name";
     @Value("${local.server.port}")
     private int serverPort;
 
     @Value("${local.management.port}")
     private int managementPort;
 
-    @Value("${hsadminng.cas.service}")
-    private String serviceUrl;
-
     @Autowired
     private TestRestTemplate restTemplate;
 
-    @Autowired
-    private WireMockServer wireMockServer;
-
-    @BeforeEach
-    void setUp() {
-        wireMockServer.stubFor(get(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
-                                <cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
-                                    <cas:authenticationFailure/>
-                                </cas:serviceResponse>
-                                """)));
-    }
-
     @Test
-    void accessToApiWithValidServiceTicketSouldBePermitted() {
-        // given
-        givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
-
-        // http request
-        final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/pong",
-                HttpMethod.GET,
-                httpHeaders(entry("Authorization", "Bearer ST-fake-cas-ticket")),
-                String.class
-        );
-
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).startsWith("ponged fake-user-name");
-    }
-
-    @Test
-    void accessToApiWithValidTicketGrantingTicketShouldBePermitted() {
-        // given
-        givenCasServiceTicketForTicketGrantingTicket("TGT-fake-cas-ticket", "ST-fake-cas-ticket");
-        givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
-
-        // http request
-        final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/pong",
-                HttpMethod.GET,
-                httpHeaders(entry("Authorization", "Bearer TGT-fake-cas-ticket")),
-                String.class
-        );
-
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).startsWith("ponged fake-user-name");
-    }
-
-    @Test
-    void accessToOpenApiWithInvalidTicketGrantingTicketShouldBePermitted() {
-        // given
-        givenCasServiceTicketForTicketGrantingTicket("TGT-fake-cas-ticket", "ST-fake-cas-ticket");
-        givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
-
-        // http request
-        final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/ping",
-                HttpMethod.GET,
-                httpHeaders(entry("Authorization", "Bearer TGT-WRONG-cas-ticket")),
-                String.class
-        );
-
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    }
-
-    @Test
-    void accessToOpenApiWithoutTokenShouldBePermitted() {
-        final var result = this.restTemplate.getForEntity(
-                "http://localhost:" + this.serverPort + "/api/ping", String.class);
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    @Test
-    void accessToProtectedApiWithValidTokenShouldBePermitted() {
-        // given
-        givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
-
+    void accessToApiWithValidJwtShouldBePermitted() {
         // when
-        final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/pong",
+        val result = restTemplate.exchange(
+                serverUrl("/api/pong"),
                 HttpMethod.GET,
-                httpHeaders(entry("Authorization", "Bearer ST-fake-cas-ticket")),
+                httpHeaders(entry("Authorization", bearer(GIVEN_FAKE_SUBJECT))),
                 String.class
         );
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).startsWith("ponged " + GIVEN_FAKE_SUBJECT);
+    }
+
+    @Test
+    void accessToOpenApiWithoutTokenShouldBePermitted() {
+        val result = this.restTemplate.getForEntity(
+                serverUrl("/api/ping"), String.class);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     void accessToProtectedApiWithInvalidTokenShouldBeDenied() {
-        // given
-        givenCasTicketValidationResponse("ST-fake-cas-ticket", "fake-user-name");
-
         // when
-        final var result = restTemplate.exchange(
-                "http://localhost:" + this.serverPort + "/api/pong",
+        val result = restTemplate.exchange(
+                serverUrl("/api/pong"),
                 HttpMethod.GET,
-                httpHeaders(entry("Authorization", "Bearer ST-WRONG-cas-ticket")),
+                httpHeaders(entry("Authorization", "Bearer INVALID-JWT")),
                 String.class
         );
 
@@ -155,59 +75,42 @@ class WebSecurityConfigIntegrationTest {
 
     @Test
     void accessToActuatorShouldBePermitted() {
-        final var result = this.restTemplate.getForEntity(
+        val result = this.restTemplate.getForEntity(
                 "http://localhost:" + this.managementPort + "/actuator", Map.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     void accessToSwaggerUiShouldBePermitted() {
-        final var result = this.restTemplate.getForEntity(
-                "http://localhost:" + this.serverPort + "/swagger-ui/index.html", String.class);
+        val result = this.restTemplate.getForEntity(
+                serverUrl("/swagger-ui/index.html"), String.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     void accessToApiDocsEndpointShouldBePermitted() {
-        final var result = this.restTemplate.getForEntity(
-                "http://localhost:" + this.serverPort + "/v3/api-docs/swagger-config", String.class);
+        val result = this.restTemplate.getForEntity(
+                serverUrl("/v3/api-docs/swagger-config"), String.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).contains("\"configUrl\":\"/v3/api-docs/swagger-config\"");
     }
 
     @Test
     void accessToActuatorEndpointShouldBePermitted() {
-        final var result = this.restTemplate.getForEntity(
+        val result = this.restTemplate.getForEntity(
                 "http://localhost:" + this.managementPort + "/actuator/health", Map.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody().get("status")).isEqualTo("UP");
     }
 
-    private void givenCasServiceTicketForTicketGrantingTicket(final String ticketGrantingTicket, final String serviceTicket) {
-        wireMockServer.stubFor(post(urlEqualTo("/cas/v1/tickets/" + ticketGrantingTicket))
-                .withFormParam("service", equalTo(serviceUrl))
-                .willReturn(aResponse()
-                        .withStatus(201)
-                        .withBody(serviceTicket)));
-    }
-
-    private void givenCasTicketValidationResponse(final String casToken, final String userName) {
-        wireMockServer.stubFor(get(urlEqualTo("/cas/p3/serviceValidate?service=" + serviceUrl + "&ticket=" + casToken))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
-                                <cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
-                                    <cas:authenticationSuccess>
-                                        <cas:user>${userName}</cas:user>
-                                    </cas:authenticationSuccess>
-                                </cas:serviceResponse>
-                                """.replace("${userName}", userName))));
+    private @NotNull String serverUrl(final String path) {
+        return "http://localhost:" + this.serverPort + path;
     }
 
     @SafeVarargs
     private HttpEntity<?> httpHeaders(final Map.Entry<String, String>... headerValues) {
-        final var headers = new HttpHeaders();
-        for ( Map.Entry<String, String> headerValue: headerValues ) {
+        val headers = new HttpHeaders();
+        for (Map.Entry<String, String> headerValue : headerValues) {
             headers.add(headerValue.getKey(), headerValue.getValue());
         }
         return new HttpEntity<>(headers);

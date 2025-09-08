@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.rbac.grant;
 
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;

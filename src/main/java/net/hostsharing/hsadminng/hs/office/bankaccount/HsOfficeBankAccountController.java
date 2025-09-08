@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeBankAccountsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountResource;
@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
     @Autowired

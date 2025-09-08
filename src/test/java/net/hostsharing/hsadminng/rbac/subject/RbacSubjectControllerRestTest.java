@@ -1,23 +1,24 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,8 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RbacSubjectController.class)
-@Import({StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({ StrictMapper.class,
+          MessageTranslator.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class RbacSubjectControllerRestTest {
 
     @Autowired
@@ -60,6 +63,7 @@ class RbacSubjectControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -82,6 +86,7 @@ class RbacSubjectControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
                         .accept(MediaType.APPLICATION_JSON))

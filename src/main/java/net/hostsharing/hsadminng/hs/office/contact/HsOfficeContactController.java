@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.contact;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeContactsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactPatchResource;
@@ -23,7 +23,7 @@ import static net.hostsharing.hsadminng.errors.Validate.validate;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Autowired

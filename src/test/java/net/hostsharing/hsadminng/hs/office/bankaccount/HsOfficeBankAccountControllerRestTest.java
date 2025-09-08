@@ -1,27 +1,29 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeBankAccountController.class)
-@Import({DisableSecurityConfig.class, MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({ MessageTranslator.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class HsOfficeBankAccountControllerRestTest {
 
     @Autowired
@@ -69,7 +71,7 @@ class HsOfficeBankAccountControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/bankaccounts")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -116,7 +118,7 @@ class HsOfficeBankAccountControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/bankaccounts")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

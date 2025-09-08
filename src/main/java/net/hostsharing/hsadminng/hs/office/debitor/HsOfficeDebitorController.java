@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeDebitorsApi;
@@ -35,7 +35,7 @@ import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Autowired

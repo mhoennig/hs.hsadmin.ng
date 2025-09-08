@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import java.util.List;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.bearerTemplate;
 import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.resolve;
 import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.resolveJsonArray;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
@@ -27,7 +28,7 @@ public class FetchRbacContext extends UseCase<FetchRbacContext> {
                 "RBAC Context", () ->
                         httpGet(
                                 "/api/rbac/context", req -> req
-                                        .header("Authorization", resolve("Bearer %{subjectName}", DROP_COMMENTS))
+                                        .header("Authorization", bearerTemplate("%{subjectName}"))
                                         .header("assumed-roles", resolve("%{assumedRoles}", DROP_COMMENTS))
                         )
                         .expecting(OK).expecting(JSON).expectObject()

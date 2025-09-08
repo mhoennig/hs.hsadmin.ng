@@ -11,18 +11,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
-
 @Configuration
 public class JsonObjectMapperConfiguration {
 
     public static ObjectMapper build() {
-        return  new JsonObjectMapperConfiguration().customObjectMapper().build();
+        return new JsonObjectMapperConfiguration().customObjectMapper();
     }
 
     @Bean
     @Primary
-    public Jackson2ObjectMapperBuilder customObjectMapper() {
-        // HOWTO: add JSON converters and specify other JSON mapping configurations
+    public ObjectMapper customObjectMapper() {
         return new Jackson2ObjectMapperBuilder()
                 .modules(new JsonNullableModule(), new JavaTimeModule())
                 .featuresToEnable(
@@ -30,6 +28,7 @@ public class JsonObjectMapperConfiguration {
                         DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS,
                         DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
                 )
-                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .build();
     }
 }

@@ -1,7 +1,8 @@
-package net.hostsharing.hsadminng.context;
+package net.hostsharing.hsadminng.rbac.context;
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
@@ -74,7 +76,7 @@ public class Context {
                 """);
         query.setParameter("currentTask", shortenToMaxLength(currentTask, 127));
         query.setParameter("currentRequest", currentRequest);
-        query.setParameter("currentSubject", currentSubject);
+        query.setParameter("currentSubject", subjectName(currentSubject));
         query.setParameter("assumedRoles", assumedRoles != null ? assumedRoles : "");
         query.executeUpdate();
     }
@@ -117,6 +119,27 @@ public class Context {
         return caller.map(
                         c -> c.getDeclaringClass().getSimpleName() + "." + c.getMethodName())
                 .orElse("unknown");
+    }
+
+    private String subjectName(final String nameOrUuid) {
+        if (nameOrUuid == null) {
+            return null;
+        }
+        // TODO.impl: maybe it should be the other way around: UUID as the default and just optionally the name
+        try {
+            val authenticatedUuid = UUID.fromString(nameOrUuid);
+            val subjectName = findSubjectNameByUuid(authenticatedUuid)
+                    .orElseThrow(() -> new EntityExistsException("Subject not found"));
+            return subjectName;
+        } catch (final IllegalArgumentException e) {
+            return nameOrUuid;
+        }
+    }
+
+    private Optional<String> findSubjectNameByUuid(final UUID authenticatedUuid) {
+        return Optional.ofNullable(em.createNativeQuery("SELECT name FROM rbac.subject s WHERE s.uuid=:uuid")
+                .setParameter("uuid", authenticatedUuid)
+                .getSingleResult()).map(Object::toString);
     }
 
     private String toTask(final HttpServletRequest request) {

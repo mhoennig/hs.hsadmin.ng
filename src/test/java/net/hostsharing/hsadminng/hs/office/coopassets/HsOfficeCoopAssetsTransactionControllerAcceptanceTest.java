@@ -3,13 +3,10 @@ package net.hostsharing.hsadminng.hs.office.coopassets;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.config.MessagesResourceConfig;
-import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -27,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DEPOSIT;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
@@ -34,14 +32,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
 
+@Tag("officeIntegrationTest")
+@Transactional
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class,
-                    MessagesResourceConfig.class, MessageTranslator.class}
-)
-@ActiveProfiles("test")
-@Transactional
-@Tag("officeIntegrationTest")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
@@ -70,14 +66,14 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions")
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("", hasSize(3*6)); // @formatter:on
+                    .body("", hasSize(3 * 6)); // @formatter:on
         }
 
         @Test
@@ -88,7 +84,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions?membershipUuid="+givenMembership.getUuid())
@@ -211,7 +207,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions?membershipUuid="
@@ -244,7 +240,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -290,18 +286,18 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                 // TODO.impl: introduce something like transactedAsSuperuser / transactedAs("...", ...)
                 context.define("superuser-alex@hostsharing.net");
                 return coopAssetsTransactionRepo.save(HsOfficeCoopAssetsTransactionEntity.builder()
-                                .transactionType(DEPOSIT)
-                                .valueDate(LocalDate.of(2022, 10, 20))
-                                .membership(givenMembership)
-                                .assetValue(new BigDecimal("256.00"))
-                                .reference("test ref")
+                        .transactionType(DEPOSIT)
+                        .valueDate(LocalDate.of(2022, 10, 20))
+                        .membership(givenMembership)
+                        .assetValue(new BigDecimal("256.00"))
+                        .reference("test ref")
                         .build());
-                    }).assertSuccessful().assertNotNull().returnedValue();
+            }).assertSuccessful().assertNotNull().returnedValue();
             toCleanup(HsOfficeCoopAssetsTransactionEntity.class, givenTransaction.getUuid());
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(ContentType.JSON)
                         .body("""
                                    {
@@ -357,7 +353,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("Accept-Language", "de")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -398,7 +394,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                     LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                .given().header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)
@@ -421,7 +417,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                     LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                .given().header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)
@@ -439,7 +435,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer person-FirstGmbH@example.com")
+                    .header("Authorization", bearer("person-FirstGmbH@example.com"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)

@@ -5,19 +5,17 @@ import java.util.List;
 import io.micrometer.core.annotation.Timed;
 import lombok.val;
 import net.hostsharing.hsadminng.config.NoSecurityRequirement;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.api.ContextsApi;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ContextResource;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@PreAuthorize("isAuthenticated()")
 @NoSecurityRequirement
 public class HsCredentialsContextsController implements ContextsApi {
 
@@ -33,7 +31,6 @@ public class HsCredentialsContextsController implements ContextsApi {
     @Override
     @Transactional(readOnly = true)
     @Timed("app.credentials.contexts.getListOfLoginContexts")
-    @PreAuthorize("permitAll()")
     public ResponseEntity<List<ContextResource>> getListOfContexts(final String assumedRoles) {
         if (SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
             context.assumeRoles(assumedRoles);

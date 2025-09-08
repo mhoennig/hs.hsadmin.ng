@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.errors.ReferenceNotFoundException;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
@@ -39,7 +39,7 @@ import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Autowired

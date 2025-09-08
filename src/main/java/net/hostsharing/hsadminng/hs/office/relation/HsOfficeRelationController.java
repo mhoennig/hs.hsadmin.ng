@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.relation;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
@@ -29,7 +29,7 @@ import static net.hostsharing.hsadminng.mapper.KeyValueMap.from;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Autowired

@@ -2,11 +2,12 @@ package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
+
 import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.UUID;
 import java.util.function.Function;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.rbac.test.JsonBuilder.jsonObject;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -28,10 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeCoopSharesTransactionController.class)
-@Import({DisableSecurityConfig.class,
-         MessagesResourceConfig.class,
-         MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({ MessagesResourceConfig.class,
+          MessageTranslator.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class HsOfficeCoopSharesTransactionControllerRestTest {
 
     @Autowired
@@ -126,7 +128,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopsharestransactions")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .header("Accept-Language", "de")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(testCase.givenRequestBody())
@@ -138,5 +140,4 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
                 .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                 .andExpect(jsonPath("message", containsString(testCase.expectedErrorMessage)));
     }
-
 }

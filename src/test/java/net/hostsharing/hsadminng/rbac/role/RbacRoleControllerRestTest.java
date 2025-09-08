@@ -1,18 +1,18 @@
 package net.hostsharing.hsadminng.rbac.role;
 
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -21,7 +21,10 @@ import jakarta.persistence.SynchronizationType;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
-import static net.hostsharing.hsadminng.rbac.role.TestRbacRole.*;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static net.hostsharing.hsadminng.rbac.role.TestRbacRole.customerXxxAdmin;
+import static net.hostsharing.hsadminng.rbac.role.TestRbacRole.customerXxxOwner;
+import static net.hostsharing.hsadminng.rbac.role.TestRbacRole.hostmasterRole;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,8 +33,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RbacRoleController.class)
-@Import({StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({ StrictMapper.class,
+          MessageTranslator.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class RbacRoleControllerRestTest {
 
     @Autowired
@@ -67,7 +72,7 @@ class RbacRoleControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/roles")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then

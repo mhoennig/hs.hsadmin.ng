@@ -3,9 +3,8 @@ package net.hostsharing.hsadminng.rbac.test.cust;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -22,16 +21,16 @@ import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.*;
 
+@Tag("generalIntegrationTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
-)
-@ActiveProfiles("test")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 @Transactional
-@Tag("generalIntegrationTest")
 class TestCustomerControllerAcceptanceTest {
 
     @LocalServerPort
@@ -59,7 +58,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewAllCustomers_ifNoCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -77,7 +76,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers?prefix=y")
@@ -93,7 +92,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -110,7 +109,7 @@ class TestCustomerControllerAcceptanceTest {
         void customerAdmin_withoutAssumedRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer customer-admin@yyy.example.com")
+                    .header("Authorization", bearer("customer-admin@yyy.example.com"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -131,7 +130,7 @@ class TestCustomerControllerAcceptanceTest {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -163,7 +162,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -194,7 +193,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer customer-admin@yyy.example.com")
+                    .header("Authorization", bearer("customer-admin@yyy.example.com"))
                     .contentType(ContentType.JSON)
                     .body("""
                               {
@@ -224,7 +223,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .contentType(ContentType.JSON)
                     .body("{]") // deliberately invalid JSON
                     .port(port)

@@ -4,11 +4,10 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -25,20 +24,22 @@ import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.ACTIVE;
 import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.CANCELLED;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
+@Tag("officeIntegrationTest")
+@Transactional
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
-)
-@ActiveProfiles("test")
-@Transactional
-@Tag("officeIntegrationTest")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     private static final String TEMP_MEMBER_NUMBER_SUFFIX = "90";
@@ -72,7 +73,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships")
@@ -118,7 +119,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .queryParam("partnerUuid", partner.getUuid() )
@@ -146,7 +147,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .port(port)
                     .when()
                         .queryParam("partnerNumber", "P-10002" )
@@ -183,7 +184,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -226,7 +227,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -252,7 +253,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -267,7 +268,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "hs_office.relation#HostsharingeG-with-PARTNER-ThirdOHG:AGENT")
                     .port(port)
                 .when()
@@ -299,7 +300,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -343,7 +344,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             // when
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", givenPartnerAdmin)
                     .contentType(ContentType.JSON)
                     .body("""
@@ -378,7 +379,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())
@@ -396,7 +397,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT")
                     .port(port)
                 .when()
@@ -415,7 +416,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())

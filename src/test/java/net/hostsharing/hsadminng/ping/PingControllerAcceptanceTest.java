@@ -2,9 +2,7 @@ package net.hostsharing.hsadminng.ping;
 
 import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
-import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,23 +11,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 
+@Tag("generalIntegrationTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {
-                HsadminNgApplication.class,
-                DisableSecurityConfig.class,
-                JpaAttempt.class
-        }
-)
-@ActiveProfiles("test")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
+@TestPropertySource(properties = {
+        "server.port=0",
+        "logging.level.root=DEBUG"
+})
 @Transactional
-@Tag("generalIntegrationTest")
 class PingControllerAcceptanceTest {
 
     @LocalServerPort
@@ -59,7 +58,7 @@ class PingControllerAcceptanceTest {
     void pongRepliesWithTranslatedPongResponse(final PongTranslationTestCase testCase) {
         final var responseBody = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("Accept-Language", testCase.givenLocale)
                     .port(port)
                 .when()

@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.role;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacRolesApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class RbacRoleController implements RbacRolesApi {
 
     @Autowired

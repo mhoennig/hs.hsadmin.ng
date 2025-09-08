@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.bearerTemplate;
 import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.resolve;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +34,7 @@ public class CurrentLoginUser extends UseCase<CurrentLoginUser> {
                 "Current Login User", () ->
                         httpGet(
                                 "/api/hs/accounts/current", req -> req
-                                        .header("Authorization", resolve("Bearer %{subjectName}", DROP_COMMENTS))
+                                        .header("Authorization", bearerTemplate("%{subjectName}"))
                         )
                         .expecting(OK).expecting(JSON).expectObject()
                                 .extractValue("subject.name", "returnedSubjectName")

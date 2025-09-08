@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.rbac.test.pac;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.test.generated.api.v1.api.TestPackagesApi;
 import net.hostsharing.hsadminng.test.generated.api.v1.model.TestPackageResource;
 import net.hostsharing.hsadminng.test.generated.api.v1.model.TestPackageUpdateResource;
@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class TestPackageController implements TestPackagesApi {
 
     @Autowired

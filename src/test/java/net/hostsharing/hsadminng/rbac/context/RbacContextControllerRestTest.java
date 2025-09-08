@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.rbac.context;
 
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
+
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleEntity;
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,8 +37,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RbacContextController.class)
-@Import({ StrictMapper.class, DisableSecurityConfig.class, MessageTranslator.class })
-@ActiveProfiles("test")
+@Import({ StrictMapper.class,
+          MessageTranslator.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class RbacContextControllerRestTest {
 
     private static final String GIVEN_SUBJECT_NAME = "superuser-alex@hostsharing.net";
@@ -99,7 +102,7 @@ class RbacContextControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/context")
-                        .header("Authorization", "Bearer " + GIVEN_SUBJECT_NAME)
+                        .header("Authorization", bearer(GIVEN_SUBJECT_NAME))
                         .header("assumed-roles", rolesToAssume)
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())

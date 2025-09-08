@@ -1,11 +1,12 @@
 package net.hostsharing.hsadminng.ping;
 
 import lombok.RequiredArgsConstructor;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
+import net.hostsharing.hsadminng.rbac.context.Context;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -26,8 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({ MessagesResourceConfig.class,
           MessageTranslator.class,
           JsonObjectMapperConfiguration.class,
-          DisableSecurityConfig.class })
-@ActiveProfiles("test")
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class PingControllerRestTest {
 
     @Autowired
@@ -47,7 +50,7 @@ class PingControllerRestTest {
 
     @ParameterizedTest
     @EnumSource(I18nTestCases.class)
-    void pingReturnsPongInEnglish(final I18nTestCases testCase) throws Exception {
+    void pingReturnsPingedInRequestedLanguage(final I18nTestCases testCase) throws Exception {
 
         // when
         final var request = mockMvc.perform(MockMvcRequestBuilders
@@ -58,7 +61,24 @@ class PingControllerRestTest {
 
         // then
         request
-            .andExpect(status().isOk())
-            .andExpect(content().string(startsWith(testCase.expectedTranslation)));
+                .andExpect(status().isOk())
+                .andExpect(content().string(startsWith(testCase.expectedTranslation)));
+    }
+
+    @Test
+    void pongReturnsPongedWithSubject() throws Exception {
+
+        // when
+        final var request = mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/pong")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Accept-Language", "de")
+                        .accept(MediaType.TEXT_PLAIN))
+                .andDo(print());
+
+        // then
+        request
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("superuser-alex@hostsharing.net")));
     }
 }

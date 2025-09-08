@@ -384,6 +384,7 @@ public class ArchitectureTest {
             classes().that(belongToProductionClasses()
                     .and(are(annotatedWith(RestController.class))))
                     .should(havePreAuthorizeWithValue("isAuthenticated()"))
+                    .orShould().beAnnotatedWith(NoSecurityRequirement.class)
                     .because("Every REST controller should require authentication by default, use @PreAuthorize(...) to override this at the endpoint method level.");
 
     private static ArchCondition<JavaClass> havePreAuthorizeWithValue(String expectedValue) {

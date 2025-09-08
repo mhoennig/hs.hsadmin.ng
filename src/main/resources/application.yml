@@ -54,12 +54,16 @@ spring:
     liquibase:
         contexts: ${spring.profiles.active}
 
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri: ${HSADMINNG_JWT_ISSUER:}
+                    jwk-set-uri: ${HSADMINNG_JWT_JWKS_URL:}
+
 hsadminng:
     postgres:
         leakproof:
-    cas:
-        server: https://login.hostsharing.net/cas # use empty string to bypass CAS-validation and directly use current-subject
-        service: https://hsadminng.hostsharing.net:443 # TODO.conf: deployment target + matching CAS service ID
 
 metrics:
     distribution:
@@ -77,4 +81,18 @@ logging:
 #        org.springframework.validation: DEBUG
 # HOWTO configure logging, e.g. logging to a separate file, see:
 #   https://docs.spring.io/spring-boot/reference/features/logging.html
+
+---
+
+spring:
+    config:
+        activate:
+            on-profile: fake-jwt
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri: "http://localhost:${server.port}/fake-jwt"
+                    jwk-set-uri: "http://localhost:${server.port}/fake-jwt/.well-known/jwks.json"
+
 

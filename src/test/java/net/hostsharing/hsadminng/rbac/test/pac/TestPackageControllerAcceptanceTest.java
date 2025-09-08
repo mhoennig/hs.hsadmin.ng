@@ -3,8 +3,7 @@ package net.hostsharing.hsadminng.rbac.test.pac;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -19,17 +18,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static java.lang.String.format;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
+@Tag("generalIntegrationTest")
+@Transactional
 @SpringBootTest(
         webEnvironment = WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class }
-)
-@ActiveProfiles("test")
-@Transactional
-@Tag("generalIntegrationTest")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 class TestPackageControllerAcceptanceTest {
 
     @LocalServerPort
@@ -48,7 +47,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .port(port)
                 .when()
@@ -70,7 +69,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .port(port)
                 .when()
@@ -99,7 +98,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body(format("""
@@ -130,7 +129,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -160,7 +159,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("{}")
@@ -180,7 +179,7 @@ class TestPackageControllerAcceptanceTest {
         // @formatter:off
         return UUID.fromString(RestAssured
             .given()
-                .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                 .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                 .port(port)
             .when()

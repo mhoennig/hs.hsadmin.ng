@@ -3,14 +3,15 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRbacEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static io.hypersistence.utils.hibernate.type.range.Range.localDateRange;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -42,8 +44,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeMembershipController.class)
-@Import({ StrictMapper.class, DisableSecurityConfig.class, MessagesResourceConfig.class, MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({ StrictMapper.class, MessagesResourceConfig.class, MessageTranslator.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 public class HsOfficeMembershipControllerRestTest {
 
     private static final HsOfficePartnerRealEntity PARTNER_12345 = HsOfficePartnerRealEntity.builder()
@@ -112,7 +115,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/memberships?partnerNumber=P-12345")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -134,7 +137,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/memberships?partnerNumber=P-12345")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
@@ -199,7 +202,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/memberships/" + givenUuid)
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -218,7 +221,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/memberships/" + UUID.randomUUID())
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -236,7 +239,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/memberships/M-1234501")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -255,7 +258,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/memberships/M-0000000")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -273,7 +276,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/memberships")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
@@ -303,7 +306,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/memberships")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
@@ -331,7 +334,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/memberships")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
@@ -366,5 +369,4 @@ public class HsOfficeMembershipControllerRestTest {
             }
         }
     }
-
 }

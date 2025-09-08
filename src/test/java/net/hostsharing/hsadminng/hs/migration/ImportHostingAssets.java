@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.migration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;

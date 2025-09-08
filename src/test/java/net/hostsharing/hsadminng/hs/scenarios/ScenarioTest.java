@@ -3,17 +3,27 @@ package net.hostsharing.hsadminng.hs.scenarios;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import lombok.val;
+import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.test.IgnoreOnFailureExtension;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.ClassOrderer;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestClassOrder;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -29,11 +39,27 @@ import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.scenarios.Produces.Aggregator.producedAliases;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag("scenarioTest")
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        classes = { HsadminNgApplication.class,
+                    RbacGrantsDiagramService.class },
+        properties = {
+                "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///scenariosTC}",
+                "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
+                "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
+                "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
+        }
+)
+@ActiveProfiles({ "fake-jwt" })
+@TestClassOrder(ClassOrderer.OrderAnnotation.class)
+@ExtendWith(IgnoreOnFailureExtension.class)
 public abstract class ScenarioTest extends ContextBasedTest {
 
     final static String RUN_AS_USER = "superuser-alex@hostsharing.net"; // TODO.test: use global:AGENT when implemented
@@ -60,8 +86,8 @@ public abstract class ScenarioTest extends ContextBasedTest {
     @Autowired
     protected JpaAttempt jpaAttempt;
 
-    @SneakyThrows
     @BeforeEach
+    @SneakyThrows
     protected void beforeScenario(final TestInfo testInfo) {
         try {
             testInfo.getTestMethod().ifPresent(currentTestMethod -> {
@@ -80,6 +106,12 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
         properties.clear();
         testReport.close();
+    }
+
+    @SneakyThrows
+    public static String bearerTemplate(final String subjectTemplate) {
+        val subject = resolve(subjectTemplate, DROP_COMMENTS);
+        return bearer(subject);
     }
 
     @SneakyThrows

@@ -37,6 +37,7 @@ import static java.net.URLEncoder.encode;
 import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.test.DebuggerDetection.isDebuggerAttached;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -172,7 +173,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     @SneakyThrows
     public final HttpResponse httpGet(final String uriPathWithPlaceholders) {
        return httpGet(uriPathWithPlaceholders,
-               req -> req.header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER));
+               req -> req.header("Authorization", bearer(ScenarioTest.RUN_AS_USER)));
     }
 
     @SneakyThrows
@@ -183,7 +184,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .POST(BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
+                .header("Authorization", bearer(ScenarioTest.RUN_AS_USER))
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -198,7 +199,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .method(HttpMethod.PATCH.toString(), BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
+                .header("Authorization", bearer(ScenarioTest.RUN_AS_USER))
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -212,7 +213,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .DELETE()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + ScenarioTest.RUN_AS_USER)
+                .header("Authorization", bearer(ScenarioTest.RUN_AS_USER))
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());

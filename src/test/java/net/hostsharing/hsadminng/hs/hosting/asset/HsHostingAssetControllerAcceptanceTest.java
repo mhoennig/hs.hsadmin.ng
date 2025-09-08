@@ -14,7 +14,6 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.Nested;
@@ -34,6 +33,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ALIAS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
@@ -43,14 +43,13 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.strictlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
 
+@Tag("hostingIntegrationTest")
 @Transactional
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, DisableSecurityConfig.class, JpaAttempt.class }
-)
-@ActiveProfiles("test")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 @TestClassOrder(ClassOrderer.OrderAnnotation.class) // fail early on fetching problems
-@Tag("hostingIntegrationTest")
 class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
@@ -89,12 +88,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .findAny().orElseThrow();
 
             RestAssured // @formatter:off
-                .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
-                .when()
+                    .when()
                     .get("http://localhost/api/hs/hosting/assets?projectUuid=" + givenProject.getUuid() + "&type=MANAGED_WEBSPACE")
-                .then().log().all().assertThat()
+                    .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
@@ -107,7 +106,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         }
                     ]
                     """));
-                // @formatter:on
+            // @formatter:on
         }
 
         @Test
@@ -118,15 +117,15 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                        .header("assumed-roles", "hs_hosting.asset#fir01:AGENT")
-                        .port(port)
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("assumed-roles", "hs_hosting.asset#fir01:AGENT")
+                    .port(port)
                     .when()
                     .   get("http://localhost/api/hs/hosting/assets?type=" + EMAIL_ALIAS)
                     .then().log().all().assertThat()
-                        .statusCode(200)
-                        .contentType("application/json")
-                        .body("", lenientlyEquals("""
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
                         [
                             {
                                 "type": "EMAIL_ALIAS",
@@ -154,7 +153,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void globalAdmin_canAddBookedAsset() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = newBookingItem("D-1000111 default project",
+            final var givenBookingItem = newBookingItem(
+                    "D-1000111 default project",
                     HsBookingItemType.MANAGED_WEBSPACE, "separate ManagedWebspace BI",
                     Map.ofEntries(
                             entry("SSD", 50),
@@ -166,9 +166,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                        .contentType(ContentType.JSON)
-                        .body("""
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .contentType(ContentType.JSON)
+                    .body("""
                             {
                                 "bookingItem.uuid": "%s",
                                 "type": "MANAGED_WEBSPACE",
@@ -178,13 +178,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "config": {}
                             }
                             """.formatted(givenBookingItem.getUuid(), givenParentAsset.getUuid()))
-                        .port(port)
+                    .port(port)
                     .when()
-                        .post("http://localhost/api/hs/hosting/assets")
+                    .post("http://localhost/api/hs/hosting/assets")
                     .then().log().all().assertThat()
-                        .statusCode(201)
-                        .contentType(ContentType.JSON)
-                        .body("", lenientlyEquals("""
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
                             {
                                 "type": "MANAGED_WEBSPACE",
                                 "identifier": "fir10",
@@ -194,9 +194,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 }
                             }
                             """
-                                .replace("{lastUnixUserId}", expectedUnixUserId.toString())
-                        ))
-                        .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
+                            .replace("{lastUnixUserId}", expectedUnixUserId.toString())
+                    ))
+                    .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
             // the new asset can be accessed under the generated UUID
@@ -206,7 +206,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             toCleanup(HsHostingAssetRbacEntity.class, newWebspaceUuid);
 
             // and a default user got created
-            final var webspaceUnixUser = em.createQuery("SELECT ha FROM HsHostingAssetRealEntity ha WHERE ha.parentAsset.uuid=:webspaceUUID")
+            final var webspaceUnixUser = em.createQuery(
+                            "SELECT ha FROM HsHostingAssetRealEntity ha WHERE ha.parentAsset.uuid=:webspaceUUID")
                     .setParameter("webspaceUUID", newWebspaceUuid)
                     .getSingleResult();
             assertThat(webspaceUnixUser).isNotNull().extracting(Object::toString)
@@ -227,10 +228,10 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                        .header("assumed-roles", "hs_hosting.asset#vm1011:ADMIN")
-                        .contentType(ContentType.JSON)
-                        .body("""
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("assumed-roles", "hs_hosting.asset#vm1011:ADMIN")
+                    .contentType(ContentType.JSON)
+                    .body("""
                                 {
                                     "parentAsset.uuid": "%s",
                                     "type": "UNIX_USER",
@@ -239,13 +240,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                     "config": {}
                                 }
                                 """.formatted(givenParentAsset.getUuid()))
-                        .port(port)
+                    .port(port)
                     .when()
-                        .post("http://localhost/api/hs/hosting/assets")
+                    .post("http://localhost/api/hs/hosting/assets")
                     .then().log().all().assertThat()
-                        .statusCode(201)
-                        .contentType(ContentType.JSON)
-                        .body("", lenientlyEquals("""
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
                                 {
                                     "type": "UNIX_USER",
                                     "identifier": "fir01-temp",
@@ -253,7 +254,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                     "config": {}
                                 }
                                 """))
-                        .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
+                    .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new asset can be accessed under the generated UUID
@@ -270,18 +271,18 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final var givenProject = realProjectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow();
             final var bookingItem = givenSomeTemporaryBookingItem(() ->
-               HsBookingItemRealEntity.builder()
-                       .project(givenProject)
-                       .type(HsBookingItemType.DOMAIN_SETUP)
-                       .caption("some temp domain setup booking item")
-                       .resources(Map.ofEntries(
-                               entry("domainName", "example.com")))
-                       .build()
+                    HsBookingItemRealEntity.builder()
+                            .project(givenProject)
+                            .type(HsBookingItemType.DOMAIN_SETUP)
+                            .caption("some temp domain setup booking item")
+                            .resources(Map.ofEntries(
+                                    entry("domainName", "example.com")))
+                            .build()
             );
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -327,9 +328,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                        .contentType(ContentType.JSON)
-                        .body("""
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .contentType(ContentType.JSON)
+                    .body("""
                                 {
                                     "bookingItem.uuid": "%s",
                                     "type": "MANAGED_SERVER",
@@ -338,13 +339,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                     "config": {  "monit_max_ssd_usage": 0, "monit_max_cpu_usage": 101, "extra": 42 }
                                 }
                                 """.formatted(givenBookingItem.getUuid()))
-                        .port(port)
+                    .port(port)
                     .when()
-                        .post("http://localhost/api/hs/hosting/assets")
+                    .post("http://localhost/api/hs/hosting/assets")
                     .then().log().all().assertThat()
-                        .statusCode(400)
-                        .contentType(ContentType.JSON)
-                        .body("", lenientlyEquals("""
+                    .statusCode(400)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
                                 {
                                     "statusPhrase": "Bad Request",
                                     "message": "ERROR: [400] [
@@ -364,12 +365,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             assertThat(givenHostingAsset.getBookingItem().getResources().get("Multi"))
                     .as("precondition failed")
                     .isEqualTo(1);
-            final var preExistingUnixUserCount = realAssetRepo.findAllByCriteria(null, givenHostingAsset.getUuid(), UNIX_USER).size();
+            final var preExistingUnixUserCount = realAssetRepo.findAllByCriteria(null, givenHostingAsset.getUuid(), UNIX_USER)
+                    .size();
             final var UNIX_USER_PER_MULTI_OPTION = 25;
 
             jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net");
-                for (int n = 0; n < UNIX_USER_PER_MULTI_OPTION-preExistingUnixUserCount; ++n) {
+                for (int n = 0; n < UNIX_USER_PER_MULTI_OPTION - preExistingUnixUserCount; ++n) {
                     toCleanup(realAssetRepo.save(
                             HsHostingAssetRealEntity.builder()
                                     .type(UNIX_USER)
@@ -382,9 +384,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                        .contentType(ContentType.JSON)
-                        .body("""
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .contentType(ContentType.JSON)
+                    .body("""
                                     {
                                         "parentAsset.uuid": "%s",
                                         "type": "UNIX_USER",
@@ -393,13 +395,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                         "config": { }
                                     }
                                     """.formatted(givenHostingAsset.getUuid()))
-                        .port(port)
+                    .port(port)
                     .when()
-                        .post("http://localhost/api/hs/hosting/assets")
+                    .post("http://localhost/api/hs/hosting/assets")
                     .then().log().all().assertThat()
-                        .statusCode(400)
-                        .contentType(ContentType.JSON)
-                        .body("", lenientlyEquals("""
+                    .statusCode(400)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
                                     {
                                         "statusPhrase": "Bad Request",
                                         "message": "ERROR: [400] ['D-1000111:D-1000111 default project:separate ManagedWebspace.resources.Multi=1 allows at maximum 25 unix users, but 26 found]"
@@ -420,12 +422,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
-                .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
-                .when()
+                    .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)
-                .then().log().all().assertThat()
+                    .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
@@ -445,12 +447,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .findAny().orElseThrow();
 
             RestAssured // @formatter:off
-                .given()
-                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                    .given()
+                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .port(port)
-                .when()
+                    .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)
-                .then().log().body().assertThat()
+                    .then().log().body().assertThat()
                     .statusCode(404); // @formatter:on
         }
 
@@ -462,13 +464,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
-                .given()
-                    .header("Authorization", "Bearer person-TuckerJack@example.com")
+                    .given()
+                    .header("Authorization", bearer("person-TuckerJack@example.com"))
                     .header("assumed-roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
-                .when()
+                    .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)
-                .then().log().all().assertThat()
+                    .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
@@ -507,8 +509,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final var alarmContactUuid = givenContact().getUuid();
 
             RestAssured // @formatter:off
-                .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .contentType(ContentType.JSON)
                     .body("""
                         {
@@ -521,9 +523,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         }
                         """.formatted(alarmContactUuid))
                     .port(port)
-                .when()
+                    .when()
                     .patch("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
-                .then().log().all().assertThat()
+                    .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("", lenientlyEquals("""
@@ -545,7 +547,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             }
                          }
                     """));
-                // @formatter:on
+            // @formatter:on
 
             // finally, the asset is actually updated
             em.clear();
@@ -556,13 +558,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 .isEqualTo("contact-admin@secondcontact.example.com");
                         assertThat(asset.getConfig().toString())
                                 .isEqualToIgnoringWhitespace("""
-                                    {
-                                        "monit_max_cpu_usage": 90,
-                                        "monit_max_ram_usage": 70,
-                                        "monit_max_ssd_usage": 85,
-                                        "monit_min_free_ssd": 5
-                                    }
-                                    """);
+                                        {
+                                            "monit_max_cpu_usage": 90,
+                                            "monit_max_ram_usage": 70,
+                                            "monit_max_ssd_usage": 85,
+                                            "monit_min_free_ssd": 5
+                                        }
+                                        """);
                         return true;
                     });
         }
@@ -581,10 +583,10 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
-                        //.header("assumed-roles", "hs_hosting.asset#vm2001:ADMIN")
-                        .contentType(ContentType.JSON)
-                        .body("""
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    //.header("assumed-roles", "hs_hosting.asset#vm2001:ADMIN")
+                    .contentType(ContentType.JSON)
+                    .body("""
                             {
                                 "caption" : "some patched test-unix-user",
                                 "config": {
@@ -594,13 +596,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 }
                             }
                             """)
-                        .port(port)
+                    .port(port)
                     .when()
-                        .patch("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
+                    .patch("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
                     .then().log().all().assertThat()
-                        .statusCode(200)
-                        .contentType(ContentType.JSON)
-                        .body("", lenientlyEquals("""
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
                             {
                                 "type": "UNIX_USER",
                                 "identifier": "fir01-temp",
@@ -628,12 +630,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .matches(asset -> {
                         assertThat(asset.getCaption()).isEqualTo("some patched test-unix-user");
                         assertThat(asset.getConfig().toString()).isEqualToIgnoringWhitespace("""
-                               {
-                                   "password": "$6$Jr5w/Y8zo8pCkqg7$/rePRbvey3R6Sz/02YTlTQcRt5qdBPTj2h5.hz.rB8NfIoND8pFOjeB7orYcPs9JNf3JDxPP2V.6MQlE5BwAY/",
-                                   "shell": "/bin/bash",
-                                   "totpKey": "0x1234567890abcdef0123456789abcdef"
-                               }
-                               """);
+                                {
+                                    "password": "$6$Jr5w/Y8zo8pCkqg7$/rePRbvey3R6Sz/02YTlTQcRt5qdBPTj2h5.hz.rB8NfIoND8pFOjeB7orYcPs9JNf3JDxPP2V.6MQlE5BwAY/",
+                                    "shell": "/bin/bash",
+                                    "totpKey": "0x1234567890abcdef0123456789abcdef"
+                                }
+                                """);
                         return true;
                     });
         }
@@ -663,12 +665,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             ))
                             .build());
             RestAssured // @formatter:off
-                .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
-                .when()
+                    .when()
                     .delete("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
-                .then().log().body().assertThat()
+                    .then().log().body().assertThat()
                     .statusCode(204); // @formatter:on
 
             // then the given assets is gone
@@ -695,12 +697,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             ))
                             .build());
             RestAssured // @formatter:off
-                .given()
-                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                    .given()
+                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .port(port)
-                .when()
+                    .when()
                     .delete("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
-                .then().log().all().assertThat()
+                    .then().log().all().assertThat()
                     .statusCode(404); // @formatter:on
 
             // then the given asset is still there
@@ -739,7 +741,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net");
             final var project = realProjectRepo.findByCaption(projectCaption).getFirst();
             final var resources = switch (bookingItemType) {
-                case MANAGED_SERVER -> Map.<String, Object>ofEntries(entry("CPU", 1),
+                case MANAGED_SERVER -> Map.<String, Object>ofEntries(
+                        entry("CPU", 1),
                         entry("RAM", 20),
                         entry("SSD", 25),
                         entry("Traffic", 250));
@@ -783,9 +786,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }).returnedValue();
     }
 
-
     private Integer nextUnixUserId() {
-        final Object result = em.createNativeQuery("SELECT nextval('hs_hosting.asset_unixuser_system_id_seq')", Integer.class)
+        final Object result = em.createNativeQuery("select nextval('hs_hosting.asset_unixuser_system_id_seq')", Integer.class)
                 .getSingleResult();
         return (Integer) result + 1;
     }

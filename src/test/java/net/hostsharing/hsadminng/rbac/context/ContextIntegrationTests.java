@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.rbac.context;
 
-import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
@@ -20,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -58,7 +59,26 @@ class ContextIntegrationTests {
 
     @Test
     @Transactional
-    void defineWithCurrentSubjectButWithoutAssumedRoles() {
+    void defineWithCurrentSubjectUuid() {
+        // when
+        final var subjectUuid = uuidOfSubjectName("superuser-alex@hostsharing.net");
+        context.define(subjectUuid.toString());
+
+        // then
+        assertThat(context.fetchCurrentSubject()).
+                isEqualTo("superuser-alex@hostsharing.net");
+
+        assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
+
+        assertThat(context.fetchAssumedRolesNames()).isEmpty();
+
+        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
+                .containsExactly(subjectUuid);
+    }
+
+    @Test
+    @Transactional
+    void defineWithCurrentSubjectNameWithoutAssumedRoles() {
         // when
         context.define("superuser-alex@hostsharing.net");
 
@@ -197,5 +217,10 @@ class ContextIntegrationTests {
 
         // then
         assertThat(hsGlobalAdminRole.returnedValue()).isFalse();
+    }
+
+    private UUID uuidOfSubjectName(final String name) {
+        return UUID.fromString(em.createNativeQuery("SELECT uuid FROM rbac.subject WHERE name = :name")
+                .setParameter("name", name).getSingleResult().toString());
     }
 }

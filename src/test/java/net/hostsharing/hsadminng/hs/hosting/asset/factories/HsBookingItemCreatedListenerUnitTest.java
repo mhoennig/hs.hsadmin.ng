@@ -39,7 +39,7 @@ class HsBookingItemCreatedListenerUnitTest {
     private EntityManagerWrapper emw = emwFake;
 
     @Spy
-    private ObjectMapper jsonMapper = new JsonObjectMapperConfiguration().customObjectMapper().build();
+    private ObjectMapper jsonMapper = new JsonObjectMapperConfiguration().customObjectMapper();
 
     @Spy
     private StrictMapper StrictMapper = new StrictMapper(emw);

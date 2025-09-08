@@ -2,8 +2,6 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,12 +10,11 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 
+@Tag("hostingIntegrationTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
-)
-@ActiveProfiles("test")
-@Tag("hostingIntegrationTest")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 class HsHostingAssetPropsControllerAcceptanceTest {
 
     @LocalServerPort

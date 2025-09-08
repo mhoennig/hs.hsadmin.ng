@@ -10,7 +10,6 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -27,18 +26,21 @@ import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItem;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
-)
-@ActiveProfiles("test")
 @Transactional(readOnly = true, propagation = Propagation.NEVER)
 @Tag("generalIntegrationTest")
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     @LocalServerPort
@@ -66,7 +68,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void globalAdmin_withoutAssumedRole_canViewAllGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -118,7 +120,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void globalAdmin_withAssumedPackageAdminRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                     .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
                     .port(port)
                 .when()
@@ -141,7 +143,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void packageAdmin_withoutAssumedRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", "Bearer pac-admin-yyy00@yyy.example.com")
+                    .header("Authorization", bearer("pac-admin-yyy00@yyy.example.com"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -387,7 +389,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
                 return RestAssured // @formatter:ff
                         .given()
-                            .header("Authorization", "Bearer " + grantingSubject.currentSubject)
+                            .header("Authorization", bearer(grantingSubject.currentSubject))
                             .header("assumed-roles", grantingSubject.assumedRole)
                             .contentType(ContentType.JSON)
                             .body("""
@@ -423,7 +425,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
                 return RestAssured // @formatter:ff
                         .given()
-                        .header("Authorization", "Bearer " + currentSubject.currentSubject)
+                        .header("Authorization", bearer(currentSubject.currentSubject))
                         .header("assumed-roles", currentSubject.assumedRole)
                         .contentType(ContentType.JSON)
                         .body("""
@@ -459,7 +461,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
                 return RestAssured // @formatter:ff
                         .given()
-                        .header("Authorization", "Bearer " + currentSubject.currentSubject)
+                        .header("Authorization", bearer(currentSubject.currentSubject))
                         .header("assumed-roles", currentSubject.assumedRole)
                         .port(port)
                         .when()

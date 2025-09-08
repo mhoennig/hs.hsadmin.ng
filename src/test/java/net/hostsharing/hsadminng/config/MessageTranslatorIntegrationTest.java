@@ -7,10 +7,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.context.WebApplicationContext;
-
-import net.hostsharing.hsadminng.context.Context;
 
 import java.util.Locale;
 
@@ -28,9 +25,6 @@ class MessageTranslatorIntegrationTest {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
-
-    @MockitoBean
-    private Context contextMock; // avoiding dependency issues
 
     @AllArgsConstructor
     enum TestCases {

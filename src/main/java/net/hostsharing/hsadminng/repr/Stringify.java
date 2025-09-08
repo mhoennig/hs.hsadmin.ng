@@ -147,15 +147,11 @@ public final class Stringify<B> {
 
         @SuppressWarnings("unchecked")
         PropertyValue(final B object, final Property<B, ?> prop) {
-            // FIXME: simplify
-            final var typedProp = (Property<B, V>) prop;
-            final var value = typedProp.getValue(object);
-            final var stringifiedValue = value instanceof Stringifyable stringifyable
-                    ? stringifyable.toShortString()
-                    : Objects.toString(value);
-            this.prop = typedProp;
-            this.value = (V) value;
-            this.stringValue = stringifiedValue;
+            this.prop = (Property<B, V>) prop;
+            this.value = (V) this.prop.getValue(object);
+            this.stringValue = this.value instanceof Stringifyable s
+                    ? s.toShortString()
+                    : Objects.toString(this.value);
         }
 
         boolean notNullAndNotEmpty() {

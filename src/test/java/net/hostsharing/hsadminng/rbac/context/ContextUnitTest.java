@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.rbac.context;
 
-import net.hostsharing.hsadminng.context.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -14,7 +14,7 @@ import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ContextResource
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CurrentLoginUserResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.RbacSubjectResource;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.api.CredentialsApi;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CredentialsInsertResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CredentialsPatchResource;
@@ -42,7 +42,7 @@ import static java.util.Optional.of;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class HsCredentialsController implements CredentialsApi {
 
     @Autowired

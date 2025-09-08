@@ -2,15 +2,16 @@ package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+
 import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.test.TestUuidGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsT
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DISBURSAL;
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.REVERSAL;
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.TRANSFER;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.rbac.test.JsonBuilder.jsonObject;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,8 +56,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           MessagesResourceConfig.class,
           MessageTranslator.class,
           JsonObjectMapperConfiguration.class,
-          DisableSecurityConfig.class })
-@ActiveProfiles("test")
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class HsOfficeCoopAssetsTransactionControllerRestTest {
 
     // If you need to run just a single test-case in this data-driven test-method, set SINGLE_TEST_CASE_EXECUTION to true!
@@ -662,7 +664,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopassetstransactions")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .header("Accept-Language", "de")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(testCase.givenRequestBody())
@@ -838,7 +840,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopassetstransactions")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(testCase.givenRequestBody())
                         .accept(MediaType.APPLICATION_JSON))
@@ -857,7 +859,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/office/coopassetstransactions/" + SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getUuid())
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(MediaType.APPLICATION_JSON))
 
                 // then
@@ -873,7 +875,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/office/coopassetstransactions/" + UNAVAILABLE_UUID)
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(MediaType.APPLICATION_JSON))
 
                 // then
@@ -899,7 +901,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/office/coopassetstransactions")
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(MediaType.APPLICATION_JSON))
 
                 // then
@@ -950,5 +952,4 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     private String suffixOf(final String memberNumber) {
         return memberNumber.substring("M-".length() + 5);
     }
-
 }

@@ -10,12 +10,11 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 
+@Tag("generalIntegrationTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class }
-)
-@ActiveProfiles("test")
-@Tag("generalIntegrationTest")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 class CustomActuatorEndpointAcceptanceTest {
 
     @LocalManagementPort

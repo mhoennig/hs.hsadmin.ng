@@ -3,9 +3,7 @@ package net.hostsharing.hsadminng.hs.accounts;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import lombok.val;
-import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.accounts.HsCredentialsEntity.HsCredentialsEntityBuilder;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
@@ -31,6 +29,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL_PERSON;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
@@ -41,18 +40,17 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
+@Tag("generalIntegrationTest")
 @Transactional
 @SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-@ActiveProfiles("test")
-@Tag("generalIntegrationTest")
+@ActiveProfiles("fake-jwt")
 // too complex database interaction for just a RestTest, thus a fully integrated test
 class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
-    private Integer port;
+    Integer port;
 
     @Autowired
     Context context;
@@ -93,7 +91,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/accounts/current")
@@ -120,7 +118,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer " + credentialsEntity.getSubject().getName())
+                        .header("Authorization", bearer(credentialsEntity.getSubject().getName()))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/accounts/credentials/" + credentialsEntity.getUuid())
@@ -188,7 +186,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                         .header("Accept-Language", "de")
                         .contentType(ContentType.JSON)
                         .body("""
@@ -228,7 +226,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                         .header("Accept-Language", "de")
                         .contentType(ContentType.JSON)
                         .body("""
@@ -268,7 +266,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .header("Accept-Language", "de")
                         .contentType(ContentType.JSON)
                         .body("""
@@ -314,7 +312,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                         .header("Accept-Language", "de")
                         .contentType(ContentType.JSON)
                         .body("""
@@ -350,7 +348,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", "Bearer selfregistered-user-drew@hostsharing.org")
+                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
                     .header("Accept-Language", "de")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -388,7 +386,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/accounts/credentials/" + credentialsEntity.getUuid() + "/used")

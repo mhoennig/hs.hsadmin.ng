@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.booking.project;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingProjectsApi;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProjectInsertResource;
@@ -25,7 +25,7 @@ import java.util.function.BiConsumer;
 @RestController
 @Profile("!only-prod-schema")
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Autowired

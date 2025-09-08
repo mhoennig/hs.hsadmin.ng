@@ -3,6 +3,7 @@ source .unset-environment
 export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
 export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
 export HSADMINNG_SUPERUSER=import-superuser@hostsharing.net
-export HSADMINNG_CAS_SERVER=
+export HSADMINNG_OFFICE_DATA_SQL_FILE
+export HSADMINNG_JWT_TOKEN_URL=http://localhost:8080/fake-jwt/token
 
 export LANG=en_US.UTF-8

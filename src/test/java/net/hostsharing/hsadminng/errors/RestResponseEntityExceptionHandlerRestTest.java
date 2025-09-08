@@ -1,9 +1,8 @@
 package net.hostsharing.hsadminng.errors;
 
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import org.junit.jupiter.api.Tag;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -21,9 +20,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = RestResponseEntityExceptionHandlerRestTest.TestController.class)
-@Import({JsonObjectMapperConfiguration.class, MessageTranslator.class, DisableSecurityConfig.class, RestResponseEntityExceptionHandler.class, RestResponseEntityExceptionHandlerRestTest.TestConfig.class})
-@Tag("generalIntegrationTest")
-@ActiveProfiles("test")
+@Import({ JsonObjectMapperConfiguration.class,
+          MessageTranslator.class,
+          RestResponseEntityExceptionHandler.class,
+          RestResponseEntityExceptionHandlerRestTest.TestConfig.class,
+          WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class RestResponseEntityExceptionHandlerRestTest {
 
     @TestConfiguration

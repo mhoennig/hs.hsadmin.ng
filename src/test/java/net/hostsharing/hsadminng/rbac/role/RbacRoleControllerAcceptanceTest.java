@@ -2,9 +2,8 @@ package net.hostsharing.hsadminng.rbac.role;
 
 import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +11,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.hamcrest.Matchers.*;
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 
+@Tag("generalIntegrationTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {HsadminNgApplication.class, DisableSecurityConfig.class}
-)
-@ActiveProfiles("test")
-@Tag("generalIntegrationTest")
+        classes = HsadminNgApplication.class)
+@ActiveProfiles("fake-jwt")
 class RbacRoleControllerAcceptanceTest {
 
     @LocalServerPort
@@ -40,7 +42,7 @@ class RbacRoleControllerAcceptanceTest {
         // @formatter:off
         RestAssured
             .given()
-                .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac/roles")
@@ -65,7 +67,7 @@ class RbacRoleControllerAcceptanceTest {
         // @formatter:off
         RestAssured
             .given()
-                .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                 .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
                 .port(port)
             .when()
@@ -98,7 +100,7 @@ class RbacRoleControllerAcceptanceTest {
         // @formatter:off
         RestAssured
             .given()
-                .header("Authorization", "Bearer pac-admin-zzz00@zzz.example.com")
+                .header("Authorization", bearer("pac-admin-zzz00@zzz.example.com"))
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac/roles")

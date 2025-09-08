@@ -74,11 +74,15 @@ function importLegacyData() {
 alias gw-importHostingAssets='importLegacyData importHostingAssets'
 
 function gradlewBootRun() {
-    local port=${1:-8080}
-    shift
+    local serverPort=${1:-8080}; shift
+    local managementPort=${2:-$((serverPort + 1))}; shift
     local additional_args="$@"
-    echo gw bootRun --args="--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=${port} ${additional_args}"
-    ./gradlew bootRun --args="--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=${port} ${additional_args}"
+    unset HSADMINNG_JWT_ISSUER
+    unset HSADMINNG_JWT_JWKS_URL
+    unset HSADMINNG_JWT_TOKEN_URL
+    set -x
+    ./gradlew bootRun --args="--spring.profiles.active=dev,fake-jwt,complete,test-data --server.port=${serverPort} --management.server.port=${managementPort} ${additional_args}"
+    set +x
 }
 alias gw-bootRun=gradlewBootRun
 
@@ -97,7 +101,7 @@ alias pg-sql-restore='gunzip --stdout | docker exec -i hsadmin-ng-postgres psql 
 
 alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
 
-alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
+alias gw-spotless='./gradlew compile spotlessApply -x pitest -x test -x :processResources'
 alias gw-check='. .aliases; . .tc-environment; gw test check -x pitest'
 
 # HOWTO: run all 'normal' tests (by default without scenario+import-tests): `gw-test`
@@ -143,7 +147,7 @@ function _gwTest() {
 alias gw-test=_gwTest
 
 alias howto=bin/howto
-alias cas-curl=bin/cas-curl
+alias jwt-curl=bin/jwt-curl
 
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
 alias gw-importHostingAssets-in-docker-compose='

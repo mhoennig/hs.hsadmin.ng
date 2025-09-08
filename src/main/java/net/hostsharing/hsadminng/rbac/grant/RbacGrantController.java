@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.grant;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacGrantsApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGrantResource;
@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
-@SecurityRequirement(name = "casTicket")
+@SecurityRequirement(name = "bearerAuth")
 public class RbacGrantController implements RbacGrantsApi {
 
     @Autowired

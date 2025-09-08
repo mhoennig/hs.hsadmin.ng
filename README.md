@@ -87,13 +87,10 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
     # if the container has been built already and you want to keep the data, run this:
     pg-sql-start
 
-Next, compile and run the application on `localhost:8080` and the management server on `localhost:8081`:
+Next, compile and run the application with in dev-mode with all modules, test-data and fake-JWT-authentication::
 
-    # this disables CAS-authentication, for using the REST-API with CAS-authentication, see `bin/cas-curl`.
-    export HSADMINNG_CAS_SERVER=
-
-    # this runs the application with test-data and all modules:
-    gw bootRun --args='--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data'
+    # on `localhost:8080` and the management server on `localhost:8081`:
+    gw-bootRun
 
     # there is also an alias which takes an optional port as an argument:
     gw-bootRun 8888
@@ -101,53 +98,75 @@ Next, compile and run the application on `localhost:8080` and the management ser
 The meaning of these profiles is:
 
 - **dev**: the PostgreSQL users are created via Liquibase
-- **fakeCasAuthenticator**: The username is simply taken from whatever is after "Bearer " in the "Authorization" header.
+- **fake-jwt**: the app starts with a build-in fake OAuth2/JWT server
 - **complete**: all modules are started
 - **test-data**: some test data inserted 
 
-Now we can access the REST API, e.g. using curl:
+Now we can access the REST API, e.g. using curl. But you need to use JWT authentication.
+To make this a bit easier to handle, we use `bin/jwt-curl` (or `jwt-curl` alias).
 
-    # the following command should reply with "pong":
-    curl -f -s http://localhost:8080/api/ping
+Make sure you replace `8080` with the port you used to run the application.`
+
+    # the following command does not need authentication and should reply with "pinged ...".
+    curl http://localhost:8080/api/ping
+
+    # but when you try endpoints which need authentication, you will get a 401 error:
+    curl http://localhost:8080/api/pong
+
+    # For the follinging commands we need to be authenticated by a valid JWT token.
+    # To make JWT handling a bit easier, there is a wrapper scropt `jwt-curl`.
+    # Make sure the following variable is set to the fake JWT issuer:
+    export HSADMINNG_JWT_TOKEN_URL=http://localhost:8080/fake-jwt/token
+
+    # optionally, you can set the username and password to in env-vars as well:
+    export HSADMINNG_JWT_USERNAME=superuser-alex@hostsharing.net
+    export HSADMINNG_JWT_PASSWORD=whatever-as-its-not-checked-by-fake-jwt-auth
+
+    # also optionally, you can login explicitly:
+    jwt-curl login
+
+    # now, the following command should reply with "ponged ... superuser-alex@hostsharing.net":
+    jwt-curl GET http://localhost:8080/api/pong
 
     # the following command should return a JSON array with just all customers:
-    curl -f -s\
-        -H 'Authorization: Bearer superuser-alex@hostsharing.net' \
-        http://localhost:8080/api/test/customers \
+    jwt-curl GET http://localhost:8080/api/test/customers \
     | jq # just if `jq` is installed, to prettyprint the output
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
-    curl -f -s\
-        -H 'Authorization: Bearer superuser-alex@hostsharing.net' -H 'assumed-roles: rbactest.customer#yyy:ADMIN' \
-        http://localhost:8080/api/test/packages \
+    jwt-curl ASSUME 'rbactest.customer#yyy:ADMIN'
+    jwt-curl GET http://localhost:8080/api/test/packages \
     | jq
+    jwt-curl UNASSUME
 
     # add a new customer
-    curl -f -s\
-        -H 'Authorization: Bearer superuser-alex@hostsharing.net' -H "Content-Type: application/json" \
+    jwt-curl POST \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
-        -X POST http://localhost:8080/api/test/customers \
+        http://localhost:8080/api/test/customers \
     | jq
 
 If you wonder who 'superuser-alex@hostsharing.net' and 'superuser-fran@hostsharing.net' are and where the data comes from:
-Mike and Sven are just example global admin accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.
-Also try for example 'admin@xxx.example.com' or 'unknown@example.org'.
+Alex and Fran are just example global admin accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.
+Also, for example, try 'admin@xxx.example.com' or 'unknown@example.org'.
 
 If you want a formatted JSON output, you can pipe the result to `jq` or similar.
 
-And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html).
-For a locally running app without CAS-authentication (export HSADMINNG_CAS_SERVER=''), 
-authorize using the name of the subject (e.g. "superuser-alex@hostsharing.net" in case of test-data).
-Otherwise, use a valid CAS-ticket.
+And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html.
 
-If you want to run the application with real CAS-Authentication:
+If you want to run the application with real (OAuth2) JWT-authentication:
 
-    # set the CAS-SERVER-Root, also see `bin/cas-curl`.
-    export HSADMINNG_CAS_SERVER=https://login.hostsharing.net # or whatever your CAS-Server-URL you want to use
+    # set the JWT-issuer URI, e.g.
+    export HSADMINNG_JWT_ISSUER=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV
 
-    # run the application against the real CAS authenticator
-    gw bootRun --args='--spring.profiles.active=dev,realCasAuthenticator,complete,test-data'
+    # and the JWT JWKS callback URI:
+    export HSADMINNG_JWT_JWKS_URL=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV/.well-known/openid-configuration
 
+    # as well as the JWT token endpoint URI:
+    export HSADMINNG_JWT_TOKEN_URL=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV/protocol/openid-connect/token
+
+    # run the application against the specified JWT authenticator, do NOT add the 'fake-jwt' profile: 
+    gw bootRun --args='--spring.profiles.active=dev,complete,test-data'
+
+Also run `bin/jwt-curl` (or the alias `jwt-curl`) without any parameters to see the available commands. 
 
 ### PostgreSQL Server
 
@@ -156,7 +175,7 @@ You might amend the port and user settings in `src/main/resources/application.ym
 
 But the easiest way to run PostgreSQL is via Docker.
 
-Initially, pull an image compatible to current PostgreSQL version of Hostsharing:
+Initially, pull an image compatible to the current PostgreSQL version of Hostsharing:
 
     docker pull postgres:15.5-bookworm 
 
@@ -674,7 +693,7 @@ howto
 Add `--args='--spring.profiles.active=...` with the wanted profile selector:
 
 ```sh
-gw bootRun --args='--spring.profiles.active=fakeCasAuthenticator,external-db,only-prod-schema,without-test-data'
+gw bootRun --args='--spring.profiles.active=external-db,only-prod-schema,without-test-data'
 ```
 
 These profiles mean:
@@ -712,7 +731,7 @@ If it's selected, just hit the *bug*-symbol next to it.
 If you frequently need to run with a fresh database and a clean build, you can use this:
 
 ```sh
-export HSADMINNG_CAS_SERVER=
+# replace `gw bootRun` by the proper command as described above
 gw clean && pg-sql-reset && sleep 5 && gw bootRun' 2>&1 | tee log
 ```
 
@@ -851,8 +870,15 @@ This port can be changed in
 Or on the command line, add ` --server.port=...` to the `--args` parameter of the `bootRun` task, e.g.:
 
 ```sh
-gw bootRun --args='--spring.profiles.active=dev,fakeCasAuthenticator,complete,test-data --server.port=8888'
+gw bootRun --args='--spring.profiles.active=dev,fake-jwt,complete,test-data --server.port=8888'
 ```
+
+or, for local development, simply:
+
+```sh
+gw-bootRun 8888
+```
+
 
 ### How to Use a Persistent Database for Integration Tests?
 
@@ -888,7 +914,7 @@ Therefore, during initial development, it's good approach just to amend the exis
 
 ```shell
 pg-sql-reset
-gw bootRun
+gw bootRun # with the proper command line arguments
 ```
 
 <big>**&#9888;**</big>

@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.rbac.context;
 
-import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import org.junit.jupiter.api.BeforeEach;

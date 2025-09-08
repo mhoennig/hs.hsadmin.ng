@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.rbac.grant;
 
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService.Include;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;

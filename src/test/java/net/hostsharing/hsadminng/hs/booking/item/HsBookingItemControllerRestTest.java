@@ -3,25 +3,25 @@ package net.hostsharing.hsadminng.hs.booking.item;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemResource;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
-import net.hostsharing.hsadminng.config.DisableSecurityConfig;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -32,20 +32,24 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsBookingItemController.class)
-@Import({StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class, MessageTranslator.class})
-@ActiveProfiles("test")
+@Import({StrictMapper.class,
+         JsonObjectMapperConfiguration.class,
+         MessageTranslator.class,
+         WebSecurityConfigForWebMvcTests.class })
+@ActiveProfiles({"fake-jwt", "test"})
 class HsBookingItemControllerRestTest {
 
     @Autowired
@@ -77,7 +81,6 @@ class HsBookingItemControllerRestTest {
         public EntityManager entityManager() {
             return mock(EntityManager.class);
         }
-
     }
 
     @BeforeEach
@@ -107,7 +110,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/booking/items")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     {
@@ -158,7 +161,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/booking/items")
-                            .header("Authorization", "Bearer superuser-alex@hostsharing.net")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     {
