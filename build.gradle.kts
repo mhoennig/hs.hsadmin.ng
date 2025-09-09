@@ -27,7 +27,7 @@ import java.io.FileOutputStream
 
 plugins {
     java
-    id("org.springframework.boot") version "3.4.4"
+    id("org.springframework.boot") version "3.5.5"
     id("io.spring.dependency-management") version "1.1.7"        // manages implicit dependencies
     id("io.openapiprocessor.openapi-processor") version "2023.2" // generates Controller-interface and resources from API-spec
     id("com.github.jk1.dependency-license-report") version "2.9" // checks dependency-license compatibility
@@ -93,16 +93,16 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
-    implementation("com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.11.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11")
+    implementation("com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.12.0")
     implementation("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")
-    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.9")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.10.3")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    implementation("org.openapitools:jackson-databind-nullable:0.2.6")
-    implementation("org.apache.commons:commons-text:1.13.0")
+    implementation("org.openapitools:jackson-databind-nullable:0.2.7")
+    implementation("org.apache.commons:commons-text:1.14.0")
     implementation("net.java.dev.jna:jna:5.17.0")
-    implementation("org.modelmapper:modelmapper:3.2.2")
+    implementation("org.modelmapper:modelmapper:3.2.4")
     implementation("org.iban4j:iban4j:3.2.11-RELEASE")
     implementation("org.reflections:reflections:0.10.2")
 
@@ -119,18 +119,22 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.0")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
     testImplementation("io.rest-assured:spring-mock-mvc")
     testImplementation("org.hamcrest:hamcrest-core")
-    testImplementation("org.pitest:pitest-junit5-plugin:1.2.2")
+    testImplementation("org.pitest:pitest-junit5-plugin:1.2.3")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
-    testImplementation("org.wiremock:wiremock-standalone:3.12.1")
+    testImplementation("org.wiremock:wiremock-standalone:3.13.1")
 }
 
 // Configure dependency management using the extension
 configure<DependencyManagementExtension> {
     imports {
         mavenBom("org.testcontainers:testcontainers-bom:$testcontainersVersion")
+    }
+    dependencies {
+        // TODO.version: remove once the BOM does'nt use the vulnerable verison 3.17.0 anymore
+        dependency("org.apache.commons:commons-lang3:3.18.0")
     }
 }
 
@@ -349,7 +353,7 @@ tasks.named<JacocoReport>("jacocoTestReport") {
     dependsOn(tasks.named("test")) // Depends on the main test task
     dependsOn(tasks.named("compileJava")) // Add explicit dependency on compileJava
     dependsOn(tasks.named("openApiGenerate")) // Add explicit dependency on openApiGenerate
-    
+
     reports {
         xml.required.set(true) // Common requirement for CI/CD
         csv.required.set(false)
@@ -545,8 +549,8 @@ configure<PitestPluginExtension> {
     // pitestVersion.set("1.17.0") // If Property<String>
     // junit5PluginVersion.set("1.1.0") // If Property<String>
     // Otherwise, direct assignment might work if the extension allows it, or check plugin docs.
-    pitestVersion = "1.17.0" // Assuming direct assignment works
-    junit5PluginVersion = "1.1.0" // Assuming direct assignment works
+    pitestVersion = "1.20.2" // Assuming direct assignment works
+    junit5PluginVersion = "1.2.3" // Assuming direct assignment works
 
     threads.set(4)
 

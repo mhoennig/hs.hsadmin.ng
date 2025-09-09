@@ -75,7 +75,9 @@ metrics:
 # HOWTO set logging-levels for certain Java packages (trace, debug, info, warn, error)
 logging:
     level:
-        org.springframework.security: info
+#        org.springframework.security: info
+#        org.hibernate.SQL: DEBUG # Enable SQL query logging
+#        org.hibernate.orm.jdbc.bind: TRACE # Enable SQL parameter binding logging
 #        org.springframework.web: DEBUG
 #        org.springframework.web.method.annotation: DEBUG
 #        org.springframework.validation: DEBUG

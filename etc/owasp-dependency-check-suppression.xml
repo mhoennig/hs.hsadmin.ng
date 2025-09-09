@@ -3,6 +3,8 @@
     <suppress>
         <notes><![CDATA[
            Internal tooling, not exposed to the Internet.
+           I cannot even see what our tech stack has to do with that vulernability in the mobile dev tool LINE,
+           just that the name occurs in 'pi-test-command-line'?
        ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.pitest/pitest\-command\-line@.*$</packageUrl>
         <cpe>cpe:/a:line:line</cpe>
