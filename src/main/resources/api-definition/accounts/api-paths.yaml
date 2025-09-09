@@ -21,9 +21,6 @@ paths:
 
   # Credentials
 
-  /api/hs/accounts/credentials/{credentialsUuid}/used:
-    $ref: "credentials-with-uuid-used.yaml"
-
   /api/hs/accounts/credentials/{credentialsUuid}:
     $ref: "credentials-with-uuid.yaml"
 

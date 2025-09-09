@@ -36,11 +36,8 @@ public class CreateCredentials extends BaseCredentialsUseCase<CreateCredentials>
                      "person.uuid": ${Person: %{personGivenName} %{personFamilyName}},
                      "nickname": ${nickname},
                      "active": %{active},
-                     "totpSecrets": @{totpSecrets},
                      "emailAddress": ${emailAddress},
-                     "phonePassword": ${phonePassword},
                      "smsNumber": ${smsNumber},
-                     "onboardingToken": ${onboardingToken},
                      "globalUid": %{globalUid},
                      "globalGid": %{globalGid},
                      "contexts": @{resolvedContexts}
@@ -58,9 +55,7 @@ public class CreateCredentials extends BaseCredentialsUseCase<CreateCredentials>
                         .expecting(OK).expecting(JSON),
                 path("uuid").contains("%{newCredentials}"),
                 path("nickname").contains("%{nickname}"),
-                path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}"),
-                path("totpSecrets").contains("@{totpSecrets}"),
-                path("onboardingToken").contains("%{onboardingToken}")
+                path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}")
         );
     }
 }
