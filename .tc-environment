@@ -5,9 +5,5 @@ export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
 export HSADMINNG_SUPERUSER=import-superuser@hostsharing.net
 export HSADMINNG_OFFICE_DATA_SQL_FILE
 export HSADMINNG_JWT_TOKEN_URL=http://localhost:8080/fake-jwt/token
-export HSADMINNG_JWT_CLIENT_ID=hsscript.ng
-export HSADMINNG_JWT_CLIENT_SECRET=
-export HSADMINNG_JWT_USERNAME=superuser-alex@hostsharing.net
-export HSADMINNG_JWT_PASSWORD=password
 
 export LANG=en_US.UTF-8

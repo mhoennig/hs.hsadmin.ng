@@ -102,12 +102,12 @@ function jwtLogin() {
   # OAuth2 Resource Owner Password Credentials Grant (public client)
   trace "+ curl --fail-with-body --show-error -X POST \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        -d \"grant_type=password&client_id=$HSADMINNG_JWT_CLIENT_ID&client_secret=$HSADMINNG_JWT_CLIENT_SECRET&username=$HSADMINNG_JWT_USERNAME&password=$HSADMINNG_JWT_PASSWORD_DISPLAY\" \
+        -d \"grant_type=password&username=$HSADMINNG_JWT_USERNAME&password=$HSADMINNG_JWT_PASSWORD_DISPLAY\" \
         $HSADMINNG_JWT_TOKEN_URL -o ~/.jwt-token.response"
 
   JWT_RESPONSE=$(curl --fail-with-body --show-error -X POST \
     -H 'Content-Type: application/x-www-form-urlencoded' \
-    -d "grant_type=password&client_id=$HSADMINNG_JWT_CLIENT_ID&client_secret=$HSADMINNG_JWT_CLIENT_SECRET&username=$HSADMINNG_JWT_USERNAME&password=$HSADMINNG_JWT_PASSWORD_DISPLAY" \
+    -d "grant_type=password&username=$HSADMINNG_JWT_USERNAME&password=$HSADMINNG_JWT_PASSWORD" \
     $HSADMINNG_JWT_TOKEN_URL 2>&1 | tee ~/.jwt-token.response)
 
   # Extract access token from JSON response
@@ -198,8 +198,6 @@ case "${1,,}" in
   "env") ## prints all related HSADMINNG_JWT_... environment variables; use '--show-password' to show the password as well
   #       example: jwt-curl  -show-password env
     echo "export HSADMINNG_JWT_TOKEN_URL=$HSADMINNG_JWT_TOKEN_URL"
-    echo "export HSADMINNG_JWT_CLIENT_ID=$HSADMINNG_JWT_CLIENT_ID"
-    echo "export HSADMINNG_JWT_CLIENT_SECRET=$HSADMINNG_JWT_CLIENT_SECRET"
     echo "export HSADMINNG_JWT_USERNAME=$HSADMINNG_JWT_USERNAME"
     if [ "$HSADMINNG_JWT_SHOW_PASSWORD" == "yes" ]; then
       echo "export HSADMINNG_JWT_PASSWORD=$HSADMINNG_JWT_PASSWORD"

@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CredentialsPatc
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
+import java.util.Optional;
 
 public class HsCredentialsEntityPatcher implements EntityPatcher<CredentialsPatchResource> {
 
@@ -22,8 +23,12 @@ public class HsCredentialsEntityPatcher implements EntityPatcher<CredentialsPatc
         }
         OptionalFromJson.of(resource.getEmailAddress())
                 .ifPresent(entity::setEmailAddress);
+        Optional.ofNullable(resource.getTotpSecrets())
+                .ifPresent(entity::setTotpSecrets);
         OptionalFromJson.of(resource.getSmsNumber())
                 .ifPresent(entity::setSmsNumber);
+        OptionalFromJson.of(resource.getPhonePassword())
+                .ifPresent(entity::setPhonePassword);
         if (resource.getContexts() != null) {
             contextMapper.syncCredentialsContextEntities(resource.getContexts(), entity.getLoginContexts());
         }

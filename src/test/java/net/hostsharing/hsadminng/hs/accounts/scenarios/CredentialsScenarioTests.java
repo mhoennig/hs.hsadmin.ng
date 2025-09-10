@@ -75,7 +75,9 @@ class CredentialsScenarioTests extends ScenarioTest {
                     .given("nickname", "firby-susan")
                     // initial credentials
                     .given("active", true)
+                    .given("totpSecrets", Array.of("initialSecret"))
                     .given("emailAddress", "susan.firby@example.com")
+                    .given("phonePassword", "securePass123")
                     .given("smsNumber", "+49123456789")
                     .given("globalUid", 21011)
                     .given("globalGid", 21011)
@@ -83,6 +85,7 @@ class CredentialsScenarioTests extends ScenarioTest {
                             "contexts", Array.of(
                                     Pair.of("HSADMIN", "prod")
                             ))
+                    .given("onboardingToken", "fake-unboarding-token")
                     .doRun()
                     .keep();
         }
@@ -96,7 +99,9 @@ class CredentialsScenarioTests extends ScenarioTest {
                     .given("credentialsUuid", "%{Credentials@hsadmin: firby-susan}")
                     // updated credentials
                     .given("active", false)
+                    .given("totpSecrets", Array.of("initialSecret", "additionalSecret"))
                     .given("emailAddress", "susan.firby@example.org")
+                    .given("phonePassword", "securePass987")
                     .given("smsNumber", "+49987654321")
                     .given(
                             "contexts", Array.of(

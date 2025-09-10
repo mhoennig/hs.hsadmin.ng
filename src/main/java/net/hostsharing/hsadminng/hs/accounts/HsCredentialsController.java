@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -35,6 +37,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
 
+import static java.util.Optional.ofNullable;
 import static java.util.Optional.of;
 
 @RestController
@@ -188,6 +191,22 @@ public class HsCredentialsController implements CredentialsApi {
         return ResponseEntity.ok(result);
     }
 
+    @Override
+    @Transactional
+    @Timed("app.credentials.credentials.credentialsUsed")
+    public ResponseEntity<CredentialsResource> credentialsUsed(final UUID credentialsUuid) {
+        context.define();
+
+        val current = credentialsRepo.findByUuid(credentialsUuid).orElseThrow();
+
+        current.setOnboardingToken(null);
+        current.setLastUsed(LocalDateTime.now());
+
+        val saved = credentialsRepo.save(current);
+        val mapped = mapper.map(saved, CredentialsResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        return ResponseEntity.ok(mapped);
+    }
+
     private void validateOnCreate(final HsCredentialsEntity newCredentialsEntity) {
         validateReferencedPersonToBeRepresentedByLoginUserPerson(newCredentialsEntity);
         validateNormalUsersOnlyAccessPublicContexts(newCredentialsEntity);
@@ -305,6 +324,8 @@ public class HsCredentialsController implements CredentialsApi {
     }
 
     final BiConsumer<HsCredentialsEntity, CredentialsResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        ofNullable(entity.getLastUsed()).ifPresent(
+            dt -> resource.setLastUsed(dt.atOffset(ZoneOffset.UTC)));
         of(entity.getSubject()).ifPresent(
                 subject -> resource.setNickname(subject.getName())
         );

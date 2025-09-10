@@ -27,12 +27,16 @@ public class UpdateCredentials extends BaseCredentialsUseCase<UpdateCredentials>
             httpPatch("/api/hs/accounts/credentials/%{credentialsUuid}", usingJsonBody("""
                 {
                      "active": %{active},
+                     "totpSecrets": @{totpSecrets},
+                     "emailAddress": ${emailAddress},
+                     "phonePassword": ${phonePassword},
                      "smsNumber": ${smsNumber},
                      "contexts": @{resolvedContexts}
                 }
                 """))
                 .reportWithResponse().expecting(HttpStatus.OK).expecting(ContentType.JSON)
                 .extractValue("nickname", "nickname")
+                .extractValue("totpSecrets", "totpSecrets")
         );
 
         return null;
@@ -45,7 +49,8 @@ public class UpdateCredentials extends BaseCredentialsUseCase<UpdateCredentials>
                 () -> httpGet("/api/hs/accounts/credentials/%{credentialsUuid}")
                         .expecting(OK).expecting(JSON),
                 path("uuid").contains("%{newCredentials}"),
-                path("nickname").contains("%{nickname}")
+                path("nickname").contains("%{nickname}"),
+                path("totpSecrets").contains("%{totpSecrets}")
         );
     }
 }

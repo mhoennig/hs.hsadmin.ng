@@ -27,6 +27,7 @@ import jakarta.persistence.PersistenceContext;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL_PERSON;
@@ -35,6 +36,9 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 @Tag("generalIntegrationTest")
 @Transactional
@@ -132,11 +136,14 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                     "familyName": null
                                 },
                                 "nickname": "test-subject1",
+                                "totpSecrets": null,
+                                "phonePassword": null,
                                 "emailAddress": null,
                                 "smsNumber": null,
                                 "active": false,
                                 "globalUid": null,
                                 "globalGid": null,
+                                "onboardingToken": null,
                                 "contexts": [
                                     {
                                         "uuid": "33333333-3333-3333-3333-333333333333",
@@ -159,7 +166,8 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                         "onlyForNaturalPersons": false,
                                         "publicAccess": true
                                     }
-                                ]
+                                ],
+                                "lastUsed": null
                             }
                             """));
             // @formatter:on
@@ -357,6 +365,37 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .statusCode(400)
                     .contentType("application/json")
                     .body("message", containsString("die eigenen hsadmin-Credentials dürfen nicht entfernt werden"));
+            // @formatter:on
+        }
+    }
+
+    @Nested
+    class MarkCredentialsAsUsed {
+
+        @Test
+        void markCredentialsAsUsed() {
+            // given
+            val testPerson = givenNaturalPerson("selfregistered-user-drew@hostsharing.org");
+            val credentialsEntity = givenNewCredentials("selfregistered-user-drew@hostsharing.org",
+                    "test-subject2",
+                    testPerson, builder -> {
+                builder.onboardingToken("some-onboarding-token");
+                builder.loginContexts(contextRepo.findAll().stream()
+                        .filter(HsCredentialsContext::isPublicAccess).collect(Collectors.toSet()));
+            });
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/accounts/credentials/" + credentialsEntity.getUuid() + "/used")
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("uuid", is(credentialsEntity.getUuid().toString()))
+                        .body("onboardingToken", is(nullValue()))
+                        .body("lastUsed", is(not(nullValue())));
             // @formatter:on
         }
     }

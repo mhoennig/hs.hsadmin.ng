@@ -68,10 +68,10 @@ begin
 --     call rbac.grantRoleToRole(hs_accounts.context_REFERRER(context_MATRIX_internal), rbac.global_ADMIN());
 
     -- Add test credentials (linking to assumed rbac.subject UUIDs)
-    INSERT INTO hs_accounts.credentials (uuid, version, person_uuid, active, global_uid, global_gid, email_address, sms_number) VALUES
-        ( superuserAlexSubjectUuid, 0, personAlexUuid, true, 1001, 1001, 'alex@example.com', '111-222-3333'),
-        ( superuserFranSubjectUuid, 0, personFranUuid, true, 1002, 1002, 'fran@example.com', '444-555-6666'),
-        ( userDrewSubjectUuid, 0, personDrewUuid, true, 1003, 1003, 'drew@example.org', '999-888-7777');
+    INSERT INTO hs_accounts.credentials (uuid, version, person_uuid, active, global_uid, global_gid, onboarding_token, totp_secrets, phone_password, email_address, sms_number) VALUES
+        ( superuserAlexSubjectUuid, 0, personAlexUuid, true, 1001, 1001, 'token-abc', ARRAY['otp-secret-1a', 'otp-secret-1b'], 'phone-pw-1', 'alex@example.com', '111-222-3333'),
+        ( superuserFranSubjectUuid, 0, personFranUuid, true, 1002, 1002, 'token-def', ARRAY['otp-secret-2'], 'phone-pw-2', 'fran@example.com', '444-555-6666'),
+        ( userDrewSubjectUuid, 0, personDrewUuid, true, 1003, 1003, 'token-def', ARRAY['otp-secret-3'], 'phone-pw-3', 'drew@example.org', '999-888-7777');
 
     -- Map credentials to contexts
     INSERT INTO hs_accounts.context_mapping (credentials_uuid, context_uuid) VALUES
