@@ -7,7 +7,6 @@ import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -31,12 +30,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 
-@Transactional
 @Tag("officeIntegrationTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = HsadminNgApplication.class)
 @ActiveProfiles("fake-jwt")
+@Transactional
 class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
@@ -58,7 +57,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     class GetListOfBankAccounts {
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canViewAllBankAccounts_ifNoCriteriaGiven() throws JSONException {
+        void globalAdmin_withoutAssumedRoles_canViewAllBankAccounts_ifNoCriteriaGiven() {
 
             RestAssured // @formatter:off
                 .given()

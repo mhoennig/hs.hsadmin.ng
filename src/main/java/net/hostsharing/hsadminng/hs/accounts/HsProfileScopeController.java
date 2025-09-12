@@ -6,8 +6,8 @@ import io.micrometer.core.annotation.Timed;
 import lombok.val;
 import net.hostsharing.hsadminng.config.NoSecurityRequirement;
 import net.hostsharing.hsadminng.rbac.context.Context;
-import net.hostsharing.hsadminng.accounts.generated.api.v1.api.ContextsApi;
-import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ContextResource;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.api.ScopesApi;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ScopeResource;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @NoSecurityRequirement
-public class HsCredentialsContextsController implements ContextsApi {
+public class HsProfileScopeController implements ScopesApi {
 
     @Autowired
     private Context context;
@@ -26,20 +26,20 @@ public class HsCredentialsContextsController implements ContextsApi {
     private StrictMapper mapper;
 
     @Autowired
-    private HsCredentialsContextRbacRepository contextRepo;
+    private HsProfileScopeRbacRepository scopeRepo;
 
     @Override
     @Transactional(readOnly = true)
-    @Timed("app.credentials.contexts.getListOfLoginContexts")
-    public ResponseEntity<List<ContextResource>> getListOfContexts(final String assumedRoles) {
+    @Timed("app.accounts.scopes.getListOfScopes")
+    public ResponseEntity<List<ScopeResource>> getListOfScopes(final String assumedRoles) {
         if (SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
             context.assumeRoles(assumedRoles);
         }
         val isGlobalAdmin = context.isGlobalAdmin();
-        final var loginContexts = contextRepo.findAll().stream().filter(
-                context -> context.isPublicAccess() || isGlobalAdmin
+        final var scopes = scopeRepo.findAll().stream().filter(
+                scope -> scope.isPublicAccess() || isGlobalAdmin
         ).toList();
-        final var result = mapper.mapList(loginContexts, ContextResource.class);
+        final var result = mapper.mapList(scopes, ScopeResource.class);
         return ResponseEntity.ok(result);
     }
 }

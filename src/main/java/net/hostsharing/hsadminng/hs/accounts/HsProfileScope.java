@@ -27,14 +27,16 @@ import static net.hostsharing.hsadminng.repr.Symbol.symbol;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @SuperBuilder(builderMethodName = "baseBuilder", toBuilder = true)
 @MappedSuperclass
-public abstract class HsCredentialsContext implements Stringifyable, BaseEntity<HsCredentialsContext> {
+public abstract class HsProfileScope implements Stringifyable, BaseEntity<HsProfileScope> {
 
-    private static Stringify<HsCredentialsContext> stringify = stringify(HsCredentialsContext.class, "loginContext")
-            .withProp(HsCredentialsContext::getType)
-            .withProp(HsCredentialsContext::getQualifier)
-            .withProp(HsCredentialsContext::isOnlyForNaturalPersons,
+    private static Stringify<HsProfileScope> stringify = stringify(HsProfileScope.class, "scope")
+            .withProp(HsProfileScope::getType)
+            .withProp(HsProfileScope::getQualifier)
+            .withProp(
+                    HsProfileScope::isOnlyForNaturalPersons,
         value -> value ? symbol("NP-ONLY") : null)
-            .withProp(HsCredentialsContext::isPublicAccess,
+            .withProp(
+                    HsProfileScope::isPublicAccess,
         value -> value ? symbol("PUBLIC") : symbol("INTERNAL"))
             .quotedValues(false)
             .withSeparator(":");
@@ -61,7 +63,7 @@ public abstract class HsCredentialsContext implements Stringifyable, BaseEntity<
     @Column(name = "public_access")
     private boolean publicAccess;
 
-    public boolean isHsadminContext() {
+    public boolean isHsadminScope() {
         return "HSADMIN".equals(type);
     }
 

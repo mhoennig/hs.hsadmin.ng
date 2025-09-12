@@ -4,7 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import lombok.val;
 import net.hostsharing.hsadminng.rbac.context.Context;
-import net.hostsharing.hsadminng.hs.accounts.HsCredentialsEntity.HsCredentialsEntityBuilder;
+import net.hostsharing.hsadminng.hs.accounts.HsProfileEntity.HsProfileEntityBuilder;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
@@ -27,7 +27,6 @@ import jakarta.persistence.PersistenceContext;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL_PERSON;
@@ -36,9 +35,6 @@ import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
 
 @Tag("generalIntegrationTest")
 @Transactional
@@ -47,7 +43,7 @@ import static org.hamcrest.Matchers.nullValue;
 )
 @ActiveProfiles("fake-jwt")
 // too complex database interaction for just a RestTest, thus a fully integrated test
-class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup {
+class HsProfileControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
     Integer port;
@@ -62,13 +58,13 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     HsOfficePersonRealRepository realPersonRepo;
 
     @Autowired
-    HsCredentialsContextRealRepository contextRepo;
+    HsProfileScopeRealRepository scopeRepo;
 
     @Autowired
-    HsCredentialsRepository credentialsRepo;
+    HsProfileRepository profileRepo;
 
     @Autowired
-    HsCredentialsContextRbacRepository loginContextRbacRepo;
+    HsProfileScopeRbacRepository scopeRbacRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -105,23 +101,23 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     }
 
     @Nested
-    class GetCredentialsByUuid {
+    class GetProfileByUuid {
 
         @Test
-        void shouldFilterInvalidContextsRegardingNonNaturalPerson() {
+        void shouldFilterInvalidScopesRegardingNonNaturalPerson() {
             // given
             val legalPerson = givenLegalPerson("selfregistered-user-drew@hostsharing.org");
-            val credentialsEntity = givenNewCredentials("selfregistered-user-drew@hostsharing.org",
+            val profileEntity = givenNewProfile("selfregistered-user-drew@hostsharing.org",
                     "test-subject1", legalPerson, builder -> {
-                builder.loginContexts(new HashSet<>(contextRepo.findAll()));
+                builder.scopes(new HashSet<>(scopeRepo.findAll()));
             });
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer(credentialsEntity.getSubject().getName()))
+                        .header("Authorization", bearer(profileEntity.getSubject().getName()))
                         .port(port)
                     .when()
-                        .get("http://localhost/api/hs/accounts/credentials/" + credentialsEntity.getUuid())
+                        .get("http://localhost/api/hs/accounts/profiles/" + profileEntity.getUuid())
                     .then().log().all().assertThat()
                         .statusCode(200)
                         .contentType("application/json")
@@ -143,8 +139,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "active": false,
                                 "globalUid": null,
                                 "globalGid": null,
-                                "onboardingToken": null,
-                                "contexts": [
+                                "scopes": [
                                     {
                                         "uuid": "33333333-3333-3333-3333-333333333333",
                                         "type": "SSH",
@@ -166,8 +161,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                         "onlyForNaturalPersons": false,
                                         "publicAccess": true
                                     }
-                                ],
-                                "lastUsed": null
+                                ]
                             }
                             """));
             // @formatter:on
@@ -175,14 +169,14 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     }
 
     @Nested
-    class PostNewCredentials {
+    class PostNewProfile {
 
         @Test
-        void shouldRejectCreatingCredentialsForUnrepresentedPerson() {
+        void shouldRejectCreatingProfileForUnrepresentedPerson() {
             // given
             val testPerson = givenPersonWithUuid("selfregistered-user-drew@hostsharing.org");
-            val publicContext = contextRepo.findByTypeAndQualifier("SSH", "external").orElseThrow();
-            assertThat(publicContext.isPublicAccess()).as("precondition failed").isTrue();
+            val publicScope = scopeRepo.findByTypeAndQualifier("SSH", "external").orElseThrow();
+            assertThat(publicScope.isPublicAccess()).as("precondition failed").isTrue();
 
             RestAssured // @formatter:off
                     .given()
@@ -196,16 +190,16 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "active": true,
                                 "globalUid": 30001,
                                 "globalGid": 40001,
-                                "contexts": [
+                                "scopes": [
                                     {
                                         "uuid" : "%s"
                                     }
                                 ]
                             }
-                            """.formatted(testPerson.getUuid(), publicContext.getUuid()))
+                            """.formatted(testPerson.getUuid(), publicScope.getUuid()))
                         .port(port)
                     .when()
-                        .post("http://localhost/api/hs/accounts/credentials")
+                        .post("http://localhost/api/hs/accounts/profiles")
                     .then().log().all().assertThat()
                         .statusCode(400)
                         .contentType("application/json")
@@ -214,15 +208,15 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         }
 
         @Test
-        void shouldRejectCreatingCredentialsWithPrivateContextForNormalUser() {
+        void shouldRejectCreatingProfileWithPrivateScopeForNormalUser() {
             // given
             val drewPerson = realPersonRepo.findPersonByOptionalNameLike("Drew").getFirst();
-            val privateInternalSshContext = contextRepo.findByTypeAndQualifier("SSH", "internal")
-                    .map(HsCredentialsControllerAcceptanceTest::asPrivateContext).orElseThrow();
-            val privateInternalMatrixContext = contextRepo.findByTypeAndQualifier("MATRIX", "internal")
-                    .map(HsCredentialsControllerAcceptanceTest::asPrivateContext).orElseThrow();
-            val publicExternalMatrixContext = contextRepo.findByTypeAndQualifier("MATRIX", "external")
-                    .map(HsCredentialsControllerAcceptanceTest::asPublicContext).orElseThrow();
+            val privateInternalSshScope = scopeRepo.findByTypeAndQualifier("SSH", "internal")
+                    .map(HsProfileControllerAcceptanceTest::asPrivateScope).orElseThrow();
+            val privateInternalMatrixScope = scopeRepo.findByTypeAndQualifier("MATRIX", "internal")
+                    .map(HsProfileControllerAcceptanceTest::asPrivateScope).orElseThrow();
+            val publicExternalMatrixScope = scopeRepo.findByTypeAndQualifier("MATRIX", "external")
+                    .map(HsProfileControllerAcceptanceTest::asPublicScope).orElseThrow();
 
             RestAssured // @formatter:off
                     .given()
@@ -236,7 +230,7 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "active": true,
                                 "globalUid": 30001,
                                 "globalGid": 40001,
-                                "contexts": [
+                                "scopes": [
                                     { "uuid" : "%s" },
                                     { "uuid" : "%s" },
                                     { "uuid" : "%s" }
@@ -244,25 +238,25 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             }
                             """.formatted(
                                 drewPerson.getUuid(),
-                                publicExternalMatrixContext.getUuid(),
-                                privateInternalSshContext.getUuid(),
-                                privateInternalMatrixContext.getUuid()))
+                                publicExternalMatrixScope.getUuid(),
+                                privateInternalSshScope.getUuid(),
+                                privateInternalMatrixScope.getUuid()))
                         .port(port)
                     .when()
-                        .post("http://localhost/api/hs/accounts/credentials")
+                        .post("http://localhost/api/hs/accounts/profiles")
                     .then().log().all().assertThat()
                         .statusCode(400)
                     .contentType("application/json")
-                    .body("message", containsString("Kontext-Zugriff verweigert: 'MATRIX:internal', 'SSH:internal'"));
+                    .body("message", containsString("Zugriff auf Geltungsbereich verweigert: 'MATRIX:internal', 'SSH:internal'"));
             // @formatter:on
         }
 
         @Test
-        void shouldRejectCreatingCredentialsWithNaturalPersonRequirementForNonNaturalPerson() {
+        void shouldRejectCreatingProfileWithNaturalPersonRequirementForNonNaturalPerson() {
             // given
             val firstGmbHPerson = realPersonRepo.findPersonByOptionalNameLike("First").getFirst();
-            val hsadminProdContextOnlyForNaturalPersons = contextRepo.findByTypeAndQualifier("HSADMIN", "prod")
-                    .map(HsCredentialsControllerAcceptanceTest::asNaturalPersonContext).orElseThrow();
+            val hsadminProdScopeOnlyForNaturalPersons = scopeRepo.findByTypeAndQualifier("HSADMIN", "prod")
+                    .map(HsProfileControllerAcceptanceTest::asNaturalPersonScope).orElseThrow();
 
             RestAssured // @formatter:off
                     .given()
@@ -276,39 +270,39 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                     "active": true,
                                     "globalUid": 30001,
                                     "globalGid": 40001,
-                                    "contexts": [
+                                    "scopes": [
                                         { "uuid" : "%s" }
                                     ]
                                 }
                                 """.formatted(
                                 firstGmbHPerson.getUuid(),
-                                hsadminProdContextOnlyForNaturalPersons.getUuid()))
+                                hsadminProdScopeOnlyForNaturalPersons.getUuid()))
                         .port(port)
                     .when()
-                    .post("http://localhost/api/hs/accounts/credentials")
+                    .post("http://localhost/api/hs/accounts/profiles")
                     .then().log().all().assertThat()
                     .statusCode(400)
                     .contentType("application/json")
-                    .body("message", containsString("Kontext verlangt eine natürliche Person: 'HSADMIN:prod'"));
+                    .body("message", containsString("Geltungsbereich verlangt eine natürliche Person: 'HSADMIN:prod'"));
             // @formatter:on
         }
     }
 
     @Nested
-    class PatchCredentials {
+    class PatchProfile {
 
         @Test
-        void shouldRejectPatchingCredentialsWithPrivateContextForNormalUser() {
+        void shouldRejectPatchingProfileWithPrivateScopeForNormalUser() {
             // given
             context.define("selfregistered-user-drew@hostsharing.org");
-            val drewCredentialsUuid = credentialsRepo.findByCurrentSubject().stream().findFirst().orElseThrow()
+            val drewProfileUuid = profileRepo.findByCurrentSubject().stream().findFirst().orElseThrow()
                     .getSubject().getUuid();
-            val privateInternalSshContext = contextRepo.findByTypeAndQualifier("SSH", "internal")
-                    .map(HsCredentialsControllerAcceptanceTest::asPrivateContext).orElseThrow();
-            val privateInternalMatrixContext = contextRepo.findByTypeAndQualifier("MATRIX", "internal")
-                    .map(HsCredentialsControllerAcceptanceTest::asPrivateContext).orElseThrow();
-            val publicExternalMatrixContext = contextRepo.findByTypeAndQualifier("MATRIX", "external")
-                    .map(HsCredentialsControllerAcceptanceTest::asPublicContext).orElseThrow();
+            val privateInternalSshScope = scopeRepo.findByTypeAndQualifier("SSH", "internal")
+                    .map(HsProfileControllerAcceptanceTest::asPrivateScope).orElseThrow();
+            val privateInternalMatrixScope = scopeRepo.findByTypeAndQualifier("MATRIX", "internal")
+                    .map(HsProfileControllerAcceptanceTest::asPrivateScope).orElseThrow();
+            val publicExternalMatrixScope = scopeRepo.findByTypeAndQualifier("MATRIX", "external")
+                    .map(HsProfileControllerAcceptanceTest::asPublicScope).orElseThrow();
 
             RestAssured // @formatter:off
                     .given()
@@ -317,34 +311,34 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
-                                    "contexts": [
+                                    "scopes": [
                                         { "uuid" : "%s" },
                                         { "uuid" : "%s" },
                                         { "uuid" : "%s" }
                                     ]
                                 }
                                 """.formatted(
-                                    privateInternalSshContext.getUuid(),
-                                    publicExternalMatrixContext.getUuid(),
-                                    privateInternalMatrixContext.getUuid()))
+                                    privateInternalSshScope.getUuid(),
+                                    publicExternalMatrixScope.getUuid(),
+                                    privateInternalMatrixScope.getUuid()))
                         .port(port)
                     .when()
-                        .patch("http://localhost/api/hs/accounts/credentials/" + drewCredentialsUuid)
+                        .patch("http://localhost/api/hs/accounts/profiles/" + drewProfileUuid)
                     .then().log().all().assertThat()
                     .statusCode(400)
                     .contentType("application/json")
-                    .body("message", containsString("Kontext-Zugriff verweigert: 'MATRIX:internal', 'SSH:internal'"));
+                    .body("message", containsString("Zugriff auf Geltungsbereich verweigert: 'MATRIX:internal', 'SSH:internal'"));
             // @formatter:on
         }
 
         @Test
-        void shouldRejectPatchingCredentialsAndRemovingTheOwnHsadminCredentials() {
+        void shouldRejectPatchingProfileAndRemovingTheOwnHsadminProfile() {
             // given
             context.define("selfregistered-user-drew@hostsharing.org");
-            val drewCredentialsUuid = credentialsRepo.findByCurrentSubject().stream().findFirst().orElseThrow()
+            val drewProfileUuid = profileRepo.findByCurrentSubject().stream().findFirst().orElseThrow()
                     .getSubject().getUuid();
-            val publicExternalMatrixContext = contextRepo.findByTypeAndQualifier("MATRIX", "external")
-                    .map(HsCredentialsControllerAcceptanceTest::asPublicContext).orElseThrow();
+            val publicExternalMatrixScope = scopeRepo.findByTypeAndQualifier("MATRIX", "external")
+                    .map(HsProfileControllerAcceptanceTest::asPublicScope).orElseThrow();
 
             RestAssured // @formatter:off
                     .given()
@@ -353,49 +347,18 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .contentType(ContentType.JSON)
                     .body("""
                                 {
-                                    "contexts": [
+                                    "scopes": [
                                         { "uuid" : "%s" }
                                     ]
                                 }
-                                """.formatted(publicExternalMatrixContext.getUuid()))
+                                """.formatted(publicExternalMatrixScope.getUuid()))
                     .port(port)
                     .when()
-                    .patch("http://localhost/api/hs/accounts/credentials/" + drewCredentialsUuid)
+                    .patch("http://localhost/api/hs/accounts/profiles/" + drewProfileUuid)
                     .then().log().all().assertThat()
                     .statusCode(400)
                     .contentType("application/json")
-                    .body("message", containsString("die eigenen hsadmin-Credentials dürfen nicht entfernt werden"));
-            // @formatter:on
-        }
-    }
-
-    @Nested
-    class MarkCredentialsAsUsed {
-
-        @Test
-        void markCredentialsAsUsed() {
-            // given
-            val testPerson = givenNaturalPerson("selfregistered-user-drew@hostsharing.org");
-            val credentialsEntity = givenNewCredentials("selfregistered-user-drew@hostsharing.org",
-                    "test-subject2",
-                    testPerson, builder -> {
-                builder.onboardingToken("some-onboarding-token");
-                builder.loginContexts(contextRepo.findAll().stream()
-                        .filter(HsCredentialsContext::isPublicAccess).collect(Collectors.toSet()));
-            });
-
-            RestAssured // @formatter:off
-                    .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                        .port(port)
-                    .when()
-                        .post("http://localhost/api/hs/accounts/credentials/" + credentialsEntity.getUuid() + "/used")
-                    .then().log().all().assertThat()
-                        .statusCode(200)
-                        .contentType("application/json")
-                        .body("uuid", is(credentialsEntity.getUuid().toString()))
-                        .body("onboardingToken", is(nullValue()))
-                        .body("lastUsed", is(not(nullValue())));
+                    .body("message", containsString("die eigenen hsadmin-Profile dürfen nicht entfernt werden"));
             // @formatter:on
         }
     }
@@ -433,25 +396,25 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         }).returnedValue();
     }
 
-    private static HsCredentialsContextRealEntity asNaturalPersonContext(@NotNull HsCredentialsContextRealEntity context) {
-        assertThat(context.isOnlyForNaturalPersons()).as("precondition failed").isTrue();
-        return context;
+    private static HsProfileScopeRealEntity asNaturalPersonScope(@NotNull HsProfileScopeRealEntity scope) {
+        assertThat(scope.isOnlyForNaturalPersons()).as("precondition failed").isTrue();
+        return scope;
     }
 
-    private static HsCredentialsContextRealEntity asPrivateContext(@NotNull HsCredentialsContextRealEntity context) {
-        assertThat(context.isPublicAccess()).as("precondition failed").isFalse();
-        return context;
+    private static HsProfileScopeRealEntity asPrivateScope(@NotNull HsProfileScopeRealEntity scope) {
+        assertThat(scope.isPublicAccess()).as("precondition failed").isFalse();
+        return scope;
     }
 
-    private static HsCredentialsContextRealEntity asPublicContext(@NotNull HsCredentialsContextRealEntity context) {
-        assertThat(context.isPublicAccess()).as("precondition failed").isTrue();
-        return context;
+    private static HsProfileScopeRealEntity asPublicScope(@NotNull HsProfileScopeRealEntity scope) {
+        assertThat(scope.isPublicAccess()).as("precondition failed").isTrue();
+        return scope;
     }
 
-    private HsCredentialsEntity givenNewCredentials(
+    private HsProfileEntity givenNewProfile(
             final String executingSubjectName,
             final String newSubjectName, final HsOfficePersonRealEntity person,
-            final Consumer<HsCredentialsEntityBuilder> modifier
+            final Consumer<HsProfileEntityBuilder> modifier
     ) {
         return jpaAttempt.transacted(() -> {
             context.define(executingSubjectName);
@@ -462,12 +425,12 @@ class HsCredentialsControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             context.define(subject.getName());
             val attachedPerson = em.find(HsOfficePersonRealEntity.class, person.getUuid());
-            val credentialsBuilder = HsCredentialsEntity.builder()
+            val profileBuilder = HsProfileEntity.builder()
                     .person(attachedPerson)
                     .subject(subjectRepo.findByUuid(subject.getUuid()))
-                    .loginContexts(Set.of());
-            modifier.accept(credentialsBuilder);
-            return toCleanup(credentialsRepo.save(credentialsBuilder.build()));
+                    .scopes(Set.of());
+            modifier.accept(profileBuilder);
+            return toCleanup(profileRepo.save(profileBuilder.build()));
         }).assertSuccessful().returnedValue();
     }
 }

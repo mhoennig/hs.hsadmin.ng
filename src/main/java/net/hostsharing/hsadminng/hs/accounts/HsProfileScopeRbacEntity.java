@@ -24,7 +24,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.WITHOUT_IMPLICIT
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 
 @Entity
-@Table(schema = "hs_accounts", name = "context") // TODO_impl: RBAC rules for _rv do not yet work properly
+@Table(schema = "hs_accounts", name = "scope") // TODO_impl: RBAC rules for _rv do not yet work properly
 @SuperBuilder(toBuilder = true)
 @Getter
 @Setter
@@ -32,11 +32,11 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.rbacViewFor;
 @AttributeOverrides({
         @AttributeOverride(name = "uuid", column = @Column(name = "uuid"))
 })
-public class HsCredentialsContextRbacEntity extends HsCredentialsContext {
+public class HsProfileScopeRbacEntity extends HsProfileScope {
 
     // TODO_impl: RBAC rules for _rv do not yet work properly (remove the X)
     public static RbacSpec rbacX() {
-        return rbacViewFor("credentialsContext", HsCredentialsContextRbacEntity.class)
+        return rbacViewFor("profileScope", HsProfileScopeRbacEntity.class)
                 .withIdentityView(SQL.projection("type || ':' || qualifier"))
                 .withRestrictedViewOrderBy(SQL.expression("type || ':' || qualifier"))
                 .withoutUpdatableColumns()
@@ -50,6 +50,6 @@ public class HsCredentialsContextRbacEntity extends HsCredentialsContext {
 
     // TODO_impl: RBAC rules for _rv do not yet work properly (remove the X)
     public static void mainX(String[] args) throws IOException {
-        rbacX().generateWithBaseFileName("9-hs-global/950-accounts/9513-hs-credentials-rbac");
+        rbacX().generateWithBaseFileName("9-hs-global/950-accounts/9513-hs-profile-rbac");
     }
 }

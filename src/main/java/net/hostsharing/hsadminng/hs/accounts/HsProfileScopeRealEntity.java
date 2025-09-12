@@ -11,7 +11,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(schema = "hs_accounts", name = "context")
+@Table(schema = "hs_accounts", name = "scope")
 @SuperBuilder(toBuilder = true)
 @Getter
 @Setter
@@ -19,5 +19,5 @@ import lombok.experimental.SuperBuilder;
 @AttributeOverrides({
         @AttributeOverride(name = "uuid", column = @Column(name = "uuid"))
 })
-public class HsCredentialsContextRealEntity extends HsCredentialsContext {
+public class HsProfileScopeRealEntity extends HsProfileScope {
 }

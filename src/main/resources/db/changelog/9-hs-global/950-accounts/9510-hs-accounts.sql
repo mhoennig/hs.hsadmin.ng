@@ -2,10 +2,10 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-credentials-CREDENTIALS-TABLE endDelimiter:--//
+--changeset michael.hoennig:hs-profile-PROFILE-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table hs_accounts.credentials
+create table hs_accounts.profile
 (
     uuid             uuid PRIMARY KEY references rbac.subject (uuid) initially deferred,
     version          int not null default 0,
@@ -13,10 +13,8 @@ create table hs_accounts.credentials
     person_uuid      uuid not null references hs_office.person(uuid),
 
     active           bool,
-    last_used        timestamp,
     global_uid       int unique,     -- w/o
     global_gid       int unique,     -- w/o
-    onboarding_token text,           -- w/o, but can be set to null to invalidate
 
     totp_secrets     text[],
     phone_password   text,
@@ -27,10 +25,10 @@ create table hs_accounts.credentials
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-credentials-context-CONTEXT-TABLE endDelimiter:--//
+--changeset michael.hoennig:hs-profile-scope-SCOPE-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table hs_accounts.context
+create table hs_accounts.scope
 (
     uuid                        uuid PRIMARY KEY,
     version                     int not null default 0,
@@ -48,31 +46,31 @@ create table hs_accounts.context
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-credentials-CONTEXT-IMMUTABLE-TRIGGER endDelimiter:--//
+--changeset michael.hoennig:hs-profile-SCOPE-IMMUTABLE-TRIGGER endDelimiter:--//
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION hs_accounts.prevent_context_update()
+CREATE OR REPLACE FUNCTION hs_accounts.prevent_scope_update()
 RETURNS TRIGGER AS $$
 BEGIN
-    RAISE EXCEPTION 'Updates to hs_accounts.context are not allowed.';
+    RAISE EXCEPTION 'Updates to hs_accounts.scope are not allowed.';
 END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to enforce immutability
-CREATE TRIGGER context_immutable_trigger
-BEFORE UPDATE ON hs_accounts.context
-FOR EACH ROW EXECUTE FUNCTION hs_accounts.prevent_context_update();
+CREATE TRIGGER scope_immutable_trigger
+BEFORE UPDATE ON hs_accounts.scope
+FOR EACH ROW EXECUTE FUNCTION hs_accounts.prevent_scope_update();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs_accounts-CONTEXT-MAPPING endDelimiter:--//
+--changeset michael.hoennig:hs_accounts-SCOPE-MAPPING endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table hs_accounts.context_mapping
+create table hs_accounts.scope_mapping
 (
     uuid                    uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    credentials_uuid        uuid references hs_accounts.credentials(uuid) ON DELETE CASCADE,
-    context_uuid            uuid references hs_accounts.context(uuid) ON DELETE RESTRICT
+    profile_uuid        uuid references hs_accounts.profile(uuid) ON DELETE CASCADE,
+    scope_uuid              uuid references hs_accounts.scope(uuid) ON DELETE RESTRICT
 );
 --//
 
@@ -81,16 +79,16 @@ create table hs_accounts.context_mapping
 --changeset michael.hoennig:hs-hs_accounts-JOURNALS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call base.create_journal('hs_accounts.context_mapping');
-call base.create_journal('hs_accounts.context');
-call base.create_journal('hs_accounts.credentials');
+call base.create_journal('hs_accounts.scope_mapping');
+call base.create_journal('hs_accounts.scope');
+call base.create_journal('hs_accounts.profile');
 --//
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs_accounts-HISTORICIZATION endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call base.tx_create_historicization('hs_accounts.context_mapping');
-call base.tx_create_historicization('hs_accounts.context');
-call base.tx_create_historicization('hs_accounts.credentials');
+call base.tx_create_historicization('hs_accounts.scope_mapping');
+call base.tx_create_historicization('hs_accounts.scope');
+call base.tx_create_historicization('hs_accounts.profile');
 --//

@@ -13,5 +13,5 @@ map:
         - type: string:uuid => java.util.UUID
 
     paths:
-        /api/hs/accounts/credentials/{credentialsUuid}:
+        /api/hs/accounts/profiles/{profileUuid}:
             null: org.openapitools.jackson.nullable.JsonNullable

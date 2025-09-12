@@ -9,7 +9,6 @@ import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 // import net.hostsharing.hsadminng.rbac.RbacSubjectEntity; // Assuming RbacSubjectEntity exists for the FK relationship
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,20 +19,20 @@ import static jakarta.persistence.CascadeType.REFRESH;
 import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
-@Table(schema = "hs_accounts", name = "credentials")
+@Table(schema = "hs_accounts", name = "profile")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Stringifyable {
+public class HsProfileEntity implements BaseEntity<HsProfileEntity>, Stringifyable {
 
-    protected static Stringify<HsCredentialsEntity> stringify = stringify(HsCredentialsEntity.class, "credentials")
-            .withProp(HsCredentialsEntity::isActive)
-            .withProp(HsCredentialsEntity::getEmailAddress)
-            .withProp(HsCredentialsEntity::getTotpSecrets)
-            .withProp(HsCredentialsEntity::getPhonePassword)
-            .withProp(HsCredentialsEntity::getSmsNumber)
+    protected static Stringify<HsProfileEntity> stringify = stringify(HsProfileEntity.class, "profile")
+            .withProp(HsProfileEntity::isActive)
+            .withProp(HsProfileEntity::getEmailAddress)
+            .withProp(HsProfileEntity::getTotpSecrets)
+            .withProp(HsProfileEntity::getPhonePassword)
+            .withProp(HsProfileEntity::getSmsNumber)
             .quotedValues(false);
 
     @Id
@@ -46,13 +45,10 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "person_uuid", nullable = false, updatable = false, referencedColumnName = "uuid")
-    private HsOfficePersonRealEntity person; // TODO.impl: add RBAC-Support to CredentialsEntity, see Story #
+    private HsOfficePersonRealEntity person; // TODO.impl: add RBAC-Support to ProfileEntity, see Story #
 
     @Version
     private int version;
-
-    @Column
-    private LocalDateTime lastUsed;
 
     @Column
     private boolean active;
@@ -62,9 +58,6 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
 
     @Column
     private Integer globalGid;
-
-    @Column
-    private String onboardingToken;
 
     @Column
     private List<String> totpSecrets;
@@ -80,17 +73,17 @@ public class HsCredentialsEntity implements BaseEntity<HsCredentialsEntity>, Str
 
     @OneToMany(fetch = FetchType.EAGER, cascade = { MERGE, REFRESH })
     @JoinTable(
-            name = "context_mapping", schema = "hs_accounts",
-            joinColumns = @JoinColumn(name = "credentials_uuid", referencedColumnName = "uuid"),
-            inverseJoinColumns = @JoinColumn(name = "context_uuid", referencedColumnName = "uuid")
+            name = "scope_mapping", schema = "hs_accounts",
+            joinColumns = @JoinColumn(name = "profile_uuid", referencedColumnName = "uuid"),
+            inverseJoinColumns = @JoinColumn(name = "scope_uuid", referencedColumnName = "uuid")
     )
-    private Set<HsCredentialsContextRealEntity> loginContexts;
+    private Set<HsProfileScopeRealEntity> scopes;
 
-    public Set<HsCredentialsContextRealEntity> getLoginContexts() {
-        if ( loginContexts == null ) {
-            loginContexts = new HashSet<>();
+    public Set<HsProfileScopeRealEntity> getScopes() {
+        if ( scopes == null ) {
+            scopes = new HashSet<>();
         }
-        return loginContexts;
+        return scopes;
     }
 
     public void setSubject(final RbacSubjectEntity subject) {

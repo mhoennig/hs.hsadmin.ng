@@ -13,20 +13,17 @@ paths:
   /api/hs/accounts/current:
     $ref: "current.yaml"
 
-  # Contexts
+  # Scopes
 
-  /api/hs/accounts/contexts:
-    $ref: "contexts.yaml"
+  /api/hs/accounts/scopes:
+    $ref: "scopes.yaml"
 
 
-  # Credentials
+  # Profile
 
-  /api/hs/accounts/credentials/{credentialsUuid}/used:
-    $ref: "credentials-with-uuid-used.yaml"
+  /api/hs/accounts/profiles/{profileUuid}:
+    $ref: "profile-with-uuid.yaml"
 
-  /api/hs/accounts/credentials/{credentialsUuid}:
-    $ref: "credentials-with-uuid.yaml"
-
-  /api/hs/accounts/credentials:
-    $ref: "credentials.yaml"
+  /api/hs/accounts/profiles:
+    $ref: "profiles.yaml"
 

@@ -1,0 +1,49 @@
+classDiagram
+    direction LR
+
+OfficePerson "1" o.. "*" Profile
+Profile "1" o-- "1" RbacSubject
+
+Scope "1..n" --o "1" ScopeMapping
+Profile "1..n" --o "1" ScopeMapping
+
+class Profile{
+    +emailAdress: text
+    +smsNumber: text
+    +password: text
+    +totpSecrets: text
+    +phonePassword: text
+    -active: bool [r/w]
+    -globalUid: int [w/o]
+    -globalGid: int [w/o]
+}
+
+class Scope{
+    -type: Enum [SSH, Matrix, Mastodon, ...]
+    -qualifier: text
+}
+
+class ScopeMapping{
+    note for ScopeMapping "Assigns Profile to Scopes"
+}
+
+class RbacSubject{
+    +uuid: uuid
+    +name: text # == nickname
+}
+
+class OfficePerson{
+    +type: enum
+    +tradename: text
+    +title: text
+    +familyName: text
+    +givenName: text
+    +salutation: text
+}
+
+style Scope fill:#00f,color:#fff
+style ScopeMapping fill:#00f,color:#fff
+style Profile fill:#00f,color:#fff
+
+style RbacSubject fill:#f96,color:#fff
+style OfficePerson fill:#f66,color:#000

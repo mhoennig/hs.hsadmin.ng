@@ -4,15 +4,15 @@
 -- I presume it's a bug in Liquibase that other changeset checksums are changed by new changesets in the same file
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATION-FOR-CREDENTIALS context:!without-test-data endDelimiter:--//
+--changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATION-FOR-PROFILES context:!without-test-data runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call hs_office.person_create_test_data('NP', null,'Hostmaster', 'Alex');
-        call hs_office.person_create_test_data('NP', null, 'Hostmaster', 'Fran');
-        call hs_office.person_create_test_data('NP', null, 'User', 'Drew');
-        call hs_office.person_create_test_data('NP', null, 'User', 'Test');
+        call hs_office.person_create_test_data('NP', null,'Hostmaster', 'Alex', true);
+        call hs_office.person_create_test_data('NP', null, 'Hostmaster', 'Fran', true);
+        call hs_office.person_create_test_data('NP', null, 'User', 'Drew', true);
+        call hs_office.person_create_test_data('NP', null, 'User', 'Test', true);
     end;
 $$;
 --//

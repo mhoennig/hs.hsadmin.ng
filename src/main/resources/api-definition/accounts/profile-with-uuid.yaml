@@ -1,23 +1,23 @@
 get:
     tags:
-        - credentials
-    description: 'Fetch a single  credentials its uuid, if visible for the current subject.'
-    operationId: getSingleCredentialsByUuid
+        - profile
+    description: 'Fetch a single  profile its uuid, if visible for the current subject.'
+    operationId: getSingleProfileByUuid
     parameters:
-        - name: credentialsUuid
+        - name: profileUuid
           in: path
           required: true
           schema:
               type: string
               format: uuid
-          description: UUID of the  credentials to fetch.
+          description: UUID of the  profile to fetch.
     responses:
         "200":
             description: OK
             content:
                 'application/json':
                     schema:
-                        $ref: 'credentials-schemas.yaml#/components/schemas/Credentials'
+                        $ref: 'profile-schemas.yaml#/components/schemas/Profile'
 
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
@@ -26,11 +26,11 @@ get:
 
 patch:
     tags:
-        - credentials
-    description: 'Updates a single  credentials identified by its uuid, if permitted for the current subject.'
-    operationId: patchCredentials
+        - profile
+    description: 'Updates a single  profile identified by its uuid, if permitted for the current subject.'
+    operationId: patchProfile
     parameters:
-        -   name: credentialsUuid
+        -   name: profileUuid
             in: path
             required: true
             schema:
@@ -40,14 +40,14 @@ patch:
         content:
             'application/json':
                 schema:
-                    $ref: 'credentials-schemas.yaml#/components/schemas/CredentialsPatch'
+                    $ref: 'profile-schemas.yaml#/components/schemas/ProfilePatch'
     responses:
         "200":
             description: OK
             content:
                 'application/json':
                     schema:
-                        $ref: 'credentials-schemas.yaml#/components/schemas/Credentials'
+                        $ref: 'profile-schemas.yaml#/components/schemas/Profile'
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
@@ -55,17 +55,17 @@ patch:
 
 delete:
     tags:
-        - credentials
-    description: 'Delete a single  credentials identified by its uuid, if permitted for the current subject.'
-    operationId: deleteCredentialsByUuid
+        - profile
+    description: 'Delete a single  profile identified by its uuid, if permitted for the current subject.'
+    operationId: deleteProfileByUuid
     parameters:
-        - name: credentialsUuid
+        - name: profileUuid
           in: path
           required: true
           schema:
               type: string
               format: uuid
-          description: UUID of the  credentials to delete.
+          description: UUID of the  profile to delete.
     responses:
         "204":
             description: No Content

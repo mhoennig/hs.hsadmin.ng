@@ -38,13 +38,13 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.SynchronizationType;
 
-@WebMvcTest(HsCredentialsContextsController.class)
+@WebMvcTest(HsProfileScopeController.class)
 @Import({ StrictMapper.class,
           MessageTranslator.class,
           JsonObjectMapperConfiguration.class,
           WebSecurityConfigForWebMvcTests.class })
 @ActiveProfiles({"fake-jwt", "test"})
-class HsCredentialsContextsControllerRestTest {
+class HsProfileScopeControllerRestTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -63,7 +63,7 @@ class HsCredentialsContextsControllerRestTest {
     EntityManagerFactory emf;
 
     @MockitoBean
-    HsCredentialsContextRbacRepository loginContextRbacRepo;
+    HsProfileScopeRbacRepository scopeRbacRepo;
 
     @TestConfiguration
     public static class TestConfig {
@@ -82,14 +82,14 @@ class HsCredentialsContextsControllerRestTest {
     }
 
     @Test
-    void getListOfLoginContextsReturnsOkWithEmptyList() throws Exception {
+    void getListOfScopesReturnsOkWithEmptyList() throws Exception {
 
         // given
-        givenNoContextsInTheRepository();
+        givenNoScopesInTheRepository();
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                        .get("/api/hs/accounts/contexts")
+                        .get("/api/hs/accounts/scopes")
                         .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -101,15 +101,15 @@ class HsCredentialsContextsControllerRestTest {
     }
 
     @Test
-    void getListOfLoginContextsReturnsAllContextsForGlobalAdmin() throws Exception {
+    void getListOfScopesReturnsAllScopesForGlobalAdmin() throws Exception {
 
         // given
-        givenSomeContextsInTheRepository();
+        givenSomeScopesInTheRepository();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/hs/accounts/contexts")
+                .get("/api/hs/accounts/scopes")
                 .header("Authorization", bearer("Bearer superuser-alex@hostsharing.net"))
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -143,15 +143,15 @@ class HsCredentialsContextsControllerRestTest {
     }
 
     @Test
-    void getListOfLoginContextsReturnsOnlyPublicContextsForNormalUser() throws Exception {
+    void getListOfScopesReturnsOnlyPublicScopesForNormalUser() throws Exception {
 
         // given
-        givenSomeContextsInTheRepository();
+        givenSomeScopesInTheRepository();
         when(contextMock.isGlobalAdmin()).thenReturn(false);
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                        .get("/api/hs/accounts/contexts")
+                        .get("/api/hs/accounts/scopes")
                         .header("Authorization", bearer("drew@hostsharing.org"))
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -178,27 +178,27 @@ class HsCredentialsContextsControllerRestTest {
                         )));
     }
 
-    private void givenNoContextsInTheRepository() {
-        when(loginContextRbacRepo.findAll()).thenReturn(emptyList());
+    private void givenNoScopesInTheRepository() {
+        when(scopeRbacRepo.findAll()).thenReturn(emptyList());
     }
 
-    private void givenSomeContextsInTheRepository() {
-        when(loginContextRbacRepo.findAll()).thenReturn(List.of(
-                HsCredentialsContextRbacEntity.builder()
+    private void givenSomeScopesInTheRepository() {
+        when(scopeRbacRepo.findAll()).thenReturn(List.of(
+                HsProfileScopeRbacEntity.builder()
                         .uuid(UUID.randomUUID())
                         .type("HSADMIN")
                         .qualifier("prod")
                         .publicAccess(true)
                         .onlyForNaturalPersons(true)
                         .build(),
-                HsCredentialsContextRbacEntity.builder()
+                HsProfileScopeRbacEntity.builder()
                         .uuid(UUID.randomUUID())
                         .type("SSH")
                         .qualifier("public")
                         .publicAccess(true)
                         .onlyForNaturalPersons(false)
                         .build(),
-                HsCredentialsContextRbacEntity.builder()
+                HsProfileScopeRbacEntity.builder()
                         .uuid(UUID.randomUUID())
                         .type("SSH")
                         .qualifier("internal")

@@ -58,7 +58,7 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
     private BiFunction<EntityManager, PropertiesProvider, T> computedBy;
 
     @Accessors(makeFinal = true, chain = true, fluent = false)
-    private ComputeMode computed; // name 'computed' instead 'computeMode' for better readability in property description
+    private ComputeMode computed; // name 'computed' instead of 'computeMode' for better readability in property description
 
     @Accessors(makeFinal = true, chain = true, fluent = false)
     private boolean readOnly;

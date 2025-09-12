@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATOR endDelimiter:--//
+--changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATOR runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -12,7 +12,8 @@ create or replace procedure hs_office.person_create_test_data(
         newPersonType hs_office.PersonType,
         newTradeName varchar,
         newFamilyName varchar = null,
-        newGivenName varchar = null
+        newGivenName varchar = null,
+        ignoreIfExists boolean = false
 )
     language plpgsql as $$
 declare
@@ -22,7 +23,10 @@ begin
     fullName := concat_ws(', ', newTradeName, newFamilyName, newGivenName);
     emailAddr = 'person-' || left(base.cleanIdentifier(fullName), 32) || '@example.com';
     call base.defineContext('creating person test-data');
-    perform rbac.create_subject(emailAddr);
+    if ignoreIfExists and exists (select 1 from rbac.subject where name = emailAddr) then
+        return;
+    end if;
+    perform rbac.create_subject(emailAddr);call base.defineContext('creating person test-data', null, emailAddr);
     call base.defineContext('creating person test-data', null, emailAddr);
 
     raise notice 'creating test person: % by %', fullName, emailAddr;

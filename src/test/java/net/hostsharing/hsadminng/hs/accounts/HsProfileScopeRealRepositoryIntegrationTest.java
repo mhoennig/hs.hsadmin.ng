@@ -11,10 +11,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,12 +25,12 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @ActiveProfiles("test")
 @Tag("generalIntegrationTest")
 @Import({ Context.class, JpaAttempt.class })
-@Transactional
-class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest {
+class HsProfileScopeRealRepositoryIntegrationTest extends ContextBasedTest {
 
-    // existing UUIDs from test data (Liquibase changeset 310-login-credentials-test-data.sql)
-    private static final UUID TEST_CONTEXT_HSADMIN_PROD_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    private static final UUID TEST_CONTEXT_MATRIX_INTERNAL_UUID = UUID.fromString("33333333-3333-3333-3333-333333333333");
+    // existing UUIDs from test data (Liquibase changeset 310-login-profile-test-data.sql)
+    private static final UUID TEST_SCOPE_HSADMIN_PROD_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID TEST_SCOPE_SSH_INTERNAL_UUID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+    private static final UUID TEST_SCOPE_MATRIX_INTERNAL_UUID = UUID.fromString("33333333-3333-3333-3333-333333333333");
 
     private static final String SUPERUSER_ALEX_SUBJECT_NAME = "superuser-alex@hostsharing.net";
     private static final String TEST_USER_SUBJECT_NAME = "selfregistered-test-user@hostsharing.org";
@@ -38,34 +39,47 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
     HttpServletRequest request;
 
     @Autowired
-    private HsCredentialsContextRbacRepository loginContextRepository;
+    private HsProfileScopeRealRepository scopeRepository;
 
     @Test
-    void shouldFindAllByNormalUserUsingTestData() {
-        context(TEST_USER_SUBJECT_NAME);
+    public void historizationIsAvailable() {
+        // given
+        final String nativeQuerySql = "select * from hs_accounts.scope_hv";
 
         // when
-        final var allContexts = loginContextRepository.findAll();
+        historicalContext(Timestamp.from(ZonedDateTime.now().minusDays(1).toInstant()));
+        final var query = em.createNativeQuery(nativeQuerySql);
+        final var rowsBefore = query.getResultList();
 
         // then
-        assertThat(allContexts)
-            .isNotNull()
-            .hasSizeGreaterThanOrEqualTo(1) // Expect at least the 1 public context from assumed test data
-            .extracting(HsCredentialsContext::getUuid)
-            .contains(TEST_CONTEXT_HSADMIN_PROD_UUID);
+        assertThat(rowsBefore)
+                .as("hs_accounts.scope_hv only contain no rows for a timestamp before test data creation")
+                .hasSize(0);
+
+        // and when
+        historicalContext(Timestamp.from(ZonedDateTime.now().toInstant()));
+        em.createNativeQuery(nativeQuerySql, Integer.class);
+        final var rowsAfter = query.getResultList();
+
+        // then
+        assertThat(rowsAfter)
+                .as("hs_accounts.scope_hv should now contain the test-data rows for the current timestamp")
+                .hasSize(7);
     }
 
     @Test
-    void shouldFindAllByAdminUserUsingTestData() {
-        context(SUPERUSER_ALEX_SUBJECT_NAME);
+    void shouldFindAllUsingTestData() {
+        context(TEST_USER_SUBJECT_NAME);
 
         // when
-        final var allContexts = loginContextRepository.findAll();
+        final var allScopes = scopeRepository.findAll();
 
         // then
-        assertThat(allContexts)
-                .isNotNull()
-                .hasSizeGreaterThanOrEqualTo(3); // Expect at least the 1 public context from assumed test data
+        assertThat(allScopes)
+            .isNotNull()
+            .hasSizeGreaterThanOrEqualTo(3) // Expect at least the 3 from assumed test data
+            .extracting(HsProfileScope::getUuid)
+            .contains(TEST_SCOPE_HSADMIN_PROD_UUID, TEST_SCOPE_SSH_INTERNAL_UUID, TEST_SCOPE_MATRIX_INTERNAL_UUID);
     }
 
     @Test
@@ -73,34 +87,34 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
         context(TEST_USER_SUBJECT_NAME);
 
         // when
-        final var foundEntityOptional = loginContextRepository.findByUuid(TEST_CONTEXT_HSADMIN_PROD_UUID);
+        final var foundEntityOptional = scopeRepository.findByUuid(TEST_SCOPE_HSADMIN_PROD_UUID);
 
         // then
         assertThat(foundEntityOptional).isPresent();
-        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(HSADMIN:prod:NP-ONLY:PUBLIC)");
+        assertThat(foundEntityOptional).map(Object::toString).contains("scope(HSADMIN:prod:NP-ONLY:PUBLIC)");
     }
 
     @Test
     void shouldFindByTypeAndQualifierUsingTestData() {
-        context(SUPERUSER_ALEX_SUBJECT_NAME);
+        context(TEST_USER_SUBJECT_NAME);
 
         // when
-        final var foundEntityOptional = loginContextRepository.findByTypeAndQualifier("SSH", "internal");
+        final var foundEntityOptional = scopeRepository.findByTypeAndQualifier("SSH", "internal");
 
         // then
         assertThat(foundEntityOptional).isPresent();
-        assertThat(foundEntityOptional).map(Object::toString).contains("loginContext(SSH:internal:NP-ONLY:INTERNAL)");
+        assertThat(foundEntityOptional).map(Object::toString).contains("scope(SSH:internal:NP-ONLY:INTERNAL)");
     }
 
     @Test
     void shouldReturnEmptyOptionalWhenFindByTypeAndQualifierNotFound() {
-        context(SUPERUSER_ALEX_SUBJECT_NAME);
+        context(TEST_USER_SUBJECT_NAME);
 
         // given
         final var nonExistentQualifier = "non-existent-qualifier";
 
         // when
-        final var foundEntityOptional = loginContextRepository.findByTypeAndQualifier(
+        final var foundEntityOptional = scopeRepository.findByTypeAndQualifier(
                 "HSADMIN", nonExistentQualifier);
 
         // then
@@ -108,19 +122,19 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
     }
 
     @Test
-    void shouldSaveNewLoginContext() {
+    void shouldSaveNewScope() {
         context(SUPERUSER_ALEX_SUBJECT_NAME);
 
         // given
         final var newQualifier = "test@example.social";
         final var newType = "MASTODON";
-        final var newContext = HsCredentialsContextRbacEntity.builder()
+        final var newScope = HsProfileScopeRealEntity.builder()
                 .type(newType)
                 .qualifier(newQualifier)
                 .build();
 
         // when
-        final var savedEntity = loginContextRepository.save(newContext);
+        final var savedEntity = scopeRepository.save(newScope);
         em.flush();
         em.clear();
 
@@ -130,8 +144,8 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
         assertThat(generatedUuid).isNotNull(); // Verify UUID was generated
 
         // Fetch again using the generated UUID to confirm persistence
-        context(SUPERUSER_ALEX_SUBJECT_NAME); // Re-set context if needed after clear
-        final var foundEntityOptional = loginContextRepository.findByUuid(generatedUuid);
+        context(TEST_USER_SUBJECT_NAME); // Re-set context if needed after clear
+        final var foundEntityOptional = scopeRepository.findByUuid(generatedUuid);
         assertThat(foundEntityOptional).isPresent();
         final var foundEntity = foundEntityOptional.get();
         assertThat(foundEntity.getUuid()).isEqualTo(generatedUuid);
@@ -140,21 +154,21 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
     }
 
     @Test
-    void shouldPreventUpdateOfExistingLoginContext() {
-        context(SUPERUSER_ALEX_SUBJECT_NAME);
+    void shouldPreventUpdateOfExistingScope() {
+        context(TEST_USER_SUBJECT_NAME);
 
         // given an existing entity from test data
-        final var entityToUpdateOptional = loginContextRepository.findByUuid(TEST_CONTEXT_MATRIX_INTERNAL_UUID);
+        final var entityToUpdateOptional = scopeRepository.findByUuid(TEST_SCOPE_MATRIX_INTERNAL_UUID);
         assertThat(entityToUpdateOptional)
-            .withFailMessage("Could not find existing LoginContext with UUID %s. Ensure test data exists.",
-                    TEST_CONTEXT_MATRIX_INTERNAL_UUID)
+            .withFailMessage("Could not find existing Scope with UUID %s. Ensure test data exists.",
+                    TEST_SCOPE_MATRIX_INTERNAL_UUID)
             .isPresent();
         final var entityToUpdate = entityToUpdateOptional.get();
 
         // when
         entityToUpdate.setQualifier("updated");
         final var exception = catchThrowable( () -> {
-            loginContextRepository.save(entityToUpdate);
+            scopeRepository.save(entityToUpdate);
             em.flush();
         });
 
@@ -162,6 +176,6 @@ class HsCredentialsContextRbacRepositoryIntegrationTest extends ContextBasedTest
         assertThat(exception)
             .isInstanceOf(PersistenceException.class)
             .hasCauseInstanceOf(PSQLException.class)
-            .hasMessageContaining("ERROR: Updates to hs_accounts.context are not allowed.");
+            .hasMessageContaining("ERROR: Updates to hs_accounts.scope are not allowed.");
     }
 }

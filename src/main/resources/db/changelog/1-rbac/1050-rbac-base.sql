@@ -31,34 +31,41 @@ end; $$;
 --//
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-SUBJECT endDelimiter:--//
+--changeset michael.hoennig:rbac-base-SUBJECT runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
+DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM information_schema.tables
+                              WHERE table_schema = 'rbac' AND table_name = 'subject') THEN
 
- */
-create table rbac.subject
-(
-    uuid uuid primary key references  rbac.reference (uuid) on delete cascade,
-    name varchar(63) not null unique
-);
+            CREATE TABLE rbac.subject
+            (
+                uuid uuid primary key references rbac.reference (uuid) on delete cascade,
+                name varchar(63) not null unique
+            );
 
-call base.create_journal('rbac.subject');
+            CALL base.create_journal('rbac.subject');
+        END IF;
+    END
+$$;
 
 create or replace function rbac.create_subject(subjectName varchar)
     returns uuid
     returns null on null input
     language plpgsql as $$
 declare
-    objectId uuid;
+    stableUuidNamespace uuid;
+    subjectUuid uuid;
 begin
+    stableUuidNamespace := '6ba7b810-9dad-11d1-80b4-00c04fd430c8'::uuid;
+    subjectUuid := uuid_generate_v5(stableUuidNamespace, subjectName);
     insert
-        into  rbac.reference (type)
-        values ('rbac.subject')
-        returning uuid into objectId;
+        into rbac.reference (uuid, type)
+        values (subjectUuid, 'rbac.subject');
     insert
         into rbac.subject (uuid, name)
-        values (objectid, subjectName);
-    return objectId;
+        values (subjectUuid, subjectName);
+    return subjectUuid;
 end;
 $$;
 

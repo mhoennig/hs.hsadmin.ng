@@ -6,11 +6,11 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class HsCredentialsContextRealEntityUnitTest {
+class HsProfileScopeRbacEntityUnitTest {
 
     @Test
     void toShortStringContainsJustTypeAndQualifier() {
-        final var entity = HsCredentialsContextRealEntity.builder()
+        final var entity = HsProfileScopeRbacEntity.builder()
                 .uuid(UUID.randomUUID())
                 .type("SSH")
                 .qualifier("prod")
@@ -21,12 +21,12 @@ class HsCredentialsContextRealEntityUnitTest {
 
     @Test
     void toStringContainsAllNonNullFields() {
-        final var entity = HsCredentialsContextRealEntity.builder()
+        final var entity = HsProfileScopeRbacEntity.builder()
                 .uuid(UUID.randomUUID())
                 .type("SSH")
                 .qualifier("prod")
                 .publicAccess(true)
                 .build();
-        assertEquals("loginContext(SSH:prod:PUBLIC)", entity.toString());
+        assertEquals("scope(SSH:prod:PUBLIC)", entity.toString());
     }
 }

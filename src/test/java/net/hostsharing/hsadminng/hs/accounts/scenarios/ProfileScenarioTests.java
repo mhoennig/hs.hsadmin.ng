@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 
-class CredentialsScenarioTests extends ScenarioTest {
+class ProfileScenarioTests extends ScenarioTest {
 
     @SneakyThrows
     @BeforeEach
@@ -61,19 +61,19 @@ class CredentialsScenarioTests extends ScenarioTest {
     @Nested
     @Order(30)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-    class CredentialScenarios {
+    class ProfileScenarios {
 
         @Test
         @Order(1010)
-        @Produces(explicitly = "Credentials@hsadmin: firby-susan", implicitly = { "Person: Susan Firby" })
-        void shouldCreateInitialCredentialsForExistingNaturalPerson() {
-            new CreateCredentials(scenarioTest)
+        @Produces(explicitly = "Profile: firby-susan", implicitly = { "Person: Susan Firby" })
+        void shouldCreateInitialProfileForExistingNaturalPerson() {
+            new CreateProfile(scenarioTest)
                     // to find a specific existing person
                     .given("personFamilyName", "Firby")
                     .given("personGivenName", "Susan")
                     // a login name, to be stored in the new RBAC subject
                     .given("nickname", "firby-susan")
-                    // initial credentials
+                    // initial profile
                     .given("active", true)
                     .given("totpSecrets", Array.of("initialSecret"))
                     .given("emailAddress", "susan.firby@example.com")
@@ -82,29 +82,28 @@ class CredentialsScenarioTests extends ScenarioTest {
                     .given("globalUid", 21011)
                     .given("globalGid", 21011)
                     .given(
-                            "contexts", Array.of(
+                            "scopes", Array.of(
                                     Pair.of("HSADMIN", "prod")
                             ))
-                    .given("onboardingToken", "fake-unboarding-token")
                     .doRun()
                     .keep();
         }
 
         @Test
         @Order(1020)
-        @Requires("Credentials@hsadmin: firby-susan")
-        void shouldUpdateCredentials() {
-            new UpdateCredentials(scenarioTest)
-                    // the credentials to update
-                    .given("credentialsUuid", "%{Credentials@hsadmin: firby-susan}")
-                    // updated credentials
+        @Requires("Profile: firby-susan")
+        void shouldUpdateProfile() {
+            new UpdateProfile(scenarioTest)
+                    // the profile to update
+                    .given("profileUuid", "%{Profile: firby-susan}")
+                    // updated profile
                     .given("active", false)
                     .given("totpSecrets", Array.of("initialSecret", "additionalSecret"))
                     .given("emailAddress", "susan.firby@example.org")
                     .given("phonePassword", "securePass987")
                     .given("smsNumber", "+49987654321")
                     .given(
-                            "contexts", Array.of(
+                            "scopes", Array.of(
                                     Pair.of("HSADMIN", "prod"),
                                     Pair.of("SSH", "internal")
                             ))

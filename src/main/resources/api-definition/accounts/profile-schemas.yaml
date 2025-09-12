@@ -13,7 +13,7 @@ components:
                 globalAdmin:
                     type: boolean
 
-        Credentials:
+        Profile:
             type: object
             properties:
                 uuid:
@@ -40,22 +40,17 @@ components:
                     type: number
                 globalGid:
                     type: number
-                onboardingToken:
-                    type: string
-                contexts:
+                scopes:
                     type: array
                     items:
-                        $ref: 'context-schemas.yaml#/components/schemas/Context'
-                lastUsed:
-                    type: string
-                    format: date-time
+                        $ref: 'scope-schemas.yaml#/components/schemas/Scope'
             required:
                 - uuid
                 - active
-                - contexts
+                - scopes
             additionalProperties: false
 
-        CredentialsPatch:
+        ProfilePatch:
             type: object
             properties:
                 totpSecrets:
@@ -73,13 +68,13 @@ components:
                     nullable: true
                 active:
                     type: boolean
-                contexts:
+                scopes:
                     type: array
                     items:
-                        $ref: 'context-schemas.yaml#/components/schemas/Context'
+                        $ref: 'scope-schemas.yaml#/components/schemas/Scope'
             additionalProperties: false
 
-        CredentialsInsert:
+        ProfileInsert:
             type: object
             properties:
                 person.uuid:
@@ -88,12 +83,6 @@ components:
                 nickname:
                     type: string
                     pattern: '^[a-z][a-z0-9]{1,8}-[a-z0-9]{1,10}$' # TODO.spec: pattern for login nickname
-                totpSecrets:
-                    type: array
-                    items:
-                        type: string
-                phonePassword:
-                    type: string
                 emailAddress:
                     type: string
                 smsNumber:
@@ -104,12 +93,16 @@ components:
                     type: number
                 globalGid:
                     type: number
-                onboardingToken:
+                phonePassword:
                     type: string
-                contexts:
+                totpSecrets:
                     type: array
                     items:
-                        $ref: 'context-schemas.yaml#/components/schemas/Context'
+                        type: string
+                scopes:
+                    type: array
+                    items:
+                        $ref: 'scope-schemas.yaml#/components/schemas/Scope'
             required:
                 - person.uuid
                 - nickname

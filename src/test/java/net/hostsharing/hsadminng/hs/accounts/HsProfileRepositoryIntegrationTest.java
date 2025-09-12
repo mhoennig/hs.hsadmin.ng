@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @DataJpaTest
 @Tag("generalIntegrationTest")
 @Import({ Context.class, JpaAttempt.class })
-class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
+class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     private static final String SUPERUSER_ALEX_SUBJECT_NAME = "superuser-alex@hostsharing.net";
     private static final String SUPERUSER_FRAN_SUBJECT_NAME = "superuser-fran@hostsharing.net";
@@ -52,10 +52,10 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     private HsOfficePersonRealRepository personRepo;
 
     @Autowired
-    private HsCredentialsRepository credentialsRepository;
+    private HsProfileRepository profileRepository;
 
     @Autowired
-    private HsCredentialsContextRealRepository loginContextRealRepo;
+    private HsProfileScopeRealRepository scopeRealRepo;
 
     // fetched UUIDs from test-data
     private RbacSubjectEntity alexSubject;
@@ -76,7 +76,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     @Test
     public void historizationIsAvailable() {
         // given
-        final String nativeQuerySql = "select * from hs_accounts.credentials_hv";
+        final String nativeQuerySql = "select * from hs_accounts.profile_hv";
 
         // when
         historicalContext(Timestamp.from(ZonedDateTime.now().minusDays(1).toInstant()));
@@ -85,7 +85,7 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
 
         // then
         assertThat(rowsBefore)
-                .as("hs_accounts.credentials_hv only contain no rows for a timestamp before test data creation")
+                .as("hs_accounts.profile_hv only contain no rows for a timestamp before test data creation")
                 .hasSize(0);
 
         // and when
@@ -95,86 +95,86 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
 
         // then
         assertThat(rowsAfter)
-                .as("hs_accounts.credentials_hv should now contain the test-data rows for the current timestamp")
+                .as("hs_accounts.profile_hv should now contain the test-data rows for the current timestamp")
                 .hasSize(3);
     }
 
     @Test
-    void representativeShouldFindOwnAndRepresentedCredentialsByCurrentSubject() {
+    void representativeShouldFindOwnAndRepresentedProfileByCurrentSubject() {
         // given
         final var firstGmbHPerson = givenPerson("First GmbH");
         givenRelation(REPRESENTATIVE)
                 .withAnchorPersonLike(firstGmbHPerson)
                 .withHolder(drewPerson)
                 .withContact("some test contact");
-        givenCredentials()
+        givenProfile()
                 .forSubject("first-gmbh")
                 .forPerson(firstGmbHPerson)
                 .withEMailAddress("first-gmbh@example.com");
 
         // when
-        final var foundCredentials = attempt(
+        final var foundProfile = attempt(
                 em, () -> {
                     context(USER_DREW_SUBJECT_NAME);
-                    return credentialsRepository.findByCurrentSubject();
+                    return profileRepository.findByCurrentSubject();
                 })
                 .assertNotNull().returnedValue();
 
         // then
-        assertThat(foundCredentials).hasSize(2)
-                .map(HsCredentialsEntity::getEmailAddress)
+        assertThat(foundProfile).hasSize(2)
+                .map(HsProfileEntity::getEmailAddress)
                 .containsExactlyInAnyOrder("drew@example.org", "first-gmbh@example.com");
     }
 
     @Test
-    void globalAdminShouldFindOnlyOwnCredentialsByCurrentSubject() {
+    void globalAdminShouldFindOnlyOwnProfileByCurrentSubject() {
 
         // when
-        final var foundCredentials = attempt(
+        final var foundProfile = attempt(
                 em, () -> {
                     context(SUPERUSER_FRAN_SUBJECT_NAME);
-                    return credentialsRepository.findByCurrentSubject();
+                    return profileRepository.findByCurrentSubject();
                 })
                 .assertNotNull().returnedValue();
 
         // then
-        assertThat(foundCredentials).hasSize(1)
-                .map(HsCredentialsEntity::getEmailAddress)
+        assertThat(foundProfile).hasSize(1)
+                .map(HsProfileEntity::getEmailAddress)
                 .containsExactlyInAnyOrder("fran@example.com");
     }
 
     @Test
     void shouldFindByUuidUsingTestData() {
         // when
-        final var foundEntityOptional = credentialsRepository.findByUuid(alexSubject.getUuid());
+        final var foundEntityOptional = profileRepository.findByUuid(alexSubject.getUuid());
 
         // then
         assertThat(foundEntityOptional).isPresent()
-                .map(HsCredentialsEntity::getEmailAddress).contains("alex@example.com");
+                .map(HsProfileEntity::getEmailAddress).contains("alex@example.com");
     }
 
     @Test
-    void shouldSaveCredentialsWithExistingContext() {
+    void shouldSaveProfileWithExistingScope() {
         // given
-        final var existingContext = loginContextRealRepo.findByTypeAndQualifier("HSADMIN", "prod")
+        final var existingScope = scopeRealRepo.findByTypeAndQualifier("HSADMIN", "prod")
                 .orElseThrow();
-        final var newCredentials = HsCredentialsEntity.builder()
+        final var newProfile = HsProfileEntity.builder()
                 .subject(testUserSubject)
                 .person(testUserPerson)
                 .active(true)
                 .emailAddress("test-user@example.com")
                 .globalUid(2011)
                 .globalGid(2011)
-                .loginContexts(mutableSetOf(existingContext))
+                .scopes(mutableSetOf(existingScope))
                 .build();
 
         // when
-        toCleanup(credentialsRepository.save(newCredentials));
+        toCleanup(profileRepository.save(newProfile));
         em.flush();
         em.clear();
 
         // then
-        final var foundEntityOptional = credentialsRepository.findByUuid(testUserSubject.getUuid());
+        final var foundEntityOptional = profileRepository.findByUuid(testUserSubject.getUuid());
         assertThat(foundEntityOptional).isPresent();
         final var foundEntity = foundEntityOptional.get();
         assertThat(foundEntity.getEmailAddress()).isEqualTo("test-user@example.com");
@@ -182,29 +182,29 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         assertThat(foundEntity.getVersion()).isEqualTo(0); // Initial version
         assertThat(foundEntity.getGlobalUid()).isEqualTo(2011);
 
-        assertThat(foundEntity.getLoginContexts()).hasSize(1)
-                .map(HsCredentialsContextRealEntity::toString).contains("loginContext(HSADMIN:prod:NP-ONLY:PUBLIC)");
+        assertThat(foundEntity.getScopes()).hasSize(1)
+                .map(HsProfileScopeRealEntity::toString).contains("scope(HSADMIN:prod:NP-ONLY:PUBLIC)");
     }
 
     @Test
-    void shouldNotSaveCredentialsWithNewContext() {
+    void shouldNotSaveProfileWithNewScope() {
         // given
-        final var newContext = HsCredentialsContextRealEntity.builder()
+        final var newScope = HsProfileScopeRealEntity.builder()
                 .type("MATRIX")
                 .qualifier("forbidden")
                 .build();
-        final var newCredentials = HsCredentialsEntity.builder()
+        final var newProfile = HsProfileEntity.builder()
                 .subject(drewSubject)
                 .active(true)
                 .emailAddress("drew.new@example.com")
                 .globalUid(2001)
                 .globalGid(2001)
-                .loginContexts(mutableSetOf(newContext))
+                .scopes(mutableSetOf(newScope))
                 .build();
 
         // when
         final var exception = catchThrowable(() -> {
-            credentialsRepository.save(newCredentials);
+            profileRepository.save(newProfile);
             em.flush();
         });
 
@@ -213,9 +213,9 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     }
 
     @Test
-    void shouldSaveNewCredentialsWithoutContext() {
+    void shouldSaveNewProfileWithoutScope() {
         // given
-        final var newCredentials = HsCredentialsEntity.builder()
+        final var newProfile = HsProfileEntity.builder()
                 .subject(testUserSubject)
                 .person(testUserPerson)
                 .active(true)
@@ -225,37 +225,37 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                 .build();
 
         // when
-        credentialsRepository.save(newCredentials);
+        profileRepository.save(newProfile);
         em.flush();
         em.clear();
 
         // then
-        final var foundEntityOptional = credentialsRepository.findByUuid(testUserSubject.getUuid());
+        final var foundEntityOptional = profileRepository.findByUuid(testUserSubject.getUuid());
         assertThat(foundEntityOptional).isPresent();
         final var foundEntity = foundEntityOptional.get();
         assertThat(foundEntity.getEmailAddress()).isEqualTo("test.user.new@example.com");
         assertThat(foundEntity.isActive()).isTrue();
         assertThat(foundEntity.getGlobalUid()).isEqualTo(20002);
         assertThat(foundEntity.getGlobalGid()).isEqualTo(2002);
-        assertThat(foundEntity.getLoginContexts()).isEmpty();
+        assertThat(foundEntity.getScopes()).isEmpty();
     }
 
     @Test
-    void shouldUpdateExistingCredentials() {
+    void shouldUpdateExistingProfile() {
         // given
-        final var entityToUpdate = credentialsRepository.findByUuid(alexSubject.getUuid()).orElseThrow();
+        final var entityToUpdate = profileRepository.findByUuid(alexSubject.getUuid()).orElseThrow();
         final var initialVersion = entityToUpdate.getVersion();
 
         // when
         entityToUpdate.setActive(false);
         entityToUpdate.setEmailAddress("updated.user1@example.com");
-        final var savedEntity = credentialsRepository.save(entityToUpdate);
+        final var savedEntity = profileRepository.save(entityToUpdate);
         em.flush();
         em.clear();
 
         // then
         assertThat(savedEntity.getVersion()).isGreaterThan(initialVersion);
-        final var updatedEntityOptional = credentialsRepository.findByUuid(alexSubject.getUuid());
+        final var updatedEntityOptional = profileRepository.findByUuid(alexSubject.getUuid());
         assertThat(updatedEntityOptional).isPresent();
         final var updatedEntity = updatedEntityOptional.get();
         assertThat(updatedEntity.isActive()).isFalse();
@@ -307,8 +307,8 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         return new RelationBuilder(relationType);
     }
 
-    private CredentialsBuilder givenCredentials() {
-        return new CredentialsBuilder();
+    private ProfileBuilder givenProfile() {
+        return new ProfileBuilder();
     }
 
     private class RelationBuilder {
@@ -349,11 +349,11 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         }
     }
 
-    private class CredentialsBuilder {
+    private class ProfileBuilder {
         private RbacSubjectEntity subject;
         private HsOfficePersonRealEntity person;
 
-        public CredentialsBuilder forSubject(String subjectName) {
+        public ProfileBuilder forSubject(String subjectName) {
             this.subject = RbacSubjectEntity.builder()
                     .name(subjectName)
                     .build();
@@ -362,24 +362,24 @@ class HsCredentialsRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             return this;
         }
 
-        public CredentialsBuilder forPerson(HsOfficePersonRealEntity person) {
+        public ProfileBuilder forPerson(HsOfficePersonRealEntity person) {
             this.person = person;
             return this;
         }
 
-        public HsCredentialsEntity withEMailAddress(String emailAddress) {
+        public HsProfileEntity withEMailAddress(String emailAddress) {
 
-            final var credentials = HsCredentialsEntity.builder()
+            final var profile = HsProfileEntity.builder()
                     .uuid(subject.getUuid())
                     .subject(subject)
                     .person(em.find(HsOfficePersonRealEntity.class, person.getUuid()))
                     .emailAddress(emailAddress)
                     .active(true)
                     .build();
-            em.persist(credentials);
-            toCleanup(credentials);
+            em.persist(profile);
+            toCleanup(profile);
             em.flush();
-            return credentials;
+            return profile;
         }
     }
 }

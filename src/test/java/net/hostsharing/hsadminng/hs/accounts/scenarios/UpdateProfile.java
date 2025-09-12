@@ -8,30 +8,30 @@ import org.springframework.http.HttpStatus;
 import static io.restassured.http.ContentType.JSON;
 import static org.springframework.http.HttpStatus.OK;
 
-public class UpdateCredentials extends BaseCredentialsUseCase<UpdateCredentials> {
+public class UpdateProfile extends BaseProfileUseCase<UpdateProfile> {
 
-    public UpdateCredentials(final ScenarioTest testSuite) {
+    public UpdateProfile(final ScenarioTest testSuite) {
         super(testSuite);
 
-        introduction("A set of credentials contains the login data for an RBAC subject.");
+        introduction("A set of profile contains the login data for an RBAC subject.");
     }
 
     @Override
     protected HttpResponse run() {
 
-        given("resolvedContexts",
-                fetchContextResourcesByDescriptorPairs("contexts")
+        given("resolvedScopes",
+                fetchScopeResourcesByDescriptorPairs("scopes")
         );
 
-        withTitle("Patch the Changes to the existing Credentials", () ->
-            httpPatch("/api/hs/accounts/credentials/%{credentialsUuid}", usingJsonBody("""
+        withTitle("Patch the Changes to the existing Profile", () ->
+            httpPatch("/api/hs/accounts/profiles/%{profileUuid}", usingJsonBody("""
                 {
                      "active": %{active},
                      "totpSecrets": @{totpSecrets},
                      "emailAddress": ${emailAddress},
                      "phonePassword": ${phonePassword},
                      "smsNumber": ${smsNumber},
-                     "contexts": @{resolvedContexts}
+                     "scopes": @{resolvedScopes}
                 }
                 """))
                 .reportWithResponse().expecting(HttpStatus.OK).expecting(ContentType.JSON)
@@ -43,12 +43,12 @@ public class UpdateCredentials extends BaseCredentialsUseCase<UpdateCredentials>
     }
 
     @Override
-    protected void verify(final UseCase<UpdateCredentials>.HttpResponse response) {
+    protected void verify(final UseCase<UpdateProfile>.HttpResponse response) {
         verify(
-                "Verify the Patched Credentials",
-                () -> httpGet("/api/hs/accounts/credentials/%{credentialsUuid}")
+                "Verify the Patched Profile",
+                () -> httpGet("/api/hs/accounts/profiles/%{profileUuid}")
                         .expecting(OK).expecting(JSON),
-                path("uuid").contains("%{newCredentials}"),
+                path("uuid").contains("%{newProfile}"),
                 path("nickname").contains("%{nickname}"),
                 path("totpSecrets").contains("%{totpSecrets}")
         );

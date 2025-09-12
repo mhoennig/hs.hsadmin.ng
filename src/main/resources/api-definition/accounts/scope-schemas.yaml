@@ -3,7 +3,7 @@ components:
 
     schemas:
 
-        Context:
+      Scope:
             type: object
             properties:
                 uuid:

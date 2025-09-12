@@ -8,12 +8,12 @@ import org.springframework.http.HttpStatus;
 import static io.restassured.http.ContentType.JSON;
 import static org.springframework.http.HttpStatus.OK;
 
-public class CreateCredentials extends BaseCredentialsUseCase<CreateCredentials> {
+public class CreateProfile extends BaseProfileUseCase<CreateProfile> {
 
-    public CreateCredentials(final ScenarioTest testSuite) {
+    public CreateProfile(final ScenarioTest testSuite) {
         super(testSuite);
 
-        introduction("A set of credentials contains the login data for an RBAC subject.");
+        introduction("A set of profile contains the login data for an RBAC subject.");
     }
 
     @Override
@@ -26,12 +26,12 @@ public class CreateCredentials extends BaseCredentialsUseCase<CreateCredentials>
                 "In real situations we have more precise measures to find the related person."
         );
 
-        given("resolvedContexts",
-            fetchContextResourcesByDescriptorPairs("contexts")
+        given("resolvedScopes",
+            fetchScopeResourcesByDescriptorPairs("scopes")
         );
 
-        return obtain("newCredentials", () ->
-            httpPost("/api/hs/accounts/credentials", usingJsonBody("""
+        return obtain("newProfile", () ->
+            httpPost("/api/hs/accounts/profiles", usingJsonBody("""
                 {
                      "person.uuid": ${Person: %{personGivenName} %{personFamilyName}},
                      "nickname": ${nickname},
@@ -40,10 +40,9 @@ public class CreateCredentials extends BaseCredentialsUseCase<CreateCredentials>
                      "emailAddress": ${emailAddress},
                      "phonePassword": ${phonePassword},
                      "smsNumber": ${smsNumber},
-                     "onboardingToken": ${onboardingToken},
                      "globalUid": %{globalUid},
                      "globalGid": %{globalGid},
-                     "contexts": @{resolvedContexts}
+                     "scopes": @{resolvedScopes}
                 }
                 """))
                 .expecting(HttpStatus.CREATED).expecting(ContentType.JSON)
@@ -51,16 +50,15 @@ public class CreateCredentials extends BaseCredentialsUseCase<CreateCredentials>
     }
 
     @Override
-    protected void verify(final UseCase<CreateCredentials>.HttpResponse response) {
+    protected void verify(final UseCase<CreateProfile>.HttpResponse response) {
         verify(
-                "Verify the New Credentials",
-                () -> httpGet("/api/hs/accounts/credentials/%{newCredentials}")
+                "Verify the new Profile",
+                () -> httpGet("/api/hs/accounts/profiles/%{newProfile}")
                         .expecting(OK).expecting(JSON),
-                path("uuid").contains("%{newCredentials}"),
+                path("uuid").contains("%{newProfile}"),
                 path("nickname").contains("%{nickname}"),
                 path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}"),
-                path("totpSecrets").contains("@{totpSecrets}"),
-                path("onboardingToken").contains("%{onboardingToken}")
+                path("totpSecrets").contains("@{totpSecrets}")
         );
     }
 }
