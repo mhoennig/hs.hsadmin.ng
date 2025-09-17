@@ -56,7 +56,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             // when:
             final var result = jpaAttempt.transacted(() -> {
                 context(null);
-                return rbacSubjectRepository.create(new RbacSubjectEntity(givenUuid, newUserName));
+                return rbacSubjectRepository.create(RbacSubjectEntity.builder().uuid(givenUuid).name(newUserName).build());
             });
 
             // then:
@@ -395,7 +395,8 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         final var givenUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
         final var givenUser = jpaAttempt.transacted(() -> {
             context(null);
-            return rbacSubjectRepository.create(new RbacSubjectEntity(UUID.randomUUID(), givenUserName));
+            return rbacSubjectRepository.create(
+                    RbacSubjectEntity.builder().uuid(UUID.randomUUID()).name(givenUserName).build());
         }).assumeSuccessful().returnedValue();
         assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
         return givenUser;

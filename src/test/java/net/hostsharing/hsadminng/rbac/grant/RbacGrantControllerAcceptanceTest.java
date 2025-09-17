@@ -24,8 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;
-import java.util.UUID;
 
+import static java.util.UUID.randomUUID;
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -491,7 +491,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         return jpaAttempt.transacted(() -> {
             final String newUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
             context(null);
-            return rbacSubjectRepository.create(new RbacSubjectEntity(UUID.randomUUID(), newUserName));
+            return rbacSubjectRepository.create(
+                    RbacSubjectEntity.builder().uuid(randomUUID()).name(newUserName).build());
         }).returnedValue();
     }
 

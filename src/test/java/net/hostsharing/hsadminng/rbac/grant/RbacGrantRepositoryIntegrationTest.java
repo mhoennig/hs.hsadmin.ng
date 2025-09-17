@@ -322,13 +322,13 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         return jpaAttempt.transacted(() -> {
             final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
             context(null);
-            return rbacSubjectRepository.create(new RbacSubjectEntity(null, newUserName));
+            return rbacSubjectRepository.create(RbacSubjectEntity.builder().name(newUserName).build());
         }).assumeSuccessful().returnedValue();
     }
 
     private RbacSubjectEntity createNewUser() {
         return rbacSubjectRepository.create(
-                new RbacSubjectEntity(null, "test-user-" + System.currentTimeMillis() + "@example.com"));
+                RbacSubjectEntity.builder().name("test-user-" + System.currentTimeMillis() + "@example.com").build());
     }
 
     void exactlyTheseRbacGrantsAreReturned(final List<RbacGrantEntity> actualResult, final String... expectedGrant) {

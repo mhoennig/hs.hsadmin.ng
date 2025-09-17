@@ -54,6 +54,7 @@
         { "moduleLicense": "GNU Library General Public License v2.1 or later" },
         { "moduleLicense": "GNU General Public License, version 2 with the GNU Classpath Exception" },
         { "moduleLicense": "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1" },
+        { "moduleLicense": "GNU LESSER GENERAL PUBLIC LICENSE, Version 3" },
 
         { "moduleLicense": "GPL2 w/ CPE" },
 

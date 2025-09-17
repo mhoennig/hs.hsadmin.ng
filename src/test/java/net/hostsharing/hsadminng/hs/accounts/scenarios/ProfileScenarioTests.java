@@ -74,13 +74,14 @@ class ProfileScenarioTests extends ScenarioTest {
                     // a login name, to be stored in the new RBAC subject
                     .given("nickname", "firby-susan")
                     // initial profile
-                    .given("active", true)
-                    .given("totpSecrets", Array.of("initialSecret"))
                     .given("emailAddress", "susan.firby@example.com")
-                    .given("phonePassword", "securePass123")
                     .given("smsNumber", "+49123456789")
+                    .given("password", "my raw password")
+                    .given("totpSecrets", Array.of("initialSecret"))
+                    .given("phonePassword", "securePass123")
                     .given("globalUid", 21011)
                     .given("globalGid", 21011)
+                    .given("active", true)
                     .given(
                             "scopes", Array.of(
                                     Pair.of("HSADMIN", "prod")
@@ -100,6 +101,7 @@ class ProfileScenarioTests extends ScenarioTest {
                     .given("active", false)
                     .given("totpSecrets", Array.of("initialSecret", "additionalSecret"))
                     .given("emailAddress", "susan.firby@example.org")
+                    .given("password", "my new raw password")
                     .given("phonePassword", "securePass987")
                     .given("smsNumber", "+49987654321")
                     .given(

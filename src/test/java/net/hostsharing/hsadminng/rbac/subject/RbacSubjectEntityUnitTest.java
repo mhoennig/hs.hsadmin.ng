@@ -4,14 +4,14 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RbacSubjectEntityUnitTest {
 
-    RbacSubjectEntity givenUser = new RbacSubjectEntity(UUID.randomUUID(), "test@example.org");
+    RbacSubjectEntity givenUser = RbacSubjectEntity.builder().uuid(randomUUID()).name("test@example.org").build();
 
     @Test
     void generatedAccessCodeMatchesDefinedPattern() {

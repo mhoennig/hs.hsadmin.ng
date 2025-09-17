@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
@@ -7,6 +8,8 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.hibernate.TransientObjectException;
@@ -49,6 +52,9 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     HttpServletRequest request;
 
     @Autowired
+    private RbacSubjectRepository rbacSubjectRepo;
+
+    @Autowired
     private HsOfficePersonRealRepository personRepo;
 
     @Autowired
@@ -58,9 +64,9 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     private HsProfileScopeRealRepository scopeRealRepo;
 
     // fetched UUIDs from test-data
-    private RbacSubjectEntity alexSubject;
-    private RbacSubjectEntity drewSubject;
-    private RbacSubjectEntity testUserSubject;
+    private RealSubjectEntity alexSubject;
+    private RealSubjectEntity drewSubject;
+    private RealSubjectEntity testUserSubject;
     private HsOfficePersonRealEntity drewPerson;
     private HsOfficePersonRealEntity testUserPerson;
 
@@ -106,11 +112,13 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         givenRelation(REPRESENTATIVE)
                 .withAnchorPersonLike(firstGmbHPerson)
                 .withHolder(drewPerson)
-                .withContact("some test contact");
+                .withContact("some test contact")
+                .inDatabase();
         givenProfile()
                 .forSubject("first-gmbh")
                 .forPerson(firstGmbHPerson)
-                .withEMailAddress("first-gmbh@example.com");
+                .withEMailAddress("first-gmbh@example.com")
+                .inDatabase();
 
         // when
         final var foundProfile = attempt(
@@ -263,13 +271,13 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     }
 
 
-    private RbacSubjectEntity fetchSubjectByName(final String name) {
-        final String jpql = "SELECT s FROM RbacSubjectEntity s WHERE s.name = :name";
-        final Query query = em.createQuery(jpql, RbacSubjectEntity.class);
+    private RealSubjectEntity fetchSubjectByName(final String name) {
+        final String jpql = "SELECT s FROM RealSubjectEntity s WHERE s.name = :name";
+        final Query query = em.createQuery(jpql, RealSubjectEntity.class);
         query.setParameter("name", name);
         try {
             context(SUPERUSER_ALEX_SUBJECT_NAME);
-            return notNull((RbacSubjectEntity) query.getSingleResult());
+            return notNull((RealSubjectEntity) query.getSingleResult());
         } catch (final NoResultException e) {
             throw new AssertionError(
                     "Failed to find subject with name '" + name + "'. Ensure test data is present.", e);
@@ -331,10 +339,14 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
             return this;
         }
 
-        public HsOfficeRelationRealEntity withContact(String caption) {
+        public RelationBuilder withContact(String caption) {
             this.contact = HsOfficeContactRealEntity.builder()
                     .caption(caption)
                     .build();
+            return this;
+        }
+
+        public HsOfficeRelationRealEntity inDatabase() {
             em.persist(contact);
 
             final var relation = HsOfficeRelationRealEntity.builder()
@@ -350,15 +362,17 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     }
 
     private class ProfileBuilder {
-        private RbacSubjectEntity subject;
+        private RealSubjectEntity subject;
         private HsOfficePersonRealEntity person;
+        private String emailAddress;
 
         public ProfileBuilder forSubject(String subjectName) {
-            this.subject = RbacSubjectEntity.builder()
+            // only the RbacSubject can be created
+            val rbacSubject = toCleanup(rbacSubjectRepo.create(RbacSubjectEntity.builder()
                     .name(subjectName)
-                    .build();
-            em.persist(subject);
-            toCleanup(subject);
+                    .build()));
+            // but we need the RealSubject
+            this.subject = em.find(RealSubjectEntity.class, rbacSubject.getUuid());
             return this;
         }
 
@@ -367,7 +381,19 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
             return this;
         }
 
-        public HsProfileEntity withEMailAddress(String emailAddress) {
+        public ProfileBuilder withEMailAddress(String emailAddress) {
+            this.emailAddress = emailAddress;
+            final var profile = HsProfileEntity.builder()
+                    .uuid(subject.getUuid())
+                    .subject(subject)
+                    .person(em.find(HsOfficePersonRealEntity.class, person.getUuid()))
+                    .emailAddress(emailAddress)
+                    .active(true)
+                    .build();
+            return this;
+        }
+
+        public HsProfileEntity inDatabase() {
 
             final var profile = HsProfileEntity.builder()
                     .uuid(subject.getUuid())

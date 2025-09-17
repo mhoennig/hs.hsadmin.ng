@@ -9,6 +9,6 @@ public class TestRbacSubject {
     static final RbacSubjectEntity userBbb = rbacRole("customer-admin@bbb.example.com");
 
     static public RbacSubjectEntity rbacRole(final String userName) {
-        return new RbacSubjectEntity(randomUUID(), userName);
+        return RbacSubjectEntity.builder().uuid(randomUUID()).name(userName).build();
     }
 }

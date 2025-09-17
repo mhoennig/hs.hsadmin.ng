@@ -9,6 +9,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ class HsProfileControllerAcceptanceTest extends ContextBasedTestWithCleanup {
     Context context;
 
     @Autowired
-    RbacSubjectRepository subjectRepo;
+    RbacSubjectRepository rbacSubjectRepo;
 
     @Autowired
     HsOfficePersonRealRepository realPersonRepo;
@@ -361,9 +362,59 @@ class HsProfileControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                     .body("message", containsString("die eigenen hsadmin-Profile dürfen nicht entfernt werden"));
             // @formatter:on
         }
+
+
+        @Test
+        void shouldRejectActivatingProfileForNormalUser() {
+            // given
+            context.define("selfregistered-user-drew@hostsharing.org");
+            val drewProfile = profileRepo.findByCurrentSubject().stream().findFirst().orElseThrow();
+            val inactiveProfileUuid = createNewInactiveProfile(drewProfile.getPerson()).getSubject().getUuid();
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                        .header("Accept-Language", "de")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "active": true
+                                }
+                                """)
+                        .port(port)
+                    .when()
+                        .patch("http://localhost/api/hs/accounts/profiles/" + inactiveProfileUuid)
+                    .then().log().all().assertThat()
+                        .statusCode(403)
+                        .contentType("application/json")
+                        .body("message", containsString("Only global admins are allowed to activate an inactive profile"));
+            // @formatter:on
+        }
+
     }
 
     // Helper methods
+
+    private HsProfileEntity createNewInactiveProfile(final HsOfficePersonRealEntity person) {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            // only RbacSubject entities can be created
+            val rbacSubjectEntity = rbacSubjectRepo.create(RbacSubjectEntity.builder()
+                    .name("some-inactive-profile")
+                    .build());
+            // but we need the RealSubjectEntity to be attached to the profile entity
+            val realSubjectEntity = em.find(RealSubjectEntity.class, rbacSubjectEntity.getUuid());
+
+            val inactiveCopy = HsProfileEntity.builder()
+                    .person(person)
+                    .subject(realSubjectEntity)
+                    .active(false).build();
+            em.persist(inactiveCopy);
+            em.flush();
+            return toCleanup(inactiveCopy);
+        }).assertSuccessful().returnedValue();
+    }
+
     private HsOfficePersonRealEntity givenLegalPerson(final String executingSubjectName) {
         return jpaAttempt.transacted(() -> {
             context.define(executingSubjectName);
@@ -418,16 +469,17 @@ class HsProfileControllerAcceptanceTest extends ContextBasedTestWithCleanup {
     ) {
         return jpaAttempt.transacted(() -> {
             context.define(executingSubjectName);
-            final RbacSubjectEntity rbacSubjectEntity = RbacSubjectEntity.builder()
+
+            // only RbacSubject entities can be created
+            val subject = rbacSubjectRepo.create(RbacSubjectEntity.builder()
                 .name(newSubjectName)
-                .build();
-            val subject = subjectRepo.create(rbacSubjectEntity);
+                .build());
 
             context.define(subject.getName());
             val attachedPerson = em.find(HsOfficePersonRealEntity.class, person.getUuid());
             val profileBuilder = HsProfileEntity.builder()
                     .person(attachedPerson)
-                    .subject(subjectRepo.findByUuid(subject.getUuid()))
+                    .subject(em.find(RealSubjectEntity.class, subject.getUuid()))
                     .scopes(Set.of());
             modifier.accept(profileBuilder);
             return toCleanup(profileRepo.save(profileBuilder.build()));

@@ -1,13 +1,17 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
 import jakarta.persistence.*;
+import jakarta.validation.ValidationException;
+
 import lombok.*;
+import net.hostsharing.hsadminng.hash.HashGenerator;
+import net.hostsharing.hsadminng.hash.LdapArgon2Hash;
+import net.hostsharing.hsadminng.hash.LdapSshaHash;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity; // Assuming BaseEntity exists
-import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
-// import net.hostsharing.hsadminng.rbac.RbacSubjectEntity; // Assuming RbacSubjectEntity exists for the FK relationship
 
 import java.util.HashSet;
 import java.util.List;
@@ -41,7 +45,7 @@ public class HsProfileEntity implements BaseEntity<HsProfileEntity>, Stringifyab
     @MapsId
     @OneToOne(optional = false, fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "uuid", nullable = false, updatable = false, referencedColumnName = "uuid")
-    private RbacSubjectEntity subject;
+    private RealSubjectEntity subject;
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "person_uuid", nullable = false, updatable = false, referencedColumnName = "uuid")
@@ -58,6 +62,9 @@ public class HsProfileEntity implements BaseEntity<HsProfileEntity>, Stringifyab
 
     @Column
     private Integer globalGid;
+
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     @Column
     private List<String> totpSecrets;
@@ -86,9 +93,22 @@ public class HsProfileEntity implements BaseEntity<HsProfileEntity>, Stringifyab
         return scopes;
     }
 
-    public void setSubject(final RbacSubjectEntity subject) {
+    public void setSubject(final RealSubjectEntity subject) {
         this.uuid = subject.getUuid();
         this.subject = subject;
+    }
+
+    public void setPassword(final String password) {
+        setPasswordHash(
+                HashGenerator.fromEnv("ACCOUNT_PROFILE_PASSWORD_HASH_ALGORITHM", "{SSHA}")
+                        .withRandomSalt().hash(password));
+    }
+
+    public void setPasswordHash(final String passwordHash) {
+        if (passwordHash != null) {
+            validatePasswordHash(passwordHash);
+        }
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -101,4 +121,10 @@ public class HsProfileEntity implements BaseEntity<HsProfileEntity>, Stringifyab
         return stringify.apply(this);
     }
 
+    private static void validatePasswordHash(final String passwordHash) {
+
+        if (!LdapSshaHash.isValid(passwordHash) && !LdapArgon2Hash.isValid(passwordHash)) {
+            throw new ValidationException("passwordHash must be SSHA or ARGON2 hash valid for LDAP");
+        }
+    }
 }

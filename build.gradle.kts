@@ -105,6 +105,7 @@ dependencies {
     implementation("org.modelmapper:modelmapper:3.2.4")
     implementation("org.iban4j:iban4j:3.2.11-RELEASE")
     implementation("org.reflections:reflections:0.10.2")
+    implementation("de.mkammerer:argon2-jvm:2.11")
 
     compileOnly("org.projectlombok:lombok")
     testCompileOnly("org.projectlombok:lombok")

@@ -1,30 +1,27 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
-
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.val;
-import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ScopeResource;
-import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CurrentLoginUserResource;
-import net.hostsharing.hsadminng.accounts.generated.api.v1.model.RbacSubjectResource;
-import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.api.ProfileApi;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CurrentLoginUserResource;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.model.HsOfficePersonResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ProfileInsertResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ProfilePatchResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ProfileResource;
-import net.hostsharing.hsadminng.accounts.generated.api.v1.model.HsOfficePersonResource;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.model.RbacSubjectResource;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ScopeResource;
+import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.errors.ForbiddenException;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,6 +31,10 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
+import java.util.List;
+import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import static java.util.Optional.of;
 
@@ -50,9 +51,6 @@ public class HsProfileController implements ProfileApi {
 
     @Autowired
     private StrictMapper mapper;
-
-    @Autowired
-    private RbacSubjectRepository subjectRepo;
 
     @Autowired
     private ScopeResourceToEntityMapper scopeMapper;
@@ -159,6 +157,7 @@ public class HsProfileController implements ProfileApi {
 
         val current = profileRepo.findByUuid(profileUuid).orElseThrow();
 
+        validateBeforePatch(current, body);
         new HsProfileEntityPatcher(scopeMapper, current).apply(body);
         validateOnUpdate(current);
 
@@ -186,6 +185,11 @@ public class HsProfileController implements ProfileApi {
         // finally, return the result
         val result = currentLoginUserResponse(currentSubject, person, isGlobalAdmin);
         return ResponseEntity.ok(result);
+    }
+
+    private void validateBeforePatch(final HsProfileEntity current, final ProfilePatchResource body) {
+        if (!context.isGlobalAdmin() && !current.isActive() && body.getActive())
+            throw new ForbiddenException("Only global admins are allowed to activate an inactive profile");
     }
 
     private void validateOnCreate(final HsProfileEntity newProfileEntity) {
@@ -276,10 +280,10 @@ public class HsProfileController implements ProfileApi {
                 .collect(Collectors.joining(", "));
     }
 
-    private RbacSubjectEntity createSubject(final String nickname) {
-        val rbacSubjectEntity = new RbacSubjectEntity(null, nickname);
-        val newRbacSubject = subjectRepo.create(rbacSubjectEntity);
-        return newRbacSubject;
+    private RealSubjectEntity createSubject(final String nickname) {
+        val rbacSubjectEntity = RbacSubjectEntity.builder().name(nickname).build();
+        val newRbacSubject = rbacSubjectRepo.create(rbacSubjectEntity);
+        return em.find(RealSubjectEntity.class, newRbacSubject.getUuid());
     }
 
     private List<HsProfileEntity> findByPersonUuid(final UUID personUuid) {
@@ -331,9 +335,8 @@ public class HsProfileController implements ProfileApi {
                         messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", resource.getPersonUuid())
                 )
         );
-
-        entity.setScopes(scopeMapper.mapProfileToScopeEntities(resource.getScopes()));
-
         entity.setPerson(person);
+        entity.setScopes(scopeMapper.mapProfileToScopeEntities(resource.getScopes()));
+        entity.setPassword(resource.getPassword());
     };
 }

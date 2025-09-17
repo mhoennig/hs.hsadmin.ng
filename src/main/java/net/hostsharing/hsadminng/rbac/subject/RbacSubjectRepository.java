@@ -15,19 +15,19 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
                  where :userName is null or u.name like concat(cast(:userName as text), '%')
                  order by u.name
             """)
-    @Timed("app.rbac.subjects.repo.findByOptionalNameLike")
+    @Timed("app.rbac.subjects.repo.findByOptionalNameLike.rbac")
     List<RbacSubjectEntity> findByOptionalNameLike(String userName);
 
     // bypasses the restricted view, to be able to grant rights to arbitrary user
     @Query(value = "select * from rbac.subject where name=:userName", nativeQuery = true)
-    @Timed("app.rbac.subjects.repo.findByName")
+    @Timed("app.rbac.subjects.repo.findByName.rbac")
     RbacSubjectEntity findByName(String userName);
 
-    @Timed("app.rbac.subjects.repo.findByUuid")
+    @Timed("app.rbac.subjects.repo.findByUuid.rbac")
     RbacSubjectEntity findByUuid(UUID uuid);
 
     @Query(value = "select * from rbac.grantedPermissions(:subjectUuid)", nativeQuery = true)
-    @Timed("app.rbac.subjects.repo.findPermissionsOfUserByUuid")
+    @Timed("app.rbac.subjects.repo.findPermissionsOfUserByUuid.rbac")
     List<RbacSubjectPermission> findPermissionsOfUserByUuid(UUID subjectUuid);
 
     /*
@@ -37,7 +37,7 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
      */
     @Modifying
     @Query(value = "insert into rbac.subject_rv (uuid, name) values( :#{#newUser.uuid}, :#{#newUser.name})", nativeQuery = true)
-    @Timed("app.rbac.subjects.repo.insert")
+    @Timed("app.rbac.subjects.repo.insert.rbac")
     void insert(final RbacSubjectEntity newUser);
 
     default RbacSubjectEntity create(final RbacSubjectEntity rbacSubjectEntity) {
@@ -52,6 +52,6 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
         return rbacSubjectEntity; // Not yet attached to EM!
     }
 
-    @Timed("app.rbac.subjects.repo.deleteByUuid")
+    @Timed("app.rbac.subjects.repo.deleteByUuid.rbac")
     void deleteByUuid(UUID subjectUuid);
 }

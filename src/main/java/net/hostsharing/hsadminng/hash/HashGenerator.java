@@ -2,12 +2,14 @@ package net.hostsharing.hsadminng.hash;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.function.BiFunction;
 import java.util.random.RandomGenerator;
 
 import lombok.Getter;
+import lombok.val;
 
 /**
  * Usage-example to generate hash:
@@ -29,6 +31,15 @@ public final class HashGenerator {
                     "0123456789/.";
     private static boolean couldBeHashEnabled; // TODO.legacy: remove after legacy data is migrated
 
+    /**
+     * Fetches the hash algorithm from an environment variable.
+     */
+    public static HashGenerator fromEnv(final String envVarName, final String defaultValue) {
+        val algorithm = Algorithm.byPrefix(
+                Optional.ofNullable(System.getenv(envVarName)).orElse(defaultValue));
+        return using(algorithm);
+    }
+
     public enum Algorithm {
         LINUX_SHA512(LinuxEtcShadowHashGenerator::hash, "6"),
         LINUX_YESCRYPT(LinuxEtcShadowHashGenerator::hash, "y", "j9T$") {
@@ -38,7 +49,14 @@ public final class HashGenerator {
             }
         },
         MYSQL_NATIVE(MySQLNativePasswordHashGenerator::hash, "*"),
-        SCRAM_SHA256(PostgreSQLScramSHA256::hash, "SCRAM-SHA-256");
+        SCRAM_SHA256(PostgreSQLScramSHA256::hash, "SCRAM-SHA-256"),
+        LDAP_SSHA(LdapSshaHash::hash, "{SSHA}"),
+        LDAP_ARGON2(LdapArgon2Hash::hash, "{ARGON2}", "$argon2id$v=19$m=1024,t=2,p=2$") {
+            @Override
+            String enrichedSalt(final String salt) {
+                return prefix + salt;
+            }
+        };
 
         final BiFunction<HashGenerator, String, String> implementation;
         final String prefix;
@@ -85,7 +103,7 @@ public final class HashGenerator {
 
     public String hash(final String plaintextPassword) {
         if (plaintextPassword == null) {
-            throw new IllegalStateException("no password given");
+            return null;
         }
 
         final var hash = algorithm.implementation.apply(this, plaintextPassword);

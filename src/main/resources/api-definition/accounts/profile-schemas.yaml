@@ -24,15 +24,15 @@ components:
                 nickname:
                     type: string
                     pattern: '^[a-z][a-z0-9]{1,8}-[a-z0-9]{1,10}$' # TODO.spec: pattern for login nickname
+                emailAddress:
+                    type: string
+                smsNumber:
+                    type: string
                 totpSecrets:
                     type: array
                     items:
                         type: string
                 phonePassword:
-                    type: string
-                emailAddress:
-                    type: string
-                smsNumber:
                     type: string
                 active:
                     type: boolean
@@ -53,17 +53,21 @@ components:
         ProfilePatch:
             type: object
             properties:
-                totpSecrets:
-                    type: array
-                    items:
-                        type: string
-                phonePassword:
-                    type: string
-                    nullable: true
                 emailAddress:
                     type: string
                     nullable: true
                 smsNumber:
+                    type: string
+                    nullable: true
+                totpSecrets:
+                    type: array
+                    items:
+                        type: string
+                password:
+                    type: string
+                    minLength: 8
+                    description: plaintext password or valid hash
+                phonePassword:
                     type: string
                     nullable: true
                 active:
@@ -93,6 +97,10 @@ components:
                     type: number
                 globalGid:
                     type: number
+                password:
+                    type: string
+                    minLength: 8
+                    description: plaintext password or valid hash
                 phonePassword:
                     type: string
                 totpSecrets:

@@ -18,20 +18,20 @@ public class HsProfileEntityPatcher implements EntityPatcher<ProfilePatchResourc
 
     @Override
     public void apply(final ProfilePatchResource resource) {
-        if ( resource.getActive() != null ) {
-                entity.setActive(resource.getActive());
-        }
+        Optional.ofNullable(resource.getActive())
+                .ifPresent(entity::setActive);
         OptionalFromJson.of(resource.getEmailAddress())
                 .ifPresent(entity::setEmailAddress);
         Optional.ofNullable(resource.getTotpSecrets())
                 .ifPresent(entity::setTotpSecrets);
         OptionalFromJson.of(resource.getSmsNumber())
                 .ifPresent(entity::setSmsNumber);
+        Optional.ofNullable(resource.getPassword())
+                .ifPresent(entity::setPassword);
         OptionalFromJson.of(resource.getPhonePassword())
                 .ifPresent(entity::setPhonePassword);
         if (resource.getScopes() != null) {
             scopeMapper.syncProfileScopeEntities(resource.getScopes(), entity.getScopes());
         }
     }
-
 }

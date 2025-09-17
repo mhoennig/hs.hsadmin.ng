@@ -35,13 +35,14 @@ public class CreateProfile extends BaseProfileUseCase<CreateProfile> {
                 {
                      "person.uuid": ${Person: %{personGivenName} %{personFamilyName}},
                      "nickname": ${nickname},
-                     "active": %{active},
-                     "totpSecrets": @{totpSecrets},
                      "emailAddress": ${emailAddress},
-                     "phonePassword": ${phonePassword},
                      "smsNumber": ${smsNumber},
+                     "password": ${password},
+                     "totpSecrets": @{totpSecrets},
+                     "phonePassword": ${phonePassword},
                      "globalUid": %{globalUid},
                      "globalGid": %{globalGid},
+                     "active": %{active},
                      "scopes": @{resolvedScopes}
                 }
                 """))

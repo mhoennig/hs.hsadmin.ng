@@ -16,6 +16,7 @@ create table hs_accounts.profile
     global_uid       int unique,     -- w/o
     global_gid       int unique,     -- w/o
 
+    password_hash    text,
     totp_secrets     text[],
     phone_password   text,
     email_address    text,

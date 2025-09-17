@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static java.util.UUID.randomUUID;
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -454,7 +455,8 @@ class RbacSubjectControllerAcceptanceTest {
         final var givenUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
         final var givenUser = jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            return rbacSubjectRepository.create(new RbacSubjectEntity(UUID.randomUUID(), givenUserName));
+            return rbacSubjectRepository.create(
+                    RbacSubjectEntity.builder().uuid(randomUUID()).name(givenUserName).build());
         }).assumeSuccessful().returnedValue();
         assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
         return givenUser;
