@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.migration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
@@ -19,6 +18,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.collections4.ListUtils;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +84,9 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQ
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_INSTANCE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_USER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
+import static net.hostsharing.hsadminng.hs.migration.ResourceUtil.resourceAsString;
+import static net.hostsharing.hsadminng.hs.migration.ResourceUtil.resourceOf;
+import static net.hostsharing.hsadminng.hs.migration.ResourceUtil.resourceReader;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -142,6 +145,18 @@ public class ImportHostingAssets extends CsvDataImport {
 
     @Value("${HSADMINNG_OFFICE_DATA_SQL_FILE:/db/released-prod-schema-with-import-test-data.sql}")
     String officeSchemaAndDataSqlFile;
+
+    @Test
+    @Order(10000)
+    @SneakyThrows
+    void baseSchemaDumpIsUnchanged() {
+        ResourceUtil.assertResourceHash(
+                officeSchemaAndDataSqlFile,
+                // Never change this hash!
+                // Except if you deliberately updated the reference SQL dump, e.g. after a prod release.
+                // It protects you from accidentally making changes, e.g. with search&replace.
+                "41e6e3ad7f2ba5de507219582d76fd33ebc93bef148f2ee2c25ae9b5b8c0f53b");
+    }
 
     @Test
     @Order(11000)
@@ -1960,6 +1975,7 @@ public class ImportHostingAssets extends CsvDataImport {
                 .map(row -> row.stream().map(Object::toString).collect(joining(", ")))
                 .collect(joining("\n"));
     }
+
 
     @SneakyThrows
     private void executeSqlScript(final String sqlFile) {

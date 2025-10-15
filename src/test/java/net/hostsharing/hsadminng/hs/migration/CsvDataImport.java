@@ -7,39 +7,29 @@ import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProject;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
-import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
+import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
-import org.opentest4j.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.core.io.Resource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ValidationException;
-import jakarta.validation.constraints.NotNull;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -50,7 +40,6 @@ import java.util.stream.Collectors;
 
 import static java.lang.Boolean.parseBoolean;
 import static java.util.Arrays.stream;
-import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.mapper.Array.emptyArray;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -120,26 +109,6 @@ public class CsvDataImport extends ContextBasedTest {
 
     protected static String[] justHeader(final List<String[]> lines) {
         return stream(lines.getFirst()).map(String::trim).toArray(String[]::new);
-    }
-
-    public static @NotNull AbstractResource resourceOf(final String sqlFile) {
-        return new File(sqlFile).exists()
-                ? new FileSystemResource(sqlFile)
-                : new ClassPathResource(sqlFile);
-    }
-
-    protected Reader resourceReader(@NotNull final String resourcePath) {
-        try {
-            return new InputStreamReader(requireNonNull(resourceOf(resourcePath).getInputStream()));
-        } catch (final Exception exc) {
-            throw new AssertionFailedError("cannot open '" + resourcePath + "'");
-        }
-    }
-
-    @SneakyThrows
-    protected String resourceAsString(final Resource resource) {
-        final var lines = Files.readAllLines(resource.getFile().toPath(), StandardCharsets.UTF_8);
-        return String.join("\n", lines);
     }
 
     protected List<String[]> withoutHeader(final List<String[]> records) {

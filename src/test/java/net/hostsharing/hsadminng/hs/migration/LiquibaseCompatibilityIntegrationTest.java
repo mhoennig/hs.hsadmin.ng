@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.migration;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,9 +44,12 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @DirtiesContext
 @ActiveProfiles("liquibase-migration-test")
 @Import(LiquibaseConfig.class)
-@Sql(value = "/db/released-prod-schema-with-test-data.sql", executionPhase = BEFORE_TEST_CLASS) // release-schema
+@Sql(value =
+        LiquibaseCompatibilityIntegrationTest.DB_RELEASED_PROD_SCHEMA_RESOURCE_WITH_TEST_DATA_SQL,
+        executionPhase = BEFORE_TEST_CLASS)
 public class LiquibaseCompatibilityIntegrationTest {
 
+    public static final String DB_RELEASED_PROD_SCHEMA_RESOURCE_WITH_TEST_DATA_SQL = "/db/released-prod-schema-with-test-data.sql";
     private static final String EXPECTED_CHANGESET_ONLY_AFTER_NEW_MIGRATION = "hs-global-liquibase-migration-test";
     private static final int EXPECTED_LIQUIBASE_CHANGELOGS_IN_PROD_SCHEMA_DUMP = 299;
 
@@ -54,6 +58,17 @@ public class LiquibaseCompatibilityIntegrationTest {
 
     @Autowired
     private LiquibaseMigration liquibase;
+
+    @Test
+    @SneakyThrows
+    void baseSchemaDumpIsUnchanged() {
+        ResourceUtil.assertResourceHash(
+                DB_RELEASED_PROD_SCHEMA_RESOURCE_WITH_TEST_DATA_SQL,
+                // Never change this hash!
+                // Except, if you deliberately updated the reference SQL dump, e.g. after a prod release.
+                // It protects you from accidentally making changes, e.g. with search&replace.
+                "512216e4baeed3f5d988766ff79a79c2885c8c04fa54c61009bde3d4f4708d72");
+    }
 
     @Test
     void migrationWorksBasedOnAPreviouslyPopulatedSchema() {
