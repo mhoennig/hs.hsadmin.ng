@@ -21,6 +21,7 @@ public class HsadminNgApplication {
 
                @Override
                public void addCorsMappings(CorsRegistry registry) {
+            	   // TODO: to enable testing, we should use Spring config
                    String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
                    if (allowedOrigins == null || allowedOrigins.length() <= 1) {
                        allowedOrigins = "*";
