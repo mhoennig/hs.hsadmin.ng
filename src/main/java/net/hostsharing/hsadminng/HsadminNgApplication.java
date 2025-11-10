@@ -24,9 +24,11 @@ public class HsadminNgApplication {
             	   // TODO: to enable testing, we should use Spring config
                    String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
                    if (allowedOrigins == null || allowedOrigins.length() <= 1) {
-                       allowedOrigins = "*";
+                       allowedOrigins = "/**";
                    }
-                   registry.addMapping("/api/**").allowedOrigins(allowedOrigins);
+                   registry.addMapping("/api/**")
+                   		.allowedOrigins(allowedOrigins)
+                   		.allowedMethods("GET", "PUT", "POST", "PATCH", "DELETE");
                }
            };
        }
