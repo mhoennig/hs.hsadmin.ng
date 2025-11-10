@@ -285,6 +285,7 @@ tasks.compileJava {
 configure<SpotlessExtension> {
     java {
         // Configure formatting steps
+
         removeUnusedImports()
         leadingTabsToSpaces(4)
         endWithNewline()
@@ -429,6 +430,20 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     }
 }
 
+// HOWTO: run all unit-tests - this is useful in an IDE: gw-test anyTest
+tasks.register<Test>("anyTest") {
+    useJUnitPlatform()
+
+    testLogging {
+        events("passed", "skipped", "failed", "standardOut", "standardError")
+        showStandardStreams = true
+    }
+
+    group = "verification"
+    description = "runs all unit-tests which do not need a database"
+
+    mustRunAfter(tasks.named("spotlessJava"))
+}
 
 // HOWTO: run all unit-tests which don't need a database: gw-test unitTest
 tasks.register<Test>("unitTest") {
@@ -590,7 +605,6 @@ tasks.named<DependencyUpdatesTask>("dependencyUpdates") {
         isNonStable(candidate.version)
     }
 }
-
 
 // Generate HTML from Markdown scenario-test-reports using Pandoc:
 tasks.register("convertMarkdownToHtml") {

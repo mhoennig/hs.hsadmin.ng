@@ -84,6 +84,8 @@ components:
                 person.uuid:
                     type: string
                     format: uuid
+                person:
+                    $ref: '../hs-office/hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonInsert'
                 nickname:
                     type: string
                     pattern: '^[a-z][a-z0-9]{1,8}-[a-z0-9]{1,10}$' # TODO.spec: pattern for login nickname
@@ -112,8 +114,11 @@ components:
                     items:
                         $ref: 'scope-schemas.yaml#/components/schemas/Scope'
             required:
-                - person.uuid
                 - nickname
                 - active
+                # soon we might need to be able to use this:
+                # https://community.smartbear.com/discussions/swaggerostools/defining-conditional-attributes-in-openapi/222410
+                # For now we just describe the conditionally required properties:
+            description:
+                Either `person.uuid` or `person` need to be given.
             additionalProperties: false
-

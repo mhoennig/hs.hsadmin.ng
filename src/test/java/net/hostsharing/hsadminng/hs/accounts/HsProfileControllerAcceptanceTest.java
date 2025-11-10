@@ -202,7 +202,7 @@ class HsProfileControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                     .when()
                         .post("http://localhost/api/hs/accounts/profiles")
                     .then().log().all().assertThat()
-                        .statusCode(400)
+                        .statusCode(403)
                         .contentType("application/json")
                         .body("message", containsString("wird von der eingeloggten Person nicht repräsentiert"));
             // @formatter:on
@@ -246,7 +246,7 @@ class HsProfileControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                     .when()
                         .post("http://localhost/api/hs/accounts/profiles")
                     .then().log().all().assertThat()
-                        .statusCode(400)
+                        .statusCode(403)
                     .contentType("application/json")
                     .body("message", containsString("Zugriff auf Geltungsbereich verweigert: 'MATRIX:internal', 'SSH:internal'"));
             // @formatter:on
@@ -326,7 +326,7 @@ class HsProfileControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                     .when()
                         .patch("http://localhost/api/hs/accounts/profiles/" + drewProfileUuid)
                     .then().log().all().assertThat()
-                    .statusCode(400)
+                    .statusCode(403)
                     .contentType("application/json")
                     .body("message", containsString("Zugriff auf Geltungsbereich verweigert: 'MATRIX:internal', 'SSH:internal'"));
             // @formatter:on

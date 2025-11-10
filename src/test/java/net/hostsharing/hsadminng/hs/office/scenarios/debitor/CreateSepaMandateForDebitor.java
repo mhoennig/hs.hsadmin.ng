@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -17,13 +18,13 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
     protected HttpResponse run() {
 
         obtain("Debitor: Test AG - main debitor", () ->
-            httpGet("/api/hs/office/debitors/%{debitorNumber}")
+            httpGet(asGlobalAgent(), "/api/hs/office/debitors/%{debitorNumber}")
                     .expecting(OK).expecting(JSON),
             response -> response.getFromBody("uuid")
         );
 
         obtain("BankAccount: Test AG - debit bank account", () ->
-            httpPost("/api/hs/office/bankaccounts", usingJsonBody("""
+            httpPost(asGlobalAgent(), "/api/hs/office/bankaccounts", usingJsonBody("""
                      {
                          "holder": ${bankAccountHolder},
                          "iban": ${bankAccountIBAN},
@@ -33,7 +34,7 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
                     .expecting(CREATED).expecting(JSON)
         );
 
-        return httpPost("/api/hs/office/sepamandates", usingJsonBody("""
+        return httpPost(asGlobalAgent(), "/api/hs/office/sepamandates", usingJsonBody("""
                 {
                    "debitor.uuid": ${Debitor: Test AG - main debitor},
                    "bankAccount.uuid": ${BankAccount: Test AG - debit bank account},

@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -17,7 +18,7 @@ public class UnsubscribeFromMailinglist extends UseCase<UnsubscribeFromMailingli
     protected HttpResponse run() {
 
         obtain("Subscription: %{subscriberEMailAddress}", () ->
-                httpGet("/api/hs/office/relations?relationType=SUBSCRIBER" +
+                httpGet(asGlobalAgent(), "/api/hs/office/relations?relationType=SUBSCRIBER" +
                             "&mark=" + uriEncoded("%{mailingList}") +
                             "&contactData=" + uriEncoded("%{subscriberEMailAddress}"))
                         .expecting(OK).expecting(JSON),
@@ -26,7 +27,7 @@ public class UnsubscribeFromMailinglist extends UseCase<UnsubscribeFromMailingli
         );
 
         return withTitle("Delete the Subscriber-Relation by its UUID", () ->
-                httpDelete("/api/hs/office/relations/&{Subscription: %{subscriberEMailAddress}}")
+                httpDelete(asGlobalAgent(), "/api/hs/office/relations/&{Subscription: %{subscriberEMailAddress}}")
                 .expecting(NO_CONTENT)
         );
     }

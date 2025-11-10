@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.OK;
 
 public class FinallyDeleteSepaMandateForDebitor extends UseCase<FinallyDeleteSepaMandateForDebitor> {
@@ -17,14 +18,15 @@ public class FinallyDeleteSepaMandateForDebitor extends UseCase<FinallyDeleteSep
     protected HttpResponse run() {
 
         obtain("SEPA-Mandate: %{bankAccountIBAN}", () ->
-                        httpGet("/api/hs/office/sepamandates?iban=&{bankAccountIBAN}")
+                        httpGet(asGlobalAgent(), "/api/hs/office/sepamandates?iban=&{bankAccountIBAN}")
                                 .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
                 "With production data, the bank-account could be used in multiple SEPA-mandates, make sure to use the right one!"
         );
 
         // TODO.spec: When to allow actual deletion of SEPA-mandates? Add constraint accordingly.
-        return withTitle("Delete the SEPA-Mandate by its UUID", () -> httpDelete("/api/hs/office/sepamandates/&{SEPA-Mandate: %{bankAccountIBAN}}")
+        return withTitle("Delete the SEPA-Mandate by its UUID", () ->
+                httpDelete(asGlobalAgent(), "/api/hs/office/sepamandates/&{SEPA-Mandate: %{bankAccountIBAN}}")
                 .expecting(HttpStatus.NO_CONTENT)
         );
     }

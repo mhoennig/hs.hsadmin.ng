@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.OK;
 
 public class CreatePartner extends UseCase<CreatePartner> {
@@ -24,14 +25,14 @@ public class CreatePartner extends UseCase<CreatePartner> {
     protected HttpResponse run() {
 
         obtain("Person: Hostsharing eG", () ->
-            httpGet("/api/hs/office/persons?name=Hostsharing+eG")
+            httpGet(asGlobalAgent(), "/api/hs/office/persons?name=Hostsharing+eG")
                     .expecting(OK).expecting(JSON),
                     response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
                 "Even in production data we expect this query to return just a single result." // TODO.impl: add constraint?
         );
 
         obtain("Person: %{%{tradeName???}???%{givenName???} %{familyName???}}", () ->
-            httpPost("/api/hs/office/persons", usingJsonBody("""
+            httpPost(asGlobalAgent(), "/api/hs/office/persons", usingJsonBody("""
                     {
                         "personType": ${personType???},
                         "tradeName": ${tradeName???},
@@ -43,7 +44,7 @@ public class CreatePartner extends UseCase<CreatePartner> {
         );
 
         obtain("Contact: %{contactCaption}", () ->
-            httpPost("/api/hs/office/contacts", usingJsonBody("""
+            httpPost(asGlobalAgent(), "/api/hs/office/contacts", usingJsonBody("""
                     {
                         "caption": ${contactCaption},
                         "postalAddress": {
@@ -60,7 +61,7 @@ public class CreatePartner extends UseCase<CreatePartner> {
                     .expecting(HttpStatus.CREATED).expecting(ContentType.JSON)
         );
 
-        return httpPost("/api/hs/office/partners", usingJsonBody("""
+        return httpPost(asGlobalAgent(), "/api/hs/office/partners", usingJsonBody("""
                 {
                     "partnerNumber": ${partnerNumber},
                     "partnerRel": {
@@ -84,7 +85,7 @@ public class CreatePartner extends UseCase<CreatePartner> {
     protected void verify(final UseCase<CreatePartner>.HttpResponse response) {
         verify(
                 "Verify the New Partner Relation",
-                () -> httpGet("/api/hs/office/relations?relationType=PARTNER&contactData=&{contactCaption}")
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/relations?relationType=PARTNER&contactData=&{contactCaption}")
                         .expecting(OK).expecting(JSON).expectArrayElements(1)
         );
     }

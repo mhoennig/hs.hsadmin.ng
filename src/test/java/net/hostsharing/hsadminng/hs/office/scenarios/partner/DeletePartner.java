@@ -4,6 +4,8 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import org.springframework.http.HttpStatus;
 
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
+
 public class DeletePartner extends UseCase<DeletePartner> {
 
     public DeletePartner(final ScenarioTest testSuite) {
@@ -18,10 +20,9 @@ public class DeletePartner extends UseCase<DeletePartner> {
 
     @Override
     protected HttpResponse run() {
-        withTitle("Delete Partner by its UUID", () ->
-            httpDelete("/api/hs/office/partners/&{Partner: Delete AG}")
+        return withTitle("Delete Partner by its UUID", () ->
+            httpDelete(asGlobalAgent(), "/api/hs/office/partners/&{Partner: Delete AG}")
                 .expecting(HttpStatus.NO_CONTENT)
         );
-        return null;
     }
 }

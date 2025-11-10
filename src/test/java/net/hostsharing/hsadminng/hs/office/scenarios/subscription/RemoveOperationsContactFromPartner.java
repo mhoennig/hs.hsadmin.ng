@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
@@ -19,7 +20,7 @@ public class RemoveOperationsContactFromPartner extends UseCase<RemoveOperations
 
         obtain("Operations-Contact: %{operationsContactPerson}",
                 () ->
-                        httpGet("/api/hs/office/relations?relationType=OPERATIONS&name=" + uriEncoded(
+                        httpGet(asGlobalAgent(), "/api/hs/office/relations?relationType=OPERATIONS&name=" + uriEncoded(
                                 "%{operationsContactPerson}"))
                                 .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
@@ -27,7 +28,7 @@ public class RemoveOperationsContactFromPartner extends UseCase<RemoveOperations
         );
 
         return withTitle("Delete the Contact", () ->
-                httpDelete("/api/hs/office/relations/&{Operations-Contact: %{operationsContactPerson}}")
+                httpDelete(asGlobalAgent(), "/api/hs/office/relations/&{Operations-Contact: %{operationsContactPerson}}")
                         .expecting(NO_CONTENT)
         );
     }
@@ -36,7 +37,7 @@ public class RemoveOperationsContactFromPartner extends UseCase<RemoveOperations
     protected void verify(final UseCase<RemoveOperationsContactFromPartner>.HttpResponse response) {
         verify(
                 "Verify the New OPERATIONS Relation",
-                () -> httpGet("/api/hs/office/relations/&{Operations-Contact: %{operationsContactPerson}}")
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/relations/&{Operations-Contact: %{operationsContactPerson}}")
                         .expecting(NOT_FOUND)
         );
     }

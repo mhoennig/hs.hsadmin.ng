@@ -1,10 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.partner;
 
+import lombok.val;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -18,7 +20,7 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
     protected HttpResponse run() {
 
         obtain("Partner: %{partnerNumber}",
-                () -> httpGet("/api/hs/office/partners/%{partnerNumber}")
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/partners/%{partnerNumber}")
                                 .reportWithResponse().expecting(OK).expecting(JSON),
                 response -> response.getFromBody("uuid"),
                 "Even in production data we expect this query to return just a single result."
@@ -30,8 +32,8 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
                         "partnerRel.holder.uuid",
                         "Person: %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}");
 
-        withTitle("New Partner-Person+Contact: Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}",
-                () -> httpPatch("/api/hs/office/partners/%{Partner: %{partnerNumber}}",
+        val result = withTitle("New Partner-Person+Contact: Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}",
+                () -> httpPatch(asGlobalAgent(), "/api/hs/office/partners/%{Partner: %{partnerNumber}}",
                         usingJsonBody("""
                                 {
                                     "partnerRel": {
@@ -68,7 +70,7 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
 
         obtain(
                 "Representative-Relation: %{representativeGivenName} %{representativeFamilyName} for Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}",
-                () -> httpPost("/api/hs/office/relations",
+                () -> httpPost(asGlobalAgent(), "/api/hs/office/relations",
                         usingJsonBody("""
                                 {
                                    "type": "REPRESENTATIVE",
@@ -88,14 +90,14 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
         // outro: die Erbengemeinschaft hat eine Frist von 6 Monaten, um die Mitgliedschaft einer Person zu übertragen
         // →nächster "Drecksfall"
 
-        return null;
+        return result;
     }
 
     @Override
     protected void verify(final UseCase<ReplaceDeceasedPartnerWithCommunityOfHeirs>.HttpResponse response) {
         verify(
                 "Verify the Updated Partner",
-                () -> httpGet("/api/hs/office/partners/%{partnerNumber}")
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/partners/%{partnerNumber}")
                         .expecting(OK).expecting(JSON).expectObject(),
                 path("partnerRel.holder.tradeName").contains(
                         "Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}"),
@@ -106,7 +108,7 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
 
         verify(
                 "Verify the Ex-Partner-Relation",
-                () -> httpGet(
+                () -> httpGet(asGlobalAgent(),
                         "/api/hs/office/relations?relationType=EX_PARTNER&personUuid=%{Person: %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}}")
                         .expecting(OK).expecting(JSON).expectArrayElements(1),
                 path("[0].anchor.tradeName").contains(
@@ -115,7 +117,7 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
 
         verify(
                 "Verify the Representative-Relation",
-                () -> httpGet(
+                () -> httpGet(asGlobalAgent(),
                         "/api/hs/office/relations?relationType=REPRESENTATIVE&personUuid=%{Person: Erbengemeinschaft %{givenNameOfDeceasedPerson} %{familyNameOfDeceasedPerson}}")
                         .expecting(OK).expecting(JSON).expectArrayElements(1),
                 path("[0].anchor.tradeName").contains(
@@ -128,7 +130,7 @@ public class ReplaceDeceasedPartnerWithCommunityOfHeirs extends UseCase<ReplaceD
 
         verify(
                 "Verify the Debitor-Relation",
-                () -> httpGet(
+                () -> httpGet(asGlobalAgent(),
                         "/api/hs/office/debitors?partnerNumber=%{partnerNumber}")
                         .expecting(OK).expecting(JSON).expectArrayElements(1),
                 path("[0].debitorRel.anchor.tradeName").contains(

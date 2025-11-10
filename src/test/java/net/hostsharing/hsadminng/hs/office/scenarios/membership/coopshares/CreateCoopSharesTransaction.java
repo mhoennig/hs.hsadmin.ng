@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.OK;
 
 public abstract class CreateCoopSharesTransaction extends UseCase<CreateCoopSharesTransaction> {
@@ -18,13 +19,13 @@ public abstract class CreateCoopSharesTransaction extends UseCase<CreateCoopShar
     protected HttpResponse run() {
 
         obtain("#{Find }membershipUuid", () ->
-            httpGet("/api/hs/office/memberships/%{memberNumber}")
+            httpGet(asGlobalAgent(), "/api/hs/office/memberships/%{memberNumber}")
                     .expecting(OK).expecting(JSON),
             response -> response.getFromBody("uuid")
         );
 
         return withTitle("Create the Coop-Shares-%{transactionType} Transaction", () ->
-                httpPost("/api/hs/office/coopsharestransactions", usingJsonBody("""
+                httpPost(asGlobalAgent(), "/api/hs/office/coopsharestransactions", usingJsonBody("""
                 {
                     "membership.uuid": ${membershipUuid},
                     "transactionType": ${transactionType},
@@ -42,7 +43,7 @@ public abstract class CreateCoopSharesTransaction extends UseCase<CreateCoopShar
     @Override
     protected void verify(final HttpResponse response) {
         verify("Verify Coop-Shares %{transactionType}-Transaction",
-                () -> httpGet("/api/hs/office/coopsharestransactions/" + response.getLocationUuid())
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/coopsharestransactions/" + response.getLocationUuid())
                         .expecting(HttpStatus.OK).expecting(ContentType.JSON),
                 path("transactionType").contains("%{transactionType}"),
                 path("shareCount").contains("%{shareCount}"),

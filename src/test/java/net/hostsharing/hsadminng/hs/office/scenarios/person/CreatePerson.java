@@ -5,6 +5,8 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import org.springframework.http.HttpStatus;
 
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
+
 public class CreatePerson extends UseCase<CreatePerson> {
 
     public CreatePerson(final ScenarioTest testSuite, final String resultAlias) {
@@ -15,7 +17,7 @@ public class CreatePerson extends UseCase<CreatePerson> {
     protected HttpResponse run() {
 
         return withTitle("Create the Person", () ->
-                httpPost("/api/hs/office/persons", usingJsonBody("""
+                httpPost(asGlobalAgent(), "/api/hs/office/persons", usingJsonBody("""
                     {
                         "personType": ${personType},
                         "tradeName": ${tradeName}

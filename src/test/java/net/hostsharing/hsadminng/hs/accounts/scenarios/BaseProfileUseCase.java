@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.accounts.scenarios;
 
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ScopeResource;
+import net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.apache.commons.lang3.tuple.Pair;
@@ -9,19 +10,23 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.Arrays;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.OK;
 
 public abstract class BaseProfileUseCase<T extends UseCase<?>> extends UseCase<T> {
 
-    public BaseProfileUseCase(final ScenarioTest testSuite) {
+    protected final FakeLoginUser asLoginUser;
+
+    public BaseProfileUseCase(final ScenarioTest testSuite, final FakeLoginUser asLoginUser) {
         super(testSuite);
+        this.asLoginUser = asLoginUser;
     }
 
     @SneakyThrows
     protected ScopeResource[] fetchScopeResourcesByDescriptorPairs(final String descriptPairsVarName) {
         final var requestedScopes = ScenarioTest.getTypedVariable("scopes", Pair[].class);
         final var existingScopesJson = withTitle("Fetch Available Account Scopes", () ->
-                httpGet("/api/hs/accounts/scopes").expecting(OK).expecting(JSON)
+                httpGet(asGlobalAgent(), "/api/hs/accounts/scopes").expecting(OK).expecting(JSON)
         ).getResponse().body();
         final var existingScopes = objectMapper.readValue(existingScopesJson, ScopeResource[].class);
         return Arrays.stream(requestedScopes)

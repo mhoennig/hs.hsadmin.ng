@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.OK;
 
 public class AmendContactData extends UseCase<AmendContactData> {
@@ -17,14 +18,14 @@ public class AmendContactData extends UseCase<AmendContactData> {
     protected HttpResponse run() {
 
         obtain("partnerContactUuid", () ->
-                httpGet("/api/hs/office/relations?relationType=PARTNER&personData=" + uriEncoded("%{partnerName}"))
+                httpGet(asGlobalAgent(), "/api/hs/office/relations?relationType=PARTNER&personData=" + uriEncoded("%{partnerName}"))
                         .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].contact.uuid"),
                 "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
-        withTitle("Patch the New Phone Number Into the Contact", () ->
-            httpPatch("/api/hs/office/contacts/%{partnerContactUuid}", usingJsonBody("""
+        return withTitle("Patch the New Phone Number Into the Contact", () ->
+            httpPatch(asGlobalAgent(), "/api/hs/office/contacts/%{partnerContactUuid}", usingJsonBody("""
             {
                 "caption": ${newContactCaption???},
                 "postalAddress": {
@@ -40,7 +41,5 @@ public class AmendContactData extends UseCase<AmendContactData> {
             """))
             .expecting(HttpStatus.OK)
         );
-
-        return null;
     }
 }

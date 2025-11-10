@@ -31,7 +31,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Stack;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,8 +63,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @ExtendWith(IgnoreOnFailureExtension.class)
 public abstract class ScenarioTest extends ContextBasedTest {
-
-    final static String RUN_AS_USER = "superuser-alex@hostsharing.net"; // TODO.test: use global:AGENT when implemented
 
     private final Stack<String> currentTestMethodProduces = new Stack<>();
 
@@ -116,20 +116,17 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
     @SneakyThrows
     private void callRequiredProducers(final Method currentTestMethod) {
-        final var testMethodRequires = Optional.of(currentTestMethod)
+        final var testMethodRequires = Stream.of(currentTestMethod)
                 .map(m -> m.getAnnotation(Requires.class))
-                .map(Requires::value)
-                .orElse(null);
-        if (testMethodRequires != null) {
+                .filter(Objects::nonNull)
+                .flatMap(annotation -> Stream.of(annotation.value()))
+                .collect(Collectors.toSet());
+        if (!testMethodRequires.isEmpty()) {
             for (Method potentialProducerMethod : getPotentialProducerMethods()) {
                 final var producesAnnot = potentialProducerMethod.getAnnotation(Produces.class);
                 final var testMethodProduces = producedAliases(producesAnnot);
-                //  @formatter:off
-                if ( // that method can produce something required
-                     testMethodProduces.contains(testMethodRequires) &&
-
-                     // and it does not produce anything we already have (would cause errors)
-                     SetUtils.intersection(testMethodProduces, knowVariables().keySet()).isEmpty()
+                if ( thatMethodProducesSomethingRequired(testMethodProduces, testMethodRequires) &&
+                     thatMethodDoesNotProduceAnythingWeAlreadyHave(testMethodProduces)
                 ) {
                     assertThat(producesAnnot.permanent()).as("cannot depend on non-permanent producer: " + potentialProducerMethod);
 
@@ -140,13 +137,28 @@ public abstract class ScenarioTest extends ContextBasedTest {
                     // and finally we call the producer method
                     invokeProducerMethod(this, potentialProducerMethod);
                 }
-                // @formatter:on
             }
 
-            assertThat(knowVariables().containsKey(testMethodRequires))
+            assertThat(haveIntersection(knowVariables().keySet(), testMethodRequires))
                     .as("no @Producer for @Required(\"" + testMethodRequires + "\") found")
                     .isTrue();
         }
+    }
+
+    private static boolean haveIntersection(final Set<String> set1, final Set<String> set2) {
+        return !SetUtils.intersection(set1, set2).isEmpty();
+    }
+
+    private static boolean areDisjunct(final Set<String> set1, final Set<String> set2) {
+        return !haveIntersection(set1, set2);
+    }
+
+    private static boolean thatMethodProducesSomethingRequired(final Set<String> testMethodProduces, final Set<String> testMethodRequires) {
+        return haveIntersection(testMethodProduces, testMethodRequires);
+    }
+
+    private static boolean thatMethodDoesNotProduceAnythingWeAlreadyHave(final Set<String> testMethodProduces) {
+        return areDisjunct(testMethodProduces, knowVariables().keySet());
     }
 
     private void keepProducesAlias(final Method currentTestMethod) {

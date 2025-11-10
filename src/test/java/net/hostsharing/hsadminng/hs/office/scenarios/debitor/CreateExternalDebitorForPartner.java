@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.office.scenarios.person.CreatePerson;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -23,14 +24,14 @@ public class CreateExternalDebitorForPartner extends UseCase<CreateExternalDebit
     protected HttpResponse run() {
 
         obtain("Person: %{partnerPersonTradeName}", () ->
-                        httpGet("/api/hs/office/persons?name=" + uriEncoded("%{partnerPersonTradeName}"))
+                        httpGet(asGlobalAgent(), "/api/hs/office/persons?name=" + uriEncoded("%{partnerPersonTradeName}"))
                                 .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
                 "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
         obtain("BankAccount: Billing GmbH - refund bank account", () ->
-            httpPost("/api/hs/office/bankaccounts", usingJsonBody("""
+            httpPost(asGlobalAgent(), "/api/hs/office/bankaccounts", usingJsonBody("""
                      {
                          "holder": "Billing GmbH - refund bank account",
                          "iban": "DE02120300000000202051",
@@ -41,7 +42,7 @@ public class CreateExternalDebitorForPartner extends UseCase<CreateExternalDebit
         );
 
         obtain("Contact: Billing GmbH - Test AG billing", () ->
-            httpPost("/api/hs/office/contacts", usingJsonBody("""
+            httpPost(asGlobalAgent(), "/api/hs/office/contacts", usingJsonBody("""
                     {
                         "caption": "Billing GmbH, billing for Test AG",
                         "emailAddresses": {
@@ -52,7 +53,7 @@ public class CreateExternalDebitorForPartner extends UseCase<CreateExternalDebit
                     .expecting(CREATED).expecting(JSON)
         );
 
-        return httpPost("/api/hs/office/debitors", usingJsonBody("""
+        return httpPost(asGlobalAgent(), "/api/hs/office/debitors", usingJsonBody("""
                 {
                     "debitorRel": {
                         "anchor.uuid": ${Person: %{partnerPersonTradeName}},

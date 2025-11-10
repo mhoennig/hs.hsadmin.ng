@@ -45,6 +45,9 @@ public class HsProfileEntity implements BaseEntity<HsProfileEntity>, Stringifyab
     @MapsId
     @OneToOne(optional = false, fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "uuid", nullable = false, updatable = false, referencedColumnName = "uuid")
+    // Must be the real subject, so that representative persons can access profiles+subjects of represented persons.
+    // Otherwise, we would also need to allow RBAC grants to subject roles.
+    // This also means that each access has to be checked explicitly (same subject or represented subject).
     private RealSubjectEntity subject;
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)

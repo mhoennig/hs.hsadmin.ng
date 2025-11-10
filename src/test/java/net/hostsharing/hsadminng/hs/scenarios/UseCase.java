@@ -37,7 +37,6 @@ import static java.net.URLEncoder.encode;
 import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
-import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.test.DebuggerDetection.isDebuggerAttached;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -76,7 +75,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         requirements.put(alias, useCaseFactory);
     }
 
-    public final HttpResponse doRun() {
+    public final HttpResponse thenExpect(final HttpStatus expectedStatus) {
         if (introduction != null) {
             testReport.printPara(introduction);
         }
@@ -95,8 +94,11 @@ public abstract class UseCase<T extends UseCase<?>> {
                     }
                 })
         );
-        final var response = run();
-        verify(response);
+        final var response = run(expectedStatus);
+        assertThat(response).as("use case implementation must return main response, never null").isNotNull();
+        if (!response.status.isError()) {
+            verify(response);
+        }
         keepInProduceAlias(response);
 
         resetProperties();
@@ -104,7 +106,14 @@ public abstract class UseCase<T extends UseCase<?>> {
         return response;
     }
 
-    protected abstract HttpResponse run();
+    // this method is called by the test framework, override, but do not call from subclass
+    protected HttpResponse run(final HttpStatus expectedStatus) {
+        assertThat(expectedStatus).as("legacy signature only defined for HttpStatus.OK").isEqualTo(HttpStatus.OK);
+        return run();
+    };
+
+    // legacy signature for backwards compatibility, only called by above method
+    protected HttpResponse run() {return null;}
 
     protected void verify(final HttpResponse response) {
     }
@@ -171,20 +180,22 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
-    public final HttpResponse httpGet(final String uriPathWithPlaceholders) {
+    public final HttpResponse httpGet(final FakeLoginUser loginUser, final String uriPathWithPlaceholders) {
        return httpGet(uriPathWithPlaceholders,
-               req -> req.header("Authorization", bearer(ScenarioTest.RUN_AS_USER)));
+               req -> req.header("Authorization", loginUser.bearer()));
     }
 
     @SneakyThrows
-    public final HttpResponse httpPost(final String uriPathWithPlaceholders, final JsonTemplate bodyJsonTemplate) {
+    public final HttpResponse httpPost(
+            final FakeLoginUser loginUser, final String uriPathWithPlaceholders,
+            final JsonTemplate bodyJsonTemplate) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
         final var request = HttpRequest.newBuilder()
                 .POST(BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", bearer(ScenarioTest.RUN_AS_USER))
+                .header("Authorization", loginUser.bearer())
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -192,14 +203,17 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
-    public final HttpResponse httpPatch(final String uriPathWithPlaceholders, final JsonTemplate bodyJsonTemplate) {
+    public final HttpResponse httpPatch(
+            final FakeLoginUser loginUser, final String uriPathWithPlaceholders,
+            final JsonTemplate bodyJsonTemplate
+    ) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
         final var request = HttpRequest.newBuilder()
                 .method(HttpMethod.PATCH.toString(), BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", bearer(ScenarioTest.RUN_AS_USER))
+                .header("Authorization", loginUser.bearer())
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -207,13 +221,13 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
-    public final HttpResponse httpDelete(final String uriPathWithPlaceholders) {
+    public final HttpResponse httpDelete(final FakeLoginUser loginUser, final String uriPathWithPlaceholders) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var request = HttpRequest.newBuilder()
                 .DELETE()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", bearer(ScenarioTest.RUN_AS_USER))
+                .header("Authorization", loginUser.bearer())
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());

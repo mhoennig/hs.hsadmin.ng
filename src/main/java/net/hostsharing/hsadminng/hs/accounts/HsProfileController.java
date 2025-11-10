@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.accounts;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.AllArgsConstructor;
 import lombok.val;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.api.ProfileApi;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CurrentLoginUserResource;
@@ -13,7 +14,9 @@ import net.hostsharing.hsadminng.accounts.generated.api.v1.model.RbacSubjectReso
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.ScopeResource;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.errors.ForbiddenException;
+import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -23,15 +26,18 @@ import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -107,17 +113,19 @@ public class HsProfileController implements ProfileApi {
             final ProfileInsertResource body
     ) {
         context.define(); // without assumed roles, otherwise we cannot access the subject anymore
+        final LoginContext originalLoginContext = new LoginContext(context);
 
         // first create and save the subject to get its UUID
         val newlySavedSubject = createSubject(body.getNickname());
 
+        // switch to the new subject to get access to its own subject RBAC object
+        context.define("activate newly created self-service subject", null, body.getNickname(), null);
+
         // afterward, create and save the profile entity with the subject's UUID
         val newProfileEntity = mapper.map(
                 body, HsProfileEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
-        validateOnCreate(newProfileEntity);
+        validateOnCreate(originalLoginContext, newProfileEntity);
 
-        // switch to the new subject to get access to its own subject RBAC object
-        context.define("activate newly created self-service subject", null, body.getNickname(), null);
         newProfileEntity.setSubject(em.merge(newlySavedSubject)); // attached to EM by the new subject
         em.persist(newProfileEntity); // newProfileEntity.uuid == newlySavedSubject.uuid => do not use repository!
 
@@ -154,10 +162,11 @@ public class HsProfileController implements ProfileApi {
             final ProfilePatchResource body
     ) {
         context.define(); // without assumed roles, otherwise we cannot access the subject anymore
+        final LoginContext originalLoginContext = new LoginContext(context);
 
         val current = profileRepo.findByUuid(profileUuid).orElseThrow();
 
-        validateBeforePatch(current, body);
+        validateBeforePatch(originalLoginContext, current, body);
         new HsProfileEntityPatcher(scopeMapper, current).apply(body);
         validateOnUpdate(current);
 
@@ -187,13 +196,15 @@ public class HsProfileController implements ProfileApi {
         return ResponseEntity.ok(result);
     }
 
-    private void validateBeforePatch(final HsProfileEntity current, final ProfilePatchResource body) {
+    private void validateBeforePatch(final LoginContext originalLoginContext, final HsProfileEntity current, final ProfilePatchResource body) {
+        validateReferencedPersonToBeRepresentedByLoginUserPerson(originalLoginContext, current);
+
         if (!context.isGlobalAdmin() && !current.isActive() && body.getActive())
             throw new ForbiddenException("Only global admins are allowed to activate an inactive profile");
     }
 
-    private void validateOnCreate(final HsProfileEntity newProfileEntity) {
-        validateReferencedPersonToBeRepresentedByLoginUserPerson(newProfileEntity);
+    private void validateOnCreate(final LoginContext originalLoginContext, final HsProfileEntity newProfileEntity) {
+        validateReferencedPersonToBeRepresentedByLoginUserPerson(originalLoginContext, newProfileEntity);
         validateNormalUsersOnlyAccessPublicScopes(newProfileEntity);
         validateNaturalPersonRequirementOfScopes(newProfileEntity);
     }
@@ -208,20 +219,16 @@ public class HsProfileController implements ProfileApi {
         validateOwnHsadminProfileMustNotBeRemoved(profileEntity);
     }
 
-    private void validateReferencedPersonToBeRepresentedByLoginUserPerson(final HsProfileEntity newProfileEntity) {
-        if (context.isGlobalAdmin()) {
+    private void validateReferencedPersonToBeRepresentedByLoginUserPerson(final LoginContext originalLoginContext, final HsProfileEntity profileEntity) {
+        if (originalLoginContext.isGlobalAdmin) {
             return;
         }
-        val referredPersonUuid = newProfileEntity.getPerson().getUuid();
-        val currentSubjectUuid = context.fetchCurrentSubjectUuid();
-        val loginPersonUuid = profileRepo.findByUuid(currentSubjectUuid)
-                .map(HsProfileEntity::getPerson)
-                .map(HsOfficePerson::getUuid)
-                .orElseThrow();
+        val referredPersonUuid = profileEntity.getPerson().getUuid();
+        val loginPersonUuid = originalLoginContext.profile.getPerson().getUuid();
         val representedPersonUuids = realPersonRepo.findPersonsRepresentedByPersonWithUuid(loginPersonUuid)
                 .stream().map(HsOfficePerson::getUuid).toList();
         if ( !representedPersonUuids.contains(referredPersonUuid)) {
-            throw new ValidationException(
+            throw new ForbiddenException(
                     messageTranslator.translate(
                             "profile.access-denied-to-person-with-uuid-{0}-not-represented-by-currently-logged-in-person",
                             loginPersonUuid));
@@ -233,7 +240,7 @@ public class HsProfileController implements ProfileApi {
                 .filter(c -> !c.isPublicAccess() && !context.isGlobalAdmin() )
                 .toList();
         if (!forbiddenScopes.isEmpty()) {
-            throw new ValidationException(
+            throw new ForbiddenException(
                     messageTranslator.translate(
                             "profile.access-denied-for-scopes-{0}",
                             toDisplay(forbiddenScopes)
@@ -330,7 +337,19 @@ public class HsProfileController implements ProfileApi {
     }
 
     final BiConsumer<ProfileInsertResource, HsProfileEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        val person = realPersonRepo.findByUuid(resource.getPersonUuid()).orElseThrow(
+
+        Validate.validate("person, person.uuid").exactlyOne(resource.getPerson(), resource.getPersonUuid());
+        if ( resource.getPersonUuid() != null) {
+            entity.setPerson(realPersonRepo.findByUuid(resource.getPersonUuid()).orElseThrow(
+                    () -> new NoSuchElementException("cannot find Person by 'person.uuid': " + resource.getPersonUuid())
+            ));
+        } else {
+            entity.setPerson(realPersonRepo.save(
+                    mapper.map(resource.getPerson(), HsOfficePersonRealEntity.class)
+            ) );
+        }
+
+        val person = realPersonRepo.findByUuid(entity.getPerson().getUuid()).orElseThrow(
                 () -> new EntityNotFoundException(
                         messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", resource.getPersonUuid())
                 )
@@ -339,4 +358,18 @@ public class HsProfileController implements ProfileApi {
         entity.setScopes(scopeMapper.mapProfileToScopeEntities(resource.getScopes()));
         entity.setPassword(resource.getPassword());
     };
+
+    @AllArgsConstructor
+    private class LoginContext {
+        final HsProfileEntity profile;
+        final boolean isGlobalAdmin;
+
+        public LoginContext(final Context context) {
+            val subjectUuid = context.fetchCurrentSubjectUuid();
+            profile = profileRepo.findByUuid(subjectUuid)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                    "subject " + context.fetchCurrentSubject() + " has no profile"));
+            isGlobalAdmin = context.isGlobalAdmin();
+        }
+    }
 }

@@ -51,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 
 class HsOfficeScenarioTests extends ScenarioTest {
 
@@ -104,8 +105,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("officePhoneNumber", "+49 40 654321-0")
                     .given("emailAddress", "hamburg@test-ag.example.org")
                     .given("registrationOffice", "Registergericht Hamburg")
-                    .given("registrationNumber", "1234567")
-                    .doRun()
+                    .given("registrationNumber", "1234567").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -132,8 +132,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("emailAddress", "michelle.matthieu@example.org")
                     .given("birthday", "1951-03-25")
                     .given("birthPlace", "Neustadt a.d.R.")
-                    .given("birthName", "Eichbaum")
-                    .doRun()
+                    .given("birthName", "Eichbaum").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -155,8 +154,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                                             "country": "Germany"
                                     """)
                     .given("representativePhoneNumber", "+49 40 123456")
-                    .given("representativeEMailAddress", "tracy.trust@example.org")
-                    .doRun()
+                    .given("representativeEMailAddress", "tracy.trust@example.org").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -170,8 +168,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("operationsContactFamilyName", "Krause")
                     .given("operationsContactGivenName", "Dennis")
                     .given("operationsContactPhoneNumber", "+49 9932 587741")
-                    .given("operationsContactEMailAddress", "dennis.krause@example.org")
-                    .doRun()
+                    .given("operationsContactEMailAddress", "dennis.krause@example.org").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -180,16 +177,14 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Operations-Contact: Dennis Krause for Test AG")
         void shouldRemoveOperationsContactFromPartner() {
             new RemoveOperationsContactFromPartner(scenarioTest)
-                    .given("operationsContactPerson", "Dennis Krause")
-                    .doRun();
+                    .given("operationsContactPerson", "Dennis Krause").thenExpect(HttpStatus.OK);
         }
 
         @Test
         @Order(1090)
         void shouldDeletePartner() {
             new DeletePartner(scenarioTest)
-                    .given("partnerNumber", "P-31020")
-                    .doRun();
+                    .given("partnerNumber", "P-31020").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -204,8 +199,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldAmendContactData() {
             new AmendContactData(scenarioTest)
                     .given("partnerName", "Matthieu")
-                    .given("newEmailAddress", "michelle@matthieu.example.org")
-                    .doRun();
+                    .given("newEmailAddress", "michelle@matthieu.example.org").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -215,8 +209,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new AddPhoneNumberToContactData(scenarioTest)
                     .given("partnerName", "Matthieu")
                     .given("phoneNumberKeyToAdd", "mobile")
-                    .given("phoneNumberToAdd", "+49 152 1234567")
-                    .doRun();
+                    .given("phoneNumberToAdd", "+49 152 1234567").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -225,8 +218,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldRemovePhoneNumberFromContactData() {
             new RemovePhoneNumberFromContactData(scenarioTest)
                     .given("partnerName", "Matthieu")
-                    .given("phoneNumberKeyToRemove", "office")
-                    .doRun();
+                    .given("phoneNumberKeyToRemove", "office").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -247,8 +239,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                                              "country": "China"
                                     """)
                     .given("newOfficePhoneNumber", "++15 999 654321")
-                    .given("newEmailAddress", "norden@test-ag.example.org")
-                    .doRun();
+                    .given("newEmailAddress", "norden@test-ag.example.org").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -263,8 +254,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldUpdatePersonData() {
             new ShouldUpdatePersonData(scenarioTest)
                     .given("oldFamilyName", "Matthieu")
-                    .given("newFamilyName", "Matthieu-Zhang")
-                    .doRun();
+                    .given("newFamilyName", "Matthieu-Zhang").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -278,14 +268,14 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Partner: P-31011 - Michelle Matthieu")
         @Produces("Debitor: D-3101100 - Michelle Matthieu")
         void shouldCreateSelfDebitorForPartnerWithIdenticalContactData() {
+            // TODO.impl: could be assigned automatically but is not yet
             new CreateSelfDebitorForPartnerWithIdenticalContactData(scenarioTest)
                     .given("partnerNumber", "P-31011")
                     .given("debitorNumberSuffix", "00") // TODO.impl: could be assigned automatically but is not yet
                     .given("billable", true)
                     .given("vatBusiness", false)
                     .given("vatReverseCharge", false)
-                    .given("defaultPrefix", "mim")
-                    .doRun()
+                    .given("defaultPrefix", "mim").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -294,6 +284,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Partner: P-31010 - Test AG")
         @Produces("Debitor: D-3101000 - Test AG - main debitor")
         void shouldCreateSelfDebitorForPartnerWithDistinctContactData() {
+            // TODO.impl: could be assigned automaticallybut is not yet
             new CreateSelfDebitorForPartner(scenarioTest)
                     .given("partnerPersonTradeName", "Test AG")
                     .given("billingContactCaption", "Test AG - billing department")
@@ -304,8 +295,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("vatCountryCode", "DE")
                     .given("vatBusiness", true)
                     .given("vatReverseCharge", false)
-                    .given("defaultPrefix", "tst")
-                    .doRun()
+                    .given("defaultPrefix", "tst").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -324,8 +314,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("vatCountryCode", "DE")
                     .given("vatBusiness", true)
                     .given("vatReverseCharge", false)
-                    .given("defaultPrefix", "tsx")
-                    .doRun()
+                    .given("defaultPrefix", "tsx").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -344,8 +333,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("vatCountryCode", "DE")
                     .given("vatBusiness", true)
                     .given("vatReverseCharge", false)
-                    .given("defaultPrefix", "tsy")
-                    .doRun()
+                    .given("defaultPrefix", "tsy").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -356,8 +344,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldDeleteDebitor() {
             new DeleteDebitor(scenarioTest)
                     .given("partnerNumber", "P-31020")
-                    .given("debitorSuffix", "02")
-                    .doRun();
+                    .given("debitorSuffix", "02").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -367,8 +354,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldNotDeleteDefaultDebitor() {
             new DontDeleteDefaultDebitor(scenarioTest)
                     .given("partnerNumber", "P-31010")
-                    .given("debitorSuffix", "00")
-                    .doRun();
+                    .given("debitorSuffix", "00").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -382,6 +368,9 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Debitor: D-3101000 - Test AG - main debitor")
         @Produces("SEPA-Mandate: Test AG")
         void shouldCreateSepaMandateForDebitor() {
+            // existing debitor
+            // new sepa-mandate
+            // new bank-account
             new CreateSepaMandateForDebitor(scenarioTest)
                     // existing debitor
                     .given("debitorNumber", "D-3101000")
@@ -394,8 +383,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     // new bank-account
                     .given("bankAccountHolder", "Test AG - debit bank account")
                     .given("bankAccountIBAN", "DE02701500000000594937")
-                    .given("bankAccountBIC", "SSKMDEMM")
-                    .doRun()
+                    .given("bankAccountBIC", "SSKMDEMM").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -405,8 +393,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldInvalidateSepaMandateForDebitor() {
             new InvalidateSepaMandateForDebitor(scenarioTest)
                     .given("bankAccountIBAN", "DE02701500000000594937")
-                    .given("mandateValidTo", "2025-09-30")
-                    .doRun();
+                    .given("mandateValidTo", "2025-09-30").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -414,8 +401,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("SEPA-Mandate: Test AG")
         void shouldFinallyDeleteSepaMandateForDebitor() {
             new FinallyDeleteSepaMandateForDebitor(scenarioTest)
-                    .given("bankAccountIBAN", "DE02701500000000594937")
-                    .doRun();
+                    .given("bankAccountIBAN", "DE02701500000000594937").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -433,8 +419,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("partnerName", "Test AG")
                     .given("validFrom", "2020-10-15")
                     .given("newStatus", "ACTIVE")
-                    .given("membershipFeeBillable", "true")
-                    .doRun()
+                    .given("membershipFeeBillable", "true").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -446,8 +431,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new CancelMembership(scenarioTest)
                     .given("memberNumber", "M-3101000")
                     .given("validTo", "2023-12-31")
-                    .given("newStatus", "CANCELLED")
-                    .doRun()
+                    .given("newStatus", "CANCELLED").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -461,8 +445,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("memberNumberSuffix", "01")
                     .given("validFrom", "2025-02-24")
                     .given("newStatus", "ACTIVE")
-                    .given("membershipFeeBillable", "true")
-                    .doRun()
+                    .given("membershipFeeBillable", "true").thenExpect(HttpStatus.OK)
                     .keep();
         }
     }
@@ -482,8 +465,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "sign 2024-01-15")
                     .given("shareCount", 100)
                     .given("comment", "Signing the Membership")
-                    .given("transactionDate", "2024-01-15")
-                    .doRun();
+                    .given("transactionDate", "2024-01-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -493,8 +475,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new CreateCoopSharesRevertTransaction(scenarioTest)
                     .given("memberNumber", "M-3101000")
                     .given("comment", "reverting some incorrect transaction")
-                    .given("dateOfIncorrectTransaction", "2024-02-15")
-                    .doRun();
+                    .given("dateOfIncorrectTransaction", "2024-02-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -507,8 +488,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "cancel 2024-01-15")
                     .given("sharesToCancel", 8)
                     .given("comment", "Cancelling 8 Shares")
-                    .given("transactionDate", "2024-02-15")
-                    .doRun();
+                    .given("transactionDate", "2024-02-15").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -527,8 +507,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "sign 2024-01-15")
                     .given("assetValue", 100 * 64)
                     .given("comment", "disposal for initial shares")
-                    .given("transactionDate", "2024-01-15")
-                    .doRun();
+                    .given("transactionDate", "2024-01-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -538,8 +517,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new CreateCoopAssetsRevertSimpleTransaction(scenarioTest)
                     .given("memberNumber", "M-3101000")
                     .given("comment", "reverting some incorrect transaction")
-                    .given("dateOfIncorrectTransaction", "2024-02-15")
-                    .doRun();
+                    .given("dateOfIncorrectTransaction", "2024-02-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -552,8 +530,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "cancel 2024-01-15")
                     .given("valueToDisburse", 8 * 64)
                     .given("comment", "disbursal according to shares cancellation")
-                    .given("transactionDate", "2024-02-15")
-                    .doRun();
+                    .given("transactionDate", "2024-02-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -567,8 +544,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "transfer 2024-12-31")
                     .given("valueToTransfer", 2 * 64)
                     .given("comment", "transfer assets from M-3101000 to M-4303000")
-                    .given("transactionDate", "2024-12-31")
-                    .doRun();
+                    .given("transactionDate", "2024-12-31").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -580,8 +556,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("adoptingMemberNumber", "M-4303000")
                     .given("transferredValue", 2 * 64)
                     .given("comment", "reverting some incorrect transfer transaction")
-                    .given("dateOfIncorrectTransaction", "2024-02-15")
-                    .doRun();
+                    .given("dateOfIncorrectTransaction", "2024-02-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -593,8 +568,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "cancel 2024-01-15")
                     .given("valueToClear", 2 * 64)
                     .given("comment", "clearing according to members debt")
-                    .given("transactionDate", "2024-02-15")
-                    .doRun();
+                    .given("transactionDate", "2024-02-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -606,8 +580,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "cancel 2024-01-15")
                     .given("valueLost", 2 * 64)
                     .given("comment", "assign balance sheet loss")
-                    .given("transactionDate", "2024-02-15")
-                    .doRun();
+                    .given("transactionDate", "2024-02-15").thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -619,8 +592,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("reference", "cancel 2024-01-15")
                     .given("valueForLimitation", 2 * 64)
                     .given("comment", "adjust coop ")
-                    .given("transactionDate", "2024-02-15")
-                    .doRun();
+                    .given("transactionDate", "2024-02-15").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -634,14 +606,14 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Person: Test AG")
         @Produces("Subscription: Michael Miller to operations-announce")
         void shouldSubscribeNewPersonAndContactToMailinglist() {
+            // TODO.spec: do we need the personType? or is an operational contact always a natural person? what about distribution lists?
             new SubscribeNewPersonAndContactToMailinglist(scenarioTest)
                     // TODO.spec: do we need the personType? or is an operational contact always a natural person? what about distribution lists?
                     .given("partnerPersonTradeName", "Test AG")
                     .given("subscriberFamilyName", "Miller")
                     .given("subscriberGivenName", "Michael")
                     .given("subscriberEMailAddress", "michael.miller@example.org")
-                    .given("mailingList", "operations-announce")
-                    .doRun()
+                    .given("mailingList", "operations-announce").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -655,8 +627,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("subscriberFamilyName", "Miller")
                     .given("subscriberGivenName", "Michael")
                     .given("subscriberEMailAddress", "michael.miller@example.org")
-                    .given("mailingList", "operations-discussion")
-                    .doRun()
+                    .given("mailingList", "operations-discussion").thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -666,8 +637,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldUnsubscribePersonAndContactFromMailinglist() {
             new UnsubscribeFromMailinglist(scenarioTest)
                     .given("mailingList", "operations-announce")
-                    .given("subscriberEMailAddress", "michael.miller@example.org")
-                    .doRun();
+                    .given("subscriberEMailAddress", "michael.miller@example.org").thenExpect(HttpStatus.OK);
         }
     }
 
@@ -694,8 +664,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                                     "country": "Germany"
                                     """)
                     .given("communityOfHeirsOfficePhoneNumber", "+49 40 666666")
-                    .given("communityOfHeirsEmailAddress", "lena.stadland@example.org")
-                    .doRun();
+                    .given("communityOfHeirsEmailAddress", "lena.stadland@example.org").thenExpect(HttpStatus.OK);
         }
     }
 }

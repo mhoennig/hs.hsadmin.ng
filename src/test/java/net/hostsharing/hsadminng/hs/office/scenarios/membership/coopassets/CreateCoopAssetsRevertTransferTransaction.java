@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.resolveTyped;
 
 public class CreateCoopAssetsRevertTransferTransaction extends CreateCoopAssetsTransaction {
@@ -41,7 +42,7 @@ public class CreateCoopAssetsRevertTransferTransaction extends CreateCoopAssetsT
         given("negativeAssetValue", resolveTyped("%{transferredValue}", BigDecimal.class).negate());
 
         verify("Verify Reverted Coop-Assets TRANSFER-Transaction",
-                () -> httpGet("/api/hs/office/coopassetstransactions/" + revertedAssetTxUuid)
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/coopassetstransactions/" + revertedAssetTxUuid)
                         .expecting(HttpStatus.OK).expecting(ContentType.JSON),
                 path("assetValue").contains("%{negativeAssetValue}"),
                 path("comment").contains("%{comment}"),
@@ -51,7 +52,7 @@ public class CreateCoopAssetsRevertTransferTransaction extends CreateCoopAssetsT
         final var adoptionAssetTxUuid = response.getFromBody("revertedAssetTx.['adoptionAssetTx.uuid']");
 
         verify("Verify Related Coop-Assets ADOPTION-Transaction Also Got Reverted",
-                () -> httpGet("/api/hs/office/coopassetstransactions/" + adoptionAssetTxUuid)
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/coopassetstransactions/" + adoptionAssetTxUuid)
                         .expecting(HttpStatus.OK).expecting(ContentType.JSON),
                 path("reversalAssetTx.['transferAssetTx.uuid']").contains(revertedAssetTxUuid.toString())
         );

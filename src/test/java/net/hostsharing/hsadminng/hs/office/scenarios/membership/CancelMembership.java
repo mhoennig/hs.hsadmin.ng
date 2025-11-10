@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static org.springframework.http.HttpStatus.OK;
 
 public class CancelMembership extends UseCase<CancelMembership> {
@@ -18,12 +19,12 @@ public class CancelMembership extends UseCase<CancelMembership> {
     protected HttpResponse run() {
 
         obtain("Membership: %{memberNumber}", () ->
-                httpGet("/api/hs/office/memberships/%{memberNumber}"),
+                httpGet(asGlobalAgent(), "/api/hs/office/memberships/%{memberNumber}"),
                 response -> response.getFromBody("uuid")
         );
 
         return withTitle("Patch the New Status Into the Membership", () ->
-                httpPatch("/api/hs/office/memberships/%{Membership: %{memberNumber}}", usingJsonBody("""
+                httpPatch(asGlobalAgent(), "/api/hs/office/memberships/%{Membership: %{memberNumber}}", usingJsonBody("""
                 {
                    "validTo": ${validTo},
                    "status": ${newStatus}
@@ -37,7 +38,7 @@ public class CancelMembership extends UseCase<CancelMembership> {
     protected void verify(final UseCase<CancelMembership>.HttpResponse response) {
         verify(
                 "Verify That the Membership Got Cancelled",
-                () -> httpGet("/api/hs/office/memberships/%{Membership: %{memberNumber}}")
+                () -> httpGet(asGlobalAgent(), "/api/hs/office/memberships/%{Membership: %{memberNumber}}")
                         .expecting(OK).expecting(JSON),
                 path("validTo").contains("%{validTo}"),
                 path("status").contains("CANCELLED")

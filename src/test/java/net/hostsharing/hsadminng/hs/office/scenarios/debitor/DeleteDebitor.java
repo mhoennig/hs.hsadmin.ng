@@ -4,6 +4,8 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import org.springframework.http.HttpStatus;
 
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
+
 public class DeleteDebitor extends UseCase<DeleteDebitor> {
 
     public DeleteDebitor(final ScenarioTest testSuite) {
@@ -24,10 +26,9 @@ public class DeleteDebitor extends UseCase<DeleteDebitor> {
 
     @Override
     protected HttpResponse run() {
-        withTitle("Delete the Debitor using its UUID", () ->
-            httpDelete("/api/hs/office/debitors/&{Debitor: Test AG - delete debitor}")
+        return withTitle("Delete the Debitor using its UUID", () ->
+            httpDelete(asGlobalAgent(), "/api/hs/office/debitors/&{Debitor: Test AG - delete debitor}")
                 .expecting(HttpStatus.NO_CONTENT)
         );
-        return null;
     }
 }
