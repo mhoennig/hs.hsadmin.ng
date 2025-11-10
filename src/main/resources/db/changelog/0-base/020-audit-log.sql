@@ -146,11 +146,12 @@ begin
                                values (curTxId, tableSchemaAndName,
                                        old.uuid, tg_op::base.tx_operation,
                                        base.jsonb_changes_delta(to_jsonb(old), to_jsonb(new)));
+        -- TODO.test: Auditlog testen
         when 'DELETE' then insert
                                into base.tx_journal
                                values (curTxId,tableSchemaAndName,
                                        old.uuid, 'DELETE'::base.tx_operation,
-                                       null::jsonb);
+                                       to_jsonb(old));
         else raise exception 'Trigger op % not supported for %.', tg_op, tableSchemaAndName;
         end case;
     return null;
