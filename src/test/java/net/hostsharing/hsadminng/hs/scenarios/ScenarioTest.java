@@ -274,17 +274,11 @@ public abstract class ScenarioTest extends ContextBasedTest {
             //noinspection unchecked
             return (T) new BigDecimal(resolvedValue);
         }
+        if (valueType == Integer.class) {
+            //noinspection unchecked
+            return (T) Integer.valueOf(resolvedValue);
+        }
         //noinspection unchecked
         return (T) resolvedValue;
-    }
-
-    public static <T> T getTypedVariable(final String varName, final Class<T> expectedValueClass) {
-        final var value = knowVariables().get(varName);
-        if (value != null && !expectedValueClass.isAssignableFrom(value.getClass())) {
-            throw new IllegalArgumentException("variable '" + varName + "'" +
-                    " expected to be of type " + expectedValueClass + " " +
-                    " but got " + value.getClass());
-        }
-        return (T) value;
     }
 }

@@ -87,20 +87,27 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
     # if the container has been built already and you want to keep the data, run this:
     pg-sql-start
 
-Next, compile and run the application with in dev-mode with all modules, test-data and fake-JWT-authentication::
+Next, compile and run the application with in dev-mode with all modules, test-data and fake-JWT-authentication usind the `gw-bootRun` alias:
 
     # on `localhost:8080` and the management server on `localhost:8081`:
     gw-bootRun
 
-    # there is also an alias which takes an optional port as an argument:
-    gw-bootRun 8888
+    # you can also pass optional arguments:
+    gw-bootRun 8888 # will set the management port to 8888+1 = 8889
+    gw-bootRun 8888 9999 # with explicit management port 9999
 
-The meaning of these profiles is:
+At the beginning of the output, you'll see the full `./gradlew`-call like this:
+
+```
++ ./gradlew bootRun '--args=--spring.profiles.active=dev,fake-jwt,complete,test-data --server.port=8080 --management.server.port=8081'
+```
+
+The meaning of the listed profiles is:
 
 - **dev**: the PostgreSQL users are created via Liquibase
 - **fake-jwt**: the app starts with a build-in fake OAuth2/JWT server
-- **complete**: all modules are started
-- **test-data**: some test data inserted 
+- **complete**: all modules (rbac, office, account, hosting) are started
+- **test-data**: some test data gets inserted at startup 
 
 Now we can access the REST API, e.g. using curl. But you need to use JWT authentication.
 To make this a bit easier to handle, we use `bin/jwt-curl` (or `jwt-curl` alias).
@@ -130,7 +137,7 @@ Make sure you replace `8080` with the port you used to run the application.`
 
     # the following command should return a JSON array with just all customers:
     jwt-curl GET http://localhost:8080/api/test/customers \
-    | jq # just if `jq` is installed, to prettyprint the output
+    | jq` # just if `jq` is installed, to prettyprint the output
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
     jwt-curl ASSUME 'rbactest.customer#yyy:ADMIN'
@@ -138,7 +145,7 @@ Make sure you replace `8080` with the port you used to run the application.`
     | jq
     jwt-curl UNASSUME
 
-    # add a new customer
+    # add a new customer (this is a test-are, not to confuse with a Hostsharing partner)
     jwt-curl POST \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
         http://localhost:8080/api/test/customers \
@@ -177,14 +184,14 @@ But the easiest way to run PostgreSQL is via Docker.
 
 Initially, pull an image compatible to the current PostgreSQL version of Hostsharing:
 
-    docker pull postgres:15.5-bookworm 
+    docker pull postgres:17.7-trixie 
 
 <big>**&#9888;**</big>
 If we switch the version, please also amend the documentation as well as the aliases file. Thanks! 
 
 Create and run a container with the given PostgreSQL version:
 
-    docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15.5-bookworm
+    docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:17.7-trixie
 
     # or via alias: 
     pg-sql-run
@@ -705,14 +712,15 @@ These profiles mean:
 
 ### How to Run the Application in a Debugger
 
-Add `' --debug-jvm` to the command line:
-
+Add `'-- --debug-jvm` to the command line ('...' stands any other args).
+The `--debug-jvm` is a so-called *Gradle side knob, which goes outside of the `--args="..."` application arguments,
+thus we separate it by `--`; this is treated by the `gw-bootRun` alias.
 
 ```sh
-gw bootRun ... --debug-jvm
+gw-bootRun ... -- --debug-jvm
 ```
 
-At the very beginning, the application is going to wait for a debugger with a message like this:
+In the very beginning, the application is going to wait for a debugger with a message like this:
 
 > Listening for transport dt_socket at address: 5005
 

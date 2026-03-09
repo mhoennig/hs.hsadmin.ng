@@ -1,0 +1,29 @@
+classDiagram
+    direction LR
+
+OfficePerson "1" o.. "*" Account
+Account "1" o-- "1" RbacSubject
+
+class Account{
+    -globalUid: int [w/o]
+    -globalGid: int [w/o]
+}
+
+class RbacSubject{
+    +uuid: uuid
+    +name: text # == subjectName
+}
+
+class OfficePerson{
+    +type: enum
+    +tradename: text
+    +title: text
+    +familyName: text
+    +givenName: text
+    +salutation: text
+}
+
+style Account fill:#00f,color:#fff
+
+style RbacSubject fill:#f96,color:#fff
+style OfficePerson fill:#f66,color:#000

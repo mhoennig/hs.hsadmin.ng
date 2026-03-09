@@ -2,7 +2,7 @@ get:
     summary: Currently logged in user data.
     description: Returns information about the currently logged in user.
     tags:
-        - profile
+        - account
     operationId: getCurrentLoginUser
     responses:
         "200":
@@ -10,7 +10,7 @@ get:
             content:
                 'application/json':
                     schema:
-                        $ref: 'profile-schemas.yaml#/components/schemas/CurrentLoginUser'
+                        $ref: 'account-schemas.yaml#/components/schemas/CurrentLoginUser'
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":

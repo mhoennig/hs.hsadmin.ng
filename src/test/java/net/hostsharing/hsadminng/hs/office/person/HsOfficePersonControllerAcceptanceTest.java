@@ -72,6 +72,21 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .body("", hasSize(17));
                 // @formatter:on
         }
+        @Test
+        void globalAdmin_withoutAssumedRoles_canViewAllPersons_byNameAndPersonType() {
+
+            RestAssured // @formatter:off
+                    .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/office/persons")
+                    .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasSize(17));
+            // @formatter:on
+        }
     }
 
     @Nested

@@ -126,7 +126,7 @@ public final class Stringify<B> {
     private class Property<B, V> {
         String name;
         Function<B, V> getter;
-        Function<V, ?> mapper; // FIXME: better generics?
+        Function<V, ?> mapper; // TODO.impl: better generics?
 
         Property(String name, Function<B, V> getter) {
             this(name, getter, v -> v);

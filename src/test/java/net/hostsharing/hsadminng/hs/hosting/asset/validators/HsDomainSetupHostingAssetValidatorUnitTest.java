@@ -360,8 +360,9 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
     @Test
     void rejectSetupOfUnregisteredSubdomainOfUnregisteredSuperDomain() {
-        domainSetupFor("sub.sub.example.org").notRegistered()
-                .isRejectedWithCauseDomainNameNotFound("sub.example.org");
+        Dns.fakeResultForDomain("unreg.example.org", DOMAIN_NOT_REGISTERED);
+        domainSetupFor("sub.unreg.example.org").notRegistered()
+                .isRejectedWithCauseDomainNameNotFound("unreg.example.org");
     }
 
     @Test

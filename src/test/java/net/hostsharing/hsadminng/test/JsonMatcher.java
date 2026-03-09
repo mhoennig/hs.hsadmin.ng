@@ -45,11 +45,13 @@ public class JsonMatcher extends BaseMatcher<CharSequence> {
 
     @Override
     public boolean matches(final Object actual) {
-        if (actual == null || actual.getClass().isAssignableFrom(CharSequence.class)) {
+        if (actual == null) {
             return false;
         }
         try {
-            final var actualJson = new ObjectMapper().enable(INDENT_OUTPUT).writeValueAsString(actual);
+            var actualJson = (actual instanceof CharSequence)
+                    ? actual.toString()
+                    : new ObjectMapper().enable(INDENT_OUTPUT).writeValueAsString(actual);
             JSONAssert.assertEquals(expectedJson, actualJson, compareMode);
             return true;
         } catch (final JSONException | JsonProcessingException e) {

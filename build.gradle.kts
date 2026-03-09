@@ -29,6 +29,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.5"
     id("io.spring.dependency-management") version "1.1.7"        // manages implicit dependencies
+    id("com.gorylenko.gradle-git-properties") version "2.5.0"     // exposes git commit info via Actuator info endpoint
     id("io.openapiprocessor.openapi-processor") version "2023.2" // generates Controller-interface and resources from API-spec
     id("com.github.jk1.dependency-license-report") version "2.9" // checks dependency-license compatibility
     id("org.owasp.dependencycheck") version "12.1.1"             // checks dependencies for known vulnerabilities
@@ -37,6 +38,10 @@ plugins {
     id("info.solidsoft.pitest") version "1.15.0"                 // performs mutation testing
     id("se.patrikerdes.use-latest-versions") version "0.2.18"    // updates module and plugin versions
     id("com.github.ben-manes.versions") version "0.52.0"         // determines which dependencies have updates
+}
+
+springBoot {
+    buildInfo()
 }
 
 // HOWTO: find out which dependency versions are managed by Spring Boot:
@@ -701,4 +706,17 @@ tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     }
     // Or always enable debug (remove the if condition)
     // jvmArgs = listOf("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
+}
+
+// Generate git.properties for Spring Boot Actuator /actuator/info
+gitProperties {
+    // Keep output small but useful for build identification
+    keys = listOf(
+        "git.commit.id",
+        "git.commit.id.abbrev",
+        "git.branch",
+        "git.commit.time"
+    )
+    // Allow builds from exported sources without .git
+    failOnNoGitDirectory = false
 }

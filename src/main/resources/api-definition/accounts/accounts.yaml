@@ -1,9 +1,9 @@
 get:
-    summary: Returns a list of all  profile.
-    description: Returns the list of all profile which are visible to the current subject or any of it's assumed roles.
+    summary: Returns a list of all  account.
+    description: Returns the list of all account which are visible to the current subject or any of it's assumed roles.
     tags:
-        - profile
-    operationId: getListOfProfile
+        - account
+    operationId: getListIfAccount
     parameters:
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUuid
@@ -12,7 +12,7 @@ get:
           schema:
               type: string
               format: uuid
-          description: The UUID of the person, whose profile are to be fetched. Or null, if all profile of the login-use should be fetched.
+          description: The UUID of the person, whose account are to be fetched. Or null, if all account of the login-use should be fetched.
     responses:
         "200":
             description: OK
@@ -21,31 +21,31 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: 'profile-schemas.yaml#/components/schemas/Profile'
+                            $ref: 'account-schemas.yaml#/components/schemas/Account'
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
-    summary: Adds a new  profile.
+    summary: Adds a new  account.
     tags:
-        - profile
-    operationId: postNewProfile
+        - account
+    operationId: postNewAccount
     requestBody:
         description: A JSON object describing the new  credential.
         required: true
         content:
             application/json:
                 schema:
-                    $ref: 'profile-schemas.yaml#/components/schemas/ProfileInsert'
+                    $ref: 'account-schemas.yaml#/components/schemas/AccountInsert'
     responses:
         "201":
             description: Created
             content:
                 'application/json':
                     schema:
-                        $ref: 'profile-schemas.yaml#/components/schemas/Profile'
+                        $ref: 'account-schemas.yaml#/components/schemas/Account'
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":

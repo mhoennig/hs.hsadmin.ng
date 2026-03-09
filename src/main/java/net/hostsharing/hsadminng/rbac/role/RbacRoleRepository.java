@@ -24,6 +24,19 @@ public interface RbacRoleRepository extends Repository<RbacRoleEntity, UUID> {
     @Timed("app.rbac.roles.repo.findByRoleName")
     RbacRoleEntity findByRoleName(String roleName);
 
+    @Timed("app.rbac.roles.repo.findByObjectUuidAndRoleType")
+    @Query(value = """
+        SELECT rev.*, rev.objectTable||'#'||rev.objectIdName||':'||rev.roleType AS roleName
+        FROM rbac.role_rv rev
+        WHERE rev.objectuuid = :objectUuid
+          AND rev.roletype = cast(:roleType as rbac.roletype)
+        """, nativeQuery = true)
+    RbacRoleEntity findByObjectUuidAndRoleType(UUID objectUuid, String roleType);
+
+    default RbacRoleEntity findByObjectUuidAndRoleType(UUID objectUuid, RbacRoleType roleType) {
+        return findByObjectUuidAndRoleType(objectUuid, roleType.name());
+    }
+
     @Timed("app.rbac.roles.repo.fetchAssumedRoles")
     @Query(value = """
         SELECT rev.*, rev.objectTable||'#'||rev.objectIdName||':'||rev.roleType AS roleName

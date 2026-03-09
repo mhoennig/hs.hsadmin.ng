@@ -9,23 +9,19 @@ import org.springframework.http.HttpStatus;
 import static io.restassured.http.ContentType.JSON;
 import static org.springframework.http.HttpStatus.OK;
 
-public class CreateProfileForNewPerson extends BaseProfileUseCase<CreateProfileForNewPerson> {
+public class CreateAccountForNewPerson extends BaseAccountUseCase<CreateAccountForNewPerson> {
 
-    public CreateProfileForNewPerson(final ScenarioTest testSuite, final FakeLoginUser asLoginUser) {
+    public CreateAccountForNewPerson(final ScenarioTest testSuite, final FakeLoginUser asLoginUser) {
         super(testSuite, asLoginUser);
 
-        introduction("A set of profile contains the login data for an RBAC subject.");
+        introduction("An account combines an RBAC subject with a natural person and thus grant's access to data in hsadmin-NG.");
     }
 
     @Override
     protected HttpResponse run() {
 
-        given("resolvedScopes",
-            fetchScopeResourcesByDescriptorPairs("scopes")
-        );
-
-        return obtain("newProfile", () ->
-            httpPost(asLoginUser, "/api/hs/accounts/profiles", usingJsonBody("""
+        return obtain("newAccount", () ->
+            httpPost(asLoginUser, "/api/hs/accounts/accounts", usingJsonBody("""
                 {
                      "person": {
                          "personType": "NATURAL_PERSON",
@@ -34,16 +30,9 @@ public class CreateProfileForNewPerson extends BaseProfileUseCase<CreateProfileF
                          "givenName": ${personGivenName},
                          "familyName": ${personFamilyName}
                      },
-                     "nickname": ${nickname},
-                     "emailAddress": ${emailAddress},
-                     "smsNumber": ${smsNumber},
-                     "password": ${password},
-                     "totpSecrets": @{totpSecrets},
-                     "phonePassword": ${phonePassword},
+                     "subjectName": ${subjectName},
                      "globalUid": %{globalUid},
-                     "globalGid": %{globalGid},
-                     "active": %{active},
-                     "scopes": @{resolvedScopes}
+                     "globalGid": %{globalGid}
                 }
                 """))
                 .expecting(HttpStatus.CREATED).expecting(ContentType.JSON)
@@ -51,7 +40,7 @@ public class CreateProfileForNewPerson extends BaseProfileUseCase<CreateProfileF
     }
 
     @Override
-    protected void verify(final UseCase<CreateProfileForNewPerson>.HttpResponse response) {
+    protected void verify(final UseCase<CreateAccountForNewPerson>.HttpResponse response) {
         obtain("Person: %{personGivenName} %{personFamilyName}", () ->
                         httpGet(asLoginUser, "/api/hs/office/persons?name=%{personFamilyName}")
                                 .expecting(OK).expecting(JSON),
@@ -60,13 +49,12 @@ public class CreateProfileForNewPerson extends BaseProfileUseCase<CreateProfileF
         );
 
         verify(
-                "Verify the new Profile",
-                () -> httpGet(asLoginUser, "/api/hs/accounts/profiles/%{newProfile}")
+                "Verify the new Account",
+                () -> httpGet(asLoginUser, "/api/hs/accounts/accounts/%{newAccount}")
                         .expecting(OK).expecting(JSON),
-                path("uuid").contains("%{newProfile}"),
-                path("nickname").contains("%{nickname}"),
-                path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}"),
-                path("totpSecrets").contains("@{totpSecrets}")
+                path("uuid").contains("%{newAccount}"),
+                path("subjectName").contains("%{subjectName}"),
+                path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}")
         );
     }
 }

@@ -12,6 +12,12 @@ get:
           schema:
               type: string
           description: Prefix of caption to filter the results.
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonType'
+          description: Filter the results by person type.
         - name: representedByPersonUuid
           in: query
           required: false

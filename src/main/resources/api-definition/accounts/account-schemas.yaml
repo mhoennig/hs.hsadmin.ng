@@ -1,0 +1,77 @@
+
+components:
+
+    schemas:
+
+        CurrentLoginUser:
+            type: object
+            properties:
+                subject:
+                    $ref: '../rbac/rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+                person:
+                    $ref: '../hs-office/hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                globalAdmin:
+                    type: boolean
+
+        Account:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                person:
+                    $ref: '../hs-office/hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                subjectName:
+                    type: string
+                    description: "
+                        Two parts separated by a single '-'.
+                        The first part is the Keycloak realm name of 3-9 chars length.
+                        The second part a account name local to that realm, which is 3-32 chars in length.
+                        Each part starts with a lowercase letter and may contain lowercase letters, digits, '.' or '_',
+                        but '.'/'_' must be followed by a letter or digit.
+                        "
+                    pattern: '^[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,8}-[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,31}$'
+                globalUid:
+                    type: number
+                globalGid:
+                    type: number
+            required:
+                - uuid
+                - subjectName
+                - person
+                - globalUid
+                - globalGid
+            additionalProperties: false
+
+        AccountInsert:
+            type: object
+            properties:
+                person.uuid:
+                    type: string
+                    format: uuid
+                person:
+                    $ref: '../hs-office/hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonInsert'
+                subjectName:
+                    type: string
+                    description: "
+                        Two parts separated by a single '-'.
+                        The first part is the Keycloak realm name of 3-9 chars length.
+                        The second part a account name local to that realm, which is 3-32 chars in length.
+                        Each part starts with a lowercase letter and may contain lowercase letters, digits, '.' or '_',
+                        but '.'/'_' must be followed by a letter or digit.
+                        "
+                    pattern: '^[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,8}-[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,31}$'
+                globalUid:
+                    type: number
+                globalGid:
+                    type: number
+            required:
+                - subjectName
+                - globalUid
+                - globalGid
+                # soon we might need to be able to use this:
+                # https://community.smartbear.com/discussions/swaggerostools/defining-conditional-attributes-in-openapi/222410
+                # For now we just describe the conditionally required properties:
+            description:
+                Either `person.uuid` or `person` need to be given.
+            additionalProperties: false

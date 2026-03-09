@@ -2,12 +2,14 @@ package net.hostsharing.hsadminng.hs.office.person;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.mapper.StrictMapper;
-import net.hostsharing.hsadminng.rbac.context.Context;
+import lombok.val;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePersonsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonTypeResource;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
+import net.hostsharing.hsadminng.rbac.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,14 +40,23 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     public ResponseEntity<List<HsOfficePersonResource>> getListOfPersons(
             final String assumedRoles,
             final String name,
+            final HsOfficePersonTypeResource type,
             final UUID representedByPersonUuid) {
         context.assumeRoles(assumedRoles);
 
-        final var entities = representedByPersonUuid != null
-            ? personRepo.findPersonsRepresentedByPersonWithUuid(representedByPersonUuid)
-            : personRepo.findPersonByOptionalNameLike(name);
+        val personType = type != null ? HsOfficePersonType.valueOf(type.name()) : null;
+        // @formatter:off
+        val entities = (
+                representedByPersonUuid != null
+                        ? personRepo.findPersonsRepresentedByPersonWithUuid(representedByPersonUuid)
+                        : personRepo.findPersonByOptionalNameLike(name)
+                ).stream()
+                // TODO.perf: this could be moved into the queries to improve the performance a bit
+                .filter(p -> personType == null || p.getPersonType() == personType)
+                .toList();
+        // @formatter:on
 
-        final var resources = mapper.mapList(entities, HsOfficePersonResource.class);
+        val resources = mapper.mapList(entities, HsOfficePersonResource.class);
         return ResponseEntity.ok(resources);
     }
 

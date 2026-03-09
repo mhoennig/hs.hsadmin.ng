@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 
 import static java.net.URLEncoder.encode;
 import static java.util.stream.Collectors.joining;
+import static net.hostsharing.hsadminng.hs.scenarios.MarkdownTableCellRenderer.toMarkdownTableCell;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
 import static net.hostsharing.hsadminng.test.DebuggerDetection.isDebuggerAttached;
@@ -46,7 +47,7 @@ import static org.junit.platform.commons.util.StringUtils.isNotBlank;
 public abstract class UseCase<T extends UseCase<?>> {
 
     private static final HttpClient client = HttpClient.newHttpClient();
-    private static final int HTTP_TIMEOUT_SECONDS = 20; // FIXME: configurable in environment
+    private static final int HTTP_TIMEOUT_SECONDS = 20; // TODO.test: configurable in environment
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
     protected final ScenarioTest testSuite;
@@ -54,6 +55,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     private final Map<String, Function<String, UseCase<?>>> requirements = new LinkedMap<>();
     private final String resultAlias;
     private final Map<String, Object> givenProperties = new LinkedHashMap<>();
+    private final Map<String, Object> expectedProperties = new LinkedHashMap<>();
 
     private String nextTitle; // just temporary to override resultAlias for sub-use-cases
     private String introduction;
@@ -79,13 +81,10 @@ public abstract class UseCase<T extends UseCase<?>> {
         if (introduction != null) {
             testReport.printPara(introduction);
         }
-        testReport.printPara("### Given Properties");
-        testReport.printLine("""
-                | name | value |
-                |------|-------|""");
-        givenProperties.forEach((key, value) ->
-                testReport.printLine("| " + key + " | " + value.toString().replace("\n", "<br>") + " |"));
-        testReport.printLine("");
+        testReport.printPara("### Properties");
+        renderProperties("Given", givenProperties);
+        renderProperties("Expected", expectedProperties);
+
         testReport.silent(() ->
                 requirements.forEach((alias, factory) -> {
                     final var resolvedAlias = ScenarioTest.resolve(alias, DROP_COMMENTS);
@@ -104,6 +103,21 @@ public abstract class UseCase<T extends UseCase<?>> {
         resetProperties();
 
         return response;
+    }
+
+    private void renderProperties(final String title, final Map<String, Object> properties) {
+        if (properties.isEmpty()) {
+            return;
+        }
+        testReport.printLine("");
+        testReport.printLine("#### " + title);
+        testReport.printLine("");
+        testReport.printLine("""
+                | name | value |
+                |------|-------|""");
+        properties.forEach((key, value) ->
+                testReport.printLine("| " + key + " | " + toMarkdownTableCell(value) + " |"));
+        testReport.printLine("");
     }
 
     // this method is called by the test framework, override, but do not call from subclass
@@ -125,6 +139,15 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     public final UseCase<T> given(final String propName, final Object propValue) {
         givenProperties.put(propName, ScenarioTest.resolve(propValue == null ? null : propValue.toString(), TemplateResolver.Resolver.KEEP_COMMENTS));
+        ScenarioTest.putProperty(propName, propValue);
+        return this;
+    }
+
+    // To keep things simple, both given and expected properties are available everywhere in all templates.
+    // The distinction is mostly for readability.
+    // It would be a bit tricky to make the expected values available just for validations.
+    public final UseCase<T> expected(final String propName, final Object propValue) {
+        expectedProperties.put(propName, ScenarioTest.resolve(propValue == null ? null : propValue.toString(), TemplateResolver.Resolver.KEEP_COMMENTS));
         ScenarioTest.putProperty(propName, propValue);
         return this;
     }
@@ -166,23 +189,25 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     @SneakyThrows
     public final HttpResponse httpGet(
+            final FakeLoginUser loginUser,
             final String uriPathWithPlaceholder,
             final Function<HttpRequest.Builder, HttpRequest.Builder> requestCustomizer) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholder, DROP_COMMENTS);
         final var requestBuilder = HttpRequest.newBuilder()
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
-                .timeout(seconds(HTTP_TIMEOUT_SECONDS));
+                .header("Authorization", loginUser.bearer())
+                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]");
         final var customizedRequestBuilder = requestCustomizer.apply(requestBuilder);
         final var request = customizedRequestBuilder.build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.GET, uriPath, null, response);
+        return new HttpResponse(HttpMethod.GET, uriPath, null, response, null);
     }
 
-    @SneakyThrows
-    public final HttpResponse httpGet(final FakeLoginUser loginUser, final String uriPathWithPlaceholders) {
-       return httpGet(uriPathWithPlaceholders,
-               req -> req.header("Authorization", loginUser.bearer()));
+    public final HttpResponse httpGet(
+            final FakeLoginUser loginUser,
+            final String uriPathWithPlaceholder) {
+        return httpGet(loginUser, uriPathWithPlaceholder, requestBuilder -> requestBuilder);
     }
 
     @SneakyThrows
@@ -196,10 +221,11 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", loginUser.bearer())
+                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]")
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.POST, uriPath, requestBody, response);
+        return new HttpResponse(HttpMethod.POST, uriPath, requestBody, response, loginUser);
     }
 
     @SneakyThrows
@@ -214,10 +240,11 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", loginUser.bearer())
+                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]")
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.PATCH, uriPath, requestBody, response);
+        return new HttpResponse(HttpMethod.PATCH, uriPath, requestBody, response, loginUser);
     }
 
     @SneakyThrows
@@ -228,10 +255,11 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", loginUser.bearer())
+                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]")
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.DELETE, uriPath, null, response);
+        return new HttpResponse(HttpMethod.DELETE, uriPath, null, response, loginUser);
     }
 
     protected PathAssertion path(final String path) {
@@ -289,9 +317,11 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     public final class HttpResponse {
 
+        private static final String AUTH_HEADER_KEY = "Authorization";
         private final HttpMethod httpMethod;
         private final String uri;
         private final String requestBody;
+        private final @Nullable String authUserName;
 
         @Getter
         private final java.net.http.HttpResponse<String> response;
@@ -310,12 +340,14 @@ public abstract class UseCase<T extends UseCase<?>> {
                 final HttpMethod httpMethod,
                 final String uri,
                 final String requestBody,
-                final java.net.http.HttpResponse<String> response
+                final java.net.http.HttpResponse<String> response,
+                final @Nullable FakeLoginUser loginUser
         ) {
             this.httpMethod = httpMethod;
             this.uri = uri;
             this.requestBody = requestBody;
             this.response = response;
+            this.authUserName = loginUser == null ? null : loginUser.name();
             this.status = HttpStatus.valueOf(response.statusCode());
             if (this.status == HttpStatus.CREATED) {
                 final var location = response.headers().firstValue("Location").orElseThrow();
@@ -386,6 +418,10 @@ public abstract class UseCase<T extends UseCase<?>> {
             return this;
         }
 
+        public String getBody() {
+            return response.body();
+        }
+
         @SneakyThrows
         public <V> V getFromBody(final String path) {
             final var body = response.body();
@@ -431,7 +467,8 @@ public abstract class UseCase<T extends UseCase<?>> {
 
             // the request
             testReport.printLine("```");
-            testReport.printLine(httpMethod.name() + " " + uri);
+            testReport.printLine(httpMethod.name() + " '" + uri + "'");
+            printRequestHeaders();
             testReport.printJson(requestBody);
 
             // the response
@@ -444,6 +481,33 @@ public abstract class UseCase<T extends UseCase<?>> {
             testReport.printLine("");
             this.reportGenerated = true;
             return this;
+        }
+
+        private void printRequestHeaders() {
+            final var request = response.request();
+            if (request == null) {
+                return;
+            }
+            request.headers().map().entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+                    // the Authorization header with the long Bearer token is of no value here
+                    .filter(entry -> !AUTH_HEADER_KEY.equalsIgnoreCase(entry.getKey()))
+                    // instead, use the X-Fake-Authorization header as if it was the real Authorization header
+                    .map(entry -> Map.entry(AUTH_HEADER_KEY, entry.getValue()))
+                    .forEach(entry -> {
+                        testReport.printLine("- " + entry.getKey() + ": " + headerValue(entry));
+                    });
+        }
+
+        private String headerValue(final Map.Entry<String, List<String>> entry) {
+            if ("X-Fake-Authorization".equalsIgnoreCase(entry.getKey())) {
+                return fakeAuthorizationValue();
+            }
+            return String.join(", ", entry.getValue());
+        }
+
+        private String fakeAuthorizationValue() {
+            return authUserName == null ? "" : "Bearer <" + authUserName + ">";
         }
 
         @SneakyThrows

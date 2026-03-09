@@ -75,13 +75,37 @@ alias gw-importHostingAssets='importLegacyData importHostingAssets'
 
 function gradlewBootRun() {
     local serverPort=${1:-8080}; shift
-    local managementPort=${2:-$((serverPort + 1))}; shift
-    local additional_args="$@"
+    local managementPort
+    if [[ -n "${1:-}" && "${1}" != -* ]]; then
+        managementPort=$1
+        shift
+    else
+        managementPort=$((serverPort + 1))
+    fi
+
+    # everything before `--` is treated as application args (go into --args="...")
+    # everything after  `--` is treated as Gradle/task args (e.g. --debug-jvm, --stacktrace, --info, ...)
+    local -a app_args=()
+    while [[ $# -gt 0 && "${1}" != "--" ]]; do
+        app_args+=("$1")
+        shift
+    done
+    if [[ "${1:-}" == "--" ]]; then
+        shift
+    fi
+    local -a gradle_args=("$@")
+
+    # preserve previous behavior: app args are appended as plain space-separated tokens
+    local additional_args=""
+    if [[ ${#app_args[@]} -gt 0 ]]; then
+        additional_args="$(printf ' %s' "${app_args[@]}")"
+    fi
+
     unset HSADMINNG_JWT_ISSUER
     unset HSADMINNG_JWT_JWKS_URL
     unset HSADMINNG_JWT_TOKEN_URL
     set -x
-    ./gradlew bootRun --args="--spring.profiles.active=dev,fake-jwt,complete,test-data --server.port=${serverPort} --management.server.port=${managementPort} ${additional_args}"
+    ./gradlew bootRun "${gradle_args[@]}" --args="--spring.profiles.active=dev,fake-jwt,complete,test-data --server.port=${serverPort} --management.server.port=${managementPort}${additional_args}"
     set +x
 }
 alias gw-bootRun=gradlewBootRun
@@ -91,7 +115,7 @@ alias podman-stop='systemctl --user disable --now podman.socket && systemctl --u
 alias podman-use='export DOCKER_HOST="unix:///run/user/$UID/podman/podman.sock"; export TESTCONTAINERS_RYUK_DISABLED=true'
 
 alias gw=gradleWrapper
-alias pg-sql-run='docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15.5-bookworm'
+alias pg-sql-run='docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:17.7-trixie'
 alias pg-sql-stop='docker stop hsadmin-ng-postgres'
 alias pg-sql-start='docker container start hsadmin-ng-postgres'
 alias pg-sql-remove='docker rm hsadmin-ng-postgres'

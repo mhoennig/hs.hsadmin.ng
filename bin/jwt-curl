@@ -14,11 +14,11 @@ if [ "$1" == "--trace" ]; then
   function doCurl() {
     set -x
     if [ -z "$HSADMINNG_JWT_ASSUME" ]; then
-      curl --fail-with-body \
+      curl --no-progress-meter --show-error --fail-with-body \
            --header "Authorization: Bearer $HSADMINNG_JWT_TOKEN" \
            "$@"
     else
-      curl --fail-with-body \
+      curl --no-progress-meter --show-error --fail-with-body \
            --header "Authorization: Bearer $HSADMINNG_JWT_TOKEN" \
            --header "assumed-roles: $HSADMINNG_JWT_ASSUME" \
            "$@"

@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestReport {
 
     public static final File BUILD_DOC_SCENARIOS = new File("build/doc/scenarios");
-    public static final SimpleDateFormat MM_DD_YYYY_HH_MM_SS = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
+    public static final SimpleDateFormat YYYY_MM_DD_HH_MM_SS = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
     private static final File markdownLogFile = new File(BUILD_DOC_SCENARIOS, ".last-debug-log.md");
     private static final ObjectMapper objectMapper = JsonObjectMapperConfiguration.build();
@@ -96,7 +96,7 @@ public class TestReport {
     public void close() {
         if (markdownReport != null) {
             printPara("---");
-            printPara("generated on " + MM_DD_YYYY_HH_MM_SS.format(new Date()) + " for branch " + currentGitBranch());
+            printPara("generated on " + YYYY_MM_DD_HH_MM_SS.format(new Date()) + " for branch " + currentGitBranch());
             markdownReport.close();
             System.out.println("SCENARIO REPORT: " + asClickableLink(markdownReportFile));
         }

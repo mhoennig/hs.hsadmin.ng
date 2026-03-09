@@ -12,7 +12,6 @@ import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import org.hibernate.TransientObjectException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -32,12 +31,11 @@ import java.util.Set;
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.REPRESENTATIVE;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 
 @DataJpaTest
 @Tag("generalIntegrationTest")
 @Import({ Context.class, JpaAttempt.class })
-class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
+class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     private static final String SUPERUSER_ALEX_SUBJECT_NAME = "superuser-alex@hostsharing.net";
     private static final String SUPERUSER_FRAN_SUBJECT_NAME = "superuser-fran@hostsharing.net";
@@ -58,10 +56,7 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     private HsOfficePersonRealRepository personRepo;
 
     @Autowired
-    private HsProfileRepository profileRepository;
-
-    @Autowired
-    private HsProfileScopeRealRepository scopeRealRepo;
+    private HsAccountRepository accountRepository;
 
     // fetched UUIDs from test-data
     private RealSubjectEntity alexSubject;
@@ -82,7 +77,7 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     @Test
     public void historizationIsAvailable() {
         // given
-        final String nativeQuerySql = "select * from hs_accounts.profile_hv";
+        final String nativeQuerySql = "select * from hs_accounts.account_hv";
 
         // when
         historicalContext(Timestamp.from(ZonedDateTime.now().minusDays(1).toInstant()));
@@ -91,7 +86,7 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
         // then
         assertThat(rowsBefore)
-                .as("hs_accounts.profile_hv only contain no rows for a timestamp before test data creation")
+                .as("hs_accounts.account_hv only contain no rows for a timestamp before test data creation")
                 .hasSize(0);
 
         // and when
@@ -101,12 +96,12 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
         // then
         assertThat(rowsAfter)
-                .as("hs_accounts.profile_hv should now contain the test-data rows for the current timestamp")
+                .as("hs_accounts.account_hv should now contain the test-data rows for the current timestamp")
                 .hasSize(3);
     }
 
     @Test
-    void representativeShouldFindOwnAndRepresentedProfileByCurrentSubject() {
+    void representativeShouldFindOwnAndRepresentedAccountByCurrentSubject() {
         // given
         final var firstGmbHPerson = givenPerson("First GmbH");
         givenRelation(REPRESENTATIVE)
@@ -114,162 +109,75 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
                 .withHolder(drewPerson)
                 .withContact("some test contact")
                 .inDatabase();
-        givenProfile()
+        givenAccount()
                 .forSubject("first-gmbh")
                 .forPerson(firstGmbHPerson)
-                .withEMailAddress("first-gmbh@example.com")
                 .inDatabase();
 
         // when
-        final var foundProfile = attempt(
+        final var foundAccount = attempt(
                 em, () -> {
                     context(USER_DREW_SUBJECT_NAME);
-                    return profileRepository.findByCurrentSubject();
+                    return accountRepository.findByCurrentSubject();
                 })
                 .assertNotNull().returnedValue();
 
         // then
-        assertThat(foundProfile).hasSize(2)
-                .map(HsProfileEntity::getEmailAddress)
+        assertThat(foundAccount).hasSize(2)
+                .map(e -> e.getSubject().getName())
                 .containsExactlyInAnyOrder("drew@example.org", "first-gmbh@example.com");
     }
 
     @Test
-    void globalAdminShouldFindOnlyOwnProfileByCurrentSubject() {
+    void globalAdminShouldFindOnlyOwnAccountByCurrentSubject() {
 
         // when
-        final var foundProfile = attempt(
+        final var foundAccount = attempt(
                 em, () -> {
                     context(SUPERUSER_FRAN_SUBJECT_NAME);
-                    return profileRepository.findByCurrentSubject();
+                    return accountRepository.findByCurrentSubject();
                 })
                 .assertNotNull().returnedValue();
 
         // then
-        assertThat(foundProfile).hasSize(1)
-                .map(HsProfileEntity::getEmailAddress)
+        assertThat(foundAccount).hasSize(1)
+                .map(e -> e.getSubject().getName())
                 .containsExactlyInAnyOrder("fran@example.com");
     }
 
     @Test
     void shouldFindByUuidUsingTestData() {
         // when
-        final var foundEntityOptional = profileRepository.findByUuid(alexSubject.getUuid());
+        final var foundEntityOptional = accountRepository.findByUuid(alexSubject.getUuid());
 
         // then
         assertThat(foundEntityOptional).isPresent()
-                .map(HsProfileEntity::getEmailAddress).contains("alex@example.com");
+                .map(e -> e.getSubject().getName())
+                .contains("alex@example.com");
     }
 
     @Test
-    void shouldSaveProfileWithExistingScope() {
+    void shouldSaveAccount() {
         // given
-        final var existingScope = scopeRealRepo.findByTypeAndQualifier("HSADMIN", "prod")
-                .orElseThrow();
-        final var newProfile = HsProfileEntity.builder()
+        final var newAccount = HsAccountEntity.builder()
                 .subject(testUserSubject)
                 .person(testUserPerson)
-                .active(true)
-                .emailAddress("test-user@example.com")
                 .globalUid(2011)
                 .globalGid(2011)
-                .scopes(mutableSetOf(existingScope))
                 .build();
 
         // when
-        toCleanup(profileRepository.save(newProfile));
+        toCleanup(accountRepository.save(newAccount));
         em.flush();
         em.clear();
 
         // then
-        final var foundEntityOptional = profileRepository.findByUuid(testUserSubject.getUuid());
+        final var foundEntityOptional = accountRepository.findByUuid(testUserSubject.getUuid());
         assertThat(foundEntityOptional).isPresent();
         final var foundEntity = foundEntityOptional.get();
-        assertThat(foundEntity.getEmailAddress()).isEqualTo("test-user@example.com");
-        assertThat(foundEntity.isActive()).isTrue();
         assertThat(foundEntity.getVersion()).isEqualTo(0); // Initial version
         assertThat(foundEntity.getGlobalUid()).isEqualTo(2011);
-
-        assertThat(foundEntity.getScopes()).hasSize(1)
-                .map(HsProfileScopeRealEntity::toString).contains("scope(HSADMIN:prod:NP-ONLY:PUBLIC)");
     }
-
-    @Test
-    void shouldNotSaveProfileWithNewScope() {
-        // given
-        final var newScope = HsProfileScopeRealEntity.builder()
-                .type("MATRIX")
-                .qualifier("forbidden")
-                .build();
-        final var newProfile = HsProfileEntity.builder()
-                .subject(drewSubject)
-                .active(true)
-                .emailAddress("drew.new@example.com")
-                .globalUid(2001)
-                .globalGid(2001)
-                .scopes(mutableSetOf(newScope))
-                .build();
-
-        // when
-        final var exception = catchThrowable(() -> {
-            profileRepository.save(newProfile);
-            em.flush();
-        });
-
-        // then
-        assertThat(exception).isNotNull().hasCauseInstanceOf(TransientObjectException.class);
-    }
-
-    @Test
-    void shouldSaveNewProfileWithoutScope() {
-        // given
-        final var newProfile = HsProfileEntity.builder()
-                .subject(testUserSubject)
-                .person(testUserPerson)
-                .active(true)
-                .emailAddress("test.user.new@example.com")
-                .globalUid(20002)
-                .globalGid(2002)
-                .build();
-
-        // when
-        profileRepository.save(newProfile);
-        em.flush();
-        em.clear();
-
-        // then
-        final var foundEntityOptional = profileRepository.findByUuid(testUserSubject.getUuid());
-        assertThat(foundEntityOptional).isPresent();
-        final var foundEntity = foundEntityOptional.get();
-        assertThat(foundEntity.getEmailAddress()).isEqualTo("test.user.new@example.com");
-        assertThat(foundEntity.isActive()).isTrue();
-        assertThat(foundEntity.getGlobalUid()).isEqualTo(20002);
-        assertThat(foundEntity.getGlobalGid()).isEqualTo(2002);
-        assertThat(foundEntity.getScopes()).isEmpty();
-    }
-
-    @Test
-    void shouldUpdateExistingProfile() {
-        // given
-        final var entityToUpdate = profileRepository.findByUuid(alexSubject.getUuid()).orElseThrow();
-        final var initialVersion = entityToUpdate.getVersion();
-
-        // when
-        entityToUpdate.setActive(false);
-        entityToUpdate.setEmailAddress("updated.user1@example.com");
-        final var savedEntity = profileRepository.save(entityToUpdate);
-        em.flush();
-        em.clear();
-
-        // then
-        assertThat(savedEntity.getVersion()).isGreaterThan(initialVersion);
-        final var updatedEntityOptional = profileRepository.findByUuid(alexSubject.getUuid());
-        assertThat(updatedEntityOptional).isPresent();
-        final var updatedEntity = updatedEntityOptional.get();
-        assertThat(updatedEntity.isActive()).isFalse();
-        assertThat(updatedEntity.getEmailAddress()).isEqualTo("updated.user1@example.com");
-    }
-
 
     private RealSubjectEntity fetchSubjectByName(final String name) {
         final String jpql = "SELECT s FROM RealSubjectEntity s WHERE s.name = :name";
@@ -315,8 +223,8 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         return new RelationBuilder(relationType);
     }
 
-    private ProfileBuilder givenProfile() {
-        return new ProfileBuilder();
+    private AccountBuilder givenAccount() {
+        return new AccountBuilder();
     }
 
     private class RelationBuilder {
@@ -361,12 +269,11 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         }
     }
 
-    private class ProfileBuilder {
+    private class AccountBuilder {
         private RealSubjectEntity subject;
         private HsOfficePersonRealEntity person;
-        private String emailAddress;
 
-        public ProfileBuilder forSubject(String subjectName) {
+        public AccountBuilder forSubject(String subjectName) {
             // only the RbacSubject can be created
             val rbacSubject = toCleanup(rbacSubjectRepo.create(RbacSubjectEntity.builder()
                     .name(subjectName)
@@ -376,36 +283,22 @@ class HsProfileRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
             return this;
         }
 
-        public ProfileBuilder forPerson(HsOfficePersonRealEntity person) {
+        public AccountBuilder forPerson(HsOfficePersonRealEntity person) {
             this.person = person;
             return this;
         }
 
-        public ProfileBuilder withEMailAddress(String emailAddress) {
-            this.emailAddress = emailAddress;
-            final var profile = HsProfileEntity.builder()
+        public HsAccountEntity inDatabase() {
+
+            final var account = HsAccountEntity.builder()
                     .uuid(subject.getUuid())
                     .subject(subject)
                     .person(em.find(HsOfficePersonRealEntity.class, person.getUuid()))
-                    .emailAddress(emailAddress)
-                    .active(true)
                     .build();
-            return this;
-        }
-
-        public HsProfileEntity inDatabase() {
-
-            final var profile = HsProfileEntity.builder()
-                    .uuid(subject.getUuid())
-                    .subject(subject)
-                    .person(em.find(HsOfficePersonRealEntity.class, person.getUuid()))
-                    .emailAddress(emailAddress)
-                    .active(true)
-                    .build();
-            em.persist(profile);
-            toCleanup(profile);
+            em.persist(account);
+            toCleanup(account);
             em.flush();
-            return profile;
+            return account;
         }
     }
 }

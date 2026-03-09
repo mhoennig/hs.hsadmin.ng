@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 
@@ -21,8 +22,9 @@ public class FakeJwtController {
     @PostMapping(value = "/fake-jwt/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @Timed("app.config.jwt.token")
     public ResponseEntity<Map<String, Object>> token(
-            @RequestParam String username,
-            @RequestParam String password,
+            HttpServletRequest request,
+            @RequestParam(name = "username", required = false) String username,
+            @RequestParam(name = "password", required = false) String password,
             @RequestParam(defaultValue = "openid profile") String scope) {
 
         log.info("Fake JWT: Issuing token for user: {}", username);

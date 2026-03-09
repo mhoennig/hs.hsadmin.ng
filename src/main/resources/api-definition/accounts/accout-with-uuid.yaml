@@ -1,0 +1,48 @@
+get:
+    tags:
+        - account
+    description: 'Fetch a single  account its uuid, if visible for the current subject.'
+    operationId: getSingleAccountByUuid
+    parameters:
+        - name: accountUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the  account to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'account-schemas.yaml#/components/schemas/Account'
+
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+
+delete:
+    tags:
+        - account
+    description: 'Delete a single account identified by its uuid, if permitted for the current subject.'
+    operationId: deleteAccountByUuid
+    parameters:
+        - name: accountUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the  account to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: 'error-responses.yaml#/components/responses/NotFound'

@@ -5,6 +5,12 @@ management:
     server:
         port: 8081
         address: 127.0.0.1
+    info:
+        build:
+            enabled: true
+        git:
+            enabled: true
+            mode: full
     endpoints:
         web:
             exposure:
@@ -96,5 +102,3 @@ spring:
                 jwt:
                     issuer-uri: "http://localhost:${server.port}/fake-jwt"
                     jwk-set-uri: "http://localhost:${server.port}/fake-jwt/.well-known/jwks.json"
-
-

@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-profile-SCHEMA endDelimiter:--//
+--changeset michael.hoennig:hs-accounts-SCHEMA endDelimiter:--//
 -- ----------------------------------------------------------------------------
 CREATE SCHEMA hs_accounts;
 --//
