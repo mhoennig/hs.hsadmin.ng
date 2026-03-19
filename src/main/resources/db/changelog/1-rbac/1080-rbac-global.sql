@@ -23,23 +23,34 @@ grant select on rbac.global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-IS-GLOBAL-ADMIN endDelimiter:--//
+--changeset michael.hoennig:rbac-global-IS-GLOBAL-ADMIN runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ------------------------------------------------------------------
 
 create or replace function rbac.isGlobalAdmin()
     returns boolean
     language plpgsql as $$
+declare
+    isGlobalAdmin text;
 begin
-    return rbac.isGranted(rbac.currentSubjectOrAssumedRolesUuids(), rbac.findRoleId(rbac.global_ADMIN()));
+    isGlobalAdmin := current_setting('hsadminng.isGlobalAdmin', true);
+    if isGlobalAdmin is not null then
+        return isGlobalAdmin::boolean;
+    end if;
+
+    raise exception '`hsadminng.isGlobalAdmin` should have been set by `rbac.defineContext()`';
 end; $$;
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-HAS-GLOBAL-ADMIN-ROLE endDelimiter:--//
+--changeset michael.hoennig:rbac-global-HAS-GLOBAL-ADMIN-ROLE runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Returns true if the current user is a global admin and has no assumed role.
+
+    ATTENTION: It's false if the global-admin role is assumed,
+    because the global admin role does not have the global admin role, but it is the global admin role.
+    The differentiation is important for the cases where this function is used.
  */
 create or replace function rbac.hasGlobalAdminRole()
     returns boolean

@@ -232,6 +232,7 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.package',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:rbactest-package-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('rbactest.package',
     $orderBy$
         name

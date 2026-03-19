@@ -182,6 +182,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.membership',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-membership-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.membership',
     $orderBy$
         validity

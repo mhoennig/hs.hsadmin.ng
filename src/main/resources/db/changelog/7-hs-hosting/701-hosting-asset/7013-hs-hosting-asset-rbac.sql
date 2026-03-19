@@ -168,6 +168,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_hosting.asset',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-hosting-asset-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_hosting.asset',
     $orderBy$
         identifier

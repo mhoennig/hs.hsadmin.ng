@@ -200,6 +200,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.sepamandate',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-sepamandate-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.sepamandate',
     $orderBy$
         validity

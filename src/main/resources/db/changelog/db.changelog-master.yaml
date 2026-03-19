@@ -229,6 +229,12 @@ databaseChangeLog:
     - include:
           file: db/changelog/9-hs-global/950-accounts/9519-hs-accounts-test-data.sql
           context: "!only-prod-schema and !without-test-data"
+    - include:
+          file: db/changelog/9-hs-global/9520-hs-mass-test-data-generators.sql
+          context: "!only-prod-schema and !without-test-data"
+    - include:
+          file: db/changelog/9-hs-global/9521-has-mass-test-data-performance.sql
+          context: "!only-prod-schema and !without-test-data"
 
     - include:
           file: db/changelog/9-hs-global/960-integrations/9600-hs-integration-schema.sql

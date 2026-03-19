@@ -194,6 +194,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_booking.project',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-booking-project-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_booking.project',
     $orderBy$
         caption

@@ -90,6 +90,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.person',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-person-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.person',
     $orderBy$
         concat(tradeName, familyName, givenName)

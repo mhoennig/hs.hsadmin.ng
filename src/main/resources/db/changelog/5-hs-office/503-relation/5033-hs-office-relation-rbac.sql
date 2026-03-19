@@ -245,6 +245,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.relation',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-relation-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.relation',
     $orderBy$
         (select idName from hs_office.person_iv p where p.uuid = target.holderUuid)

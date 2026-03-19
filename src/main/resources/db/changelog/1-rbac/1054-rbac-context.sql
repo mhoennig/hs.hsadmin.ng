@@ -83,7 +83,7 @@ begin
 end; $$;
 
 -- ============================================================================
---changeset michael.hoennig:rbac-context-CONTEXT-DEFINED endDelimiter:--//
+--changeset michael.hoennig:rbac-context-CONTEXT-DEFINED runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Callback which is called after the context has been (re-) defined.
@@ -98,6 +98,7 @@ create or replace procedure base.contextDefined(
     language plpgsql as $$
 declare
     currentSubjectUuid uuid;
+    currentSubjectHasGlobalAdminRole boolean;
 begin
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
@@ -110,6 +111,13 @@ begin
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
     execute format('set local hsadminng.currentSubjectOrAssumedRolesUuids to %L',
        (select array_to_string(rbac.determineCurrentSubjectOrAssumedRolesUuids(currentSubjectUuid, assumedRoles), ';')));
+
+    if currentSubjectUuid is null then
+        currentSubjectHasGlobalAdminRole := false;
+    else
+        currentSubjectHasGlobalAdminRole := rbac.isGranted(array[currentSubjectUuid], rbac.findRoleId(rbac.global_ADMIN()));
+    end if;
+    execute format('set local hsadminng.isGlobalAdmin to %L', currentSubjectHasGlobalAdminRole::text);
 
     raise notice 'Context defined as: %, %, %, [%]', currentTask, currentRequest, currentSubject, assumedRoles;
 end; $$;
@@ -181,4 +189,3 @@ begin
     return string_to_array(currentSubjectOrAssumedRolesUuids, ';');
 end; $$;
 --//
-

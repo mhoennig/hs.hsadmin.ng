@@ -90,6 +90,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.bankaccount',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-bankaccount-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.bankaccount',
     $orderBy$
         iban

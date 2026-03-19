@@ -90,6 +90,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.contact',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-contact-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.contact',
     $orderBy$
         caption

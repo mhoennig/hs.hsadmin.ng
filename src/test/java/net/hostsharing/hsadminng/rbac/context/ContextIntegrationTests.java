@@ -189,7 +189,7 @@ class ContextIntegrationTests {
 
     @Test
     public void hasGlobalAdminRoleIsTrueForGlobalAdminWithAssumedRole() {
-        final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
+        final var hasGlobalAdminRole = jpaAttempt.transacted(() -> {
             // given
             context.define("superuser-alex@hostsharing.net", "rbactest.package#yyy00:ADMIN");
 
@@ -198,6 +198,20 @@ class ContextIntegrationTests {
         });
 
         // when
+
+        // then
+        assertThat(hasGlobalAdminRole.returnedValue()).isFalse();
+    }
+
+    @Test
+    public void hasGlobalAdminRoleIsFalseForGlobalAdminWithAssumedGlobalAdminRole() {
+        final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
+            // given
+            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+
+            // when
+            return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+        });
 
         // then
         assertThat(hsGlobalAdminRole.returnedValue()).isFalse();

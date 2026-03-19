@@ -167,6 +167,7 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.customer',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:rbactest-customer-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+-- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('rbactest.customer',
     $orderBy$
         reference

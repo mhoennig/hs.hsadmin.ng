@@ -179,8 +179,10 @@ create or replace procedure rbac.generateRbacRestrictedView(targetTable text, or
 declare
     sql text;
     newColumns text;
+    functionName text;
 begin
     targetTable := lower(targetTable);
+    functionName := replace(targetTable, '.', '_');
     if columnNames = '*' then
         columnNames := base.tableColumnNames(targetTable);
     end if;
@@ -189,45 +191,62 @@ begin
         Creates a restricted view based on the 'SELECT' permission of the current subject.
     */
     sql := format($sql$
+        create or replace function rbac.select_%3$s_rv()
+            returns setof %1$s
+            language plpgsql
+        as $f$
+        begin
+            if rbac.hasGlobalAdminRole() then
+                return query
+                    select target.*
+                        from %1$s as target
+                        order by %2$s;
+            else
+                return query
+                    with accessible_uuids as (
+                         with recursive
+                              recursive_grants as
+                                  (select distinct rbac.grant.descendantuuid,
+                                                   rbac.grant.ascendantuuid,
+                                                   1 as level,
+                                                   true
+                                       from rbac.grant
+                                       where rbac.grant.assumed
+                                         and (rbac.grant.ascendantuuid = any (rbac.currentSubjectOrAssumedRolesUuids()))
+                                   union all
+                                   select distinct g.descendantuuid,
+                                                   g.ascendantuuid,
+                                                   grants.level + 1 as level,
+                                                   base.assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
+                                       from rbac.grant g
+                                                join recursive_grants grants on grants.descendantuuid = g.ascendantuuid
+                                       where g.assumed),
+                              grant_count AS (
+                                SELECT COUNT(*) AS grant_count FROM recursive_grants
+                              ),
+                              count_check as (select base.assertTrue((select count(*) as grant_count from recursive_grants) < 400000,
+                                    'too many grants for current subjects: ' || (select count(*) as grant_count from recursive_grants))
+                                                         as valid)
+                          select distinct perm.objectuuid
+                              from recursive_grants
+                                       join rbac.permission perm on recursive_grants.descendantuuid = perm.uuid
+                                       join rbac.object obj on obj.uuid = perm.objectuuid
+                                       join count_check cc on cc.valid
+                              where obj.objectTable = '%1$s' -- 'SELECT' permission is included in all other permissions
+                    )
+                    select target.*
+                        from %1$s as target
+                        where target.uuid in (select * from accessible_uuids)
+                        order by %2$s;
+            end if;
+        end;
+        $f$;
+
         create or replace view %1$s_rv as
-            with accessible_uuids as (
-                     with recursive
-                          recursive_grants as
-                              (select distinct rbac.grant.descendantuuid,
-                                               rbac.grant.ascendantuuid,
-                                               1 as level,
-                                               true
-                                   from rbac.grant
-                                   where rbac.grant.assumed
-                                     and (rbac.grant.ascendantuuid = any (rbac.currentSubjectOrAssumedRolesUuids()))
-                               union all
-                               select distinct g.descendantuuid,
-                                               g.ascendantuuid,
-                                               grants.level + 1 as level,
-                                               base.assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
-                                   from rbac.grant g
-                                            join recursive_grants grants on grants.descendantuuid = g.ascendantuuid
-                                   where g.assumed),
-                          grant_count AS (
-                            SELECT COUNT(*) AS grant_count FROM recursive_grants
-                          ),
-                          count_check as (select base.assertTrue((select count(*) as grant_count from recursive_grants) < 400000,
-                                'too many grants for current subjects: ' || (select count(*) as grant_count from recursive_grants))
-                                                     as valid)
-                      select distinct perm.objectuuid
-                          from recursive_grants
-                                   join rbac.permission perm on recursive_grants.descendantuuid = perm.uuid
-                                   join rbac.object obj on obj.uuid = perm.objectuuid
-                                   join count_check cc on cc.valid
-                          where obj.objectTable = '%1$s' -- 'SELECT' permission is included in all other permissions
-            )
-            select target.*
-                from %1$s as target
-                where rbac.hasGlobalAdminRole() or target.uuid in (select * from accessible_uuids)
-                order by %2$s;
+            select * from rbac.select_%3$s_rv();
 
         grant all privileges on %1$s_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
-        $sql$, targetTable, orderBy);
+        $sql$, targetTable, orderBy, functionName);
     execute sql;
 
     /**
