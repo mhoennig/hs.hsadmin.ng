@@ -184,8 +184,8 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @SuppressWarnings("unchecked")
     final BiConsumer<HsOfficeContactInsertResource, HsOfficeContactRealEntity> CONTACT_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        entity.putPostalAddress(from(resource.getPostalAddress()));
-        entity.putEmailAddresses(from(resource.getEmailAddresses()));
-        entity.putPhoneNumbers(from(resource.getPhoneNumbers()));
+        entity.putPostalAddress(from("postalAddress", resource.getPostalAddress()));
+        entity.putEmailAddresses(from("emailAddresses", resource.getEmailAddresses()));
+        entity.putPhoneNumbers(from("phoneNumbers", resource.getPhoneNumbers()));
     };
 }

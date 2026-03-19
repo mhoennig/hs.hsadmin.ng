@@ -19,9 +19,9 @@ public class HsOfficeContactFromResourceConverter<E extends HsOfficeContact>
         final var resource = context.getSource();
         final var entity = context.getDestinationType().getDeclaredConstructor().newInstance();
         entity.setCaption(resource.getCaption());
-        entity.putPostalAddress(from(resource.getPostalAddress()));
-        entity.putEmailAddresses(from(resource.getEmailAddresses()));
-        entity.putPhoneNumbers(from(resource.getPhoneNumbers()));
+        entity.putPostalAddress(from("postalAddress", resource.getPostalAddress()));
+        entity.putEmailAddresses(from("emailAddresses", resource.getEmailAddresses()));
+        entity.putPhoneNumbers(from("phoneNumbers", resource.getPhoneNumbers()));
         return entity;
     }
 }

@@ -155,7 +155,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     }
 
     final BiConsumer<HsHostingAssetInsertResource, HsHostingAssetRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        entity.putConfig(KeyValueMap.from(resource.getConfig()));
+        entity.putConfig(KeyValueMap.from("config", resource.getConfig()));
         if (resource.getBookingItemUuid() != null) {
             entity.setBookingItem(realBookingItemRepo.findByUuid(resource.getBookingItemUuid())
                     .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] bookingItemUuid %s not found".formatted(

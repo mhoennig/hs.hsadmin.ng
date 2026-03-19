@@ -174,6 +174,6 @@ public class HsBookingItemController implements HsBookingItemsApi {
                 .map(parentItemUuid -> em.find(HsBookingItemRealEntity.class, parentItemUuid))
                 .ifPresent(entity::setParentItem);
         entity.setValidity(toPostgresDateRange(LocalDate.now(), resource.getValidTo()));
-        entity.putResources(KeyValueMap.from(resource.getResources()));
+        entity.putResources(KeyValueMap.from("resources", resource.getResources()));
     };
 }

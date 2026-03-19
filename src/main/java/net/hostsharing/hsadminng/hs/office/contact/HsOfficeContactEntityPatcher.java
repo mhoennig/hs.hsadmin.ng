@@ -19,10 +19,10 @@ class HsOfficeContactEntityPatcher implements EntityPatcher<HsOfficeContactPatch
     public void apply(final HsOfficeContactPatchResource resource) {
         OptionalFromJson.of(resource.getCaption()).ifPresent(entity::setCaption);
         Optional.ofNullable(resource.getPostalAddress())
-                .ifPresent(r -> entity.getPostalAddress().patch(KeyValueMap.from(resource.getPostalAddress())));
+                .ifPresent(r -> entity.getPostalAddress().patch(KeyValueMap.from("postalAddress", resource.getPostalAddress())));
         Optional.ofNullable(resource.getEmailAddresses())
-                .ifPresent(r -> entity.getEmailAddresses().patch(KeyValueMap.from(resource.getEmailAddresses())));
+                .ifPresent(r -> entity.getEmailAddresses().patch(KeyValueMap.from("emailAddresses", resource.getEmailAddresses())));
         Optional.ofNullable(resource.getPhoneNumbers())
-                .ifPresent(r -> entity.getPhoneNumbers().patch(KeyValueMap.from(resource.getPhoneNumbers())));
+                .ifPresent(r -> entity.getPhoneNumbers().patch(KeyValueMap.from("phoneNumbers", resource.getPhoneNumbers())));
     }
 }

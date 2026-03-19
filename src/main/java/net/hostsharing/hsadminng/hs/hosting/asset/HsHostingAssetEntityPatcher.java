@@ -24,7 +24,7 @@ public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAsset
         OptionalFromJson.of(resource.getCaption())
                 .ifPresent(entity::setCaption);
         Optional.ofNullable(resource.getConfig())
-                .ifPresent(r -> entity.getConfig().patch(KeyValueMap.from(resource.getConfig())));
+                .ifPresent(r -> entity.getConfig().patch(KeyValueMap.from("config", resource.getConfig())));
         OptionalFromJson.of(resource.getAlarmContactUuid())
                 // HOWTO: patch nullable JSON resource uuid to an ntity reference
                 .ifPresent(newValue -> entity.setAlarmContact(

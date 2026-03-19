@@ -71,7 +71,7 @@ class HsBookingItemEntityPatcherUnitTest extends PatchUnitTestBase<
         final var entity = new HsBookingItemRbacEntity();
         entity.setUuid(INITIAL_BOOKING_ITEM_UUID);
         entity.setProject(PROJECT_TEST_ENTITY);
-        entity.getResources().putAll(KeyValueMap.from(INITIAL_RESOURCES));
+        entity.getResources().putAll(KeyValueMap.from("resources", INITIAL_RESOURCES));
         entity.setCaption(INITIAL_CAPTION);
         entity.setValidity(Range.closedInfinite(GIVEN_VALID_FROM));
         return entity;

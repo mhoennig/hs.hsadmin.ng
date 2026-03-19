@@ -21,7 +21,7 @@ public class HsBookingItemEntityPatcher implements EntityPatcher<HsBookingItemPa
         OptionalFromJson.of(resource.getCaption())
                 .ifPresent(entity::setCaption);
         Optional.ofNullable(resource.getResources())
-                .ifPresent(r -> entity.getResources().patch(KeyValueMap.from(resource.getResources())));
+                .ifPresent(r -> entity.getResources().patch(KeyValueMap.from("resources", resource.getResources())));
         OptionalFromJson.of(resource.getValidTo())
                 .ifPresent(entity::setValidTo);
     }

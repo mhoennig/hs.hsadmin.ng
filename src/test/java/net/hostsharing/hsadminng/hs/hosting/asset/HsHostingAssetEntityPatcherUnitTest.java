@@ -71,7 +71,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
         final var entity = new HsHostingAssetRbacEntity();
         entity.setUuid(INITIAL_BOOKING_ITEM_UUID);
         entity.setBookingItem(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY);
-        entity.getConfig().putAll(KeyValueMap.from(INITIAL_CONFIG));
+        entity.getConfig().putAll(KeyValueMap.from("config", INITIAL_CONFIG));
         entity.setCaption(INITIAL_CAPTION);
         entity.setAlarmContact(givenInitialContact);
         return entity;
