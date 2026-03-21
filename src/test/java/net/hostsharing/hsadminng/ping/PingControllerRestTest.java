@@ -81,4 +81,21 @@ class PingControllerRestTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("superuser-alex@hostsharing.net")));
     }
+
+    @Test
+    void pongPostReturnsPongedWithSubject() throws Exception {
+
+        // when
+        final var request = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/pong")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Accept-Language", "de")
+                        .accept(MediaType.TEXT_PLAIN))
+                .andDo(print());
+
+        // then
+        request
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("superuser-alex@hostsharing.net")));
+    }
 }

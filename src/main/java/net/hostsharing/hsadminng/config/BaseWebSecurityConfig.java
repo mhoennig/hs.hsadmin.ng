@@ -3,10 +3,12 @@ package net.hostsharing.hsadminng.config;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.SneakyThrows;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,6 +16,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -48,7 +52,7 @@ public abstract class BaseWebSecurityConfig {
                 .oauth2ResourceServer(oauth ->
                         oauth.jwt(Customizer.withDefaults()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) ->
                                 // For unknown reason Spring security returns 403 FORBIDDEN for a BadCredentialsException.
@@ -74,5 +78,25 @@ public abstract class BaseWebSecurityConfig {
     public JwtDecoder fakeJwtDecoder() {
         // For fake-jwt profile, use the same RSA key as JwtFakeBearer
         return NimbusJwtDecoder.withPublicKey(RSA_KEY.toRSAPublicKey()).build();
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer(
+            @Value("${hsadminng.cors.allowed-origins:*}") final String corsAllowedOrigins) {
+
+        return new WebMvcConfigurer() {
+
+            @Override
+            public void addCorsMappings(@NonNull final CorsRegistry registry) {
+                val allowedOrigins = (corsAllowedOrigins != null && !corsAllowedOrigins.isEmpty())
+                        ? corsAllowedOrigins.split(",")
+                        : new String[]{"*"};
+                registry.addMapping("/api/ping")
+                        .allowedOrigins("*")
+                        .allowedMethods("GET");
+                registry.addMapping("/api/**").allowedOrigins(allowedOrigins)
+                        .allowedMethods("GET", "PUT", "POST", "PATCH", "DELETE");
+            }
+        };
     }
 }

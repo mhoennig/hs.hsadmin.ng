@@ -70,6 +70,8 @@ spring:
 hsadminng:
     postgres:
         leakproof:
+    cors:
+        allowed-origin: ${ALLOWED_ORIGINS} // for compatibility with env-based CORS-configuration
 
 metrics:
     distribution:

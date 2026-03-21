@@ -33,3 +33,14 @@ paths:
                         'text/plain':
                             schema:
                                 type: string
+        post:
+            tags:
+                - test
+            operationId: pongPost
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        'text/plain':
+                            schema:
+                                type: string

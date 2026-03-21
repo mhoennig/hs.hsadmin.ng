@@ -17,6 +17,7 @@ public class PingController implements TestApi {
     private MessageTranslator messageTranslator;
 
     @Timed("app.api.ping")
+    @Override
     public ResponseEntity<String> ping() {
         // HOWTO translate text with placeholders - also see in resource files i18n/messages_*.properties.
         final var translatedMessage = messageTranslator.translate("test.pinged--in-your-language");
@@ -24,7 +25,18 @@ public class PingController implements TestApi {
     }
 
     @Timed("app.api.pong")
+    @Override
     public ResponseEntity<String> pong() {
+        return createPongResponse();
+    }
+
+    @Timed("app.api.pong")
+    @Override
+    public ResponseEntity<String> pongPost() {
+        return createPongResponse();
+    }
+
+    private ResponseEntity<String> createPongResponse() {
         final var userName = SecurityContextHolder.getContext().getAuthentication().getName();
         // HOWTO translate text with placeholders - also see in resource files i18n/messages_*.properties.
         final var translatedMessage = messageTranslator.translate("test.ponged-{0}--in-your-language", userName);

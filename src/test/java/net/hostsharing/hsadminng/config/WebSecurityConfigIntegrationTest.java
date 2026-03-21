@@ -12,6 +12,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = { "management.port=0", "server.port=0" })
 @ActiveProfiles("fake-jwt") // IMPORTANT: In this test, want to test the prod config, do NOT use test profile!
+@TestPropertySource(properties = "hsadminng.cors.allowed-origins=https://allowed.example")
 class WebSecurityConfigIntegrationTest {
 
     public static final String GIVEN_FAKE_SUBJECT = "fake-user-name";
@@ -39,37 +42,32 @@ class WebSecurityConfigIntegrationTest {
 
     @Test
     void accessToApiWithValidJwtShouldBePermitted() {
-        // when
         val result = restTemplate.exchange(
                 serverUrl("/api/pong"),
                 HttpMethod.GET,
-                httpHeaders(entry("Authorization", bearer(GIVEN_FAKE_SUBJECT))),
+                httpHeaders(entry(HttpHeaders.AUTHORIZATION, bearer(GIVEN_FAKE_SUBJECT))),
                 String.class
         );
 
-        // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).startsWith("ponged " + GIVEN_FAKE_SUBJECT);
     }
 
     @Test
     void accessToOpenApiWithoutTokenShouldBePermitted() {
-        val result = this.restTemplate.getForEntity(
-                serverUrl("/api/ping"), String.class);
+        val result = this.restTemplate.getForEntity(serverUrl("/api/ping"), String.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     void accessToProtectedApiWithInvalidTokenShouldBeDenied() {
-        // when
         val result = restTemplate.exchange(
                 serverUrl("/api/pong"),
                 HttpMethod.GET,
-                httpHeaders(entry("Authorization", "Bearer INVALID-JWT")),
+                httpHeaders(entry(HttpHeaders.AUTHORIZATION, "Bearer INVALID-JWT")),
                 String.class
         );
 
-        // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
@@ -82,15 +80,13 @@ class WebSecurityConfigIntegrationTest {
 
     @Test
     void accessToSwaggerUiShouldBePermitted() {
-        val result = this.restTemplate.getForEntity(
-                serverUrl("/swagger-ui/index.html"), String.class);
+        val result = this.restTemplate.getForEntity(serverUrl("/swagger-ui/index.html"), String.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     void accessToApiDocsEndpointShouldBePermitted() {
-        val result = this.restTemplate.getForEntity(
-                serverUrl("/v3/api-docs/swagger-config"), String.class);
+        val result = this.restTemplate.getForEntity(serverUrl("/v3/api-docs/swagger-config"), String.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).contains("\"configUrl\":\"/v3/api-docs/swagger-config\"");
     }
@@ -101,6 +97,156 @@ class WebSecurityConfigIntegrationTest {
                 "http://localhost:" + this.managementPort + "/actuator/health", Map.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody().get("status")).isEqualTo("UP");
+    }
+
+    @Test
+    void preflightToPingAllowsAnyOrigin() {
+        val response = corsPreflightRequest("/api/ping", "https://anywhere.example");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isEqualTo("*");
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)).contains("GET");
+    }
+
+    @Test
+    void actualPingRequestAllowsAnyOrigin() {
+        val response = corsGetRequest("/api/ping", "https://anywhere.example", null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isEqualTo("*");
+    }
+
+    @Test
+    void preflightToPongAllowsConfiguredOrigin() {
+        val response = corsPreflightRequest("/api/pong", "https://allowed.example", "GET");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN))
+                .isEqualTo("https://allowed.example");
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)).contains("GET");
+    }
+
+    @Test
+    void preflightToPongBlocksOtherOrigin() {
+        val response = corsPreflightRequest("/api/pong", "https://denied.example", "GET");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isNull();
+    }
+
+    @Test
+    void actualPongRequestWithInvalidTokenAndAllowedOriginReturnsUnauthorizedWithCorsHeader() {
+        val response = corsGetRequest("/api/pong", "https://allowed.example", "Bearer INVALID-JWT");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN))
+                .isEqualTo("https://allowed.example");
+    }
+
+    @Test
+    void actualPongRequestWithInvalidTokenAndDeniedOriginIsRejectedByCors() {
+        val response = corsGetRequest("/api/pong", "https://denied.example", "Bearer INVALID-JWT");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isNull();
+    }
+
+    @Test
+    void preflightPostToPongAllowsConfiguredOrigin() {
+        val response = corsPreflightRequest("/api/pong", "https://allowed.example", "POST");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN))
+                .isEqualTo("https://allowed.example");
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)).contains("POST");
+    }
+
+    @Test
+    void preflightPostToPongBlocksOtherOrigin() {
+        val response = corsPreflightRequest("/api/pong", "https://denied.example", "POST");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isNull();
+    }
+
+    @Test
+    void actualPongPostWithInvalidTokenAndAllowedOriginReturnsUnauthorizedWithCorsHeader() {
+        val response = corsPostRequest("/api/pong", "https://allowed.example", "Bearer INVALID-JWT");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN))
+                .isEqualTo("https://allowed.example");
+    }
+
+    @Test
+    void actualPongPostWithInvalidTokenAndDeniedOriginIsRejectedByCors() {
+        val response = corsPostRequest("/api/pong", "https://denied.example", "Bearer INVALID-JWT");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isNull();
+    }
+
+    private ResponseEntity<String> corsPreflightRequest(final String path, final String origin) {
+        return corsPreflightRequest(path, origin, "GET");
+    }
+
+    private ResponseEntity<String> corsPreflightRequest(
+            final String path,
+            final String origin,
+            final String accessControlRequestMethod) {
+        return restTemplate.exchange(
+                serverUrl(path),
+                HttpMethod.OPTIONS,
+                httpHeaders(
+                        entry(HttpHeaders.ORIGIN, origin),
+                        entry(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, accessControlRequestMethod)
+                ),
+                String.class
+        );
+    }
+
+    private ResponseEntity<String> corsGetRequest(
+            final String path,
+            final String origin,
+            final String authorization) {
+        if (authorization != null) {
+            return restTemplate.exchange(
+                    serverUrl(path),
+                    HttpMethod.GET,
+                    httpHeaders(
+                            entry(HttpHeaders.ORIGIN, origin),
+                            entry(HttpHeaders.AUTHORIZATION, authorization),
+                            entry(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN_VALUE)
+                    ),
+                    String.class
+            );
+        }
+
+        return restTemplate.exchange(
+                serverUrl(path),
+                HttpMethod.GET,
+                httpHeaders(
+                        entry(HttpHeaders.ORIGIN, origin),
+                        entry(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN_VALUE)
+                ),
+                String.class
+        );
+    }
+
+    private ResponseEntity<String> corsPostRequest(
+            final String path,
+            final String origin,
+            final String authorization) {
+        return restTemplate.exchange(
+                serverUrl(path),
+                HttpMethod.POST,
+                httpHeaders(
+                        entry(HttpHeaders.ORIGIN, origin),
+                        entry(HttpHeaders.AUTHORIZATION, authorization),
+                        entry(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN_VALUE)
+                ),
+                String.class
+        );
     }
 
     private @NotNull String serverUrl(final String path) {

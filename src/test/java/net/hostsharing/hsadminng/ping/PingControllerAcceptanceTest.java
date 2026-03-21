@@ -73,6 +73,24 @@ class PingControllerAcceptanceTest {
     }
 
     @Test
+    void pongPostRepliesWithTranslatedPongResponse() {
+        final var responseBody = RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Accept-Language", Locale.GERMAN)
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/pong")
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("text/plain;charset=UTF-8")
+                    .extract().body().asString();
+        // @formatter:on
+
+        assertThat(responseBody).isEqualTo("ponged superuser-alex@hostsharing.net - auf Deutsch\n");
+    }
+
+    @Test
     void pingRepliesWithTranslatedPongResponse() {
         final var responseBody = RestAssured // @formatter:off
                 .given()
