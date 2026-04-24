@@ -72,7 +72,7 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
     class GetCurrentUser {
 
         @Test
-        void shouldFetchCurrentLoginUser() throws Exception {
+        void shouldFetchCurrentLoginUser() {
             // given
             context.define("superuser-alex@hostsharing.net");
 

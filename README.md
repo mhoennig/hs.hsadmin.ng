@@ -159,6 +159,8 @@ If you want a formatted JSON output, you can pipe the result to `jq` or similar.
 
 And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html.
 
+### HOWTO: Run the application with a real (OAuth2) JWT-authentication, e.g. Keycloak OIDC
+
 If you want to run the application with real (OAuth2) JWT-authentication:
 
     # set the JWT-issuer URI, e.g.

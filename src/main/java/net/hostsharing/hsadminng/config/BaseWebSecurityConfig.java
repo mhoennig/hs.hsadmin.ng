@@ -14,12 +14,18 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import jakarta.servlet.http.HttpServletResponse;
+import javax.crypto.spec.SecretKeySpec;
+
+import java.nio.charset.StandardCharsets;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.RSA_KEY;
 
@@ -63,13 +69,25 @@ public abstract class BaseWebSecurityConfig {
                 .build();
     }
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:http://localhost:${server.port}/fake-jwt/.well-known/jwks.json}")
-    private String jwkSetUri;
-
     @Bean
     @Profile("!fake-jwt")
-    public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+    public JwtDecoder jwtDecoder(
+            // FIXME: Maybe move all defaults from the application.yml to here?
+            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") final String issuerUri,
+            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") final String jwkSetUri,
+            @Value("${spring.security.oauth2.resourceserver.jwt.hmac-secret:${HSADMINNG_JWT_HMAC_SECRET:}}") final String hmacSecret) {
+        if (StringUtils.hasText(hmacSecret)) {
+            return NimbusJwtDecoder.withSecretKey(new SecretKeySpec(hmacSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA512"))
+                    .macAlgorithm(MacAlgorithm.HS512)
+                    .build();
+        }
+        if (StringUtils.hasText(jwkSetUri)) {
+            return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        }
+        if (StringUtils.hasText(issuerUri)) {
+            return JwtDecoders.fromIssuerLocation(issuerUri);
+        }
+        throw new IllegalStateException("Either spring.security.oauth2.resourceserver.jwt.hmac-secret (HSADMINNG_JWT_HMAC_SECRET), spring.security.oauth2.resourceserver.jwt.jwk-set-uri (HSADMINNG_JWT_JWKS_URL) or ...issuer-uri (HSADMINNG_JWT_ISSUER) must be configured.");
     }
 
     @Bean

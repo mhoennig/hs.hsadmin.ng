@@ -6,6 +6,7 @@ import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -47,7 +48,17 @@ public class Context {
 
     @Transactional(propagation = MANDATORY)
     public void define() {
-        define(SecurityContextHolder.getContext().getAuthentication().getName(), null);
+        val auth = SecurityContextHolder.getContext().getAuthentication();
+        // FIXME: this code works for simplified JWT in tests as well as the real Keycloak, but there should be only one way
+        // if "preferred_username" is set, use it, otherwise use "sub"
+        val username = Optional.of(auth)
+                .filter(JwtAuthenticationToken.class::isInstance)
+                .map(JwtAuthenticationToken.class::cast)
+                .map(JwtAuthenticationToken::getToken)
+                .map(token -> token.getClaimAsString("preferred_username"))
+                .filter(claim -> !claim.isBlank()) // force to getName ("sub") if blank
+                .orElseGet(auth::getName);
+        define(username, null);
     }
 
     @Transactional(propagation = MANDATORY)

@@ -100,12 +100,12 @@ function jwtLogin() {
   fi
 
   # OAuth2 Resource Owner Password Credentials Grant (public client)
-  trace "+ curl --fail-with-body --show-error -X POST \
+  trace "+ curl --no-progress-meter --fail-with-body --show-error -X POST \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -d \"grant_type=password&client_id=$HSADMINNG_JWT_CLIENT_ID&client_secret=$HSADMINNG_JWT_CLIENT_SECRET&username=$HSADMINNG_JWT_USERNAME&password=$HSADMINNG_JWT_PASSWORD_DISPLAY\" \
         $HSADMINNG_JWT_TOKEN_URL -o ~/.jwt-token.response"
 
-  JWT_RESPONSE=$(curl --fail-with-body --show-error -X POST \
+  JWT_RESPONSE=$(curl --no-progress-meter --fail-with-body --show-error -X POST \
     -H 'Content-Type: application/x-www-form-urlencoded' \
     -d "grant_type=password&client_id=$HSADMINNG_JWT_CLIENT_ID&client_secret=$HSADMINNG_JWT_CLIENT_SECRET&username=$HSADMINNG_JWT_USERNAME&password=$HSADMINNG_JWT_PASSWORD_DISPLAY" \
     $HSADMINNG_JWT_TOKEN_URL 2>&1 | tee ~/.jwt-token.response)
