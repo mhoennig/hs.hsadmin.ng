@@ -31,6 +31,7 @@ subgraph project["`**project**`"]
         role:project:ADMIN[[project:ADMIN]]
         role:project:AGENT[[project:AGENT]]
         role:project:TENANT[[project:TENANT]]
+        role:project:REFERRER[[project:REFERRER]]
     end
 
     subgraph project:permissions[ ]
@@ -53,11 +54,13 @@ role:project:OWNER ==> role:project:ADMIN
 role:project:ADMIN ==> role:project:AGENT
 role:project:AGENT ==> role:project:TENANT
 role:project:TENANT ==> role:debitorRel:TENANT
+role:project:TENANT ==> role:project:REFERRER
+role:debitorRel:AGENT ==> role:project:REFERRER
 
 %% granting permissions to roles
 role:debitorRel:ADMIN ==> perm:project:INSERT
 role:rbac.global:ADMIN ==> perm:project:DELETE
 role:project:ADMIN ==> perm:project:UPDATE
-role:project:TENANT ==> perm:project:SELECT
+role:project:REFERRER ==> perm:project:SELECT
 
 ```

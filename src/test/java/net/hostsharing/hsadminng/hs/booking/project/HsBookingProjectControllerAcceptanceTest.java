@@ -9,6 +9,8 @@ import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -183,6 +185,36 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
                         {
                             "caption": "D-1000313 default project"
                         }
+                    """)); // @formatter:on
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "hs_office.relation#FirstGmbH-with-DEBITOR-FirstGmbH:ADMIN",
+                "hs_booking.project#D-1000111-D-1000111defaultproject:OWNER",
+                "" // without any assumed-roles
+        })
+        void debitorAdminUser_canGetRelatedBookingProjectEvenWithoutAssumingTheProjectRole(final String assumedRoles) {
+            context.define("superuser-alex@hostsharing.net");
+            final var debitorUuid = debitorRepo.findByDebitorNumber(1000111).stream()
+                    .findAny().orElseThrow().getUuid();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("person-FirstGmbH@example.com"))
+                    .header("assumed-roles", assumedRoles)
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/booking/projects?debitorUuid=" + debitorUuid)
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                        [
+                            {
+                                "caption": "D-1000111 default project"
+                            }
+                        ]
                     """)); // @formatter:on
         }
     }

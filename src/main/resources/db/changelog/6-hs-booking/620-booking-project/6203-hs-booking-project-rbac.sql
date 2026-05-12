@@ -65,9 +65,16 @@ begin
 
     perform rbac.defineRoleWithGrants(
         hs_booking.project_TENANT(NEW),
-            permissions => array['SELECT'],
             incomingSuperRoles => array[hs_booking.project_AGENT(NEW)],
             outgoingSubRoles => array[hs_office.relation_TENANT(newDebitorRel)]
+    );
+
+    perform rbac.defineRoleWithGrants(
+        hs_booking.project_REFERRER(NEW),
+            permissions => array['SELECT'],
+            incomingSuperRoles => array[
+            	hs_booking.project_TENANT(NEW),
+            	hs_office.relation_AGENT(newDebitorRel)]
     );
 
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), rbac.global_ADMIN());
@@ -194,15 +201,15 @@ call rbac.generateRbacIdentityViewFromQuery('hs_booking.project',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-booking-project-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_booking.project',
     $orderBy$
         caption
-    $orderBy$,
+$orderBy$,
     $updates$
         version = new.version,
         caption = new.caption
-    $updates$);
+$updates$
+);
 --//
 
 

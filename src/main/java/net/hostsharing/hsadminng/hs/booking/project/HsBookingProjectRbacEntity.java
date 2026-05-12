@@ -26,6 +26,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.UPDAT
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.AGENT;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.REFERRER;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.fetchedBySql;
@@ -72,9 +73,13 @@ public class HsBookingProjectRbacEntity extends HsBookingProject {
                 .createSubRole(ADMIN, (with) -> {
                     with.permission(UPDATE);
                 })
-                .createSubRole(AGENT)
+                .createSubRole(AGENT) // just for manual grants
                 .createSubRole(TENANT, (with) -> {
                     with.outgoingSubRole("debitorRel", TENANT);
+                })
+                .createSubRole(REFERRER, (with) -> {
+                    // make the project visible for debitors, but for anything below, the owner role needs to be assumed
+                    with.incomingSuperRole("debitorRel", AGENT);
                     with.permission(SELECT);
                 })
 
