@@ -1,7 +1,7 @@
 # build using:
-# docker build -t postgres-with-contrib:15.5-bookworm .
+# docker build -t postgres-with-contrib:17.7-trixie .
 
-FROM postgres:15.5-bookworm
+FROM postgres:17.7-trixie
 
 RUN apt-get update && \
     apt-get install -y postgresql-contrib && \

@@ -95,7 +95,7 @@ import static org.springframework.util.FileCopyUtils.copyToByteArray;
 @Tag("migrationTest")
 @Tag("importHostingAssets")
 @DataJpaTest(properties = {
-        "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///importHostingAssetsTC}",
+        "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:17.7-trixie:///importHostingAssetsTC}",
         "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
         "hsadminng.superuser=${HSADMINNG_SUPERUSER:import-superuser@hostsharing.net}",

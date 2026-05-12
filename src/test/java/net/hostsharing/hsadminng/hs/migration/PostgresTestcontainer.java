@@ -4,10 +4,7 @@ import lombok.SneakyThrows;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.jdbc.ContainerDatabaseDriver;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.FileUtils.readFileToString;
@@ -23,22 +20,20 @@ public class PostgresTestcontainer {
 
         final var jdbcDatabaseContainer = getJdbcDatabaseContainer(jdbcUrl);
 
+        // use the pg_dump from within the container to get the same version
         final var sqlDumpFile = new File(targetFileName.getParent(), "." + targetFileName.getName());
-        final var pb = new ProcessBuilder(
+        final var containerDumpFile = "/tmp/" + sqlDumpFile.getName();
+        final var result = jdbcDatabaseContainer.execInContainer(
+                "env", "PGPASSWORD=" + jdbcDatabaseContainer.getPassword(),
                 "pg_dump", "--column-inserts", "--disable-dollar-quoting",
-                "--host=" + jdbcDatabaseContainer.getHost(),
-                "--port=" + jdbcDatabaseContainer.getFirstMappedPort(),
+                "--host=localhost",
+                "--port=5432",
                 "--username=" + jdbcDatabaseContainer.getUsername() ,
                 "--dbname=" + jdbcDatabaseContainer.getDatabaseName(),
-                "--file=" + sqlDumpFile.getCanonicalPath()
+                "--file=" + containerDumpFile
         );
-        pb.environment().put("PGPASSWORD", jdbcDatabaseContainer.getPassword());
-
-        final var process = pb.start();
-        int exitCode = process.waitFor();
-        final var stderr = new BufferedReader(new InputStreamReader(process.getErrorStream()))
-                .lines().collect(Collectors.joining("\n"));
-        assertThat(exitCode).describedAs(stderr).isEqualTo(0);
+        assertThat(result.getExitCode()).describedAs(result.getStderr()).isEqualTo(0);
+        jdbcDatabaseContainer.copyFileFromContainer(containerDumpFile, sqlDumpFile.getCanonicalPath());
 
         final var header = """
               -- =================================================================================

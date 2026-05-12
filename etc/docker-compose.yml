@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres-with-contrib:15.5-bookworm
+    image: postgres-with-contrib:17.7-trixie
     container_name: custom-postgres
     environment:
       POSTGRES_PASSWORD: password

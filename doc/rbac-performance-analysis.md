@@ -24,7 +24,7 @@ The module auto_explain can be used to automatically run EXPLAIN on long-running
 To use this extension and module, we extended the PostgreSQL-Docker-image:
 
 ```Dockerfile
-FROM postgres:15.5-bookworm
+FROM postgres:17.7-trixie
 
 RUN apt-get update && \
     apt-get install -y postgresql-contrib && \
@@ -36,7 +36,7 @@ COPY etc/postgresql-log-slow-queries.conf /etc/postgresql/postgresql.conf
 And create an image from it:
 
 ```sh
-docker build -t postgres-with-contrib:15.5-bookworm .
+docker build -t postgres-with-contrib:17.7-trixie .
 ```
 
 Then we created a config file for PostgreSQL in `etc/postgresql-log-slow-queries.conf`:
@@ -61,7 +61,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres-with-contrib:15.5-bookworm
+    image: postgres-with-contrib:17.7-trixie
     container_name: custom-postgres
     environment:
       POSTGRES_PASSWORD: password
