@@ -175,7 +175,7 @@ execute procedure hs_office.debitor_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-debitor-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-debitor-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -188,7 +188,7 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission if rbac.global ADMIN
-    if rbac.isGlobalAdmin() then
+    if rbac.hasGlobalAdminRole() then
         return NEW;
     end if;
 
@@ -196,7 +196,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger debitor_insert_permission_check_tg
+create or replace trigger debitor_insert_permission_check_tg
     before insert on hs_office.debitor
     for each row
         execute procedure hs_office.debitor_insert_permission_check_tf();
@@ -226,11 +226,10 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.debitor',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-debitor-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.debitor',
     $orderBy$
         defaultPrefix
-    $orderBy$,
+$orderBy$,
     $updates$
         debitorRelUuid = new.debitorRelUuid,
         billable = new.billable,
@@ -240,7 +239,8 @@ call rbac.generateRbacRestrictedView('hs_office.debitor',
         vatBusiness = new.vatBusiness,
         vatReverseCharge = new.vatReverseCharge,
         defaultPrefix = new.defaultPrefix
-    $updates$);
+$updates$
+);
 --//
 
 

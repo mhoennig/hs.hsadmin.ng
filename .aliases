@@ -143,12 +143,12 @@ alias gw-check='. .aliases; . .tc-environment; gw test check -x pitest'
 function _gwTest1() {
     echo
     printf -- '=%0.s' {1..80}; echo
-    echo "RUNNING gw $@"
+    echo "RUNNING gw $@ at $(date '+%Y-%m-%d %H:%M:%S %Z')"
     printf -- '-%0.s' {1..80}; echo
     ./gradlew "$@"
     local buildResultCode=$?
     printf -- '-%0.s' {1..80}; echo
-    echo "DONE gw $@"
+    echo "DONE gw $@ at $(date '+%Y-%m-%d %H:%M:%S %Z')"
     return $buildResultCode
 }
 function _gwTest() {

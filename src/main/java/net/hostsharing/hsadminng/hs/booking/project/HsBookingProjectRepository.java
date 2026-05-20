@@ -19,6 +19,9 @@ public interface HsBookingProjectRepository<E extends HsBookingProject> {
     @Timed("app.booking.projects.repo.findAllByDebitorUuid")
     List<E> findAllByDebitorUuid(final UUID bookingProjectUuid);
 
+    @Timed("app.booking.projects.repo.findAll")
+    List<E> findAll();
+
     @Timed("app.booking.projects.repo.save")
     E save(E current);
 

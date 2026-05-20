@@ -154,7 +154,8 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "hs_booking.project#D-1000111-somenewbookingproject:ADMIN",
                     "hs_booking.project#D-1000111-somenewbookingproject:AGENT",
                     "hs_booking.project#D-1000111-somenewbookingproject:OWNER",
-                    "hs_booking.project#D-1000111-somenewbookingproject:TENANT"));
+                    "hs_booking.project#D-1000111-somenewbookingproject:TENANT",
+                    "hs_booking.project#D-1000111-somenewbookingproject:REFERRER"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
@@ -177,7 +178,11 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
 
                             // tenant
                             "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:TENANT to role:hs_booking.project#D-1000111-somenewbookingproject:TENANT by system and assume }",
-                            "{ grant perm:hs_booking.project#D-1000111-somenewbookingproject:SELECT to role:hs_booking.project#D-1000111-somenewbookingproject:TENANT by system and assume }",
+
+                            // referrer
+                            "{ grant perm:hs_booking.project#D-1000111-somenewbookingproject:SELECT to role:hs_booking.project#D-1000111-somenewbookingproject:REFERRER by system and assume }",
+                            "{ grant role:hs_booking.project#D-1000111-somenewbookingproject:REFERRER to role:hs_booking.project#D-1000111-somenewbookingproject:TENANT by system and assume }",
+                            "{ grant role:hs_booking.project#D-1000111-somenewbookingproject:REFERRER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
 
                             null));
         }

@@ -54,12 +54,15 @@ For architecture consider the files in the `doc` and `adr` folder.
 
 ## Setting up the Development Environment
 
-All instructions assume that you're using a current _Linux_ or _MacOS_ operating system.
-Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
+All instructions assume that you're using a current _Linux_ operating system.
+The build (including automated tests) was last tested on _Ubuntu Linux 24.04_ and _Linux Mint 22.3_.
+
+Builds on _MacOS_ are not officially supported anymore.
+If you're a _MacOS_ user, you're welcome to contribute to support _MacOS_ again. 
 
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
-- Docker 20.x (on MacOS you also need *Docker Desktop* or similar) or Podman
+- Docker 28.x or Podman
 - optionally: PostgreSQL Server 17.7-trixie, if you want to use the database directly, not just via Docker
   (see instructions below to install and run in Docker)
 - The matching Java JDK at will be automatically installed by Gradle toolchain support to `~/.gradle/jdks/`.
@@ -69,6 +72,9 @@ To be able to build and run the Java Spring Boot application, you need the follo
 If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
     cd your-hsadmin-ng-directory
+
+    # set your Docker host, this might need to be ameneded to your system conf
+    export DOCKER_HOST=unix:///var/run/docker.sock
     
     source .aliases     # creates some comfortable bash aliases, e.g. 'gw'='./gradlew'
     gw                  # initially downloads the configured Gradle version into the project
@@ -366,7 +372,6 @@ and will show false errors (missing identifiers).
 
 **jq**: a JSON formatter. 
 On _Debian_'oid systems you can install it with `sudo apt-get install jq`.
-On _MacOS_ you can install it with `brew install jq`, given you have _brew_ installed.
 
 ## Running the SQL files
 
@@ -1096,7 +1101,7 @@ tail -f build/aider.strace | grep -oP '"\K[^\n"]+(?=")'
 At the time I've checked it, all accessed files made sense.
 Of course, as with any locally installed application, there is no guarantee.
 
-There is a _Docker_ image for _aider AI_, but it's pretty restriced
+There is a _Docker_ image for _aider AI_, but it's pretty restricted
 and to be able to use some features, you'd need to rebuild the image.
 
 

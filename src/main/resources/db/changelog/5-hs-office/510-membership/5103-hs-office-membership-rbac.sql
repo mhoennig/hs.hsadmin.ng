@@ -137,7 +137,7 @@ execute procedure hs_office.membership_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-membership-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-membership-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -150,7 +150,7 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission if rbac.global ADMIN
-    if rbac.isGlobalAdmin() then
+    if rbac.hasGlobalAdminRole() then
         return NEW;
     end if;
 
@@ -158,7 +158,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger membership_insert_permission_check_tg
+create or replace trigger membership_insert_permission_check_tg
     before insert on hs_office.membership
     for each row
         execute procedure hs_office.membership_insert_permission_check_tf();
@@ -182,16 +182,16 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.membership',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-membership-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.membership',
     $orderBy$
         validity
-    $orderBy$,
+$orderBy$,
     $updates$
         validity = new.validity,
         membershipFeeBillable = new.membershipFeeBillable,
         status = new.status
-    $updates$);
+$updates$
+);
 --//
 
 

@@ -43,12 +43,14 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Override
     @Transactional(readOnly = true)
     @Timed("app.bookingProjects.api.getListOfBookingProjectsByDebitorUuid")
-    public ResponseEntity<List<HsBookingProjectResource>> getListOfBookingProjectsByDebitorUuid(
+    public ResponseEntity<List<HsBookingProjectResource>> getListOfBookingProjectsByOptionalDebitorUuid(
             final String assumedRoles,
             final UUID debitorUuid) {
         context.assumeRoles(assumedRoles);
 
-        final var entities = bookingProjectRepo.findAllByDebitorUuid(debitorUuid);
+        final var entities = debitorUuid != null
+                ? bookingProjectRepo.findAllByDebitorUuid(debitorUuid)
+                : bookingProjectRepo.findAll();
 
         final var resources = mapper.mapList(entities, HsBookingProjectResource.class);
         return ResponseEntity.ok(resources);

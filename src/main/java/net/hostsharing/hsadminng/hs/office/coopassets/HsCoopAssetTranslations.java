@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
-// HOWTO translate messages which got created without i18n support, in this case in a PostgreSQL constraint trigger
+// HOWTO translate simple messages (without placeholders) which got created without i18n support, in this case in a PostgreSQL constraint trigger
 @Service
 public class HsCoopAssetTranslations implements RetroactiveTranslator {
 
@@ -25,16 +25,5 @@ public class HsCoopAssetTranslations implements RetroactiveTranslator {
         // it's guaranteed to be the same message, for which canTranslate(...) returned true
         // and in this case it's just one
         return ERROR_400_PREFIX + messageTranslator.translate(message.substring(ERROR_400_PREFIX.length()));
-
-        // HOWTO extract variable parts from messages which got created without i18n support:
-        //  final var regex = "(?<propertyName>[^ ]+) (?<propertyValue>.+) not found";
-        //  final var pattern = Pattern.compile(regex);
-        //  final var matcher = pattern.matcher(message);
-        //
-        //  if (matcher.matches()) {
-        //      final var propertyName = matcher.group("propertyName");
-        //      final var propertyValue = matcher.group("propertyValue");
-        //      return messageTranslator.translate("", propertyName, propertyValue);
-        //  }
     }
 }

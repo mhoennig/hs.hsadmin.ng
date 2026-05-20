@@ -41,6 +41,7 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     private static final String SUPERUSER_FRAN_SUBJECT_NAME = "superuser-fran@hostsharing.net";
     private static final String USER_DREW_SUBJECT_NAME = "selfregistered-user-drew@hostsharing.org";
     private static final String TEST_USER_SUBJECT_NAME = "selfregistered-test-user@hostsharing.org";
+    public static final String FIRST_GMBH = "first-gmbh";
 
     // HOWTO fix UnsatisfiedDependencyException with cause "No qualifying bean of type 'jakarta.servlet.http.HttpServletRequest'"
     //  This dependency comes from class net.hostsharing.hsadminng.context.Context,
@@ -110,7 +111,7 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
                 .withContact("some test contact")
                 .inDatabase();
         givenAccount()
-                .forSubject("first-gmbh")
+                .forSubject(FIRST_GMBH)
                 .forPerson(firstGmbHPerson)
                 .inDatabase();
 
@@ -125,7 +126,10 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         // then
         assertThat(foundAccount).hasSize(2)
                 .map(e -> e.getSubject().getName())
-                .containsExactlyInAnyOrder("drew@example.org", "first-gmbh@example.com");
+                .containsExactlyInAnyOrder(
+                        USER_DREW_SUBJECT_NAME,
+                        FIRST_GMBH
+                );
     }
 
     @Test
@@ -142,7 +146,7 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         // then
         assertThat(foundAccount).hasSize(1)
                 .map(e -> e.getSubject().getName())
-                .containsExactlyInAnyOrder("fran@example.com");
+                .containsExactlyInAnyOrder(SUPERUSER_FRAN_SUBJECT_NAME);
     }
 
     @Test
@@ -153,7 +157,7 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         // then
         assertThat(foundEntityOptional).isPresent()
                 .map(e -> e.getSubject().getName())
-                .contains("alex@example.com");
+                .contains(SUPERUSER_ALEX_SUBJECT_NAME);
     }
 
     @Test

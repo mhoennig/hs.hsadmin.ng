@@ -5,7 +5,6 @@ import net.hostsharing.hsadminng.config.RetroactiveTranslator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-// HOWTO translate messages which got created without i18n support, in this case in a PostgreSQL constraint trigger
 @Service
 public class HsCoopShareTranslations implements RetroactiveTranslator {
 

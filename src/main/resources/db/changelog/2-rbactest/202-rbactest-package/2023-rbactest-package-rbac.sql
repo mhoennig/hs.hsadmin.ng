@@ -190,7 +190,7 @@ execute procedure rbactest.package_grants_insert_to_customer_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:rbactest-package-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-package-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -211,7 +211,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger package_insert_permission_check_tg
+create or replace trigger package_insert_permission_check_tg
     before insert on rbactest.package
     for each row
         execute procedure rbactest.package_insert_permission_check_tf();
@@ -232,16 +232,16 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.package',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:rbactest-package-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('rbactest.package',
     $orderBy$
         name
-    $orderBy$,
+$orderBy$,
     $updates$
         version = new.version,
         customerUuid = new.customerUuid,
         description = new.description
-    $updates$);
+$updates$
+);
 --//
 
 

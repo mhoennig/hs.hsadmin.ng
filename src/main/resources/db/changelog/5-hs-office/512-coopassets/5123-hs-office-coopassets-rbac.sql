@@ -113,7 +113,7 @@ execute procedure hs_office.coopassettx_grants_insert_to_membership_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-coopassettx-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-coopassettx-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -134,7 +134,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger coopassettx_insert_permission_check_tg
+create or replace trigger coopassettx_insert_permission_check_tg
     before insert on hs_office.coopassettx
     for each row
         execute procedure hs_office.coopassettx_insert_permission_check_tf();
@@ -155,14 +155,14 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.coopassettx',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-coopassettx-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.coopassettx',
     $orderBy$
         reference
-    $orderBy$,
+$orderBy$,
     $updates$
         comment = new.comment
-    $updates$);
+$updates$
+);
 --//
 
 

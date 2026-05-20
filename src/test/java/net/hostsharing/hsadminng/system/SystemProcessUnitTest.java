@@ -63,7 +63,9 @@ class SystemProcessUnitTest {
 
         // then
         assertThat(exception).isInstanceOf(IOException.class)
-                .hasMessage("Cannot run program \"non-existing program\": error=2, No such file or directory");
+                // the exact message might vary with Linux versions
+                .hasMessageContaining("non-existing program")
+                .hasMessageContaining("No such file or directory");
     }
 
     @Test

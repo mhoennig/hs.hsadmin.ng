@@ -86,7 +86,7 @@ end; $$;
 --changeset michael.hoennig:rbac-context-CONTEXT-DEFINED runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Callback which is called after the context has been (re-) defined.
+    This callback gets called after the context has been (re-) defined.
     This function will be overwritten by later changesets.
  */
 create or replace procedure base.contextDefined(
@@ -98,7 +98,10 @@ create or replace procedure base.contextDefined(
     language plpgsql as $$
 declare
     currentSubjectUuid uuid;
+    currentSubjectOrAssumedRolesUuids uuid[];
+    globalAdminRoleUuid uuid;
     currentSubjectHasGlobalAdminRole boolean;
+    currentSubjectHasEffectiveGlobalAdminRole boolean;
 begin
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
@@ -109,15 +112,25 @@ begin
     execute format('set local hsadminng.currentSubjectUuid to %L', coalesce(currentSubjectUuid::text, ''));
 
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
+    currentSubjectOrAssumedRolesUuids := rbac.determineCurrentSubjectOrAssumedRolesUuids(currentSubjectUuid, assumedRoles);
     execute format('set local hsadminng.currentSubjectOrAssumedRolesUuids to %L',
-       (select array_to_string(rbac.determineCurrentSubjectOrAssumedRolesUuids(currentSubjectUuid, assumedRoles), ';')));
+       (select array_to_string(currentSubjectOrAssumedRolesUuids, ';')));
 
     if currentSubjectUuid is null then
         currentSubjectHasGlobalAdminRole := false;
     else
-        currentSubjectHasGlobalAdminRole := rbac.isGranted(array[currentSubjectUuid], rbac.findRoleId(rbac.global_ADMIN()));
+        globalAdminRoleUuid := rbac.findRoleId(rbac.global_ADMIN());
+        currentSubjectHasGlobalAdminRole := rbac.isGranted(array[currentSubjectUuid], globalAdminRoleUuid);
     end if;
     execute format('set local hsadminng.isGlobalAdmin to %L', currentSubjectHasGlobalAdminRole::text);
+
+    if currentSubjectHasGlobalAdminRole then
+        currentSubjectHasEffectiveGlobalAdminRole := trim(coalesce(assumedRoles, '')) = ''
+            or globalAdminRoleUuid = any(currentSubjectOrAssumedRolesUuids);
+    else
+        currentSubjectHasEffectiveGlobalAdminRole := false;
+    end if;
+    execute format('set local hsadminng.hasGlobalAdminRole to %L', currentSubjectHasEffectiveGlobalAdminRole::text);
 
     raise notice 'Context defined as: %, %, %, [%]', currentTask, currentRequest, currentSubject, assumedRoles;
 end; $$;

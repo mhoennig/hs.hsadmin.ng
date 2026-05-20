@@ -201,7 +201,7 @@ execute procedure hs_office.relation_grants_insert_to_person_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-relation-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-relation-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -222,7 +222,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger relation_insert_permission_check_tg
+create or replace trigger relation_insert_permission_check_tg
     before insert on hs_office.relation
     for each row
         execute procedure hs_office.relation_insert_permission_check_tf();
@@ -245,16 +245,16 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.relation',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-relation-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.relation',
     $orderBy$
         (select idName from hs_office.person_iv p where p.uuid = target.holderUuid)
-    $orderBy$,
+$orderBy$,
     $updates$
         anchorUuid = new.anchorUuid,
         holderUuid = new.holderUuid,
         contactUuid = new.contactUuid
-    $updates$);
+$updates$
+);
 --//
 
 

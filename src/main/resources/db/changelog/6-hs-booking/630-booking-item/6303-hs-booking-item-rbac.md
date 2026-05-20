@@ -40,6 +40,7 @@ subgraph project["`**project**`"]
         role:project:ADMIN[[project:ADMIN]]
         role:project:AGENT[[project:AGENT]]
         role:project:TENANT[[project:TENANT]]
+        role:project:REFERRER[[project:REFERRER]]
     end
 end
 
@@ -47,6 +48,7 @@ end
 role:project:OWNER -.-> role:project:ADMIN
 role:project:ADMIN -.-> role:project:AGENT
 role:project:AGENT -.-> role:project:TENANT
+role:project:TENANT -.-> role:project:REFERRER
 role:project:AGENT ==> role:bookingItem:OWNER
 role:bookingItem:OWNER ==> role:bookingItem:ADMIN
 role:bookingItem:ADMIN ==> role:bookingItem:AGENT

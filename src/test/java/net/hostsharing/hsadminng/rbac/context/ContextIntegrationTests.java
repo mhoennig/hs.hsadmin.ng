@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.context;
 
+import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
@@ -20,6 +21,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +38,9 @@ class ContextIntegrationTests {
     @MockitoBean
     @SuppressWarnings("unused") // the bean must be present, even though it's not used directly
     private HttpServletRequest request;
+
+    @MockitoBean
+    private MessageTranslator messageTranslator;
 
     @Autowired
     private JpaAttempt jpaAttempt;
@@ -179,7 +184,7 @@ class ContextIntegrationTests {
                     context.define("superuser-alex@hostsharing.net");
 
                     // when
-                    return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+                    return hasGlobalAdminRole();
                 }
         );
 
@@ -188,13 +193,13 @@ class ContextIntegrationTests {
     }
 
     @Test
-    public void hasGlobalAdminRoleIsTrueForGlobalAdminWithAssumedRole() {
+    public void hasGlobalAdminRoleIsFalseForGlobalAdminWithAssumedNonGlobalRole() {
         final var hasGlobalAdminRole = jpaAttempt.transacted(() -> {
             // given
             context.define("superuser-alex@hostsharing.net", "rbactest.package#yyy00:ADMIN");
 
             // when
-            return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+            return hasGlobalAdminRole();
         });
 
         // when
@@ -204,17 +209,64 @@ class ContextIntegrationTests {
     }
 
     @Test
-    public void hasGlobalAdminRoleIsFalseForGlobalAdminWithAssumedGlobalAdminRole() {
+    public void hasGlobalAdminRoleIsTrueForGlobalAdminWithAssumedGlobalAdminRole() {
         final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
             // given
             context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
 
             // when
-            return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+            return hasGlobalAdminRole();
         });
 
         // then
-        assertThat(hsGlobalAdminRole.returnedValue()).isFalse();
+        assertThat(hsGlobalAdminRole.returnedValue()).isTrue();
+    }
+
+    @Test
+    public void hasGlobalAdminRoleIsTrueForGlobalAdminWithOneOfMultipleAssumedRolesBeingGlobalAdminRole() {
+        final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
+            // given
+            context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN;rbac.global#global:ADMIN");
+
+            // when
+            return hasGlobalAdminRole();
+        });
+
+        // then
+        assertThat(hsGlobalAdminRole.returnedValue()).isTrue();
+    }
+
+    @Test
+    public void hasGlobalAdminRoleFollowsRedefinedContextWithinSameTransaction() {
+        final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            final var withoutAssumedRole = hasGlobalAdminRole();
+
+            context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
+            final var withAssumedCustomerRole = hasGlobalAdminRole();
+
+            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            final var withAssumedGlobalAdminRole = hasGlobalAdminRole();
+
+            return List.of(withoutAssumedRole, withAssumedCustomerRole, withAssumedGlobalAdminRole);
+        });
+
+        assertThat(hsGlobalAdminRole.returnedValue()).containsExactly(true, false, true);
+    }
+
+    @Test
+    public void hasGlobalAdminRoleIsCachedInContext() {
+        final var cachedHasGlobalAdminRole = jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
+            final var withAssumedCustomerRole = cachedHasGlobalAdminRole();
+
+            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            final var withAssumedGlobalAdminRole = cachedHasGlobalAdminRole();
+
+            return List.of(withAssumedCustomerRole, withAssumedGlobalAdminRole);
+        });
+
+        assertThat(cachedHasGlobalAdminRole.returnedValue()).containsExactly("false", "true");
     }
 
     @Test
@@ -225,7 +277,7 @@ class ContextIntegrationTests {
                     context.define("customer-admin@xxx.example.com");
 
                     // when
-                    return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+                    return hasGlobalAdminRole();
                 }
         );
 
@@ -236,5 +288,14 @@ class ContextIntegrationTests {
     private UUID uuidOfSubjectName(final String name) {
         return UUID.fromString(em.createNativeQuery("SELECT uuid FROM rbac.subject WHERE name = :name")
                 .setParameter("name", name).getSingleResult().toString());
+    }
+
+    private boolean hasGlobalAdminRole() {
+        return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+    }
+
+    private String cachedHasGlobalAdminRole() {
+        return (String) em.createNativeQuery("select current_setting('hsadminng.hasGlobalAdminRole', true)")
+                .getSingleResult();
     }
 }

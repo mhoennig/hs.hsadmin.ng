@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+trim() {
+    local value="${1:-}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+normalize_ram() {
+    local kib="${1:-0}"
+    local gib
+
+    if [[ ! "$kib" =~ ^[0-9]+$ ]] || (( kib <= 0 )); then
+        printf 'unknown RAM'
+        return
+    fi
+
+    gib=$(( (kib + 1024 * 1024 - 1) / (1024 * 1024) ))
+    printf '%d GB RAM' "$gib"
+}
+
+get_cpu() {
+    local cpu=""
+
+    if command_exists lscpu; then
+        cpu="$(LC_ALL=C lscpu | awk -F: '/Model name/ {sub(/^[[:space:]]+/, "", $2); print $2; exit}')"
+    fi
+
+    if [[ -z "$cpu" && -r /proc/cpuinfo ]]; then
+        cpu="$(awk -F: '/model name/ {sub(/^[[:space:]]+/, "", $2); print $2; exit}' /proc/cpuinfo)"
+    fi
+
+    trim "${cpu:-unknown CPU}"
+}
+
+get_ram() {
+    local mem_total=""
+
+    if [[ -r /proc/meminfo ]]; then
+        mem_total="$(awk '/^MemTotal:/ {print $2; exit}' /proc/meminfo)"
+    fi
+
+    normalize_ram "$mem_total"
+}
+
+get_disk_models_from_lsblk() {
+    command_exists lsblk || return 0
+
+    lsblk -bdnpo NAME,TYPE,RM,SIZE,MODEL 2>/dev/null |
+        awk '
+            $2 == "disk" && $3 == 0 && $4 > 0 {
+                name=$1
+                model=""
+                for (i = 5; i <= NF; i++) {
+                    model = model (model == "" ? "" : " ") $i
+                }
+                if (model == "") {
+                    model = name
+                }
+                print model
+            }
+        '
+}
+
+get_disk_models_from_sysfs() {
+    local device model removable sectors
+
+    for device in /sys/block/*; do
+        [[ -e "$device" ]] || continue
+        [[ -r "$device/removable" ]] || continue
+        [[ -r "$device/size" ]] || continue
+
+        removable="$(<"$device/removable")"
+        sectors="$(<"$device/size")"
+        [[ "$removable" == "0" ]] || continue
+        [[ "$sectors" =~ ^[0-9]+$ && "$sectors" -gt 0 ]] || continue
+
+        model=""
+        if [[ -r "$device/device/model" ]]; then
+            model="$(<"$device/device/model")"
+        elif [[ -r "$device/device/name" ]]; then
+            model="$(<"$device/device/name")"
+        fi
+
+        printf '%s\n' "$(trim "${model:-$(basename "$device")}")"
+    done
+}
+
+get_storage_summary() {
+    local disks=""
+
+    disks="$(get_disk_models_from_lsblk | awk 'NF && !seen[$0]++')"
+
+    if [[ -z "$disks" ]]; then
+        disks="$(get_disk_models_from_sysfs | awk 'NF && !seen[$0]++')"
+    fi
+
+    if [[ -z "$disks" ]]; then
+        printf 'Storage: unknown'
+        return
+    fi
+
+    printf 'Storage: %s' "$(printf '%s\n' "$disks" | awk 'BEGIN { sep="" } { printf "%s%s", sep, $0; sep=", " }')"
+}
+
+get_linux_summary() {
+    local distro="unknown Linux distro"
+    local kernel="unknown kernel"
+
+    if [[ -r /etc/os-release ]]; then
+        distro="$(
+            awk -F= '
+                $1 == "PRETTY_NAME" {
+                    gsub(/^"|"$/, "", $2)
+                    print $2
+                    exit
+                }
+            ' /etc/os-release
+        )"
+    fi
+
+    if command_exists uname; then
+        kernel="$(uname -r)"
+    fi
+
+    printf 'Linux: %s, Kernel: %s' "$(trim "$distro")" "$(trim "$kernel")"
+}
+
+get_docker_summary() {
+    local version=""
+
+    if command_exists docker; then
+        version="$(docker --version 2>/dev/null || true)"
+    fi
+
+    printf 'Docker: %s' "$(trim "${version:-not installed}")"
+}
+
+get_java_summary() {
+    local version=""
+
+    if command_exists java; then
+        version="$(java -version 2>&1 | awk -F\" '/version/ {print $2; exit}')"
+    fi
+
+    printf 'Java RE: %s' "$(trim "${version:-not installed}")"
+}
+
+get_gradle_summary() {
+    local version=""
+
+    if command_exists gradle; then
+        version="$(gradle --version 2>/dev/null | awk '/^Gradle / {print $2; exit}')"
+    fi
+
+    printf 'Gradle: %s' "$(trim "${version:-not installed}")"
+}
+
+main() {
+    printf 'Hardware: %s, %s, %s\n' "$(get_cpu)" "$(get_ram)" "$(get_storage_summary)"
+    printf '%s\n' "$(get_linux_summary)"
+    printf '%s\n' "$(get_docker_summary)"
+    printf '%s\n' "$(get_java_summary)"
+    printf '%s\n' "$(get_gradle_summary)"
+}
+
+main "$@"

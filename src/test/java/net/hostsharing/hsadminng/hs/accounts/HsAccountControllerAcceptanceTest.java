@@ -134,7 +134,10 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
     class PostNewAccount {
 
         @Test
-        void shouldRejectCreatingAccountForUnrepresentedPerson() {
+        void shouldRejectCreatingAccountIfNotGlobalAdmin() {
+            // New accounts will be created only in Keycloak and synched from Keycloak to hsadmin-NG.
+            // For now, we only allow global-admins to create new accounts.
+
             // given
             val testPerson = givenPersonWithUuid("selfregistered-user-drew@hostsharing.org");
 
@@ -157,7 +160,7 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                     .then().log().all().assertThat()
                         .statusCode(403)
                         .contentType("application/json")
-                        .body("message", containsString("wird von der eingeloggten Person nicht repräsentiert"));
+                        .body("message", containsString("Das Subjekt selfregistered-user-drew@hostsharing.org hat keine Berechtigung, die Rolle rbac.global#global:ADMIN anzunehmen"));
             // @formatter:on
         }
 

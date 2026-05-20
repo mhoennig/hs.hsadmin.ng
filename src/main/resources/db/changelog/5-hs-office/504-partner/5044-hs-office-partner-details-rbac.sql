@@ -106,7 +106,7 @@ execute procedure hs_office.partner_details_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-partner-details-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-partner-details-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -119,7 +119,7 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission if rbac.global ADMIN
-    if rbac.isGlobalAdmin() then
+    if rbac.hasGlobalAdminRole() then
         return NEW;
     end if;
 
@@ -127,7 +127,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger partner_details_insert_permission_check_tg
+create or replace trigger partner_details_insert_permission_check_tg
     before insert on hs_office.partner_details
     for each row
         execute procedure hs_office.partner_details_insert_permission_check_tf();
@@ -151,11 +151,10 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.partner_details',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-partner-details-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.partner_details',
     $orderBy$
         uuid
-    $orderBy$,
+$orderBy$,
     $updates$
         registrationOffice = new.registrationOffice,
         registrationNumber = new.registrationNumber,
@@ -163,7 +162,8 @@ call rbac.generateRbacRestrictedView('hs_office.partner_details',
         birthName = new.birthName,
         birthday = new.birthday,
         dateOfDeath = new.dateOfDeath
-    $updates$);
+$updates$
+);
 --//
 
 

@@ -86,8 +86,8 @@ java {
     }
 }
 
-// Use extra properties delegate for type safety
-val testcontainersVersion by extra("1.20.6")
+// For special versions, use `extra` properties delegate for type safety
+val testcontainersVersion by extra("1.21.4")
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

@@ -53,6 +53,36 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
     class ListBookingProjects {
 
         @Test
+        void globalAdmin_canViewAllVisibleBookingProjects() {
+
+            // given
+            context("superuser-alex@hostsharing.net");
+
+            RestAssured // @formatter:off
+                    .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/booking/projects")
+                    .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                    [
+                        {
+                            "caption": "D-1000111 default project"
+                        },
+                        {
+                            "caption": "D-1000212 default project"
+                        },
+                        {
+                            "caption": "D-1000313 default project"
+                        }
+                    ]
+                    """));
+            // @formatter:on
+        }
+        @Test
         void globalAdmin_canViewAllBookingProjectsOfArbitraryDebitor() {
 
             // given

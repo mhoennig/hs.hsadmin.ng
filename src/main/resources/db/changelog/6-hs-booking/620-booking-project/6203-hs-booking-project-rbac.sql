@@ -151,7 +151,7 @@ execute procedure hs_booking.project_grants_insert_to_relation_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-booking-project-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-booking-project-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -178,7 +178,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger project_insert_permission_check_tg
+create or replace trigger project_insert_permission_check_tg
     before insert on hs_booking.project
     for each row
         execute procedure hs_booking.project_insert_permission_check_tf();

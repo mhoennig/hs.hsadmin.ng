@@ -55,15 +55,15 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void globalAdmin_withAssumedGlobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
+        public void globalAdmin_withAssumedCustomerAdminRole__canNotViewOnlyThatCustomersPackages() {
             // given
-            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            context.define("superuser-alex@hostsharing.net", "rbactest.customer#yyy:ADMIN");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
             // then
-            noPackagesAreReturned(result);
+            exactlyThesePackagesAreReturned(result, "yyy00", "yyy01", "yyy02");
         }
 
         @Test

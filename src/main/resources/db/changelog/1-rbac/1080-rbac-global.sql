@@ -25,7 +25,14 @@ grant select on rbac.global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 -- ============================================================================
 --changeset michael.hoennig:rbac-global-IS-GLOBAL-ADMIN runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ------------------------------------------------------------------
+/*
+    Returns true if the current subject itself has the rbac.global ADMIN role.
 
+    This intentionally ignores any assumed role. A global admin who assumed a
+    non-global role still remains a global admin subject, but does not currently
+    act with global-admin permissions. Permission checks that need the effective
+    assumed-role context should use rbac.hasGlobalAdminRole() instead.
+ */
 create or replace function rbac.isGlobalAdmin()
     returns boolean
     language plpgsql as $$
@@ -46,26 +53,27 @@ end; $$;
 --changeset michael.hoennig:rbac-global-HAS-GLOBAL-ADMIN-ROLE runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns true if the current user is a global admin and has no assumed role.
+    Returns true if the current effective RBAC context has effective global-admin
+    permissions.
 
-    ATTENTION: It's false if the global-admin role is assumed,
-    because the global admin role does not have the global admin role, but it is the global admin role.
-    The differentiation is important for the cases where this function is used.
+    A global admin has these permissions if no role is assumed, or if one of the
+    assumed roles is rbac.global#global:ADMIN. If a global admin assumes only
+    non-global roles, this returns false because the effective context is limited
+    to that assumed role.
  */
 create or replace function rbac.hasGlobalAdminRole()
     returns boolean
     stable -- leakproof
     language plpgsql as $$
 declare
-    assumedRoles text;
+    hasGlobalAdminRole text;
 begin
-    begin
-        assumedRoles := current_setting('hsadminng.assumedRoles');
-    exception
-        when others then
-            assumedRoles := null;
-    end;
-    return TRIM(COALESCE(assumedRoles, '')) = '' and rbac.isGlobalAdmin();
+    hasGlobalAdminRole := current_setting('hsadminng.hasGlobalAdminRole', true);
+    if hasGlobalAdminRole is not null then
+        return hasGlobalAdminRole::boolean;
+    end if;
+
+    raise exception '`hsadminng.hasGlobalAdminRole` should have been set by `rbac.defineContext()`';
 end; $$;
 --//
 

@@ -150,7 +150,7 @@ execute procedure hs_office.sepamandate_grants_insert_to_relation_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-sepamandate-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-sepamandate-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -177,7 +177,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger sepamandate_insert_permission_check_tg
+create or replace trigger sepamandate_insert_permission_check_tg
     before insert on hs_office.sepamandate
     for each row
         execute procedure hs_office.sepamandate_insert_permission_check_tf();
@@ -200,16 +200,16 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.sepamandate',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-sepamandate-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.sepamandate',
     $orderBy$
         validity
-    $orderBy$,
+$orderBy$,
     $updates$
         reference = new.reference,
         agreement = new.agreement,
         validity = new.validity
-    $updates$);
+$updates$
+);
 --//
 
 

@@ -185,7 +185,7 @@ public class InsertTriggerGenerator {
     private void generateInsertPermissionsCheckHeader(final StringWriter plPgSql) {
         plPgSql.writeLn("""
             -- ============================================================================
-            --changeset InsertTriggerGenerator:${liquibaseTagPrefix}-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+            --changeset InsertTriggerGenerator:${liquibaseTagPrefix}-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
             -- ----------------------------------------------------------------------------
 
             /**
@@ -223,7 +223,7 @@ public class InsertTriggerGenerator {
             plPgSql.writeLn(
                     """
                     -- check INSERT permission if rbac.global ADMIN
-                    if ${caseCondition}rbac.isGlobalAdmin() then
+                    if ${caseCondition}rbac.hasGlobalAdminRole() then
                         return NEW;
                     end if;
                     """,
@@ -265,7 +265,7 @@ public class InsertTriggerGenerator {
                         NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
             end; $$;
             
-            create trigger ${rawSubTable}_insert_permission_check_tg
+            create or replace trigger ${rawSubTable}_insert_permission_check_tg
                 before insert on ${rawSubTableWithSchema}
                 for each row
                     execute procedure ${rawSubTableWithSchema}_insert_permission_check_tf();

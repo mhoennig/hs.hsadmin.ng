@@ -125,7 +125,7 @@ execute procedure rbactest.customer_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:rbactest-customer-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-customer-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -138,7 +138,7 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission if rbac.global ADMIN
-    if rbac.isGlobalAdmin() then
+    if rbac.hasGlobalAdminRole() then
         return NEW;
     end if;
 
@@ -146,7 +146,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger customer_insert_permission_check_tg
+create or replace trigger customer_insert_permission_check_tg
     before insert on rbactest.customer
     for each row
         execute procedure rbactest.customer_insert_permission_check_tf();
@@ -167,16 +167,16 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.customer',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:rbactest-customer-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('rbactest.customer',
     $orderBy$
         reference
-    $orderBy$,
+$orderBy$,
     $updates$
         reference = new.reference,
         prefix = new.prefix,
         adminUserName = new.adminUserName
-    $updates$);
+$updates$
+);
 --//
 
 

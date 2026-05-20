@@ -202,7 +202,7 @@ execute procedure hs_office.partner_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-partner-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-partner-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -215,7 +215,7 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission if rbac.global ADMIN
-    if rbac.isGlobalAdmin() then
+    if rbac.hasGlobalAdminRole() then
         return NEW;
     end if;
 
@@ -223,7 +223,7 @@ begin
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger partner_insert_permission_check_tg
+create or replace trigger partner_insert_permission_check_tg
     before insert on hs_office.partner
     for each row
         execute procedure hs_office.partner_insert_permission_check_tf();
@@ -244,14 +244,14 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.partner',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-partner-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
--- trigger change of change in generateRbacRestrictedView regarding #453 optimization for global:ADMIN
 call rbac.generateRbacRestrictedView('hs_office.partner',
     $orderBy$
         'P-' || partnerNumber
-    $orderBy$,
+$orderBy$,
     $updates$
         partnerRelUuid = new.partnerRelUuid
-    $updates$);
+$updates$
+);
 --//
 
 
