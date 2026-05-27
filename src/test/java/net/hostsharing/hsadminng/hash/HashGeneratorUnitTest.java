@@ -20,6 +20,10 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @ExtendWith(MockitoExtension.class)
 class HashGeneratorUnitTest {
 
+    static final int SHA1_DIGEST_LENGTH_BYTES = 20;
+    static final int HEX_DIGITS_PER_BYTE = 2;
+    static final int MYSQL_NATIVE_HASH_LENGTH = "*".length() + SHA1_DIGEST_LENGTH_BYTES * HEX_DIGITS_PER_BYTE;
+
     final String GIVEN_PASSWORD = "given password";
     final String WRONG_PASSWORD = "wrong password";
     final String GIVEN_SALT = "0123456789abcdef";
@@ -47,24 +51,102 @@ class HashGeneratorUnitTest {
     }
 
     @Test
+    void returnsNullHashForNullPassword() {
+        assertThat(HashGenerator.using(LDAP_ARGON2).hash(null)).isNull();
+    }
+
+    @Test
+    void rejectsGeneratedHashShorterThanPlaintextPassword() {
+        val plaintextLongerThanGeneratedMySqlNativeHash = "x".repeat(MYSQL_NATIVE_HASH_LENGTH + 1);
+
+        val throwable = catchThrowable(() ->
+                HashGenerator.using(MYSQL_NATIVE).hash(plaintextLongerThanGeneratedMySqlNativeHash)
+        );
+
+        assertThat(throwable).isInstanceOf(AssertionError.class)
+                .hasMessageStartingWith("generated hash too short: *");
+    }
+
+    @Test
+    void hashesPasswordIfNotYetHashed() {
+        HashGenerator.enableCouldBeHash(false);
+
+        val hash = HashGenerator.using(LDAP_SSHA)
+                .withSalt(GIVEN_SALT)
+                .hashIfNotYetHashed(GIVEN_PASSWORD);
+
+        LdapSshaHash.verifyHash(hash, GIVEN_PASSWORD); // throws exception if wrong
+    }
+
+    @Test
+    void hashesPasswordIfHashDetectionIsEnabledButValueDoesNotMatchAlgorithmPrefix() {
+        HashGenerator.enableCouldBeHash(true);
+        try {
+            val hash = HashGenerator.using(LDAP_SSHA)
+                    .withSalt(GIVEN_SALT)
+                    .hashIfNotYetHashed(GIVEN_PASSWORD);
+
+            LdapSshaHash.verifyHash(hash, GIVEN_PASSWORD); // throws exception if wrong
+        } finally {
+            HashGenerator.enableCouldBeHash(false);
+        }
+    }
+
+    @Test
+    void avoidsHashingPasswordIfHashDetectionIsEnabledAndValueCouldBeHash() {
+        HashGenerator.enableCouldBeHash(true);
+        try {
+            val hashedPassword = "{SSHA}not-validated-here";
+
+            val hash = HashGenerator.using(LDAP_SSHA).hashIfNotYetHashed(hashedPassword);
+
+            assertThat(hash).isEqualTo(hashedPassword);
+        } finally {
+            HashGenerator.enableCouldBeHash(false);
+        }
+    }
+
+    @Test
     void verifiesPasswordAgainstGeneratedArgon2Hash() {
         val hash = HashGenerator.using(LDAP_ARGON2).withSalt(null).hash(GIVEN_PASSWORD);
         LdapArgon2Hash.verifyHash(hash, GIVEN_PASSWORD); // throws exception if wrong
     }
 
     @Test
+    void verifiesPasswordAgainstGeneratedArgon2PhcStringWithoutLdapPrefix() {
+        val hash = HashGenerator.using(LDAP_ARGON2).withSalt(null).hash(GIVEN_PASSWORD);
+        val phc = hash.substring("{ARGON2}".length());
+
+        LdapArgon2Hash.verifyHash(phc, GIVEN_PASSWORD); // throws exception if wrong
+    }
+
+    @Test
     void rejectsInvalidPasswordAgainstGeneratedArgon2Hash() {
         val hash = HashGenerator.using(LDAP_ARGON2).withSalt(null).hash(GIVEN_PASSWORD);
-        final var throwable = catchThrowable(() ->
+        val throwable = catchThrowable(() ->
                 LdapArgon2Hash.verifyHash(hash, GIVEN_PASSWORD+"x") // throws exception if wrong
         );
         assertThat(throwable).hasMessage("invalid password");
     }
 
     @Test
+    void rejectsNullArgon2Password() {
+        val throwable = catchThrowable(() ->
+                LdapArgon2Hash.hash(null, null)
+        );
+        assertThat(throwable).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void currentArgon2AdapterIgnoresExplicitSalt() {
         val hash = HashGenerator.using(LDAP_ARGON2).withRandomSalt().hash(GIVEN_PASSWORD);
         LdapArgon2Hash.verifyHash(hash, GIVEN_PASSWORD); // throws exception if wrong
+    }
+
+    @Test
+    void enrichesArgon2SaltWithLdapPrefixOnly() {
+        assertThat(LDAP_ARGON2.enrichedSalt("$argon2id$v=19$m=1024,t=2,p=2$given-salt"))
+                .isEqualTo("{ARGON2}$argon2id$v=19$m=1024,t=2,p=2$given-salt");
     }
 
     @Test
@@ -79,6 +161,43 @@ class HashGeneratorUnitTest {
         val password = "{ARGON2}$argon2id$das-ist-kein-base64-hash";
         val hash = HashGenerator.using(LDAP_ARGON2).hash(password);
         LdapArgon2Hash.verifyHash(hash, password); // throws exception if wrong
+    }
+
+    @Test
+    void hashesPasswordWhichStartsWithArgon2PrefixButDoesNotContainArgon2IdMarker() {
+        val password = "{ARGON2}not-an-argon2-hash";
+        val hash = HashGenerator.using(LDAP_ARGON2).hash(password);
+        LdapArgon2Hash.verifyHash(hash, password); // throws exception if wrong
+    }
+
+    @Test
+    void hashesPasswordWhichLooksLikeArgon2HashButHasTooShortHashValue() {
+        val password = "{ARGON2}$argon2id$short";
+        val hash = HashGenerator.using(LDAP_ARGON2).hash(password);
+        LdapArgon2Hash.verifyHash(hash, password); // throws exception if wrong
+    }
+
+    @Test
+    void generatesArgon2HashWithExplicitParametersForLdap() {
+        val hash = LdapArgon2Hash.hashForLdap(GIVEN_PASSWORD, 1, 1024, 1, 16, 32);
+
+        assertThat(hash).startsWith("{ARGON2}$argon2id$v=19$m=1024,t=1,p=1$");
+        assertThat(LdapArgon2Hash.isValid(hash)).isTrue();
+        LdapArgon2Hash.verifyHash(hash, GIVEN_PASSWORD); // throws exception if wrong
+    }
+
+    @Test
+    void detectsValidArgon2Hash() {
+        val hash = HashGenerator.using(LDAP_ARGON2).hash(GIVEN_PASSWORD);
+
+        assertThat(LdapArgon2Hash.isValid(hash)).isTrue();
+    }
+
+    @Test
+    void detectsInvalidArgon2Hashes() {
+        assertThat(LdapArgon2Hash.isValid("not-an-argon2-hash")).isFalse();
+        assertThat(LdapArgon2Hash.isValid("{ARGON2}not-an-argon2-hash")).isFalse();
+        assertThat(LdapArgon2Hash.isValid("{ARGON2}$argon2id$v=19$m=65536,t=3,p=1$short$hash")).isFalse();
     }
 
     @Test
@@ -110,7 +229,7 @@ class HashGeneratorUnitTest {
     @Test
     void rejectsInvalidPasswordAgainstGeneratedSshaHash() {
         val hash = HashGenerator.using(LDAP_SSHA).withRandomSalt().hash(GIVEN_PASSWORD);
-        final var throwable = catchThrowable(() ->
+        val throwable = catchThrowable(() ->
                 LdapSshaHash.verifyHash(hash, GIVEN_PASSWORD+"x") // throws exception if wrong
         );
         assertThat(throwable).hasMessage("invalid password");
@@ -128,20 +247,29 @@ class HashGeneratorUnitTest {
 
     @Test
     void verifiesHashedLinuxPasswordWithRandomSalt() {
-        final var hash = HashGenerator.using(LINUX_SHA512).withRandomSalt().hash(GIVEN_PASSWORD);
+        val hash = HashGenerator.using(LINUX_SHA512).withRandomSalt().hash(GIVEN_PASSWORD);
         LinuxEtcShadowHashGenerator.verify(hash, GIVEN_PASSWORD); // throws exception if wrong
     }
 
     @Test
+    void hashesLinuxPasswordWithPredefinedNextSalt() {
+        HashGenerator.nextSalt("ooei1HK6JXVaI7KC");
+
+        val hash = HashGenerator.using(LINUX_SHA512).withRandomSalt().hash(GIVEN_PASSWORD);
+
+        assertThat(hash).isEqualTo(GIVEN_LINUX_GENERATED_SHA512_HASH);
+    }
+
+    @Test
     void verifiesLinuxHashedPasswordWithGivenSalt() {
-        final var hash = HashGenerator.using(LINUX_SHA512).withSalt(GIVEN_SALT).hash(GIVEN_PASSWORD);
+        val hash = HashGenerator.using(LINUX_SHA512).withSalt(GIVEN_SALT).hash(GIVEN_PASSWORD);
         LinuxEtcShadowHashGenerator.verify(hash, GIVEN_PASSWORD); // throws exception if wrong
     }
 
     @Test
     void throwsExceptionForInvalidLinuxPassword() {
-        final var hash = HashGenerator.using(LINUX_SHA512).withRandomSalt().hash(GIVEN_PASSWORD);
-        final var throwable = catchThrowable(() ->
+        val hash = HashGenerator.using(LINUX_SHA512).withRandomSalt().hash(GIVEN_PASSWORD);
+        val throwable = catchThrowable(() ->
                 LinuxEtcShadowHashGenerator.verify(hash, WRONG_PASSWORD)
         );
         assertThat(throwable).hasMessage("invalid password");
@@ -149,29 +277,29 @@ class HashGeneratorUnitTest {
 
     @Test
     void generatesLinuxSha512PasswordHash() {
-        final var hash = HashGenerator.using(LINUX_SHA512).withSalt("ooei1HK6JXVaI7KC").hash(GIVEN_PASSWORD);
+        val hash = HashGenerator.using(LINUX_SHA512).withSalt("ooei1HK6JXVaI7KC").hash(GIVEN_PASSWORD);
         assertThat(hash).isEqualTo(GIVEN_LINUX_GENERATED_SHA512_HASH);
     }
 
     @Test
     void generatesLinuxYescriptPasswordHash() {
-        final var hash = HashGenerator.using(LINUX_YESCRYPT).withSalt("wgYACPmBXvlMg2MzeZA0p1").hash(GIVEN_PASSWORD);
+        val hash = HashGenerator.using(LINUX_YESCRYPT).withSalt("wgYACPmBXvlMg2MzeZA0p1").hash(GIVEN_PASSWORD);
         assertThat(hash).isEqualTo(GIVEN_LINUX_GENERATED_YESCRYPT_HASH);
     }
 
     @Test
     void generatesMySqlNativePasswordHash() {
-        final var hash = HashGenerator.using(MYSQL_NATIVE).hash("t8L7FULt"); // results in line+branch-coverage
+        val hash = HashGenerator.using(MYSQL_NATIVE).hash("t8L7FULt"); // results in line+branch-coverage
         assertThat(hash).isEqualTo("*F1E107E5C47E0939C7BC941DDE59EDBBDA1F7E39");
     }
 
     @Test
     void generatePostgreSqlScramPasswordHash() {
         // given the same salt, extracted from the hash as generated by PostgreSQL
-        final var postgresBase64Salt = Base64.getDecoder().decode(GIVEN_POSTGRESQL_GENERATED_SCRAM_SHA256_HASH.split("\\$")[1].split(":")[1]);
+        val postgresBase64Salt = Base64.getDecoder().decode(GIVEN_POSTGRESQL_GENERATED_SCRAM_SHA256_HASH.split("\\$")[1].split(":")[1]);
 
         // when the hash is re-generated via Java
-        final var hash = HashGenerator.using(SCRAM_SHA256).withSalt(new String(postgresBase64Salt, Charset.forName("latin1"))).hash(GIVEN_PASSWORD);
+        val hash = HashGenerator.using(SCRAM_SHA256).withSalt(new String(postgresBase64Salt, Charset.forName("latin1"))).hash(GIVEN_PASSWORD);
 
         // then we are getting the same hash
         assertThat(hash).isEqualTo(GIVEN_POSTGRESQL_GENERATED_SCRAM_SHA256_HASH);

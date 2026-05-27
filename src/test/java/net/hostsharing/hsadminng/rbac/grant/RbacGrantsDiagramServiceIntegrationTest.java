@@ -55,9 +55,9 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
     }
 
     @Test
-    void allGrantsTocurrentSubject() {
+    void allGrantsToCurrentSubject() {
         context("superuser-alex@hostsharing.net", "rbactest.domain#xxx00-aaaa:OWNER");
-        final var graph = grantsMermaidService.allGrantsTocurrentSubject(EnumSet.of(Include.TEST_ENTITIES));
+        final var graph = grantsMermaidService.allGrantsToCurrentSubject(EnumSet.of(Include.TEST_ENTITIES));
 
         assertThat(graph).isEqualTo("""
                 flowchart TB
@@ -70,9 +70,9 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
     }
 
     @Test
-    void allGrantsTocurrentSubjectIncludingPermissions() {
+    void allGrantsToCurrentSubjectIncludingPermissions() {
         context("superuser-alex@hostsharing.net", "rbactest.domain#xxx00-aaaa:OWNER");
-        final var graph = grantsMermaidService.allGrantsTocurrentSubject(EnumSet.of(Include.TEST_ENTITIES, Include.PERMISSIONS));
+        final var graph = grantsMermaidService.allGrantsToCurrentSubject(EnumSet.of(Include.TEST_ENTITIES, Include.PERMISSIONS));
 
         assertThat(graph).isEqualTo("""
                 flowchart TB

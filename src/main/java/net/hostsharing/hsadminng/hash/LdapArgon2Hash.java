@@ -2,11 +2,13 @@ package net.hostsharing.hsadminng.hash;
 
 import de.mkammerer.argon2.Argon2Factory;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import lombok.val;
 
 import static net.hostsharing.hsadminng.hash.Base64Utils.isBase64;
 
 // WARNING: explicit salt and external random salt are silently ignored, a salt gets generated implicitly
+@UtilityClass
 public class LdapArgon2Hash {
 
     // align with LDAP config

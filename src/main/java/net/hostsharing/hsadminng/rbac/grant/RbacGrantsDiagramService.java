@@ -74,7 +74,7 @@ public class RbacGrantsDiagramService {
 
     private final Map<UUID, List<RawRbacGrantEntity>> descendantsByUuid = new HashMap<>();
 
-    public String allGrantsTocurrentSubject(final EnumSet<Include> includes) {
+    public String allGrantsToCurrentSubject(final EnumSet<Include> includes) {
         final var graph = new LimitedHashSet<RawRbacGrantEntity>();
         for (UUID subjectUuid : context.fetchCurrentSubjectOrAssumedRolesUuids()) {
             traverseGrantsTo(graph, subjectUuid, includes);

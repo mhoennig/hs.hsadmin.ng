@@ -17,7 +17,7 @@ For architecture consider the files in the `doc` and `adr` folder.
 - [Running the SQL files](#running-the-sql-files)
     - [For RBAC](#for-rbac)
     - [For Historization](#for-historization)
-- [Coding Guidelines](#coding-guidelines)
+    - [Coding Guidelines](#coding-guidelines)
     - [Directory and Package Structure](#directory-and-package-structure)
         - [General Directory Structure](#general-directory-structure)
         - [Source Code Package Structure](#source-code-package-structure)
@@ -403,14 +403,23 @@ You can explore the prototype as follows:
 `.aider.conf.yml`
     Configuration for the _aider AI_ coding agent.
 
+`.aiassistant/rules/hsadmin-ng.md`
+    Symbolic link to `AGENTS.md` for IntelliJ IDEA AI Chat project rules.
+
 `.aliases`
     Shell-aliases for common tasks.
+
+`AGENTS.md`
+    Canonical project guidance for AI coding agents.
 
 `build/`
     Output directory for gradle build results. Ignored by git.
 
 `build.gradle.kts`
     Gradle build-file (Kotlin-Script). Contains dependencies and build configurations.
+
+`CLAUDE.md`
+    Claude agent wrapper which imports `AGENTS.md`.
 
 `CONVENTIONS.md`
     Coding conventions for use by an AI agent.
@@ -444,6 +453,9 @@ You can explore the prototype as follows:
 `.idea/` (optional)
     Config and cache files created by *IntelliJ IDEA*. Ignore by git.
 
+`.junie/guidelines.md`
+    Junie guidelines file pointing Junie to `AGENTS.md`.
+
 `LICENSE.md`
     Contains the license used for this software.
 
@@ -468,7 +480,6 @@ You can explore the prototype as follows:
 
 `tools/`
     Some shell-scripts to useful tasks.
-
 
 #### Source Code Package Structure
 

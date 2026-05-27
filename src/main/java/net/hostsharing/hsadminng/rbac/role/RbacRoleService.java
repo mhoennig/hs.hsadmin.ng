@@ -16,7 +16,7 @@ public class RbacRoleService{
     @Autowired
     private RbacRoleRepository rbacRoleRepo;
 
-   public RbacRoleEntity rbacRole(final BaseEntity<?> rbacEntity, final RbacRoleType roleType) {
+    public RbacRoleEntity rbacRole(final BaseEntity<?> rbacEntity, final RbacRoleType roleType) {
         val personAdminRole = rbacRoleRepo.findByObjectUuidAndRoleType(rbacEntity.getUuid(), roleType);
         if (personAdminRole == null) {
             throw new ResponseStatusException(

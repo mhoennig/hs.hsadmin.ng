@@ -35,4 +35,18 @@ class HsAccountEntityUnitTest {
     void toStringContainsJustTheSubjectNam() {
         assertThat(GIVEN_ACCOUNT_ENTITY.toString()).isEqualTo("account(test-subject)");
     }
+
+    @Test
+    void setSubjectAlsoUpdatesUuid() {
+        final var givenSubject = RealSubjectEntity.builder()
+                .uuid(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+                .name("new-subject")
+                .build();
+        final var account = new HsAccountEntity();
+
+        account.setSubject(givenSubject);
+
+        assertThat(account.getSubject()).isSameAs(givenSubject);
+        assertThat(account.getUuid()).isEqualTo(givenSubject.getUuid());
+    }
 }

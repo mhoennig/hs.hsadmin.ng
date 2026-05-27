@@ -1,17 +1,27 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
-import jakarta.persistence.*;
-import jakarta.validation.ValidationException;
-
-import lombok.*;
-import net.hostsharing.hsadminng.hash.LdapArgon2Hash;
-import net.hostsharing.hsadminng.hash.LdapSshaHash;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity; // Assuming BaseEntity exists
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.repr.Stringify.stringify;
@@ -67,12 +77,5 @@ public class HsAccountEntity implements BaseEntity<HsAccountEntity>, Stringifyab
     @Override
     public String toString() {
         return stringify.apply(this);
-    }
-
-    private static void validatePasswordHash(final String passwordHash) {
-
-        if (!LdapSshaHash.isValid(passwordHash) && !LdapArgon2Hash.isValid(passwordHash)) {
-            throw new ValidationException("passwordHash must be SSHA or ARGON2 hash valid for LDAP");
-        }
     }
 }

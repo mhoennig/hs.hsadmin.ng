@@ -1,0 +1,489 @@
+#!/bin/bash
+# A poor-man's-CI/CD - actually just builds+tests.
+# The script waits for commits on any branch on origin, then checks it out, builds and tests it.
+# Call with -h or --help for more details.
+#
+# This script was mostly vibe-coded and is mainly a workaound until we have a working CI/CD pipeline again.
+
+script_path=$(realpath "${BASH_SOURCE[0]}")
+script_name=$(basename "$script_path")
+
+install_to_bin() {
+    local target_dir="$HOME/bin"
+    local target_path="$target_dir/$script_name"
+
+    mkdir -p "$target_dir"
+    cp "$script_path" "$target_path"
+    chmod +x "$target_path"
+    echo "installed $target_path"
+}
+
+if [ "$1" = "--bin" ]; then
+    install_to_bin
+    exit 0
+fi
+
+script_repo_root=$(git -C "$(dirname "$script_path")" rev-parse --show-toplevel 2>/dev/null || true)
+if [ -n "$script_repo_root" ]; then
+    echo "ERROR: $script_name must not be started from within its repository." >&2
+    echo "Install it first: $script_path --bin" >&2
+    echo "Then start it from: $HOME/bin/$script_name" >&2
+    exit 1
+fi
+
+reported_skipped_new_branches=$(mktemp "${TMPDIR:-/tmp}/git-watch-origin-and-test-skipped.XXXXXX")
+trap 'rm -f "$reported_skipped_new_branches"' EXIT
+
+. .aliases
+
+include_remote_branches=false
+include_new_remote_branches=false
+run_current_branch=false
+branches_to_build=()
+
+usage() {
+    echo "Poor mans CI - to be precise just continuous build+test."
+    echo "Checks for branches on origin, pulls+builds these."
+    echo "Usage: $0 [--bin] [--all] [--new] [--run] [branch ...]"
+    echo
+    echo "With --bin, this script is installed to the current user's ~/bin directory."
+    echo "With --all, all origin branches are watched as well;"
+    echo "without --all, only existing local branches are watched."
+    echo "With --new, origin is also scanned for new branches that do not exist locally yet"
+    echo "and whose latest origin commit is not older than 24 hours."
+    echo "With --run, the current branch is built once before watching."
+    echo "Branch arguments may be full names or unique name parts matching local or origin branches."
+    echo "If multiple branches match, the script asks which one to use."
+}
+
+normalize_branch_name() {
+    local branch="$1"
+
+    branch="${branch#"${branch%%[![:space:]]*}"}"
+    branch="${branch%"${branch##*[![:space:]]}"}"
+    branch="${branch#\* }"
+    branch="${branch#remotes/}"
+    branch="${branch#remote/}"
+    branch="${branch#origin/}"
+
+    echo "$branch"
+}
+
+branch_candidates() {
+    {
+        git for-each-ref --format='%(refname:strip=2)' refs/heads
+        git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin | grep -v '^HEAD$'
+    } | awk '!seen[$0]++'
+}
+
+resolve_branch_name() {
+    local branch_part="$1"
+    local choice
+    local index
+    local selected
+    local matches=()
+
+    mapfile -t matches < <(branch_candidates | grep -F -- "$branch_part")
+
+    if [ "${#matches[@]}" -eq 0 ]; then
+        echo "ERROR: no local or origin branch matches '$branch_part'." >&2
+        return 1
+    fi
+
+    if [ "${#matches[@]}" -eq 1 ]; then
+        echo "${matches[0]}"
+        return 0
+    fi
+
+    echo "Multiple branches match '$branch_part':" >&2
+    index=1
+    for selected in "${matches[@]}"; do
+        echo "  $index) $selected" >&2
+        index=$((index + 1))
+    done
+
+    while true; do
+        echo -n "Select branch [1-${#matches[@]}]: " >&2
+        if ! read -r choice; then
+            echo "ERROR: no branch selected." >&2
+            return 1
+        fi
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#matches[@]}" ]; then
+            echo "${matches[$((choice - 1))]}"
+            return 0
+        fi
+        echo "ERROR: invalid selection: $choice" >&2
+    done
+}
+
+switch_to_branch() {
+    local branch="$1"
+
+    echo "checking out branch: $branch"
+    if git show-ref --quiet --verify "refs/heads/$branch"; then
+        echo "Branch $branch already exists. Checking it out."
+        git switch "$branch" || return 1
+    else
+        echo "Creating and checking out new branch: $branch"
+        git switch --track -c "$branch" "refs/remotes/origin/$branch" || return 1
+    fi
+}
+
+pull_branch_if_possible() {
+    local branch="$1"
+
+    if git show-ref --quiet --verify "refs/remotes/origin/$branch"; then
+        git pull origin "$branch" || return 1
+    fi
+}
+
+checkout_and_build() {
+    local branch="$1"
+
+    switch_to_branch "$branch" || return 1
+    pull_branch_if_possible "$branch" || return 1
+
+    build_current_checkout
+}
+
+branch_has_new_commits() {
+    local branch="$1"
+    local upstream
+
+    if ! git show-ref --quiet --verify "refs/heads/$branch"; then
+        git show-ref --quiet --verify "refs/remotes/origin/$branch"
+        return
+    fi
+
+    upstream=$(git for-each-ref --format='%(upstream)' "refs/heads/$branch")
+    if [ -n "$upstream" ]; then
+        has_new_commits "refs/heads/$branch" "$upstream"
+    elif git show-ref --quiet --verify "refs/remotes/origin/$branch"; then
+        has_new_commits "refs/heads/$branch" "refs/remotes/origin/$branch"
+    else
+        return 1
+    fi
+}
+
+checkout_requested_branch() {
+    local branch_arg="$1"
+    local branch
+    local has_remote_updates=false
+
+    branch=$(resolve_branch_name "$branch_arg") || return 1
+    if branch_has_new_commits "$branch"; then
+        has_remote_updates=true
+    fi
+
+    switch_to_branch "$branch" || return 1
+
+    if [ "$has_remote_updates" = true ]; then
+        pull_branch_if_possible "$branch" || return 1
+    fi
+
+    if [ "$has_remote_updates" = true ] || [ "$run_current_branch" = true ]; then
+        build_current_checkout
+    else
+        echo "Branch $branch has no new commits. Skipping initial build."
+    fi
+}
+
+print_build_banner() {
+    local branch="$1"
+
+    echo
+    printf '%*s\n' 80 '' | tr ' ' '='
+    echo "$branch"
+    printf '%*s\n' 80 '' | tr ' ' '-'
+}
+
+open_test_report() {
+    local report_path="build/reports/tests/test/index.html"
+    local report_file
+
+    if [ ! -f "$report_path" ]; then
+        echo "Test report not found: $PWD/$report_path"
+        return 0
+    fi
+
+    report_file=$(realpath "$report_path")
+    if command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$report_file" >/dev/null 2>&1 &
+    elif command -v open >/dev/null 2>&1; then
+        open "$report_file" >/dev/null 2>&1 &
+    elif command -v sensible-browser >/dev/null 2>&1; then
+        sensible-browser "$report_file" >/dev/null 2>&1 &
+    else
+        echo "Cannot open test report automatically: no browser opener found."
+        echo "Test report: $report_file"
+        return 0
+    fi
+
+    echo "Opened test report: $report_file"
+}
+
+build_results_file() {
+    git rev-parse --git-path git-watch-origin-and-test/build-results.tsv
+}
+
+record_build_result() {
+    local branch="$1"
+    local status="$2"
+    local results_file
+    local results_dir
+    local tmp_file
+    local commit
+    local timestamp
+
+    results_file=$(build_results_file)
+    results_dir=$(dirname "$results_file")
+    mkdir -p "$results_dir"
+
+    tmp_file=$(mktemp "$results_dir/build-results.XXXXXX")
+    commit=$(git rev-parse HEAD)
+    timestamp=$(date -Iseconds)
+
+    if [ -f "$results_file" ]; then
+        awk -F '\t' -v branch="$branch" '$1 != branch' "$results_file" >"$tmp_file"
+    fi
+
+    printf '%s\t%s\t%s\t%s\n' "$branch" "$commit" "$status" "$timestamp" >>"$tmp_file"
+    mv "$tmp_file" "$results_file"
+}
+
+prune_build_results() {
+    local results_file
+    local results_dir
+    local tmp_file
+    local branch
+    local commit
+    local status
+    local timestamp
+
+    results_file=$(build_results_file)
+    if [ ! -f "$results_file" ]; then
+        return 0
+    fi
+
+    results_dir=$(dirname "$results_file")
+    tmp_file=$(mktemp "$results_dir/build-results.XXXXXX")
+
+    while IFS=$'\t' read -r branch commit status timestamp; do
+        if git show-ref --quiet --verify "refs/remotes/origin/$branch"; then
+            printf '%s\t%s\t%s\t%s\n' "$branch" "$commit" "$status" "$timestamp" >>"$tmp_file"
+        fi
+    done <"$results_file"
+
+    mv "$tmp_file" "$results_file"
+}
+
+print_build_results() {
+    local results_file
+    local branch
+    local commit
+    local status
+    local timestamp
+    local has_results=false
+    local green=""
+    local red=""
+    local reset=""
+
+    prune_build_results
+
+    if [ -t 1 ] && command -v tput >/dev/null 2>&1; then
+        green=$(tput setaf 2)
+        red=$(tput setaf 1)
+        reset=$(tput sgr0)
+    fi
+
+    results_file=$(build_results_file)
+    echo
+    echo "latest build results:"
+    if [ -f "$results_file" ]; then
+        while IFS=$'\t' read -r branch commit status timestamp; do
+            case "$status" in
+                passed)
+                    echo "${green}passed: $branch${reset}"
+                    has_results=true
+                    ;;
+                failed)
+                    echo "${red}failed: $branch${reset}"
+                    has_results=true
+                    ;;
+            esac
+        done <"$results_file"
+    fi
+
+    if [ "$has_results" = false ]; then
+        echo "(none)"
+    fi
+}
+
+build_current_checkout() {
+    local branch
+
+    branch=$(git branch --show-current)
+    if [ -z "$branch" ]; then
+        branch="detached HEAD"
+    fi
+
+    print_build_banner "$branch"
+    echo "building ..."
+    if ./gradlew clean test check -x pitest -x dependencyCheckAnalyze; then
+        record_build_result "$branch" passed
+        print_build_results
+    else
+        echo "Build failed on branch: $branch"
+        record_build_result "$branch" failed
+        open_test_report
+        read -r -p "Build failed. Press ENTER to continue."
+        print_build_results
+        return 0
+    fi
+}
+
+build_current_branch() {
+    local branch
+
+    branch=$(git branch --show-current)
+    if [ -z "$branch" ]; then
+        echo "ERROR: --run requires a checked out branch, but HEAD is detached." >&2
+        return 1
+    fi
+
+    echo "building current branch: $branch"
+    build_current_checkout
+}
+
+has_new_commits() {
+    local local_ref="$1"
+    local upstream_ref="$2"
+    local count
+
+    if ! git show-ref --quiet --verify "$local_ref" || ! git show-ref --quiet --verify "$upstream_ref"; then
+        return 1
+    fi
+
+    count=$(git rev-list --count "$local_ref..$upstream_ref" 2>/dev/null) || return 1
+    [ "${count:-0}" -gt 0 ]
+}
+
+local_branches_with_new_commits() {
+    git for-each-ref --format='%(refname:strip=2)' refs/heads | while read -r branch; do
+        upstream=$(git for-each-ref --format='%(upstream)' "refs/heads/$branch")
+        if [ -n "$upstream" ]; then
+            if has_new_commits "refs/heads/$branch" "$upstream"; then
+                echo "$branch"
+            fi
+        elif git show-ref --quiet --verify "refs/remotes/origin/$branch"; then
+            if has_new_commits "refs/heads/$branch" "refs/remotes/origin/$branch"; then
+                echo "$branch"
+            fi
+        fi
+    done
+}
+
+remote_branches_with_new_commits() {
+    git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin | while read -r branch; do
+        if [ "$branch" = "HEAD" ]; then
+            continue
+        fi
+
+        if ! git show-ref --quiet --verify "refs/heads/$branch"; then
+            echo "$branch"
+        elif has_new_commits "refs/heads/$branch" "refs/remotes/origin/$branch"; then
+            echo "$branch"
+        fi
+    done
+}
+
+new_remote_branches() {
+    local cutoff
+
+    cutoff=$(date -d '24 hours ago' +%s)
+    git for-each-ref --sort=-committerdate --format='%(refname:strip=3) %(committerdate:unix)' refs/remotes/origin | while read -r branch commit_date; do
+        if [ "$branch" = "HEAD" ]; then
+            continue
+        fi
+
+        if git show-ref --quiet --verify "refs/heads/$branch"; then
+            continue
+        fi
+
+        if [ "$commit_date" -lt "$cutoff" ]; then
+            if ! grep -Fxq -- "$branch" "$reported_skipped_new_branches"; then
+                echo "$branch" >>"$reported_skipped_new_branches"
+                echo "skipping new origin branch $branch: latest commit is older than 24 hours" >&2
+            fi
+            continue
+        fi
+
+        echo "$branch"
+    done
+}
+
+for arg in "$@"; do
+    case "$arg" in
+        --all)
+            include_remote_branches=true
+            ;;
+        --new)
+            include_new_remote_branches=true
+            ;;
+        --run)
+            run_current_branch=true
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -*)
+            echo "Unknown option: $arg"
+            usage
+            exit 1
+            ;;
+        *)
+            branches_to_build+=("$(normalize_branch_name "$arg")")
+            ;;
+    esac
+done
+
+git fetch origin >/dev/null
+if [ "$run_current_branch" = true ] && [ "${#branches_to_build[@]}" -eq 0 ]; then
+    build_current_branch || exit 1
+fi
+
+for branch in "${branches_to_build[@]}"; do
+    checkout_requested_branch "$branch" || exit 1
+done
+
+while true; do
+    git fetch origin >/dev/null
+    branch_with_new_commits=$(
+        {
+            local_branches_with_new_commits
+            if [ "$include_remote_branches" = true ]; then
+                remote_branches_with_new_commits
+            elif [ "$include_new_remote_branches" = true ]; then
+                new_remote_branches
+            fi
+        } | awk '!seen[$0]++' | head -n1
+    )
+
+    if [ -n "$branch_with_new_commits" ]; then
+          checkout_and_build "$branch_with_new_commits"
+    fi
+
+    # wait 10s with a little animation
+    echo -e -n "\r\033[K waiting for changes (/) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes (-) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes (\) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes (|) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes ( ) ... "
+    sleep 2
+    echo -e -n "\r\033[K checking for changes"
+done

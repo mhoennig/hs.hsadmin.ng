@@ -330,7 +330,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     protected void generateRbacDiagramForCurrentSubjects(final EnumSet<RbacGrantsDiagramService.Include> include, final String name) {
         RbacGrantsDiagramService.writeToFile(
                 name,
-                diagramService.allGrantsTocurrentSubject(include),
+                diagramService.allGrantsToCurrentSubject(include),
                 "doc/temp/" + name + ".md"
         );
     }
