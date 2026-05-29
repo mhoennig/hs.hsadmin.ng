@@ -110,7 +110,7 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -211,7 +211,7 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
@@ -306,7 +306,7 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")

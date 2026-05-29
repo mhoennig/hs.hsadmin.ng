@@ -58,7 +58,6 @@ public class RbacGrantController implements RbacGrantsApi {
     @Timed("app.rbac.grants.api.getListOfSubjectGrants")
     public ResponseEntity<List<RbacGrantResource>> getListOfSubjectGrants(
             final String assumedRoles) {
-
         context.assumeRoles(assumedRoles);
 
         return ResponseEntity.ok(mapper.mapList(rbacGrantRepository.findAll(), RbacGrantResource.class));
@@ -107,7 +106,7 @@ public class RbacGrantController implements RbacGrantsApi {
 //    @Transactional(readOnly = true)
 //    public ResponseEntity<String> allGrantsOfUserAsMermaid(
 //            @RequestHeader(name = "current-subject") String currentSubject,
-//            @RequestHeader(name = "assumed-roles", required = false) String assumedRoles) {
+//            @RequestHeader(name = "Hostsharing-Assumed-Roles", required = false) String assumedRoles) {
 //        final var graph = RbacGrantsDiagramService.allGrantsToUser(currentSubject);
 //        return ResponseEntity.ok(graph);
 //    }

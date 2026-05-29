@@ -121,7 +121,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.package#yyy00:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -390,7 +390,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                 return RestAssured // @formatter:ff
                         .given()
                             .header("Authorization", bearer(grantingSubject.currentSubject))
-                            .header("assumed-roles", grantingSubject.assumedRole)
+                            .header("Hostsharing-Assumed-Roles", grantingSubject.assumedRole)
                             .contentType(ContentType.JSON)
                             .body("""
                                     {
@@ -426,7 +426,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                 return RestAssured // @formatter:ff
                         .given()
                         .header("Authorization", bearer(currentSubject.currentSubject))
-                        .header("assumed-roles", currentSubject.assumedRole)
+                        .header("Hostsharing-Assumed-Roles", currentSubject.assumedRole)
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
@@ -462,7 +462,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                 return RestAssured // @formatter:ff
                         .given()
                         .header("Authorization", bearer(currentSubject.currentSubject))
-                        .header("assumed-roles", currentSubject.assumedRole)
+                        .header("Hostsharing-Assumed-Roles", currentSubject.assumedRole)
                         .port(port)
                         .when()
                         .get("http://localhost/api/rbac/grants/%s/%s".formatted(

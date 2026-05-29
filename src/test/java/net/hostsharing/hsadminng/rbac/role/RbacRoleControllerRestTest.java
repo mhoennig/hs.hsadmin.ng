@@ -28,6 +28,8 @@ import static net.hostsharing.hsadminng.rbac.role.TestRbacRole.hostmasterRole;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -85,5 +87,24 @@ class RbacRoleControllerRestTest {
                 .andExpect(jsonPath("$[2].['object.uuid']", is(customerXxxAdmin.getObjectUuid().toString())))
                 .andExpect(jsonPath("$[2].objectTable", is(customerXxxAdmin.getObjectTable())))
                 .andExpect(jsonPath("$[2].objectIdName", is(customerXxxAdmin.getObjectIdName())));
+    }
+
+    @Test
+    void apiRejectsConflictingAssumedRolesHeaders() throws Exception {
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/roles")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Hostsharing-Assumed-Roles", "rbactest.package#xxx00:OWNER")
+                        .header("assumed-roles", "rbactest.package#yyy00:OWNER")
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is(
+                        "ERROR: [400] headers 'Hostsharing-Assumed-Roles' and 'assumed-roles' must either match or only one may be used")));
+
+        verify(contextMock, never()).assumeRoles(any());
     }
 }

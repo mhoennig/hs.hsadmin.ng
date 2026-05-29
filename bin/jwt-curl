@@ -20,7 +20,7 @@ if [ "$1" == "--trace" ]; then
     else
       curl --no-progress-meter --show-error --fail-with-body \
            --header "Authorization: Bearer $HSADMINNG_JWT_TOKEN" \
-           --header "assumed-roles: $HSADMINNG_JWT_ASSUME" \
+           --header "Hostsharing-Assumed-Roles: $HSADMINNG_JWT_ASSUME" \
            "$@"
     fi
     set +x
@@ -37,7 +37,7 @@ else
     else
       curl --fail-with-body \
            --header "Authorization: Bearer $HSADMINNG_JWT_TOKEN" \
-           --header "assumed-roles: $HSADMINNG_JWT_ASSUME" \
+           --header "Hostsharing-Assumed-Roles: $HSADMINNG_JWT_ASSUME" \
            "$@"
       echo
     fi

@@ -118,7 +118,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                     .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "hs_hosting.asset#fir01:AGENT")
+                    .header("Hostsharing-Assumed-Roles", "hs_hosting.asset#fir01:AGENT")
                     .port(port)
                     .when()
                     .   get("http://localhost/api/hs/hosting/assets?type=" + EMAIL_ALIAS)
@@ -229,7 +229,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final var location = RestAssured // @formatter:off
                     .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "hs_hosting.asset#vm1011:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "hs_hosting.asset#vm1011:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                                 {
@@ -466,7 +466,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                     .given()
                     .header("Authorization", bearer("person-TuckerJack@example.com"))
-                    .header("assumed-roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
+                    .header("Hostsharing-Assumed-Roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)
@@ -584,7 +584,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                     .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    //.header("assumed-roles", "hs_hosting.asset#vm2001:ADMIN")
+                    // TODO.impl: found this commeted out and it does not work, but should work with fir01, was vm2001 before
+                    //.header("Hostsharing-Assumed-Roles", "hs_hosting.asset#fir01:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                             {

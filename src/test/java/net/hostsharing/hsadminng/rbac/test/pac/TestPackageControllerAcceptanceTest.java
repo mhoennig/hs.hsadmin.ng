@@ -48,7 +48,7 @@ class TestPackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/packages")
@@ -70,7 +70,7 @@ class TestPackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/packages?name=xxx01")
@@ -99,7 +99,7 @@ class TestPackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body(format("""
                             {
@@ -130,7 +130,7 @@ class TestPackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -160,7 +160,7 @@ class TestPackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("{}")
                     .port(port)
@@ -180,7 +180,7 @@ class TestPackageControllerAcceptanceTest {
         return UUID.fromString(RestAssured
             .given()
                 .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
+                .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                 .port(port)
             .when()
                 .get("http://localhost/api/test/packages?name={packageName}", packageName)

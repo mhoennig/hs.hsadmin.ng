@@ -20,6 +20,8 @@ import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -126,22 +128,26 @@ class HsAccountControllerRestTest {
         response.andExpect(status().isNotFound());
     }
 
-    @Test
-    void getListOfAccountsForCurrentSubjectReturnsOwnAccont() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void getListOfAccountsForCurrentSubjectReturnsOwnAccount(final boolean withAssumedRoles) throws Exception {
         // given
         val givenPerson = givenNaturalPerson("Test", "Person");
         val givenAccount = givenAccount(UUID.randomUUID(), "abc-current", givenPerson);
         given(accountRepo.findByCurrentSubject()).willReturn(java.util.List.of(givenAccount));
 
         // when
-        val response = mockMvc.perform(MockMvcRequestBuilders
+        val request = MockMvcRequestBuilders
                         .get("/api/hs/accounts/accounts")
                         .header("Authorization", bearer("abc-current"))
-                        .header("assumed-roles", "rbac.global#global:ADMIN")
-                        .accept(MediaType.APPLICATION_JSON));
+                        .accept(MediaType.APPLICATION_JSON);
+        if (withAssumedRoles) {
+            request.header("Hostsharing-Assumed-Roles", "rbac.global#global:ADMIN");
+        }
+        val response = mockMvc.perform(request);
 
         // then
-        verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
+        verify(contextMock).assumeRoles(withAssumedRoles ? "rbac.global#global:ADMIN" : null);
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].uuid").value(givenAccount.getUuid().toString()))

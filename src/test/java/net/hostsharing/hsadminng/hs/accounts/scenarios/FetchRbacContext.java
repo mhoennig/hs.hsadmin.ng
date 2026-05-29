@@ -28,7 +28,7 @@ public class FetchRbacContext extends UseCase<FetchRbacContext> {
                 "RBAC Context", () ->
                         httpGet( asSubject("%{subjectName}"),
                                 "/api/rbac/context", req -> req
-                                        .header("assumed-roles", resolve("%{assumedRoles}", DROP_COMMENTS))
+                                        .header("Hostsharing-Assumed-Roles", resolve("%{assumedRoles}", DROP_COMMENTS))
                         )
                         .expecting(OK).expecting(JSON).expectObject()
                                 .extractValue("subject.name", "returnedSubjectName")

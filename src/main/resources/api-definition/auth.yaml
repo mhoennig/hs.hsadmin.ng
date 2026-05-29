@@ -4,7 +4,7 @@ components:
     parameters:
 
         assumedRoles:
-            name: assumed-roles
+            name: Hostsharing-Assumed-Roles
             in: header
             required: false
             schema:

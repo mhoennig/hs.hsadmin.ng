@@ -93,7 +93,7 @@ class TestCustomerControllerAcceptanceTest {
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -163,7 +163,7 @@ class TestCustomerControllerAcceptanceTest {
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
+                    .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                               {

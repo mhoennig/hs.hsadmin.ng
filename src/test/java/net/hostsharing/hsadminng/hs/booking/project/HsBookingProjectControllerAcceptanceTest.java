@@ -204,7 +204,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", bearer("person-TuckerJack@example.com"))
-                    .header("assumed-roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
+                    .header("Hostsharing-Assumed-Roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/projects/" + givenBookingProjectUuid)
@@ -222,7 +222,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @ValueSource(strings = {
                 "hs_office.relation#FirstGmbH-with-DEBITOR-FirstGmbH:ADMIN",
                 "hs_booking.project#D-1000111-D-1000111defaultproject:OWNER",
-                "" // without any assumed-roles
+                "" // without any Hostsharing-Assumed-Roles
         })
         void debitorAdminUser_canGetRelatedBookingProjectEvenWithoutAssumingTheProjectRole(final String assumedRoles) {
             context.define("superuser-alex@hostsharing.net");
@@ -232,7 +232,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", bearer("person-FirstGmbH@example.com"))
-                    .header("assumed-roles", assumedRoles)
+                    .header("Hostsharing-Assumed-Roles", assumedRoles)
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/projects?debitorUuid=" + debitorUuid)

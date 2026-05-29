@@ -11,7 +11,9 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleType;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -26,11 +28,14 @@ import jakarta.persistence.SynchronizationType;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -45,6 +50,7 @@ class RbacContextControllerRestTest {
 
     private static final String GIVEN_SUBJECT_NAME = "superuser-alex@hostsharing.net";
     private static final boolean GIVEN_GLOBAL_ADMIN = true;
+    private static final String GIVEN_ASSUMED_ROLES = "rbactest.package#xxx00:OWNER;rbactest.package#yyy00:OWNER";
 
     @Autowired
     MockMvc mockMvc;
@@ -64,7 +70,6 @@ class RbacContextControllerRestTest {
     @MockitoBean
     EntityManagerFactory emf;
 
-
     @BeforeEach
     void init() {
         when(emf.createEntityManager()).thenReturn(em);
@@ -83,14 +88,17 @@ class RbacContextControllerRestTest {
         when(rbacSubjectRepository.findByUuid(mockUuid)).thenReturn(mockSubject);
     }
 
-    @Test
-    void apiContextWillReturnCurrentContext() throws Exception {
+    @ParameterizedTest
+    @MethodSource("validAssumedRolesHeaderCombinations")
+    void apiContextWillReturnCurrentContext(
+            final String assumedRoles,
+            final String assumedRolesDeprecated,
+            final String expectedAssumedRoles) throws Exception {
 
         // given
-        final var rolesToAssume = "rbactest.package#xxx00:OWNER;rbactest.package#yyy00:OWNER";
         when(contextMock.isGlobalAdmin()).thenReturn(GIVEN_GLOBAL_ADMIN);
         when(rbacRoleRepository.fetchAssumedRoles()).thenReturn(
-                Arrays.stream(rolesToAssume.split(";"))
+                Arrays.stream(GIVEN_ASSUMED_ROLES.split(";"))
                         .map(RbacRoleDescriptor::fromRoleName)
                         .map(roleDesc -> new RbacRoleEntity(
                                 UUID.randomUUID(), UUID.randomUUID(),
@@ -100,11 +108,18 @@ class RbacContextControllerRestTest {
         );
 
         // when
-        mockMvc.perform(MockMvcRequestBuilders
+        final var request = MockMvcRequestBuilders
                         .get("/api/rbac/context")
                         .header("Authorization", bearer(GIVEN_SUBJECT_NAME))
-                        .header("assumed-roles", rolesToAssume)
-                        .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON);
+        if (assumedRoles != null) {
+            request.header("Hostsharing-Assumed-Roles", assumedRoles);
+        }
+        if (assumedRolesDeprecated != null) {
+            request.header("assumed-roles", assumedRolesDeprecated);
+        }
+
+        mockMvc.perform(request)
                 .andDo(print())
 
                 // then
@@ -114,6 +129,46 @@ class RbacContextControllerRestTest {
                 .andExpect(jsonPath("$.assumedRoles", hasSize(2)))
                 .andExpect(jsonPath("$.assumedRoles[0].roleName", is("rbactest.package#xxx00:OWNER")))
                 .andExpect(jsonPath("$.assumedRoles[1].roleName", is("rbactest.package#yyy00:OWNER")));
+
+        verify(contextMock).assumeRoles(expectedAssumedRoles);
+    }
+
+    static Stream<Arguments> validAssumedRolesHeaderCombinations() {
+        return Stream.of(
+                Arguments.of(null, null, null),
+                Arguments.of(GIVEN_ASSUMED_ROLES, null, GIVEN_ASSUMED_ROLES),
+                Arguments.of(null, GIVEN_ASSUMED_ROLES, GIVEN_ASSUMED_ROLES),
+                Arguments.of(GIVEN_ASSUMED_ROLES, GIVEN_ASSUMED_ROLES, GIVEN_ASSUMED_ROLES)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("conflictingAssumedRolesHeaderCombinations")
+    void apiContextWillRespondBadRequestForConflictingAssumedRolesHeaders(
+            final String assumedRoles,
+            final String assumedRolesDeprecated) throws Exception {
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/context")
+                        .header("Authorization", bearer(GIVEN_SUBJECT_NAME))
+                        .header("Hostsharing-Assumed-Roles", assumedRoles)
+                        .header("assumed-roles", assumedRolesDeprecated)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+
+                // then
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is(
+                        "ERROR: [400] headers 'Hostsharing-Assumed-Roles' and 'assumed-roles' must either match or only one may be used")));
+
+        verify(contextMock, never()).assumeRoles(any());
+    }
+
+    static Stream<Arguments> conflictingAssumedRolesHeaderCombinations() {
+        return Stream.of(
+                Arguments.of(GIVEN_ASSUMED_ROLES, "rbactest.package#zzz00:OWNER")
+        );
     }
 
     record RbacRoleDescriptor(String roleName, String tableName, String objectIdName, RbacRoleType roleType) {

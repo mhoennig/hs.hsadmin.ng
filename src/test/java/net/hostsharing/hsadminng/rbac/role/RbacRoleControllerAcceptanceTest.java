@@ -68,7 +68,7 @@ class RbacRoleControllerAcceptanceTest {
         RestAssured
             .given()
                 .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
+                .header("Hostsharing-Assumed-Roles", "rbactest.package#yyy00:ADMIN")
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac/roles")

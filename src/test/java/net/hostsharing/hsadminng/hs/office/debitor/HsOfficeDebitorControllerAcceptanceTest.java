@@ -705,7 +705,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
             RestAssured // @formatter:off
                 .given()
                     .header("Authorization", bearer("superuser-alex@hostsharing.net"))
-                    .header("assumed-roles", givenDebitor.getDebitorRel().getContact().roleId(ADMIN) )
+                    .header("Hostsharing-Assumed-Roles", givenDebitor.getDebitorRel().getContact().roleId(ADMIN) )
                     .contentType(ContentType.JSON)
                     .body("""
                            {
