@@ -140,6 +140,10 @@ alias gw-check='. .aliases; . .tc-environment; gw test check -x pitest'
 #   You can also re-run all these tests, which will take ~20min: `gw-test --all --rerun`
 #   This will always use the environment from `.tc-environment`.
 #
+# HOWTO: run quick tests (unit coverage and migration): `gw-test --quick`
+#   You can also re-run these tests: `gw-test --quick --rerun`
+#   This will always use the environment from `.tc-environment`.
+#
 function _gwTest1() {
     echo
     printf -- '=%0.s' {1..80}; echo
@@ -161,6 +165,10 @@ function _gwTest() {
     time (_gwTest1 unitTest "$@" &&
         _gwTest1 officeIntegrationTest bookingIntegrationTest hostingIntegrationTest "$@" &&
         _gwTest1 scenarioTest "$@" && _gwTest1 migrationTest "$@");
+  elif [ "$1" == "--quick" ]; then
+    shift # to remove the --quick from $@
+    # deliberately in separate gradlew-calls to avoid Testcontainers-PostgreSQL problem spillover
+    time (_gwTest1 jacocoTestCoverageVerification "$@" && _gwTest1 migrationTest "$@");
   elif [ $# -eq 0 ] || [[ $1 == -* ]]; then
     time _gwTest1 test "$@";
   else
@@ -171,7 +179,7 @@ function _gwTest() {
 alias gw-test=_gwTest
 
 alias howto=bin/howto
-alias jwt-curl=bin/jwt-curl
+alias jwt-curl=tools/jwt-curl
 
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
 alias gw-importHostingAssets-in-docker-compose='

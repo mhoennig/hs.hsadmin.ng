@@ -70,6 +70,7 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 - Preserve existing transaction boundaries and security annotations.
 - Use `StrictMapper` and local mapping conventions instead of handwritten mappings unless the local code already does so.
 - Do not introduce new dependencies without a clear need.
+- Avoid deprecated APIs and Gradle features unless there is a clear reason, for example to avoid disproportionate refactoring or to keep tests for this project's own deprecated behavior.
 - Do not create new files for helper classes that are used from only one file. Put such helper classes into the file where
   they are used, similar to Kotlin-style colocated helper classes.
 
@@ -84,6 +85,7 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 - Useful checks:
   - `./gradlew openApiGenerate`
   - `./gradlew test --tests ...`
+  - `. .tc-environment; ./gradlew jacocoTestCoverageVerification migrationTest` for a quick and yet broad check without integration/acceptance/scenario tests - will need about 2 min
   - `./gradlew spotlessJavaCheck -x test`
 - Never run a full `./gradlew test`, it's extremely slow.
 
@@ -111,3 +113,4 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 - Tests cover the changed behavior at the appropriate level.
 - The PR documentation under `doc/PR` is updated when the task belongs to a tracked PR checklist.
 - Formatting checks pass or any inability to run them is clearly explained.
+- Final responses end with a suggested git commit message.

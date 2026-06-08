@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
+import lombok.val;
+
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
@@ -30,19 +32,32 @@ class HsOfficePartnerEntityUnitTest {
 
     @Test
     void toStringContainsPartnerNumberPersonAndContact() {
-        final var result = givenPartner.toString();
+        val result = givenPartner.toString();
         assertThat(result).isEqualTo("partner(P-12345: LP some trade name, some caption)");
     }
 
     @Test
     void toShortStringContainsPartnerNumber() {
-        final var result = givenPartner.toShortString();
+        val result = givenPartner.toShortString();
         assertThat(result).isEqualTo("P-12345");
     }
 
     @Test
+    void loadReturnsSameInstanceAndLoadsOptionalDetails() {
+        val givenPartnerWithDetails = givenPartner.toBuilder()
+                .details(HsOfficePartnerDetailsEntity.builder()
+                        .registrationNumber("123456")
+                        .build())
+                .build();
+
+        val result = givenPartnerWithDetails.load();
+
+        assertThat(result).isSameAs(givenPartnerWithDetails);
+    }
+
+    @Test
     void definesRbac() {
-        final var rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficePartnerRbacEntity.rbac()).toString();
+        val rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficePartnerRbacEntity.rbac()).toString();
         assertThat(rbacFlowchart).isEqualTo("""
                 %%{init:{'flowchart':{'htmlLabels':false}}}%%
                 flowchart TB

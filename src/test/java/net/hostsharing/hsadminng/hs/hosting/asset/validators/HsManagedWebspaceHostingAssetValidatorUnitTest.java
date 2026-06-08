@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
+import lombok.val;
+
 import net.hostsharing.hsadminng.hs.hosting.asset.EntityManagerMock;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
@@ -11,7 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
@@ -19,6 +25,10 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOU
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.PROJECT_TEST_ENTITY;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class HsManagedWebspaceHostingAssetValidatorUnitTest {
@@ -65,8 +75,8 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void acceptsAlienIdentifierPrefixForPreExistingEntity() {
         // given
-        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
+        val validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        val mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemRealEntity.builder()
                         .type(HsBookingItemType.MANAGED_WEBSPACE)
@@ -76,10 +86,10 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .identifier("xyz00")
                 .isLoaded(true)
                 .build();
-        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
+        val em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
 
         // when
-        final var result = HsEntityValidator.doWithEntityManager(em, () ->
+        val result = HsEntityValidator.doWithEntityManager(em, () ->
                 validator.validateContext(mangedWebspaceHostingAssetEntity));
 
         // then
@@ -89,8 +99,8 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void validatesIdentifierAndReferencedEntities() {
         // given
-        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
+        val validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        val mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
                 .parentAsset(mangedServerAssetEntity)
@@ -98,7 +108,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
+        val result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
 
         // then
         assertThat(result).containsExactly("'identifier' expected to match '^abc[0-9][0-9]$' but is 'xyz00'");
@@ -107,8 +117,8 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void validatesUnknownProperties() {
         // given
-        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
+        val validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        val mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
                 .parentAsset(mangedServerAssetEntity)
@@ -119,7 +129,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
+        val result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
 
         // then
         assertThat(result).containsExactly("'MANAGED_WEBSPACE:abc00.config.unknown' is not expected but is set to 'some value'");
@@ -128,8 +138,8 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void validatesValidEntity() {
         // given
-        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
+        val validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        val mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemRealEntity.builder()
                         .type(HsBookingItemType.MANAGED_WEBSPACE)
@@ -140,10 +150,10 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .parentAsset(mangedServerAssetEntity)
                 .identifier("abc00")
                 .build();
-        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
+        val em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
 
         // when
-        final var result = HsEntityValidator.doWithEntityManager(em, () ->
+        val result = HsEntityValidator.doWithEntityManager(em, () ->
                 Stream.concat(
                         validator.validateEntity(mangedWebspaceHostingAssetEntity).stream(),
                         validator.validateContext(mangedWebspaceHostingAssetEntity).stream())
@@ -156,8 +166,8 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void rejectsInvalidEntityReferences() {
         // given
-        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
+        val validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        val mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemRealEntity.builder()
                         .type(HsBookingItemType.MANAGED_SERVER)
@@ -170,12 +180,60 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
+        val result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
 
         // then
         assertThat(result).containsExactly(
                 "'MANAGED_WEBSPACE:abc00.bookingItem' must be of type MANAGED_WEBSPACE but is of type MANAGED_SERVER",
                 "'MANAGED_WEBSPACE:abc00.parentAsset' must be null or of type MANAGED_SERVER but is of type CLOUD_SERVER",
                 "'MANAGED_WEBSPACE:abc00.assignedToAsset' must be null but is of type CLOUD_SERVER");
+    }
+
+    @Test
+    void postPersistCreatesDefaultUnixUserAndStoresGroupId() {
+        // given
+        val validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        val webspaceUuid = UUID.randomUUID();
+        val webspaceRealEntity = HsHostingAssetRealEntity.builder()
+                .uuid(webspaceUuid)
+                .type(MANAGED_WEBSPACE)
+                .bookingItem(HsBookingItemRealEntity.builder()
+                        .type(HsBookingItemType.MANAGED_WEBSPACE)
+                        .project(PROJECT_TEST_ENTITY)
+                        .resources(Map.ofEntries(entry("SSD", 25), entry("Traffic", 250)))
+                        .build())
+                .parentAsset(mangedServerAssetEntity)
+                .identifier("abc00")
+                .build();
+        val webspaceRbacEntity = HsHostingAssetRbacEntity.builder()
+                .uuid(webspaceUuid)
+                .type(MANAGED_WEBSPACE)
+                .bookingItem(webspaceRealEntity.getBookingItem())
+                .parentAsset(mangedServerAssetEntity)
+                .identifier("abc00")
+                .build();
+        val em = mock(EntityManager.class);
+        val nativeQuery = mock(Query.class);
+        val assetQuery = mock(TypedQuery.class);
+        val assetStream = mock(Stream.class);
+        when(em.find(HsHostingAssetRealEntity.class, webspaceUuid)).thenReturn(webspaceRealEntity);
+        when(em.createNativeQuery("SELECT nextval('hs_hosting.asset_unixuser_system_id_seq')", Integer.class))
+                .thenReturn(nativeQuery);
+        when(nativeQuery.getSingleResult()).thenReturn(100000);
+        when(em.createQuery(any(String.class), any(Class.class))).thenReturn(assetQuery);
+        when(assetQuery.setParameter(any(String.class), any())).thenReturn(assetQuery);
+        when(assetQuery.getResultStream()).thenReturn(assetStream);
+        when(assetStream.findFirst()).thenReturn(java.util.Optional.empty());
+        when(em.contains(any())).thenReturn(false);
+        doNothing().when(em).persist(any());
+        doNothing().when(em).flush();
+
+        // when
+        validator.postPersist(em, webspaceRbacEntity);
+
+        // then
+        assertThat(webspaceRbacEntity.getSubHostingAssets()).hasSize(1);
+        assertThat(webspaceRbacEntity.getSubHostingAssets().getFirst().getIdentifier()).isEqualTo("abc00");
+        assertThat(webspaceRbacEntity.getConfig().get("groupid")).isEqualTo(100000);
     }
 }

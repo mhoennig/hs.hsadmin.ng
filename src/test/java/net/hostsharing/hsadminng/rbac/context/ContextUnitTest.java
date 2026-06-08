@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.context;
 
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,10 +18,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,7 +53,7 @@ class ContextUnitTest {
         @BeforeEach
         void setup() {
             RequestContextHolder.setRequestAttributes(null);
-            given(em.createNativeQuery(any())).willReturn(nativeQuery);
+            lenient().when(em.createNativeQuery(any())).thenReturn(nativeQuery);
         }
 
         @Test
@@ -72,6 +76,81 @@ class ContextUnitTest {
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter("currentRequest", null);
+        }
+
+        @Test
+        void registerWithSubjectUuidResolvesSubjectName() {
+            val subjectUuid = UUID.randomUUID();
+            lenient().when(nativeQuery.setParameter("uuid", subjectUuid)).thenReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn("resolved-subject@example.org");
+
+            context.define(subjectUuid.toString());
+
+            verify(nativeQuery).setParameter("currentSubject", "resolved-subject@example.org");
+        }
+
+        @Test
+        void fetchCurrentTaskReturnsCurrentTask() {
+            given(em.createNativeQuery("select current_setting('hsadminng.currentTask');")).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn("given task");
+
+            val result = context.fetchCurrentTask();
+
+            assertThat(result).isEqualTo("given task");
+        }
+
+        @Test
+        void fetchCurrentSubjectReturnsCurrentSubject() {
+            given(em.createNativeQuery("select base.currentSubject()")).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn("given-subject@example.org");
+
+            val result = context.fetchCurrentSubject();
+
+            assertThat(result).isEqualTo("given-subject@example.org");
+        }
+
+        @Test
+        void fetchCurrentSubjectUuidReturnsCurrentSubjectUuid() {
+            val subjectUuid = UUID.randomUUID();
+            given(em.createNativeQuery("select rbac.currentSubjectUuid()", UUID.class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(subjectUuid);
+
+            val result = context.fetchCurrentSubjectUuid();
+
+            assertThat(result).isEqualTo(subjectUuid);
+        }
+
+        @Test
+        void fetchAssumedRolesNamesReturnsAssumedRoles() {
+            val assumedRoles = new String[] { "rbac.global#global:ADMIN" };
+            given(em.createNativeQuery("select base.assumedRoles() as roles", String[].class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(assumedRoles);
+
+            val result = context.fetchAssumedRolesNames();
+
+            assertThat(result).containsExactly("rbac.global#global:ADMIN");
+        }
+
+        @Test
+        void fetchCurrentSubjectOrAssumedRolesUuidsReturnsUuids() {
+            val uuids = new UUID[] { UUID.randomUUID(), UUID.randomUUID() };
+            given(em.createNativeQuery("select rbac.currentSubjectOrAssumedRolesUuids() as uuids", UUID[].class))
+                    .willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(uuids);
+
+            val result = context.fetchCurrentSubjectOrAssumedRolesUuids();
+
+            assertThat(result).containsExactly(uuids);
+        }
+
+        @Test
+        void isGlobalAdminReturnsCurrentFlag() {
+            given(em.createNativeQuery("select rbac.isGlobalAdmin()", boolean.class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(true);
+
+            val result = context.isGlobalAdmin();
+
+            assertThat(result).isTrue();
         }
     }
 
@@ -102,7 +181,7 @@ class ContextUnitTest {
         @BeforeEach
         void setup() {
             RequestContextHolder.setRequestAttributes(requestAttributes);
-            given(em.createNativeQuery(any())).willReturn(nativeQuery);
+            lenient().when(em.createNativeQuery(any())).thenReturn(nativeQuery);
         }
 
         @Test

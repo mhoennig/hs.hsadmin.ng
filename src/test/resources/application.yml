@@ -38,6 +38,9 @@ spring:
     liquibase:
         change-log: classpath:/db/changelog/db.changelog-master.yaml
         contexts: tc,test,dev,pg_stat_statements
+        parameters:
+            "[HSADMINNG_POSTGRES_ADMIN_USERNAME]": ${HSADMINNG_POSTGRES_ADMIN_USERNAME:admin}
+            "[HSADMINNG_POSTGRES_RESTRICTED_USERNAME]": ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME:restricted}
 
 logging:
     level:
@@ -51,4 +54,3 @@ logging:
 testcontainers:
     network:
         mode: host
-

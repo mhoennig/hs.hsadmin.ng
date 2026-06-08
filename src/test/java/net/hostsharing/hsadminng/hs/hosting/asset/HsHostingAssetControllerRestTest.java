@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import lombok.val;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +13,8 @@ import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
-import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapperFake;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapperFakeConfiguration;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,8 +22,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -28,7 +29,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.SynchronizationType;
 import java.util.HashMap;
@@ -46,9 +46,8 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntit
 import static net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealTestEntity.TEST_REAL_CONTACT;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -58,6 +57,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({ StrictMapper.class,
           JsonObjectMapperConfiguration.class,
           MessageTranslator.class,
+          EntityManagerWrapperFakeConfiguration.class,
           WebSecurityConfigForWebMvcTests.class })
 @ActiveProfiles({"fake-jwt", "test"})
 public class HsHostingAssetControllerRestTest {
@@ -72,8 +72,8 @@ public class HsHostingAssetControllerRestTest {
     @SuppressWarnings("unused") // not used in test, but in controller class
     StrictMapper mapper;
 
-    @MockitoBean
-    EntityManagerWrapper em;
+    @Autowired
+    EntityManagerWrapperFake em;
 
     @MockitoBean
     EntityManagerFactory emf;
@@ -87,16 +87,6 @@ public class HsHostingAssetControllerRestTest {
 
     @MockitoBean
     private HsHostingAssetRbacRepository rbacAssetRepo;
-
-    @TestConfiguration
-    public static class TestConfig {
-
-        @Bean
-        public EntityManager entityManager() {
-            return mock(EntityManager.class);
-        }
-
-    }
 
     enum ListTestCases {
         CLOUD_SERVER(
@@ -584,6 +574,7 @@ public class HsHostingAssetControllerRestTest {
         when(emf.createEntityManager(any(Map.class))).thenReturn(em);
         when(emf.createEntityManager(any(SynchronizationType.class))).thenReturn(em);
         when(emf.createEntityManager(any(SynchronizationType.class), any(Map.class))).thenReturn(em);
+        em.clear();
     }
 
     @ParameterizedTest
@@ -594,7 +585,7 @@ public class HsHostingAssetControllerRestTest {
                 .thenReturn(testCase.givenHostingAssetsOfType);
 
         // when
-        final var result = mockMvc.perform(MockMvcRequestBuilders
+        val result = mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/hosting/assets?type="+testCase.name())
                         .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .accept(MediaType.APPLICATION_JSON))
@@ -605,21 +596,151 @@ public class HsHostingAssetControllerRestTest {
                 .andReturn();
 
         // and the config properties do match not just leniently but even strictly
-        final var resultBody = new ObjectMapper().readTree(result.getResponse().getContentAsString());
+        val resultBody = new ObjectMapper().readTree(result.getResponse().getContentAsString());
         for (int n = 0; n < resultBody.size(); ++n) {
             assertThat(resultBody.get(n).path("config")).isEqualTo(testCase.expectedConfig(n));
         }
     }
 
     @Test
+    void shouldGetSingleHostingAssetIfFound() throws Exception {
+        // given
+        val assetUuid = UUID.randomUUID();
+        when(rbacAssetRepo.findByUuid(assetUuid)).thenReturn(Optional.of(HsHostingAssetRbacEntity.builder()
+                .uuid(assetUuid)
+                .type(HsHostingAssetType.CLOUD_SERVER)
+                .bookingItem(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY)
+                .identifier("vm1234")
+                .caption("some fake cloud-server")
+                .build()));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/hosting/assets/" + assetUuid)
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("uuid", is(assetUuid.toString())))
+                .andExpect(jsonPath("type", is("CLOUD_SERVER")))
+                .andExpect(jsonPath("identifier", is("vm1234")));
+    }
+
+    @Test
+    void shouldReturnNotFoundIfSingleHostingAssetIsMissing() throws Exception {
+        // given
+        val assetUuid = UUID.randomUUID();
+        when(rbacAssetRepo.findByUuid(assetUuid)).thenReturn(Optional.empty());
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/hosting/assets/" + assetUuid)
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldPostNewHostingAsset() throws Exception {
+        // given
+        val bookingItemUuid = UUID.randomUUID();
+        CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY.setUuid(bookingItemUuid);
+        when(realBookingItemRepo.findByUuid(bookingItemUuid)).thenReturn(Optional.of(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/hosting/assets")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "bookingItem.uuid": "%s",
+                                    "type": "CLOUD_SERVER",
+                                    "identifier": "vm1234",
+                                    "caption": "some new cloud-server",
+                                    "config": {}
+                                }
+                                """.formatted(bookingItemUuid))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("type", is("CLOUD_SERVER")))
+                .andExpect(jsonPath("identifier", is("vm1234")))
+                .andExpect(jsonPath("caption", is("some new cloud-server")));
+    }
+
+    @Test
+    void shouldRejectPostIfBookingItemIsMissing() throws Exception {
+        // given
+        val bookingItemUuid = UUID.randomUUID();
+        when(realBookingItemRepo.findByUuid(bookingItemUuid)).thenReturn(Optional.empty());
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/hosting/assets")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "bookingItem.uuid": "%s",
+                                    "type": "CLOUD_SERVER",
+                                    "identifier": "vm1234",
+                                    "caption": "some new cloud-server",
+                                    "config": {}
+                                }
+                                """.formatted(bookingItemUuid))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", is("ERROR: [400] bookingItemUuid %s not found".formatted(bookingItemUuid))));
+    }
+
+    @Test
+    void shouldDeleteHostingAsset() throws Exception {
+        // given
+        val assetUuid = UUID.randomUUID();
+        when(rbacAssetRepo.deleteByUuid(assetUuid)).thenReturn(1);
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/hs/hosting/assets/" + assetUuid)
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldReturnNotFoundIfDeletedHostingAssetIsMissing() throws Exception {
+        // given
+        val assetUuid = UUID.randomUUID();
+        when(rbacAssetRepo.deleteByUuid(assetUuid)).thenReturn(0);
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/hs/hosting/assets/" + assetUuid)
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void shouldPatchHostingAsset() throws Exception {
         // given
-        final var givenDomainSetup = HsHostingAssetRealEntity.builder()
+        val givenDomainSetup = HsHostingAssetRealEntity.builder()
                 .type(HsHostingAssetType.DOMAIN_SETUP)
                 .identifier("example.org")
                 .caption("some fake Domain-Setup")
                 .build();
-        final var givenUnixUser = HsHostingAssetRealEntity.builder()
+        val givenUnixUser = HsHostingAssetRealEntity.builder()
                 .type(HsHostingAssetType.UNIX_USER)
                 .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .identifier("xyz00-office")
@@ -633,8 +754,8 @@ public class HsHostingAssetControllerRestTest {
                         entry("HDD-soft-quota", 256),
                         entry("HDD-hard-quota", 512)))
                 .build();
-        final var givenDomainHttpSetupUuid = UUID.randomUUID();
-        final var givenDomainHttpSetupHostingAsset = HsHostingAssetRbacEntity.builder()
+        val givenDomainHttpSetupUuid = UUID.randomUUID();
+        val givenDomainHttpSetupHostingAsset = HsHostingAssetRbacEntity.builder()
                 .type(HsHostingAssetType.DOMAIN_HTTP_SETUP)
                 .identifier("example.org|HTTP")
                 .caption("some fake Domain-HTTP-Setup")
@@ -659,12 +780,11 @@ public class HsHostingAssetControllerRestTest {
                         entry("subdomains", Array.of("www", "test1", "test2"))
                 )))
                 .build();
+        em.persist(givenDomainHttpSetupHostingAsset);
         when(rbacAssetRepo.findByUuid(givenDomainHttpSetupUuid)).thenReturn(Optional.of(givenDomainHttpSetupHostingAsset));
-        when(em.contains(givenDomainHttpSetupHostingAsset)).thenReturn(true);
-        doNothing().when(em).flush();
 
         // when
-        final var result = mockMvc.perform(MockMvcRequestBuilders
+        val result = mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/hosting/assets/" + givenDomainHttpSetupUuid)
                         .header("Authorization", bearer("superuser-alex@hostsharing.net"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -698,8 +818,8 @@ public class HsHostingAssetControllerRestTest {
                 .andReturn();
 
         // and the config properties do match not just leniently but even strictly
-        final var actualConfig = formatJsonNode(result.getResponse().getContentAsString());
-        final var expectedConfig = formatJsonNode("""
+        val actualConfig = formatJsonNode(result.getResponse().getContentAsString());
+        val expectedConfig = formatJsonNode("""
                {
                     "config": {
                       "autoconfig" : true,
@@ -730,8 +850,8 @@ public class HsHostingAssetControllerRestTest {
     }
 
     private static String formatJsonNode(final String json) throws JsonProcessingException {
-        final var node = SORTED_MAPPER.readTree(json.replaceAll("//.*", "")).path("config");
-        final var obj = SORTED_MAPPER.treeToValue(node, Object.class);
+        val node = SORTED_MAPPER.readTree(json.replaceAll("//.*", "")).path("config");
+        val obj = SORTED_MAPPER.treeToValue(node, Object.class);
         return SORTED_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
     }
 }

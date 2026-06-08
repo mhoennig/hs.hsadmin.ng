@@ -1,7 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
+import lombok.val;
+
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +24,7 @@ class HsOfficeRelationUnitTest {
 
     @Test
     void toStringReturnsAllProperties() {
-        final var given = HsOfficeRelationRbacEntity.builder()
+        val given = HsOfficeRelationRbacEntity.builder()
                 .type(HsOfficeRelationType.SUBSCRIBER)
                 .mark("members-announce")
                 .anchor(anchor)
@@ -33,7 +36,7 @@ class HsOfficeRelationUnitTest {
 
     @Test
     void toShortString() {
-        final var given = HsOfficeRelationRbacEntity.builder()
+        val given = HsOfficeRelationRbacEntity.builder()
                 .type(HsOfficeRelationType.REPRESENTATIVE)
                 .anchor(anchor)
                 .holder(holder)
@@ -43,8 +46,22 @@ class HsOfficeRelationUnitTest {
     }
 
     @Test
+    void loadReturnsSameInstance() {
+        val given = HsOfficeRelationRealEntity.builder()
+                .type(HsOfficeRelationType.REPRESENTATIVE)
+                .anchor(anchor)
+                .holder(holder)
+                .contact(HsOfficeContactRealEntity.builder().caption("some contact").build())
+                .build();
+
+        val result = given.load();
+
+        assertThat(result).isSameAs(given);
+    }
+
+    @Test
     void definesRbac() {
-        final var rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficeRelationRbacEntity.rbac()).toString();
+        val rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficeRelationRbacEntity.rbac()).toString();
         assertThat(rbacFlowchart).isEqualTo("""
                 %%{init:{'flowchart':{'htmlLabels':false}}}%%
                 flowchart TB

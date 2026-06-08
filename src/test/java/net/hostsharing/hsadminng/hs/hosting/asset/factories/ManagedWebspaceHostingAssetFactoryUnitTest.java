@@ -1,7 +1,11 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.factories;
 
+import lombok.val;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
+import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetAutoInsertResource;
+import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetTypeResource;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
 import net.hostsharing.hsadminng.hs.booking.item.BookingItemCreatedAppEvent;
 import net.hostsharing.hsadminng.hs.booking.item.BookingItemCreatedEventEntity;
@@ -23,11 +27,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import jakarta.persistence.TypedQuery;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static net.hostsharing.hsadminng.mapper.PatchableMapWrapper.entry;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 // Tests the DomainSetupHostingAssetFactory through a HsBookingItemCreatedListener instance.
 @ExtendWith(MockitoExtension.class)
@@ -68,7 +80,7 @@ class ManagedWebspaceHostingAssetFactoryUnitTest {
     @Test
     void doesNotPersistAnyEntityWithoutHostingAssetWithoutValidationErrors() {
         // given
-        final var givenBookingItem = HsBookingItemRealEntity.builder()
+        val givenBookingItem = HsBookingItemRealEntity.builder()
                 .type(HsBookingItemType.MANAGED_WEBSPACE)
                 .project(project)
                 .caption("Test Managed-Webspace")
@@ -93,10 +105,10 @@ class ManagedWebspaceHostingAssetFactoryUnitTest {
     @Test
     void persistsEventEntityIfDomainSetupVerificationFails() {
         // given
-        final var givenBookingItem = createBookingItemFromResources(
+        val givenBookingItem = createBookingItemFromResources(
                 entry("domainName", "example.org")
         );
-        final var givenAssetJson = """
+        val givenAssetJson = """
                 {
                     "identifier": "xyz00"
                 }
@@ -111,6 +123,48 @@ class ManagedWebspaceHostingAssetFactoryUnitTest {
         // then
         assertEventStatus(givenBookingItem, givenAssetJson,
                 "requires MANAGED_WEBSPACE hosting asset, but got null");
+    }
+
+    @Test
+    void createsManagedWebspaceAssetWithParentAssetFromParentBookingItem() {
+        // given
+        val givenParentBookingItem = HsBookingItemRealEntity.builder()
+                .uuid(UUID.randomUUID())
+                .type(HsBookingItemType.MANAGED_SERVER)
+                .project(project)
+                .caption("Test Managed-Server")
+                .build();
+        val givenBookingItem = HsBookingItemRealEntity.builder()
+                .uuid(UUID.randomUUID())
+                .type(HsBookingItemType.MANAGED_WEBSPACE)
+                .parentItem(givenParentBookingItem)
+                .project(project)
+                .caption("Test Managed-Webspace")
+                .build();
+        val givenParentAsset = HsHostingAssetRealEntity.builder()
+                .uuid(UUID.randomUUID())
+                .bookingItem(givenParentBookingItem)
+                .identifier("vm1234")
+                .build();
+        val givenAsset = new HsHostingAssetAutoInsertResource();
+        givenAsset.setType(HsHostingAssetTypeResource.MANAGED_WEBSPACE);
+        givenAsset.setIdentifier("xyz00");
+        givenAsset.setCaption("Test Managed-Webspace");
+
+        val assetQuery = mock(TypedQuery.class);
+        val assetStream = mock(Stream.class);
+        doReturn(assetQuery).when(emw).createQuery(anyString(), any(Class.class));
+        when(assetQuery.setParameter("bookingItemUuid", givenParentBookingItem.getUuid())).thenReturn(assetQuery);
+        when(assetQuery.getResultStream()).thenReturn(assetStream);
+        when(assetStream.findFirst()).thenReturn(Optional.of(givenParentAsset));
+
+        // when
+        val result = new ManagedWebspaceHostingAssetFactory(emw, givenBookingItem, givenAsset, StrictMapper).create();
+
+        // then
+        assertThat(result.getBookingItem()).isSameAs(givenBookingItem);
+        assertThat(result.getParentAsset()).isSameAs(givenParentAsset);
+        assertThat(result.getIdentifier()).isEqualTo("xyz00");
     }
 
     @SafeVarargs

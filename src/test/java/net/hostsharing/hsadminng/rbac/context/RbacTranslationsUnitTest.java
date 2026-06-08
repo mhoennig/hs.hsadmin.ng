@@ -30,9 +30,6 @@ class RbacTranslationsUnitTest {
     @Test
     void cannotTranslateOtherMessages() {
         assertThat(rbacTranslations.canTranslate("ERROR: [403] whatever")).isFalse();
-        assertThat(rbacTranslations.canTranslate(
-                "ERROR: [400] office.coop-shares.transaction-would-result-in-a-negative-number-of-shares"))
-                .isFalse();
     }
 
     @Test

@@ -63,10 +63,16 @@ If you're a _MacOS_ user, you're welcome to contribute to support _MacOS_ again.
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
 - Docker 28.x or Podman
-- optionally: PostgreSQL Server 17.7-trixie, if you want to use the database directly, not just via Docker
+- A Java Runtime Environment (JRE) compatible with Java 17 to run gradle.
+  - The matching Java JDK at will be automatically installed by Gradle toolchain support to `~/.gradle/jdks/`.
+- The Linux bind9 utils (e.g. package bind9-utils) to support DNS checks in the booking+hosting modules.
+
+Optionally, the following tools are suggested:
+
+- PostgreSQL Server 17.7-trixie, if you want to use the database directly, not just via Docker.
   (see instructions below to install and run in Docker)
-- The matching Java JDK at will be automatically installed by Gradle toolchain support to `~/.gradle/jdks/`.
-- You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
+- An IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI frontend for *PostgreSQL* like *Postbird*.
+  - IntelliJ IDEA Ultimate contains a great SQL GUI frontend, and for its Community edition, there is a community plugin.
 - Python 3 is expected in /usr/bin/python3 if you want to run the `howto` tool (see `bin/howto`)
 
 If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
@@ -81,9 +87,10 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
 
     gw test             # compiles and runs unit- and integration-tests - takes >10min even on a fast machine
                         # `gw test` does NOT run import- and scenario-tests.
-                        # Use `gw-test` instead to make sure .tc-environment is sourced.
+                        # You can use `gw-test` instead use .tc-environment, if you've tinkered with your env.
+                        # `gw-test` also starts separate runs for groups of tests to avoid PostgreSQL connection problems.
     gw scenarioTest     # compiles and scenario-tests - takes ~1min on a decent machine
-                        # Use `gw-test scenarioTest` instead to make sure .tc-environment is sourced.
+                        # Youz can `gw-test scenarioTest` for same reasons as mentioned above.
                         
     howto test          # shows more test information about how to run tests
     
@@ -116,7 +123,7 @@ The meaning of the listed profiles is:
 - **test-data**: some test data gets inserted at startup 
 
 Now we can access the REST API, e.g. using curl. But you need to use JWT authentication.
-To make this a bit easier to handle, we use `bin/jwt-curl` (or `jwt-curl` alias).
+To make this a bit easier to handle, we use `tools/jwt-curl` (or `jwt-curl` alias).
 
 Make sure you replace `8080` with the port you used to run the application.`
 
@@ -181,7 +188,7 @@ If you want to run the application with real (OAuth2) JWT-authentication:
     # run the application against the specified JWT authenticator, do NOT add the 'fake-jwt' profile: 
     gw bootRun --args='--spring.profiles.active=dev,complete,test-data'
 
-Also run `bin/jwt-curl` (or the alias `jwt-curl`) without any parameters to see the available commands. 
+Also run `tools/jwt-curl` (or the alias `jwt-curl`) without any parameters to see the available commands. 
 
 ### PostgreSQL Server
 

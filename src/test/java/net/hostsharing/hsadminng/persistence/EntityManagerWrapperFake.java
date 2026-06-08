@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.persistence;
 
 import lombok.SneakyThrows;
+import lombok.val;
 
 import jakarta.persistence.Id;
 import java.lang.reflect.Field;
@@ -16,8 +17,9 @@ public class EntityManagerWrapperFake extends EntityManagerWrapper {
 
     @Override
     public boolean contains(final Object entity) {
-        final var id = getEntityId(entity);
-        return find(entity.getClass(), id) != null;
+        return getEntityId(entity)
+                .map(id -> find(entity.getClass(), id) != null)
+                .orElse(false);
     }
 
     @Override
@@ -28,7 +30,7 @@ public class EntityManagerWrapperFake extends EntityManagerWrapper {
     @Override
     public <T> T find(final Class<T> entityClass, final Object primaryKey) {
         if (entityClasses.containsKey(entityClass)) {
-            final var entities = entityClasses.get(entityClass);
+            val entities = entityClasses.get(entityClass);
             //noinspection unchecked
             return entities.keySet().stream()
                     .filter(key -> key.equals(primaryKey))
@@ -44,12 +46,25 @@ public class EntityManagerWrapperFake extends EntityManagerWrapper {
         if (!entityClasses.containsKey(entity.getClass())) {
             entityClasses.put(entity.getClass(), new HashMap<>());
         }
-        final var id = getEntityId(entity).orElseGet(() -> setEntityId(entity, UUID.randomUUID()));
+        val id = getEntityId(entity).orElseGet(() -> setEntityId(entity, UUID.randomUUID()));
         entityClasses.get(entity.getClass()).put(id, entity);
     }
 
     @Override
     public void flush() {
+    }
+
+    @Override
+    public void detach(final Object entity) {
+    }
+
+    @Override
+    public void refresh(final Object entity) {
+    }
+
+    @Override
+    public void clear() {
+        entityClasses.clear();
     }
 
     public Stream<Object> stream() {

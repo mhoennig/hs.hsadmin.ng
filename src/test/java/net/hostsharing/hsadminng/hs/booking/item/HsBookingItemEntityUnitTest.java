@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
+import lombok.val;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -39,11 +41,11 @@ class HsBookingItemEntityUnitTest {
     @Test
     void validityStartsToday() {
         // given
-        final var fakedToday = LocalDate.of(2024, Month.MAY, 1);
+        val fakedToday = LocalDate.of(2024, Month.MAY, 1);
         localDateMockedStatic.when(LocalDate::now).thenReturn(fakedToday);
 
         // when
-        final var newBookingItem = HsBookingItemRbacEntity.builder().build();
+        val newBookingItem = HsBookingItemRbacEntity.builder().build();
 
         // then
         assertThat(newBookingItem.getValidity().toString()).isEqualTo("Range{lower=2024-05-01, upper=null, mask=82, clazz=class java.time.LocalDate}");
@@ -51,16 +53,50 @@ class HsBookingItemEntityUnitTest {
 
     @Test
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
-        final var result = givenBookingItem.toString();
+        val result = givenBookingItem.toString();
 
         assertThat(result).isEqualToIgnoringWhitespace("HsBookingItem(CLOUD_SERVER, some caption, D-1234500:test project, [2020-01-01,2031-01-01), { \"CPU\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
     }
 
     @Test
     void toShortStringContainsOnlyMemberNumberAndCaption() {
-        final var result = givenBookingItem.toShortString();
+        val result = givenBookingItem.toShortString();
 
         assertThat(result).isEqualTo("D-1234500:test project:some caption");
+    }
+
+    @Test
+    void toShortStringFallsBackIfNoRelatedProjectIsAvailable() {
+        val result = HsBookingItemRbacEntity.builder()
+                .caption("technical item")
+                .build()
+                .toShortString();
+
+        assertThat(result).isEqualTo("D-???????-?:technical item");
+    }
+
+    @Test
+    void getContextValueFallsBackToParentResources() {
+        val givenParentItem = HsBookingItemRealEntity.builder()
+                .resources(Map.ofEntries(entry("CPU", 4)))
+                .build();
+        val givenChildItem = HsBookingItemRbacEntity.builder()
+                .parentItem(givenParentItem)
+                .resources(Map.ofEntries(entry("SSD", 25)))
+                .build();
+
+        assertThat(givenChildItem.getContextValue("SSD")).isEqualTo(25);
+        assertThat(givenChildItem.getContextValue("CPU")).isEqualTo(4);
+        assertThat(givenChildItem.getContextValue("RAM")).isNull();
+    }
+
+    @Test
+    void markAsLoadedSetsLoadedFlag() {
+        val givenItem = HsBookingItemRbacEntity.builder().build();
+
+        givenItem.markAsLoaded();
+
+        assertThat(givenItem.isLoaded()).isTrue();
     }
 
     @Test

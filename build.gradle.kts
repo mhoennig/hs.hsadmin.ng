@@ -150,19 +150,30 @@ tasks.withType<JavaCompile> {
 }
 
 // Configure tests
+tasks.withType<Test> {
+    testLogging {
+        events("started", "failed")
+    }
+}
+
 tasks.named<Test>("test") {
     useJUnitPlatform {
-        excludeTags("importHostingAssets", "scenarioTest")
+        includeTags(
+            "migrationTest", "generalIntegrationTest", "officeIntegrationTest",
+            "bookingIntegrationTest", "hostingIntegrationTest"
+        )
     }
     jvmArgs("-Duser.language=en", "-Duser.country=US")
-    // The 'excludes' property seems deprecated/less common in Kotlin DSL for Test tasks.
-    // Use filtering or other mechanisms if needed, or keep if it works.
-    // For filtering based on package/class name patterns:
     filter {
         excludeTestsMatching("net.hostsharing.hsadminng.**.generated.**")
-        // Add more exclude patterns if needed
     }
-    finalizedBy(tasks.named("jacocoTestReport")) // generate a report after tests
+}
+
+
+// Wire custom test tasks to the test source set.
+fun Test.useTestSourceSet() {
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
 }
 
 // OpenAPI Source Code Generation
@@ -311,7 +322,6 @@ tasks.named("spotlessJava") {
     dependsOn(
         tasks.named("generateLicenseReport"),
         // tasks.named("pitest"), // TODO.test: PiTest currently does not work, needs to be fixed
-        tasks.named("jacocoTestReport"),
         tasks.named("processResources"),
         tasks.named("processTestResources")
     )
@@ -357,9 +367,13 @@ configure<JacocoPluginExtension> {
 }
 
 tasks.named<JacocoReport>("jacocoTestReport") {
-    dependsOn(tasks.named("test")) // Depends on the main test task
+    dependsOn("unitTest")
     dependsOn(tasks.named("compileJava")) // Add explicit dependency on compileJava
     dependsOn(tasks.named("openApiGenerate")) // Add explicit dependency on openApiGenerate
+    mustRunAfter("unitTest") // If unitTest is scheduled, report its coverage data after it ran.
+
+    // Use coverage data from the custom unitTest task instead of the default test task.
+    executionData.setFrom(layout.buildDirectory.file("jacoco/unitTest.exec"))
 
     reports {
         xml.required.set(true) // Common requirement for CI/CD
@@ -386,7 +400,12 @@ tasks.check {
 }
 
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn("unitTest") // Coverage verification depends only on unit and REST tests.
     dependsOn(tasks.named("jacocoTestReport")) // Ensure report is generated first
+
+    // Use coverage data from the custom unitTest task instead of the default test task.
+    executionData.setFrom(layout.buildDirectory.file("jacoco/unitTest.exec"))
+
     violationRules {
         rule {
             limit {
@@ -437,12 +456,8 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
 
 // HOWTO: run all unit-tests - this is useful in an IDE: gw-test anyTest
 tasks.register<Test>("anyTest") {
+    useTestSourceSet()
     useJUnitPlatform()
-
-    testLogging {
-        events("passed", "skipped", "failed", "standardOut", "standardError")
-        showStandardStreams = true
-    }
 
     group = "verification"
     description = "runs all unit-tests which do not need a database"
@@ -452,26 +467,25 @@ tasks.register<Test>("anyTest") {
 
 // HOWTO: run all unit-tests which don't need a database: gw-test unitTest
 tasks.register<Test>("unitTest") {
+    useTestSourceSet()
     useJUnitPlatform {
         excludeTags(
             "importHostingAssets", "scenarioTest", "migrationTest", "generalIntegrationTest",
             "officeIntegrationTest", "bookingIntegrationTest", "hostingIntegrationTest"
         )
     }
-
-    testLogging {
-        events("passed", "skipped", "failed", "standardOut", "standardError")
-        showStandardStreams = true
-    }
+    jvmArgs("-Duser.language=en", "-Duser.country=US")
 
     group = "verification"
     description = "runs all unit-tests which do not need a database"
 
     mustRunAfter(tasks.named("spotlessJava"))
+    finalizedBy(tasks.named("jacocoTestReport")) // generate a report after unit tests
 }
 
 // HOWTO: run all integration tests that are not specific to a module, like base, rbac, config etc.
 tasks.register<Test>("generalIntegrationTest") {
+    useTestSourceSet()
     useJUnitPlatform {
         includeTags("generalIntegrationTest")
     }
@@ -484,6 +498,7 @@ tasks.register<Test>("generalIntegrationTest") {
 
 // HOWTO: run all integration tests of the office module: gw-test officeIntegrationTest
 tasks.register<Test>("officeIntegrationTest") {
+    useTestSourceSet()
     useJUnitPlatform {
         includeTags("officeIntegrationTest")
     }
@@ -496,6 +511,7 @@ tasks.register<Test>("officeIntegrationTest") {
 
 // HOWTO: run all integration tests of the booking module: gw-test bookingIntegrationTest
 tasks.register<Test>("bookingIntegrationTest") {
+    useTestSourceSet()
     useJUnitPlatform {
         includeTags("bookingIntegrationTest")
     }
@@ -508,6 +524,7 @@ tasks.register<Test>("bookingIntegrationTest") {
 
 // HOWTO: run all integration tests of the hosting module: gw-test hostingIntegrationTest
 tasks.register<Test>("hostingIntegrationTest") {
+    useTestSourceSet()
     useJUnitPlatform {
         includeTags("hostingIntegrationTest")
     }
@@ -519,6 +536,7 @@ tasks.register<Test>("hostingIntegrationTest") {
 }
 
 tasks.register<Test>("migrationTest") {
+    useTestSourceSet()
     useJUnitPlatform {
         includeTags("migrationTest")
     }
@@ -530,6 +548,7 @@ tasks.register<Test>("migrationTest") {
 }
 
 tasks.register<Test>("importHostingAssets") {
+    useTestSourceSet()
     useJUnitPlatform {
         includeTags("importHostingAssets")
     }
@@ -541,6 +560,7 @@ tasks.register<Test>("importHostingAssets") {
 }
 
 tasks.register<Test>("scenarioTest") {
+    useTestSourceSet()
     useJUnitPlatform {
         includeTags("scenarioTest")
     }
@@ -549,6 +569,12 @@ tasks.register<Test>("scenarioTest") {
     description = "run the import jobs as tests" // Description seems copied, adjust if needed
 
     mustRunAfter(tasks.named("spotlessJava"))
+}
+
+tasks.withType<Test>().configureEach {
+    if (name != "unitTest") {
+        mustRunAfter(tasks.named("unitTest"))
+    }
 }
 
 

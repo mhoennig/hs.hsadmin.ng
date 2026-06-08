@@ -1,6 +1,9 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
+import lombok.val;
+
 import io.hypersistence.utils.hibernate.type.range.Range;
+import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.rbac.context.Context;
@@ -44,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeMembershipController.class)
-@Import({ StrictMapper.class, MessagesResourceConfig.class, MessageTranslator.class,
+@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class, MessagesResourceConfig.class, MessageTranslator.class,
           WebSecurityConfigForWebMvcTests.class })
 @ActiveProfiles({"fake-jwt", "test"})
 public class HsOfficeMembershipControllerRestTest {
@@ -185,6 +188,43 @@ public class HsOfficeMembershipControllerRestTest {
                             ]
                             """)));
         }
+
+        @Test
+        void findAllMembershipsWithoutFilter() throws Exception {
+
+            // given
+            when(membershipRepo.findAll()).thenReturn(List.of(MEMBERSHIP_1234500));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/memberships")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(1)))
+                    .andExpect(jsonPath("$[0].memberNumber", is("M-1234500")));
+        }
+
+        @Test
+        void findMembershipsByPartnerUuid() throws Exception {
+
+            // given
+            val partnerUuid = UUID.randomUUID();
+            when(membershipRepo.findMembershipsByPartnerUuid(partnerUuid)).thenReturn(List.of(MEMBERSHIP_1234501));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/memberships?partnerUuid=" + partnerUuid)
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(1)))
+                    .andExpect(jsonPath("$[0].memberNumber", is("M-1234501")));
+        }
     }
 
     @Nested
@@ -194,7 +234,7 @@ public class HsOfficeMembershipControllerRestTest {
         void byUuid() throws Exception {
 
             // given
-            final var givenUuid = UUID.randomUUID();
+            val givenUuid = UUID.randomUUID();
             when(membershipRepo.findByUuid(givenUuid)).thenReturn(
                     Optional.of(MEMBERSHIP_1234500)
             );
@@ -300,7 +340,7 @@ public class HsOfficeMembershipControllerRestTest {
         void respondBadRequest_ifAnyGivenPartnerUuidCannotBeFound() throws Exception {
 
             // given
-            final var givenPartnerUuid = UUID.randomUUID();
+            val givenPartnerUuid = UUID.randomUUID();
             when(em.find(HsOfficePartnerRbacEntity.class, givenPartnerUuid)).thenReturn(null);
 
             // when
@@ -325,6 +365,45 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(jsonPath(
                             "message",
                             is("ERROR: [400] partnerUuid " + givenPartnerUuid + " not found")));
+        }
+
+        @Test
+        void respondsCreatedIfPartnerUuidIsFound() throws Exception {
+
+            // given
+            val givenPartnerUuid = UUID.randomUUID();
+            val savedMembershipUuid = UUID.randomUUID();
+            val givenPartner = HsOfficePartnerRealEntity.builder()
+                    .uuid(givenPartnerUuid)
+                    .partnerNumber(12345)
+                    .build();
+            when(partnerRepo.findByUuid(givenPartnerUuid)).thenReturn(Optional.of(givenPartner));
+            when(membershipRepo.save(any(HsOfficeMembershipEntity.class))).thenAnswer(invocation -> {
+                final HsOfficeMembershipEntity membership = invocation.getArgument(0);
+                membership.setUuid(savedMembershipUuid);
+                membership.setPartner(givenPartner);
+                return membership;
+            });
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/memberships")
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                      {
+                                          "partner.uuid": "%s",
+                                          "memberNumberSuffix": "03",
+                                          "validFrom": "2022-10-13",
+                                          "membershipFeeBillable": true
+                                      }
+                                    """.formatted(givenPartnerUuid))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("uuid", is(savedMembershipUuid.toString())))
+                    .andExpect(jsonPath("memberNumber", is("M-1234503")));
         }
 
         @ParameterizedTest
@@ -368,5 +447,77 @@ public class HsOfficeMembershipControllerRestTest {
                 this.expectedErrorMessage = expectedErrorMessage;
             }
         }
+    }
+
+    @Nested
+    class DeleteMembership {
+
+        @Test
+        void respondsNoContentIfDeleted() throws Exception {
+            // given
+            val membershipUuid = UUID.randomUUID();
+            when(membershipRepo.deleteByUuid(membershipUuid)).thenReturn(1);
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .delete("/api/hs/office/memberships/" + membershipUuid)
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void respondsNotFoundIfMissing() throws Exception {
+            // given
+            val membershipUuid = UUID.randomUUID();
+            when(membershipRepo.deleteByUuid(membershipUuid)).thenReturn(0);
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .delete("/api/hs/office/memberships/" + membershipUuid)
+                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
+    void patchesMembership() throws Exception {
+        // given
+        val membershipUuid = UUID.randomUUID();
+        val current = HsOfficeMembershipEntity.builder()
+                .uuid(membershipUuid)
+                .partner(PARTNER_12345)
+                .memberNumberSuffix("04")
+                .validity(localDateRange("[2020-01-01,)"))
+                .membershipFeeBillable(true)
+                .status(HsOfficeMembershipStatus.ACTIVE)
+                .build();
+        when(membershipRepo.findByUuid(membershipUuid)).thenReturn(Optional.of(current));
+        when(membershipRepo.save(any(HsOfficeMembershipEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .patch("/api/hs/office/memberships/" + membershipUuid)
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                  {
+                                      "validTo": "2024-12-31",
+                                      "membershipFeeBillable": false,
+                                      "status": "CANCELLED"
+                                  }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("validTo", is("2024-12-31")))
+                .andExpect(jsonPath("membershipFeeBillable", is(false)))
+                .andExpect(jsonPath("status", is("CANCELLED")));
     }
 }

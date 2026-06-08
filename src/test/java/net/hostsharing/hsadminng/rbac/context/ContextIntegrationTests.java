@@ -1,20 +1,17 @@
 package net.hostsharing.hsadminng.rbac.context;
 
-import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.mapper.Array;
-import net.hostsharing.hsadminng.mapper.StrictMapper;
-import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
@@ -28,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("generalIntegrationTest")
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, JpaAttempt.class, EntityManagerWrapper.class, StrictMapper.class })
+@Import({ Context.class, JpaAttempt.class })
 @DirtiesContext
 class ContextIntegrationTests {
 
@@ -38,9 +35,6 @@ class ContextIntegrationTests {
     @MockitoBean
     @SuppressWarnings("unused") // the bean must be present, even though it's not used directly
     private HttpServletRequest request;
-
-    @MockitoBean
-    private MessageTranslator messageTranslator;
 
     @Autowired
     private JpaAttempt jpaAttempt;

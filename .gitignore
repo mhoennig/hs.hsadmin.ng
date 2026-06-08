@@ -1,7 +1,6 @@
 ######################
 # Project Specific
 ######################
-/build/www/**
 /src/test/javascript/coverage/
 /worktrees/
 
@@ -80,6 +79,7 @@ out/
 .gradle/
 !gradle/wrapper/gradle-wrapper.jar
 /build/
+/buildSrc/build/
 .gradletasknamecache
 gradle-app.setting
 
