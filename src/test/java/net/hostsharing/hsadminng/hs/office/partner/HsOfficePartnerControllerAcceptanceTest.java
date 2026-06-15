@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationSearchCriteria;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -421,12 +422,10 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             // and an ex-partner-relation got created
             final var newPartnerPersonUuid = givenPartner.getPartnerRel().getHolder().getUuid();
-            assertThat(relationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
-                    newPartnerPersonUuid,
-                    EX_PARTNER,
-                    null,
-                    null,
-                    null))
+            assertThat(relationRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .personUuid(newPartnerPersonUuid)
+                    .relationType(EX_PARTNER)
+                    .build()))
                     .map(HsOfficeRelation::toShortString)
                     .contains("rel(anchor='NP Winkler, Paul', type=EX_PARTNER, holder='UF Erben Bessler')");
         }

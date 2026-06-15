@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
-import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.REPRESENTATIVE;
 import static net.hostsharing.hsadminng.rbac.test.EntityList.one;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -75,7 +74,10 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             final var personUuid = determinePersonUuid(NATURAL_PERSON, "Smith");
 
             // when:
-            final var result = realRelationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(personUuid, REPRESENTATIVE, null, null, null);
+            final var result = realRelationRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .personUuid(personUuid)
+                    .relationType(HsOfficeRelationType.REPRESENTATIVE)
+                    .build());
 
             // then:
             context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
@@ -83,6 +85,30 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
                     result,
                     "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type=REPRESENTATIVE, holder='NP Smith, Peter', contact='second contact')"
             );
+        }
+
+        @Test
+        public void canFindRelationsByContactUuid() {
+            // given:
+            context("superuser-alex@hostsharing.net");
+            final var contact = realContactRepo.findContactByOptionalCaptionLike("third contact")
+                    .stream()
+                    .findFirst()
+                    .orElseThrow();
+
+            // when:
+            final var result = realRelationRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .contactUuid(contact.getUuid())
+                    .build());
+
+            // then:
+            exactlyTheseRelationsAreReturned(
+                    result,
+                    "rel(anchor='IF Third OHG', type=SUBSCRIBER, mark='members-announce', holder='NP Smith, Peter', contact='third contact')",
+                    "rel(anchor='NP Smith, Peter', type=DEBITOR, holder='NP Smith, Peter', contact='third contact')",
+                    "rel(anchor='IF Third OHG', type=REPRESENTATIVE, holder='NP Tucker, Jack', contact='third contact')",
+                    "rel(anchor='IF Third OHG', type=DEBITOR, holder='IF Third OHG', contact='third contact')",
+                    "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='IF Third OHG', contact='third contact')");
         }
     }
 

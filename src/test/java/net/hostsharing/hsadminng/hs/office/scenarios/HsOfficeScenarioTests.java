@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.AddPhoneNumberToContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.AmendContactData;
+import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelations;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFromContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateExternalDebitorForPartner;
@@ -638,6 +639,33 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new UnsubscribeFromMailinglist(scenarioTest)
                     .given("mailingList", "operations-announce")
                     .given("subscriberEMailAddress", "michael.miller@example.org").thenExpect(HttpStatus.OK);
+        }
+    }
+
+    @Nested
+    @Order(51)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class RelationScenarios {
+
+        @Test
+        @Order(5100)
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+        void shouldQueryRelationsByContact() {
+            new QueryRelations(scenarioTest)
+                    .given("contactUuid", "%{Contact: Michelle Matthieu}")
+                    .thenExpect(HttpStatus.OK)
+                    .expectArrayElements(2);
+        }
+
+        @Test
+        @Order(5101)
+        @Requires("Subscription: Michael Miller to operations-discussion")
+        void shouldQuerySubscriptionRelationsOfGivenPerson() {
+            new QueryRelations(scenarioTest)
+                    .given("personUuid", "%{Person: Test AG}")
+                    .given("relationType", "SUBSCRIBER")
+                    .thenExpect(HttpStatus.OK)
+                    .expectArrayElements(1);
         }
     }
 

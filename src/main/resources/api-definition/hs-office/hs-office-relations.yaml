@@ -14,25 +14,49 @@ get:
           schema:
               type: string
               format: uuid
-          description: Prefix of name properties from holder or contact to filter the results.
+          description: UUID of a person, matching if it is either the anchor or the holder of the relation.
+        - name: anchorPersonUuid
+          in: query
+          required: false
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the anchor person.
+        - name: holderPersonUuid
+          in: query
+          required: false
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the holder person.
         - name: relationType
           in: query
           required: false
           schema:
               $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationType'
-          description: Beginning of name properties from holder or contact to filter the results.
+          description: Type of the relation.
         - name: mark
           in: query
           required: false
           schema:
             type: string
           description:
+            Extra data, depending on the relation type.
+            This is also discriminatory regarding the unique constraint,
+            thus the same anchor+holder+contant+type can have multiple records with different marks.
         - name: personData
           in: query
           required: false
           schema:
               type: string
           description: 'Data from any of these text field in the anchor or holder person: tradeName, familyName, givenName'
+        - name: contactUuid
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the contact to filter the results.
         - name: contactData
           in: query
           required: false

@@ -79,8 +79,10 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
         @Test
         public void testHostsharingAdminCanAssumeRelationRoleWithUuid() {
-            final var relationUuid = relationRealRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
-                    null, HsOfficeRelationType.PARTNER, null, "%Second%", null)
+            final var relationUuid = relationRealRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                            .relationType(HsOfficeRelationType.PARTNER)
+                            .personData("%Second%")
+                            .build())
                     .stream().reduce(Reducer::toSingleElement).orElseThrow().getUuid();
 
             context("superuser-alex@hostsharing.net", "hs_office.relation#" + relationUuid + ":AGENT");
@@ -227,12 +229,9 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     .findFirst().orElseThrow();
 
             // when:
-            final var result = relationRbacRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
-                    person.getUuid(),
-                    null,
-                    null,
-                    null,
-                    null);
+            final var result = relationRbacRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .personUuid(person.getUuid())
+                    .build());
 
             // then:
             exactlyTheseRelationsAreReturned(
@@ -241,6 +240,66 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "rel(anchor='IF Third OHG', type=SUBSCRIBER, mark='members-announce', holder='NP Smith, Peter', contact='third contact')",
                     "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='NP Smith, Peter', contact='sixth contact')",
                     "rel(anchor='NP Smith, Peter', type=DEBITOR, holder='NP Smith, Peter', contact='third contact')");
+        }
+
+        @Test
+        public void normalUser_canViewRelationsByContactUuid() {
+            // given:
+            context("superuser-alex@hostsharing.net");
+            final var contact = contactRealRepo.findContactByOptionalCaptionLike("third contact")
+                    .stream()
+                    .findFirst()
+                    .orElseThrow();
+
+            // when:
+            final var result = relationRbacRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .contactUuid(contact.getUuid())
+                    .build());
+
+            // then:
+            exactlyTheseRelationsAreReturned(
+                    result,
+                    "rel(anchor='IF Third OHG', type=SUBSCRIBER, mark='members-announce', holder='NP Smith, Peter', contact='third contact')",
+                    "rel(anchor='NP Smith, Peter', type=DEBITOR, holder='NP Smith, Peter', contact='third contact')",
+                    "rel(anchor='IF Third OHG', type=REPRESENTATIVE, holder='NP Tucker, Jack', contact='third contact')",
+                    "rel(anchor='IF Third OHG', type=DEBITOR, holder='IF Third OHG', contact='third contact')",
+                    "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='IF Third OHG', contact='third contact')");
+        }
+
+        @Test
+        public void normalUser_canViewRelationsByAnchorPersonUuid() {
+            // given:
+            context("superuser-alex@hostsharing.net");
+            final var person = personRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
+
+            // when:
+            final var result = relationRbacRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .anchorPersonUuid(person.getUuid())
+                    .build());
+
+            // then:
+            exactlyTheseRelationsAreReturned(
+                    result,
+                    "rel(anchor='LP First GmbH', type=DEBITOR, holder='LP First GmbH', contact='first contact')",
+                    "rel(anchor='LP First GmbH', type=REPRESENTATIVE, holder='NP Firby, Susan', contact='first contact')");
+        }
+
+        @Test
+        public void normalUser_canViewRelationsByHolderPersonUuid() {
+            // given:
+            context("superuser-alex@hostsharing.net");
+            final var person = personRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
+
+            // when:
+            final var result = relationRbacRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .holderPersonUuid(person.getUuid())
+                    .build());
+
+            // then:
+            exactlyTheseRelationsAreReturned(
+                    result,
+                    "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='LP First GmbH', contact='first contact')",
+                    "rel(anchor='LP First GmbH', type=DEBITOR, holder='LP First GmbH', contact='first contact')");
         }
     }
 

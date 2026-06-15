@@ -86,14 +86,29 @@ class HsOfficeRelationControllerRestTest {
         void returnsRelations() throws Exception {
             // given
             val personUuid = UUID.randomUUID();
-            when(relationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
-                    personUuid, HsOfficeRelationType.REPRESENTATIVE, "billing", "miller", "office"))
+            val contactUuid = UUID.randomUUID();
+            val anchorPersonUuid = UUID.randomUUID();
+            val holderPersonUuid = UUID.randomUUID();
+
+            when(relationRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                    .personUuid(personUuid)
+                    .contactUuid(contactUuid)
+                    .anchorPersonUuid(anchorPersonUuid)
+                    .holderPersonUuid(holderPersonUuid)
+                    .relationType(HsOfficeRelationType.REPRESENTATIVE)
+                    .mark("billing")
+                    .personData("miller")
+                    .contactData("office")
+                    .build()))
                     .thenReturn(List.of(givenRelation(UUID.randomUUID())));
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/relations")
                             .queryParam("personUuid", personUuid.toString())
+                            .queryParam("contactUuid", contactUuid.toString())
+                            .queryParam("anchorPersonUuid", anchorPersonUuid.toString())
+                            .queryParam("holderPersonUuid", holderPersonUuid.toString())
                             .queryParam("relationType", "REPRESENTATIVE")
                             .queryParam("mark", "billing")
                             .queryParam("personData", "miller")

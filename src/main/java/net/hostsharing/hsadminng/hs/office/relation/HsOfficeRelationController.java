@@ -56,17 +56,26 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     public ResponseEntity<List<HsOfficeRelationResource>> getListOfRelations(
             final String assumedRoles,
             final UUID personUuid,
+            final UUID anchorPersonUuid,
+            final UUID holderPersonUuid,
             final HsOfficeRelationTypeResource relationType,
             final String mark,
             final String personData,
+            final UUID contactUuid,
             final String contactData) {
         context.assumeRoles(assumedRoles);
 
         final List<HsOfficeRelationRbacEntity> entities =
-                rbacRelationRepo.findRelationRelatedToPersonUuidRelationTypeMarkPersonAndContactData(
-                        personUuid,
-                        relationType == null ? null : HsOfficeRelationType.valueOf(relationType.name()),
-                        mark, personData, contactData);
+                rbacRelationRepo.findRelations(HsOfficeRelationSearchCriteria.builder()
+                        .personUuid(personUuid)
+                        .anchorPersonUuid(anchorPersonUuid)
+                        .holderPersonUuid(holderPersonUuid)
+                        .relationType(relationType == null ? null : HsOfficeRelationType.valueOf(relationType.name()))
+                        .mark(mark)
+                        .personData(personData)
+                        .contactData(contactData)
+                        .contactUuid(contactUuid)
+                        .build());
 
         final var resources = mapper.mapList(entities, HsOfficeRelationResource.class,
                 RELATION_ENTITY_TO_RESOURCE_POSTMAPPER);

@@ -220,6 +220,176 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         """));
             // @formatter:on
         }
+
+        @Test
+        void globalAdmin_canViewAllRelationsWithGivenContactUuid() {
+
+            // given
+            context.define("superuser-alex@hostsharing.net");
+            final var givenContact = realContactRepo.findContactByOptionalCaptionLike("first contact").getFirst();
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/office/relations?contactUuid=" + givenContact.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                        [
+                            {
+                                "anchor": {
+                                    "personType": "LEGAL_PERSON",
+                                    "tradeName": "First GmbH"
+                                },
+                                "holder": {
+                                    "personType": "LEGAL_PERSON",
+                                    "tradeName": "First GmbH"
+                                },
+                                "type": "DEBITOR",
+                                "contact": {
+                                    "caption": "first contact"
+                                }
+                            },
+                            {
+                                "anchor": {
+                                    "personType": "LEGAL_PERSON",
+                                    "tradeName": "Hostsharing eG"
+                                },
+                                "holder": {
+                                    "personType": "LEGAL_PERSON",
+                                    "tradeName": "First GmbH"
+                                },
+                                "type": "PARTNER",
+                                "contact": {
+                                    "caption": "first contact"
+                                }
+                            },
+                            {
+                                "anchor": {
+                                    "personType": "LEGAL_PERSON",
+                                    "tradeName": "First GmbH"
+                                },
+                                "holder": {
+                                    "personType": "NATURAL_PERSON",
+                                    "givenName": "Susan",
+                                    "familyName": "Firby"
+                                },
+                                "type": "REPRESENTATIVE",
+                                "contact": {
+                                    "caption": "first contact"
+                                }
+                            }
+                        ]
+                        """));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canViewAllRelationsWithGivenAnchorPersonUuid() {
+
+            // given
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/office/relations?anchorPersonUuid=" + givenPerson.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                        [
+                             {
+                                 "anchor": { "tradeName": "First GmbH" },
+                                 "holder": { "tradeName": "First GmbH" },
+                                 "type": "DEBITOR"
+                             },
+                             {
+                                 "anchor": { "tradeName": "First GmbH" },
+                                 "holder": { "givenName": "Susan", "familyName": "Firby" },
+                                 "type": "REPRESENTATIVE"
+                             }
+                        ]
+                        """));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canViewAllRelationsWithGivenHolderPersonUuid() {
+
+            // given
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/office/relations?holderPersonUuid=" + givenPerson.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                        [
+                             {
+                                 "anchor": { "tradeName": "First GmbH" },
+                                 "holder": { "tradeName": "First GmbH" },
+                                 "type": "DEBITOR"
+                             },
+                             {
+                                 "anchor": { "tradeName": "Hostsharing eG" },
+                                 "holder": { "tradeName": "First GmbH" },
+                                 "type": "PARTNER"
+                             }
+                        ]
+                        """));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canViewAllRelationsWithGivenGenericPersonUuid() {
+
+            // given
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/office/relations?personUuid=" + givenPerson.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                        [
+                             {
+                                 "anchor": { "tradeName": "First GmbH" },
+                                 "holder": { "tradeName": "First GmbH" },
+                                 "type": "DEBITOR"
+                             },
+                             {
+                                 "anchor": { "tradeName": "Hostsharing eG" },
+                                 "holder": { "tradeName": "First GmbH" },
+                                 "type": "PARTNER"
+                             },
+                             {
+                                 "anchor": { "tradeName": "First GmbH" },
+                                 "holder": { "givenName": "Susan", "familyName": "Firby" },
+                                 "type": "REPRESENTATIVE"
+                             }
+                        ]
+                        """));
+            // @formatter:on
+        }
     }
 
     @Nested
