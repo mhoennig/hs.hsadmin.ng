@@ -1,8 +1,18 @@
+---
+HOWTO: specify PDF page settings and diagram scaling in Markdown files
+pdf-page-size: A2
+pdf-orientation: landscape
+pdf-margin: 5mm
+pdf-mermaid-scaling: true
+pdf-mermaid-width: 1200
+pdf-mermaid-scale: 2
+---
+
 # Beispiel: juristische Person (GmbH) 
 
 ```mermaid
 classDiagram
-    direction TD
+    direction RL
 
     namespace Hostsharing {
         class person-HostsharingEG
@@ -26,6 +36,15 @@ classDiagram
         class debitor-MeierGmbH
         class contactData-MeierGmbH-Buha
         class rel-MeierGmbH-Buha
+    }
+
+    namespace Membership {
+        class membership-MeierGmbH
+        class coopShareTx-MeierGmbH
+        class coopAssetTx-MeierGmbH
+        class MembershipStatus
+        class CoopSharesTransactionType
+        class CoopAssetsTransactionType
     }
 
     namespace Operations {
@@ -134,6 +153,77 @@ classDiagram
     rel-MeierGmbH-Buha o-- person-MeierGmbH : anchor
     rel-MeierGmbH-Buha o-- person-MeierGmbH : holder
     rel-MeierGmbH-Buha o-- contactData-MeierGmbH-Buha
+
+    %% --- Membership, Coop-Shares and Coop-Assets ---
+
+    class membership-MeierGmbH {
+        +Partner partner
+        +Numeric[2] memberNumberSuffix: 01
+        +DateRange validity: 2024-01-01..
+        +MembershipStatus status: ACTIVE
+        +boolean membershipFeeBillable: true
+    }
+    membership-MeierGmbH o-- partner-MeierGmbH
+    membership-MeierGmbH ..> MembershipStatus : status
+
+    class coopShareTx-MeierGmbH {
+        +Membership membership
+        +CoopSharesTransactionType transactionType
+        +Date valueDate
+        +Integer shareCount
+        +String reference
+        +CoopShareTx revertedShareTx
+        +String comment
+    }
+    coopShareTx-MeierGmbH o-- membership-MeierGmbH
+    coopShareTx-MeierGmbH o-- coopShareTx-MeierGmbH : revertedShareTx
+    coopShareTx-MeierGmbH ..> CoopSharesTransactionType : transactionType
+
+    class coopAssetTx-MeierGmbH {
+        +Membership membership
+        +CoopAssetsTransactionType transactionType
+        +Date valueDate
+        +Decimal assetValue
+        +String reference
+        +CoopAssetTx revertedAssetTx
+        +CoopAssetTx assetAdoptionTx
+        +String comment
+    }
+    coopAssetTx-MeierGmbH o-- membership-MeierGmbH
+    coopAssetTx-MeierGmbH o-- coopAssetTx-MeierGmbH : revertedAssetTx
+    coopAssetTx-MeierGmbH o-- coopAssetTx-MeierGmbH : assetAdoptionTx
+    coopAssetTx-MeierGmbH ..> CoopAssetsTransactionType : transactionType
+
+    class MembershipStatus {
+        <<enum values>>
+        INVALID
+        ACTIVE
+        CANCELLED
+        TRANSFERRED
+        DECEASED
+        LIQUIDATED
+        EXPULSED
+        UNKNOWN
+    }
+
+    class CoopSharesTransactionType {
+        <<enum values>>
+        REVERSAL
+        SUBSCRIPTION
+        CANCELLATION
+    }
+
+    class CoopAssetsTransactionType {
+        <<enum values>>
+        REVERSAL
+        DEPOSIT
+        DISBURSAL
+        TRANSFER
+        ADOPTION
+        CLEARING
+        LOSS
+        LIMITATION
+    }
 
     %% --- Representatives ---
 

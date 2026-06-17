@@ -1,25 +1,14 @@
-import com.github.jk1.license.render.ReportRenderer
-import com.github.jk1.license.render.InventoryHtmlReportRenderer
-import com.github.jk1.license.filter.DependencyFilter
-import com.github.jk1.license.filter.LicenseBundleNormalizer
 import org.gradle.kotlin.dsl.*
-import com.diffplug.gradle.spotless.SpotlessExtension
 import info.solidsoft.gradle.pitest.PitestPluginExtension
-import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.Copy
-import org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension
+import org.gradle.api.tasks.GradleBuild
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import java.io.File
-import org.gradle.api.GradleException
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.gradle.jvm.toolchain.JvmImplementation
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
-import org.gradle.testing.jacoco.tasks.JacocoReport
-import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 import org.gradle.api.tasks.wrapper.Wrapper
-import java.io.FileOutputStream
 
 // Import specific license report task/extension if needed (adjust class name if necessary)
 // import com.github.jk1.gradle.license.LicenseReportExtension
@@ -31,17 +20,17 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"        // manages implicit dependencies
     id("com.gorylenko.gradle-git-properties") version "2.5.0"     // exposes git commit info via Actuator info endpoint
     id("io.openapiprocessor.openapi-processor") version "2023.2" // generates Controller-interface and resources from API-spec
-    id("com.github.jk1.dependency-license-report") version "2.9" // checks dependency-license compatibility
-    id("org.owasp.dependencycheck") version "12.1.1"             // checks dependencies for known vulnerabilities
-    id("com.diffplug.spotless") version "7.0.2"                  // formats + checks formatting for source-code
-    jacoco                                                       // determines code-coverage of tests
     id("info.solidsoft.pitest") version "1.15.0"                 // performs mutation testing
     id("se.patrikerdes.use-latest-versions") version "0.2.18"    // updates module and plugin versions
     id("com.github.ben-manes.versions") version "0.52.0"         // determines which dependencies have updates
 }
 
 springBoot {
-    buildInfo()
+    buildInfo {
+        if (!providers.gradleProperty("includeBuildTime").map(String::toBoolean).getOrElse(false)) {
+            excludes.set(setOf("time"))
+        }
+    }
 }
 
 // HOWTO: find out which dependency versions are managed by Spring Boot:
@@ -147,33 +136,6 @@ configure<DependencyManagementExtension> {
 // Java Compiler Options
 tasks.withType<JavaCompile> {
     options.compilerArgs.add("-parameters") // keep parameter names => no need for @Param for SpringData
-}
-
-// Configure tests
-tasks.withType<Test> {
-    testLogging {
-        events("started", "failed")
-    }
-}
-
-tasks.named<Test>("test") {
-    useJUnitPlatform {
-        includeTags(
-            "migrationTest", "generalIntegrationTest", "officeIntegrationTest",
-            "bookingIntegrationTest", "hostingIntegrationTest"
-        )
-    }
-    jvmArgs("-Duser.language=en", "-Duser.country=US")
-    filter {
-        excludeTestsMatching("net.hostsharing.hsadminng.**.generated.**")
-    }
-}
-
-
-// Wire custom test tasks to the test source set.
-fun Test.useTestSourceSet() {
-    testClassesDirs = sourceSets["test"].output.classesDirs
-    classpath = sourceSets["test"].runtimeClasspath
 }
 
 // OpenAPI Source Code Generation
@@ -296,287 +258,9 @@ tasks.compileJava {
     dependsOn(openApiGenerate)
 }
 
+apply(plugin = "hsadmin.quality")
 
-// Spotless Code Formatting
-configure<SpotlessExtension> {
-    java {
-        // Configure formatting steps
-
-        removeUnusedImports()
-        leadingTabsToSpaces(4)
-        endWithNewline()
-        toggleOffOn()
-
-        // Target files
-        target(fileTree(rootDir) {
-            include("**/*.java")
-            exclude("**/generated/**/*.java", "build/**", ".gradle/**") // Add build/.gradle excludes
-        })
-    }
-}
-tasks.check {
-    dependsOn(tasks.named("spotlessCheck"))
-}
-// HACK: no idea why spotless uses the output of these tasks, but we get warnings without those
-tasks.named("spotlessJava") {
-    dependsOn(
-        tasks.named("generateLicenseReport"),
-        // tasks.named("pitest"), // TODO.test: PiTest currently does not work, needs to be fixed
-        tasks.named("processResources"),
-        tasks.named("processTestResources")
-    )
-}
-
-
-// OWASP Dependency Security Test
-configure<DependencyCheckExtension> {
-    nvd {
-        apiKey = project.findProperty("OWASP_API_KEY")?.toString() // set it in ~/.gradle/gradle.properties
-        delay = 16000 // Milliseconds
-    }
-    format = org.owasp.dependencycheck.reporting.ReportGenerator.Format.ALL.name
-    suppressionFiles.add("etc/owasp-dependency-check-suppression.xml") // Use suppressionFiles collection
-    failOnError = true
-    failBuildOnCVSS = 5.0f // Use float value
-}
-tasks.check {
-    dependsOn(tasks.named("dependencyCheckAnalyze"))
-}
-tasks.named("dependencyCheckAnalyze") {
-    doFirst { // Why not doLast? See README.md!
-        println("OWASP Dependency Security Report: file://${project.rootDir}/build/reports/dependency-check-report.html")
-    }
-}
-
-
-licenseReport {
-    renderers = arrayOf<ReportRenderer>(InventoryHtmlReportRenderer("report.html", "Backend"))
-    filters = arrayOf<DependencyFilter>(LicenseBundleNormalizer())
-    excludeBoms = true
-    allowedLicensesFile = project.file("etc/allowed-licenses.json")
-}
-tasks.check {
-    // Ensure the task name 'checkLicense' is correct for the plugin
-    dependsOn(tasks.named("checkLicense"))
-}
-
-
-// JaCoCo Test Code Coverage for unit-tests
-configure<JacocoPluginExtension> {
-    toolVersion = "0.8.10"
-}
-
-tasks.named<JacocoReport>("jacocoTestReport") {
-    dependsOn("unitTest")
-    dependsOn(tasks.named("compileJava")) // Add explicit dependency on compileJava
-    dependsOn(tasks.named("openApiGenerate")) // Add explicit dependency on openApiGenerate
-    mustRunAfter("unitTest") // If unitTest is scheduled, report its coverage data after it ran.
-
-    // Use coverage data from the custom unitTest task instead of the default test task.
-    executionData.setFrom(layout.buildDirectory.file("jacoco/unitTest.exec"))
-
-    reports {
-        xml.required.set(true) // Common requirement for CI/CD
-        csv.required.set(false)
-        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/test/html"))
-    }
-
-    classDirectories.setFrom(files(sourceSets.main.get().output.classesDirs.map { dir ->
-        fileTree(dir) {
-            exclude(
-                "net/hostsharing/hsadminng/**/generated/**/*.class",
-                "net/hostsharing/hsadminng/hs/HsadminNgApplication.class"
-            )
-        }
-    }))
-
-    doFirst { // Why not doLast? See README.md!
-        println("HTML Jacoco Test Code Coverage Report: file://${reports.html.outputLocation.get().asFile}/index.html")
-    }
-}
-
-tasks.check {
-    dependsOn(tasks.named("jacocoTestCoverageVerification"))
-}
-
-tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
-    dependsOn("unitTest") // Coverage verification depends only on unit and REST tests.
-    dependsOn(tasks.named("jacocoTestReport")) // Ensure report is generated first
-
-    // Use coverage data from the custom unitTest task instead of the default test task.
-    executionData.setFrom(layout.buildDirectory.file("jacoco/unitTest.exec"))
-
-    violationRules {
-        rule {
-            limit {
-                minimum = "0.80".toBigDecimal() // TODO.test: improve instruction coverage
-            }
-        }
-
-        // element: PACKAGE, BUNDLE, CLASS, SOURCEFILE or METHOD
-        // counter:  INSTRUCTION, BRANCH, LINE, COMPLEXITY, METHOD, or CLASS
-        // value: TOTALCOUNT, COVEREDCOUNT, MISSEDCOUNT, COVEREDRATIO or MISSEDRATIO
-
-        rule {
-            element = "CLASS"
-            excludes = listOf(
-                "net.hostsharing.hsadminng.**.generated.**",
-                "net.hostsharing.hsadminng.rbac.test.dom.TestDomainEntity",
-                "net.hostsharing.hsadminng.HsadminNgApplication",
-                "net.hostsharing.hsadminng.ping.PingController",
-                "net.hostsharing.hsadminng.rbac.generator.*",
-                "net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService",
-                "net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService\$Node", // Use $ for inner class
-                "net.hostsharing.hsadminng.**.*Repository",
-                "net.hostsharing.hsadminng.mapper.Mapper"
-            )
-
-            limit {
-                counter = "LINE"
-                value = "COVEREDRATIO"
-                minimum = "0.75".toBigDecimal() // TODO.test: improve line coverage
-            }
-        }
-        rule {
-            element = "METHOD"
-            excludes = listOf(
-                "net.hostsharing.hsadminng.**.generated.**",
-                "net.hostsharing.hsadminng.HsadminNgApplication.main",
-                "net.hostsharing.hsadminng.ping.PingController.*"
-            )
-
-            limit {
-                counter = "BRANCH"
-                value = "COVEREDRATIO"
-                minimum = "0.00".toBigDecimal() // TODO.test: improve branch coverage
-            }
-        }
-    }
-}
-
-// HOWTO: run all unit-tests - this is useful in an IDE: gw-test anyTest
-tasks.register<Test>("anyTest") {
-    useTestSourceSet()
-    useJUnitPlatform()
-
-    group = "verification"
-    description = "runs all unit-tests which do not need a database"
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-// HOWTO: run all unit-tests which don't need a database: gw-test unitTest
-tasks.register<Test>("unitTest") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        excludeTags(
-            "importHostingAssets", "scenarioTest", "migrationTest", "generalIntegrationTest",
-            "officeIntegrationTest", "bookingIntegrationTest", "hostingIntegrationTest"
-        )
-    }
-    jvmArgs("-Duser.language=en", "-Duser.country=US")
-
-    group = "verification"
-    description = "runs all unit-tests which do not need a database"
-
-    mustRunAfter(tasks.named("spotlessJava"))
-    finalizedBy(tasks.named("jacocoTestReport")) // generate a report after unit tests
-}
-
-// HOWTO: run all integration tests that are not specific to a module, like base, rbac, config etc.
-tasks.register<Test>("generalIntegrationTest") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        includeTags("generalIntegrationTest")
-    }
-
-    group = "verification"
-    description = "runs integration tests which are not specific to a module, like base, rbac, config etc."
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-// HOWTO: run all integration tests of the office module: gw-test officeIntegrationTest
-tasks.register<Test>("officeIntegrationTest") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        includeTags("officeIntegrationTest")
-    }
-
-    group = "verification"
-    description = "runs integration tests of the office module"
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-// HOWTO: run all integration tests of the booking module: gw-test bookingIntegrationTest
-tasks.register<Test>("bookingIntegrationTest") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        includeTags("bookingIntegrationTest")
-    }
-
-    group = "verification"
-    description = "runs integration tests of the booking module"
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-// HOWTO: run all integration tests of the hosting module: gw-test hostingIntegrationTest
-tasks.register<Test>("hostingIntegrationTest") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        includeTags("hostingIntegrationTest")
-    }
-
-    group = "verification"
-    description = "runs integration tests of the hosting module"
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-tasks.register<Test>("migrationTest") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        includeTags("migrationTest")
-    }
-
-    group = "verification"
-    description = "run database migration tests"
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-tasks.register<Test>("importHostingAssets") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        includeTags("importHostingAssets")
-    }
-
-    group = "verification"
-    description = "run the import jobs as tests"
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-tasks.register<Test>("scenarioTest") {
-    useTestSourceSet()
-    useJUnitPlatform {
-        includeTags("scenarioTest")
-    }
-
-    group = "verification"
-    description = "run the import jobs as tests" // Description seems copied, adjust if needed
-
-    mustRunAfter(tasks.named("spotlessJava"))
-}
-
-tasks.withType<Test>().configureEach {
-    if (name != "unitTest") {
-        mustRunAfter(tasks.named("unitTest"))
-    }
-}
-
+apply(plugin = "hsadmin.test-tasks")
 
 // pitest mutation testing
 configure<PitestPluginExtension> {
@@ -637,70 +321,7 @@ tasks.named<DependencyUpdatesTask>("dependencyUpdates") {
     }
 }
 
-// Generate HTML from Markdown scenario-test-reports using Pandoc:
-tasks.register("convertMarkdownToHtml") {
-    description = "Generates HTML from Markdown scenario-test-reports using Pandoc."
-    group = "Conversion"
-
-    // Define the template file using project.file
-    val templateFile = project.file("doc/scenarios/.template.html")
-    inputs.file(templateFile).withPathSensitivity(PathSensitivity.NONE)
-
-    // Define input+output directory using layout property
-    val inputDir = layout.buildDirectory.dir("doc/scenarios")
-    outputs.dir(inputDir) // Output HTMLs will be in the same directory
-
-    onlyIf {
-        val dir = inputDir.get().asFile
-        if (!dir.exists()) {
-            logger.lifecycle("Skipping convertMarkdownToHtml because ${dir} does not exist (scenarioTest skipped).")
-            false
-        } else {
-            true
-        }
-    }
-
-    doFirst {
-        // Check if pandoc is installed using exec and capturing output/errors
-        val result = project.exec {
-            commandLine("pandoc", "--version")
-            isIgnoreExitValue = true // Don't fail the build immediately
-            standardOutput = FileOutputStream(File.createTempFile("pandoc_check", ".out")) // Redirect output
-            errorOutput = FileOutputStream(File.createTempFile("pandoc_check", ".err")) // Redirect error
-        }
-        if (result.exitValue != 0) {
-            throw GradleException("Pandoc is not installed or not found in the system path. Please install Pandoc.")
-        }
-
-        // Check if the template file exists
-        if (!templateFile.exists()) {
-            throw GradleException("Template file '$templateFile' not found.")
-        }
-    }
-
-    doLast {
-        // Gather all Markdown files in the input directory
-        project.fileTree(inputDir) {
-            include("*.md")
-        }.forEach { file ->
-            // Create the output file path in the same directory
-            val outputFile = File(file.parentFile, file.name.replace(".md", ".html"))
-
-            // Execute pandoc for each markdown file
-            project.exec {
-                commandLine(
-                    "pandoc",
-                    file.absolutePath,
-                    "--template", templateFile.absolutePath,
-                    "-o", outputFile.absolutePath
-                )
-            }
-            println("Converted ${file.name} to ${outputFile.name}")
-        }
-    }
-    // Ensure this task runs after scenario tests have potentially generated the markdown files
-    dependsOn(tasks.named("scenarioTest"))
-}
+apply(plugin = "hsadmin.documentation")
 
 // HOWTO re-generate the RBAC rules (PostgreSQL code) from the RBAC specs in the entities rbac()-method
 //  in a shell run `gw rbacGenerate`
@@ -722,6 +343,14 @@ tasks.register("compile") {
     group = "build"
     description = "Compiles main and test Java sources."
     dependsOn("compileJava", "compileTestJava")
+}
+
+tasks.register<GradleBuild>("bootJarWithBuildTime") {
+    group = "build"
+    description = "Builds bootJar with build.time included in META-INF/build-info.properties."
+
+    tasks = listOf("bootJar")
+    startParameter.projectProperties = startParameter.projectProperties + ("includeBuildTime" to "true")
 }
 
 

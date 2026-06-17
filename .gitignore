@@ -115,7 +115,7 @@ Desktop.ini
 .Trashes
 
 ######################
-# Directories
+# Directories for Generated Files of IDEs and build-tools
 ######################
 /bin/
 /deploy/

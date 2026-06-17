@@ -2,7 +2,7 @@
 
 (The origin repository for this project can be found at [Hostsharing eG](https://git.hostsharing.net/hostsharing/hs.hsadmin.ng).)
 
-This documents gives an overview of the development environment and tools.
+This document gives an overview of the development environment and tools.
 For architecture consider the files in the `doc` and `adr` folder.
 
 <!-- generated TOC begin: -->
@@ -11,6 +11,7 @@ For architecture consider the files in the `doc` and `adr` folder.
     - [Markdown](#markdown)
         - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
         - [Render Markdown Embedded Mermaid Diagrams](#render-markdown-embedded-mermaid-diagrams)
+    - [Building the Executable Jar](#building-the-executable-jar)
     - [IDE Specific Settings](#ide-specific-settings)
         - [IntelliJ IDEA](#intellij-idea)
     - [Other Tools](#other-tools)
@@ -66,6 +67,7 @@ To be able to build and run the Java Spring Boot application, you need the follo
 - A Java Runtime Environment (JRE) compatible with Java 17 to run gradle.
   - The matching Java JDK at will be automatically installed by Gradle toolchain support to `~/.gradle/jdks/`.
 - The Linux bind9 utils (e.g. package bind9-utils) to support DNS checks in the booking+hosting modules.
+- Some Gradle like to generate PDF-files for documentation, require more tooling, see [Dockerfile](Jenkins/jenkins-agent/Dockerfile). 
 
 Optionally, the following tools are suggested:
 
@@ -719,6 +721,21 @@ also try this (assumed you've sourced .aliases):
 ```sh
 howto 
 ```
+
+
+### How to Build the Executable Jar
+
+For normal development and test runs, `build.time` is omitted from
+`META-INF/build-info.properties` so Gradle can keep test tasks up to date.
+
+To build the final executable Spring Boot jar with `build.time` included, use:
+
+```shell
+gw bootJarWithBuildTime
+```
+
+This wraps `bootJar` and sets the build-time flag automatically.
+
 
 ### How to Run the Application With Other Profiles, e.g. production:
 

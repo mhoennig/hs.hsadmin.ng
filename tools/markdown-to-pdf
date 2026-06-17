@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+
+# Wrapper-script for pandoc with some extended control features via Markdown YAML-Frontmatter,
+# especially Mermaid-diagram scaling for larger formats than A4.
+
+set -euo pipefail
+
+usage() {
+    echo "Usage: $0 <source-markdown-file> <target-pdf-file>" >&2
+    echo "Renders Markdown with Mermaid and PlantUML diagram elements to PDF." >&2
+}
+
+if [[ $# -ne 2 ]]; then
+    usage
+    exit 2
+fi
+
+markdown_file=$1
+target_file=$2
+
+if [[ ! -f "${markdown_file}" ]]; then
+    echo "Markdown file not found: ${markdown_file}" >&2
+    exit 1
+fi
+
+if [[ "${markdown_file}" != *.md ]]; then
+    echo "Expected a .md file: ${markdown_file}" >&2
+    exit 1
+fi
+
+if [[ "${target_file}" != *.pdf ]]; then
+    echo "Expected a .pdf target file: ${target_file}" >&2
+    exit 1
+fi
+
+if ! command -v pandoc >/dev/null 2>&1; then
+    echo "Pandoc not found. Install pandoc to render Markdown to PDF." >&2
+    exit 1
+fi
+
+if ! command -v mermaid-filter >/dev/null 2>&1; then
+    echo "mermaid-filter not found. Install it with: npm install -g mermaid-filter" >&2
+    exit 1
+fi
+
+if ! command -v pandoc-plantuml >/dev/null 2>&1; then
+    echo "pandoc-plantuml not found. Install it with: apt-get install pandoc-plantuml-filter" >&2
+    exit 1
+fi
+
+if ! command -v xelatex >/dev/null 2>&1; then
+    echo "xelatex not found. Install a TeX distribution with xelatex support." >&2
+    exit 1
+fi
+
+frontmatter_value() {
+    local key=$1
+
+    awk -v key="${key}" '
+        NR == 1 && $0 != "---" { exit }
+        NR > 1 && $0 == "---" { exit }
+        NR > 1 && $0 ~ "^" key ":[[:space:]]*" {
+            sub("^" key ":[[:space:]]*", "")
+            sub(/[[:space:]]*#.*$/, "")
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "")
+            gsub(/^["\047]|["\047]$/, "")
+            print
+            exit
+        }
+    ' "${markdown_file}"
+}
+
+normalize_plantuml_fences() {
+    local input_file=$1
+    local output_file=$2
+
+    awk '
+        function sanitize_plantuml_identifier(identifier) {
+            gsub(/:/, "_", identifier)
+            return identifier
+        }
+
+        function sanitize_plantuml_references(line,   i, ch, previous, next_char, result, in_quote) {
+            result = ""
+            in_quote = 0
+
+            for (i = 1; i <= length(line); i++) {
+                ch = substr(line, i, 1)
+                if (ch == "\"") {
+                    in_quote = !in_quote
+                }
+                if (!in_quote && ch == ":") {
+                    previous = substr(line, i - 1, 1)
+                    next_char = substr(line, i + 1, 1)
+                    if (previous ~ /[[:alnum:]_]/ && next_char ~ /[[:alnum:]_]/) {
+                        ch = "_"
+                    }
+                }
+                result = result ch
+            }
+
+            return result
+        }
+
+        function normalize_plantuml_line(line,   prefix, identifier, alias) {
+            if (line ~ /^[[:space:]]*(entity|object|actor|class|enum)[[:space:]]+[A-Za-z_][A-Za-z0-9_]*:[A-Za-z0-9_:]*[[:space:]]*$/) {
+                prefix = line
+                sub(/[A-Za-z_][A-Za-z0-9_]*:[A-Za-z0-9_:]*[[:space:]]*$/, "", prefix)
+                identifier = line
+                sub(/^[[:space:]]*(entity|object|actor|class|enum)[[:space:]]+/, "", identifier)
+                sub(/[[:space:]]*$/, "", identifier)
+                alias = sanitize_plantuml_identifier(identifier)
+                return prefix "\"" identifier "\" as " alias
+            }
+
+            if (line ~ /[[:space:]]as[[:space:]]/ || line ~ /[-.xo*]+[udlr]?[.=-]*[<>-]+/ || line ~ /[<>-]+[.=-]*[udlr]?[-.xo*]+/) {
+                return sanitize_plantuml_references(line)
+            }
+
+            return line
+        }
+
+        /^[[:space:]]*```[[:space:]]*plantuml[[:space:]]*$/ {
+            in_plantuml = 1
+            has_start = 0
+            has_end = 0
+            print
+            next
+        }
+
+        in_plantuml && /^[[:space:]]*```[[:space:]]*$/ {
+            if (has_start && !has_end) {
+                print "@enduml"
+            }
+            in_plantuml = 0
+            print
+            next
+        }
+
+        in_plantuml && /^[[:space:]]*@start/ {
+            has_start = 1
+        }
+
+        in_plantuml && /^[[:space:]]*@end/ {
+            has_end = 1
+        }
+
+        in_plantuml {
+            print normalize_plantuml_line($0)
+            next
+        }
+
+        {
+            print
+        }
+    ' "${input_file}" > "${output_file}"
+}
+
+page_size=$(frontmatter_value "pdf-page-size")
+orientation=$(frontmatter_value "pdf-orientation")
+margin=$(frontmatter_value "pdf-margin")
+mermaid_scaling=$(frontmatter_value "pdf-mermaid-scaling")
+mermaid_width=$(frontmatter_value "pdf-mermaid-width")
+mermaid_scale=$(frontmatter_value "pdf-mermaid-scale")
+image_width=$(frontmatter_value "pdf-image-width")
+image_height=$(frontmatter_value "pdf-image-height")
+
+page_size=${page_size:-A4}
+orientation=${orientation:-portrait}
+margin=${margin:-18mm}
+mermaid_scaling=${mermaid_scaling:-false}
+mermaid_width=${mermaid_width:-1200}
+mermaid_scale=${mermaid_scale:-2}
+image_width=${image_width:-\\linewidth}
+image_height=${image_height:-0.95\\textheight}
+
+target_dir=$(dirname "${target_file}")
+mkdir -p "${target_dir}"
+target_dir=$(realpath "${target_dir}")
+target_file=${target_dir}/$(basename "${target_file}")
+
+tmp_dir=$(mktemp -d)
+
+cleanup() {
+    rm -rf "${tmp_dir}"
+}
+trap cleanup EXIT
+
+source_file=${tmp_dir}/$(basename "${markdown_file}")
+normalize_plantuml_fences "$(realpath "${markdown_file}")" "${source_file}"
+
+puppeteer_config=${tmp_dir}/puppeteer-config.json
+
+cat > "${puppeteer_config}" <<JSON
+{
+  "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+}
+JSON
+
+# mermaid-filter always creates mermaid-filter.err in its working directory,
+# so run Pandoc from the target directory to keep that side file next to the PDF.
+(
+    cd "${target_dir}"
+
+    pandoc_args=(
+        --standalone
+        --filter mermaid-filter
+        --filter pandoc-plantuml
+        --pdf-engine=xelatex
+        -V "geometry:${page_size,,}paper"
+        -V "geometry:${orientation}"
+        -V "geometry:margin=${margin}"
+    )
+
+    if [[ "${mermaid_scaling}" == "true" ]]; then
+        pandoc_args+=(
+            -V "header-includes=\\usepackage{graphicx}\\setkeys{Gin}{width=${image_width},height=${image_height},keepaspectratio}"
+        )
+        MERMAID_FILTER_WIDTH="${mermaid_width}" \
+        MERMAID_FILTER_SCALE="${mermaid_scale}" \
+        MERMAID_FILTER_PUPPETEER_CONFIG="${puppeteer_config}" \
+        JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+${JAVA_TOOL_OPTIONS} }-Djava.awt.headless=true" \
+            pandoc "${pandoc_args[@]}" "${source_file}" -o "${target_file}"
+    else
+        MERMAID_FILTER_PUPPETEER_CONFIG="${puppeteer_config}" \
+        JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+${JAVA_TOOL_OPTIONS} }-Djava.awt.headless=true" \
+            pandoc "${pandoc_args[@]}" "${source_file}" -o "${target_file}"
+    fi
+)
+
+if [[ -f "${target_dir}/mermaid-filter.err" && ! -s "${target_dir}/mermaid-filter.err" ]]; then
+    rm "${target_dir}/mermaid-filter.err"
+fi
+
+echo "Generated ${target_file}"

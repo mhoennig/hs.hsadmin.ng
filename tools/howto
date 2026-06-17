@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import re
 import sys
 from urllib.parse import urljoin, quote
 
@@ -25,6 +26,93 @@ def is_binary_file(filepath, chunk_size=1024):
         print(f"Fehler beim Prüfen, ob Datei binär ist: {filepath}: {e}")
         return True
 
+def frontmatter_lines(lines):
+    if not lines or lines[0].strip() != "---":
+        return
+
+    for line_number, line in enumerate(lines[1:], start=2):
+        if line.strip() == "---":
+            return
+        yield line_number, line
+
+def unquote(value):
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1].strip()
+    return value
+
+def howto_from_yaml_line(line):
+    line = line.strip()
+    if not line or line.startswith("#"):
+        return None
+
+    if line.startswith("-"):
+        line = line[1:].strip()
+
+    if ":" in line:
+        key, value = line.split(":", 1)
+        key = unquote(key)
+        value = unquote(value)
+        if key.lower() == "howto":
+            return f"HOWTO: {value}" if value else "HOWTO"
+        line = value
+    else:
+        line = unquote(line)
+
+    if line.startswith(("HOWTO ", "HOWTO: ", "How to ")):
+        return line
+
+    return None
+
+def words(text):
+    return re.findall(r"[^\W_]+", text.casefold())
+
+def edit_distance_at_most_one(left, right):
+    if left == right:
+        return True
+
+    if abs(len(left) - len(right)) > 1:
+        return False
+
+    if len(left) == len(right):
+        return sum(1 for l, r in zip(left, right) if l != r) <= 1
+
+    shorter, longer = sorted((left, right), key=len)
+    differences = 0
+    shorter_index = 0
+
+    for longer_char in longer:
+        if shorter_index < len(shorter) and shorter[shorter_index] == longer_char:
+            shorter_index += 1
+        else:
+            differences += 1
+            if differences > 1:
+                return False
+
+    return True
+
+def word_matches(query_word, candidate_word):
+    return query_word == candidate_word or (
+        len(query_word) >= 5 and edit_distance_at_most_one(query_word, candidate_word)
+    )
+
+def matches_keywords(text, keywords):
+    text_words = words(text)
+    keyword_words = [word for keyword in keywords for word in words(keyword)]
+
+    return all(
+        any(word_matches(keyword_word, text_word) for text_word in text_words)
+        for keyword_word in keyword_words
+    )
+
+def print_howto_match(howto_match, filepath, line_number):
+    print(howto_match.rstrip())
+    print_howto_link(filepath, line_number)
+
+def print_howto_link(filepath, line_number):
+    print(f"--> {path_to_file_uri(filepath)}:{line_number}")
+    print()
+
 def search_keywords_in_files(keywords):
     if not keywords:
         print("Bitte geben Sie mindestens ein Stichwort an.")
@@ -48,6 +136,12 @@ def search_keywords_in_files(keywords):
                 with open(filepath, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
+                if filepath.endswith(".md"):
+                    for line_number, line in frontmatter_lines(lines) or []:
+                        howto_match = howto_from_yaml_line(line)
+                        if howto_match and matches_keywords(howto_match, keywords):
+                            print_howto_match(howto_match, filepath, line_number)
+
                 for line_number, line in enumerate(lines, start=1):
                     stripped_line = line.lstrip()  # Entfernt führende Leerzeichen
                     for symbol in comment_symbols:
@@ -55,7 +149,7 @@ def search_keywords_in_files(keywords):
                             # Entfernt das Kommentarzeichen und nachfolgende Leerzeichen
                             howtoMatch = stripped_line[len(symbol):].lstrip()
                             if howtoMatch.startswith(("HOWTO ", "HOWTO: ", "How to ")):
-                                if all(keyword in howtoMatch.lower() for keyword in keywords):
+                                if matches_keywords(howtoMatch, keywords):
 
                                     # Titelzeile ohne Kommentarzeichen
                                     print(howtoMatch.rstrip())
@@ -70,10 +164,7 @@ def search_keywords_in_files(keywords):
                                             break
 
                                     # Link mit Zeilennummer
-                                    print(f"--> {path_to_file_uri(filepath)}:{line_number}")
-
-                                    # Abstand zwischen Matches
-                                    print()
+                                    print_howto_link(filepath, line_number)
                                     break
             except Exception as e:
                 print(f"Fehler beim Lesen der Datei {filepath}: {e}")

@@ -10,7 +10,18 @@ RUN apt-get update && \
         postgresql-client \
         bind9-utils \
         docker.io \
-        pandoc && \
+        pandoc \
+        pandoc-plantuml-filter \
+        texlive-latex-base \
+        texlive-fonts-recommended \
+        texlive-extra-utils \
+        texlive-latex-extra \
+        texlive-xetex \
+        nodejs \
+        npm && \
+    mkdir -p /tmp/docker-home && \
+    HOME=/tmp/docker-home npm install -g mermaid-filter && \
+    chmod -R a+rwX /tmp/docker-home && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

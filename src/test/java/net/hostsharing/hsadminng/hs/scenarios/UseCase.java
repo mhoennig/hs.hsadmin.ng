@@ -47,7 +47,9 @@ import static org.junit.platform.commons.util.StringUtils.isNotBlank;
 public abstract class UseCase<T extends UseCase<?>> {
 
     private static final HttpClient client = HttpClient.newHttpClient();
-    private static final int HTTP_TIMEOUT_SECONDS = 20; // TODO.test: configurable in environment
+    private static final String HTTP_TIMEOUT_SECONDS_ENV_VAR = "HSADMINNG_SCENARIO_HTTP_TIMEOUT_SECONDS";
+    public static final int HTTP_TIMEOUT_SECONDS_DEFAULT = 20;
+    private static final int HTTP_TIMEOUT_SECONDS = httpTimeoutSeconds(HTTP_TIMEOUT_SECONDS_DEFAULT);
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
     protected final ScenarioTest testSuite;
@@ -309,6 +311,22 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     private static Duration seconds(final int secondsIfNoDebuggerAttached) {
         return isDebuggerAttached() ? Duration.ofHours(1) : Duration.ofSeconds(secondsIfNoDebuggerAttached);
+    }
+
+    private static int httpTimeoutSeconds(final int defaultSeconds) {
+        final var configuredTimeout = System.getenv(HTTP_TIMEOUT_SECONDS_ENV_VAR);
+        if (isBlank(configuredTimeout)) {
+            return defaultSeconds;
+        }
+        try {
+            final var timeoutSeconds = Integer.parseInt(configuredTimeout.trim());
+            if (timeoutSeconds > 0) {
+                return timeoutSeconds;
+            }
+        } catch (final NumberFormatException exc) {
+            throw new IllegalArgumentException(HTTP_TIMEOUT_SECONDS_ENV_VAR + " must be a positive integer", exc);
+        }
+        throw new IllegalArgumentException(HTTP_TIMEOUT_SECONDS_ENV_VAR + " must be a positive integer");
     }
 
     private void resetProperties() {

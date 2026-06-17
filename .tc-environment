@@ -10,5 +10,6 @@ export HSADMINNG_JWT_CLIENT_ID=hsscript.ng
 export HSADMINNG_JWT_CLIENT_SECRET=
 export HSADMINNG_JWT_USERNAME=superuser-alex@hostsharing.net
 export HSADMINNG_JWT_PASSWORD=password
+export HSADMINNG_SCENARIO_HTTP_TIMEOUT_SECONDS=30
 
 export LANG=en_US.UTF-8
