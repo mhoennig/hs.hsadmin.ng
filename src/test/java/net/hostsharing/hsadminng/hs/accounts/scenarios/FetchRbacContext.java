@@ -32,6 +32,7 @@ public class FetchRbacContext extends UseCase<FetchRbacContext> {
                         )
                         .expecting(OK).expecting(JSON).expectObject()
                                 .extractValue("subject.name", "returnedSubjectName")
+                                .extractValue("subject.type", "returnedSubjectType")
                                 .extractValue("assumedRoles", "returnedAssumedRoles")
                                 .extractValue("globalAdmin", "returnedGlobalAdmin")
         ).expecting(OK).expecting(JSON);
@@ -46,8 +47,11 @@ public class FetchRbacContext extends UseCase<FetchRbacContext> {
         assertThat(resolve("%{returnedSubjectName}", DROP_COMMENTS))
                 .isEqualTo(resolve("%{subjectName}", DROP_COMMENTS));
 
+        assertThat(resolve("%{returnedSubjectType}", DROP_COMMENTS))
+                .isEqualTo(resolve("%{expectedSubjectType}", DROP_COMMENTS));
+
         assertThat(resolveJsonArray("%{returnedAssumedRoles}")
-                .stream().map(m -> m.get("roleName")).toList())
+                .stream().map(m -> m.get("roleIdName")).toList())
                 .isEqualTo(List.of(resolve("%{assumedRoles}", DROP_COMMENTS).split(";")));
 
         assertThat(resolve("%{returnedGlobalAdmin}", DROP_COMMENTS))

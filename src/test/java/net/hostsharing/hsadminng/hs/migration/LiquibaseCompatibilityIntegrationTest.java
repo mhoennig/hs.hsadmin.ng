@@ -26,7 +26,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
  *
  * <ol>
  *     <li>the database is initialized by `db/released-only-prod-schema-with-test-data.sql` from the test-resources</li>
- *     <li>the current Liquibase-migrations (only-prod-schema but with-test-data) are performed</li>
+ *     <li>the current Liquibase migrations (only-prod-schema but with-test-data) are performed</li>
  *     <li>a new dump is written to `db/released-only-prod-schema-with-test-data.sql` in the build-directory</li>
  *     <li>an extra Liquibase-changeset (liquibase-migration-test) is applied</li>
  *     <li>it's asserted that the extra changeset got applied</li>
@@ -65,7 +65,7 @@ public class LiquibaseCompatibilityIntegrationTest {
         ResourceUtil.assertResourceHash(
                 DB_RELEASED_PROD_SCHEMA_RESOURCE_WITH_TEST_DATA_SQL,
                 // Never change this hash!
-                // Except, if you deliberately updated the reference SQL dump, e.g. after a prod release.
+                // Except if you deliberately updated the reference SQL dump, e.g. after a prod release.
                 // It protects you from accidentally making changes, e.g. with search&replace.
                 "512216e4baeed3f5d988766ff79a79c2885c8c04fa54c61009bde3d4f4708d72");
     }

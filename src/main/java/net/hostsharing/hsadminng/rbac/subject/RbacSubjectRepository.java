@@ -10,13 +10,23 @@ import java.util.UUID;
 
 public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUID> {
 
-    @Query("""
-             select u from RbacSubjectEntity u
-                 where :userName is null or u.name like concat(cast(:userName as text), '%')
-                 order by u.name
-            """)
+    @Query(value = """
+             select *
+               from rbac.subject_rv u
+              where (:userName is null or u.name like concat(cast(:userName as text), '%'))
+                and (:type is null or u.type = cast(:type as rbac.SubjectType))
+              order by u.name
+            """, nativeQuery = true)
     @Timed("app.rbac.subjects.repo.findByOptionalNameLike.rbac")
-    List<RbacSubjectEntity> findByOptionalNameLike(String userName);
+    List<RbacSubjectEntity> findByOptionalNameLikeAndOptionalTypeName(String userName, String type);
+
+    default List<RbacSubjectEntity> findByOptionalNameLikeAndOptionalType(String userName, SubjectType type) {
+        return findByOptionalNameLikeAndOptionalTypeName(userName, type != null ? type.name() : null);
+    }
+
+    default List<RbacSubjectEntity> findByOptionalNameLike(String userName) {
+        return findByOptionalNameLikeAndOptionalType(userName, null);
+    }
 
     // bypasses the restricted view, to be able to grant rights to arbitrary user
     @Query(value = "select * from rbac.subject where name=:userName", nativeQuery = true)
@@ -33,16 +43,19 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
     /*
         Can't use save/saveAndFlush from SpringData because the uuid is not generated on the entity level,
         but explicitly, and then SpringData check's if it exists using an SQL SELECT.
-        And SQL SELECT needs a currentSubject which we don't yet have in the case of self registration.
+        And SQL SELECT needs a currentSubject which we don't yet have in the case of self-registration.
      */
     @Modifying
-    @Query(value = "insert into rbac.subject_rv (uuid, name) values( :#{#newUser.uuid}, :#{#newUser.name})", nativeQuery = true)
+    @Query(value = "insert into rbac.subject_rv (uuid, name, type) values( :#{#newUser.uuid}, :#{#newUser.name}, cast(:#{#newUser.type.name()} as rbac.SubjectType))", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.insert.rbac")
     void insert(final RbacSubjectEntity newUser);
 
     default RbacSubjectEntity create(final RbacSubjectEntity rbacSubjectEntity) {
         if (rbacSubjectEntity.getUuid() == null) {
             rbacSubjectEntity.setUuid(UUID.randomUUID());
+        }
+        if (rbacSubjectEntity.getType() == null) {
+            rbacSubjectEntity.setType(SubjectType.USER);
         }
         insert(rbacSubjectEntity);
         // RbacSubjectEntity binds to 'rbac.subject_rv',

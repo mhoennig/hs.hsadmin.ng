@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.subject;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,6 +10,9 @@ import lombok.experimental.SuperBuilder;
 import lombok.val;
 import net.hostsharing.hsadminng.persistence.ImmutableBaseEntity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
@@ -33,6 +37,11 @@ public abstract class Subject<T extends Subject<?> & ImmutableBaseEntity<?>> imp
     private UUID uuid;
 
     private String name;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private SubjectType type = SubjectType.USER;
 
     public String generateAccessCode() {
         return generateAccessCode(LocalDateTime.now());

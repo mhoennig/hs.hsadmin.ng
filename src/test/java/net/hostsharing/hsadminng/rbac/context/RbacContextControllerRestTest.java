@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleType;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
+import net.hostsharing.hsadminng.rbac.subject.SubjectType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -49,6 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RbacContextControllerRestTest {
 
     private static final String GIVEN_SUBJECT_NAME = "superuser-alex@hostsharing.net";
+    private static final SubjectType GIVEN_SUBJECT_TYPE = SubjectType.USER;
     private static final boolean GIVEN_GLOBAL_ADMIN = true;
     private static final String GIVEN_ASSUMED_ROLES = "rbactest.package#xxx00:OWNER;rbactest.package#yyy00:OWNER";
 
@@ -82,10 +84,11 @@ class RbacContextControllerRestTest {
         when(contextMock.fetchCurrentSubjectUuid()).thenReturn(mockUuid);
 
         // find by uuid mock
-        final var mockSubject = new RbacSubjectEntity();
-        mockSubject.setUuid(mockUuid);
-        mockSubject.setName(GIVEN_SUBJECT_NAME);
-        when(rbacSubjectRepository.findByUuid(mockUuid)).thenReturn(mockSubject);
+        final var fakeSubject = new RbacSubjectEntity();
+        fakeSubject.setUuid(mockUuid);
+        fakeSubject.setName(GIVEN_SUBJECT_NAME);
+        fakeSubject.setType(GIVEN_SUBJECT_TYPE);
+        when(rbacSubjectRepository.findByUuid(mockUuid)).thenReturn(fakeSubject);
     }
 
     @ParameterizedTest
@@ -97,15 +100,18 @@ class RbacContextControllerRestTest {
 
         // given
         when(contextMock.isGlobalAdmin()).thenReturn(GIVEN_GLOBAL_ADMIN);
-        when(rbacRoleRepository.fetchAssumedRoles()).thenReturn(
-                Arrays.stream(GIVEN_ASSUMED_ROLES.split(";"))
-                        .map(RbacRoleDescriptor::fromRoleName)
-                        .map(roleDesc -> new RbacRoleEntity(
-                                UUID.randomUUID(), UUID.randomUUID(),
-                                roleDesc.tableName, roleDesc.objectIdName, roleDesc.roleType,
-                                roleDesc.roleName))
-                        .toList()
-        );
+        final var givenAssumedRoles = Arrays.stream(GIVEN_ASSUMED_ROLES.split(";"))
+                .map(RbacRoleDescriptor::fromRoleName)
+                .map(roleDesc -> {
+                    final var objectUuid = UUID.randomUUID();
+                    return new RbacRoleEntity(
+                            UUID.randomUUID(), objectUuid,
+                            roleDesc.tableName, roleDesc.objectIdName, roleDesc.roleType,
+                            roleDesc.tableName + "#" + objectUuid + ":" + roleDesc.roleType,
+                            roleDesc.roleName);
+                })
+                .toList();
+        when(rbacRoleRepository.fetchAssumedRoles()).thenReturn(givenAssumedRoles);
 
         // when
         final var request = MockMvcRequestBuilders
@@ -125,10 +131,13 @@ class RbacContextControllerRestTest {
                 // then
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.subject.name", is(GIVEN_SUBJECT_NAME)))
+                .andExpect(jsonPath("$.subject.type", is(GIVEN_SUBJECT_TYPE.name())))
                 .andExpect(jsonPath("$.globalAdmin", is(GIVEN_GLOBAL_ADMIN)))
                 .andExpect(jsonPath("$.assumedRoles", hasSize(2)))
-                .andExpect(jsonPath("$.assumedRoles[0].roleName", is("rbactest.package#xxx00:OWNER")))
-                .andExpect(jsonPath("$.assumedRoles[1].roleName", is("rbactest.package#yyy00:OWNER")));
+                .andExpect(jsonPath("$.assumedRoles[0].roleName", is(givenAssumedRoles.get(0).getRoleName())))
+                .andExpect(jsonPath("$.assumedRoles[0].roleIdName", is("rbactest.package#xxx00:OWNER")))
+                .andExpect(jsonPath("$.assumedRoles[1].roleName", is(givenAssumedRoles.get(1).getRoleName())))
+                .andExpect(jsonPath("$.assumedRoles[1].roleIdName", is("rbactest.package#yyy00:OWNER")));
 
         verify(contextMock).assumeRoles(expectedAssumedRoles);
     }

@@ -172,7 +172,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // given
             final var givencurrentSubjectAsPackageAdmin = new Subject("customer-admin@xxx.example.com");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByIdName("rbactest.package#xxx00:ADMIN");
 
             // when
             final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
@@ -191,7 +191,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // given
             final var givencurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByIdName("rbactest.package#xxx00:ADMIN");
 
             // when
             final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
@@ -212,7 +212,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     "pac-admin-xxx00@xxx.example.com",
                     "rbactest.package#xxx00:ADMIN");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByIdName("rbactest.package#xxx00:ADMIN");
 
             // when
             final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
@@ -234,7 +234,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     "pac-admin-xxx00@xxx.example.com",
                     "rbactest.package#xxx00:TENANT");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByIdName("rbactest.package#xxx00:ADMIN");
             final var grant = givencurrentSubjectAsPackageAdmin.getListOfGrantsByUuid()
                     .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
 
@@ -255,7 +255,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             final var givenRoleToGrant = "rbactest.package#xxx00:ADMIN";
             final var givencurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
             final var givenOwnPackageAdminRole =
-                    getRbacRoleByName(givencurrentSubjectAsPackageAdmin.assumedRole);
+                    getRbacRoleByIdName(givencurrentSubjectAsPackageAdmin.assumedRole);
 
             // when
             final var response = givencurrentSubjectAsPackageAdmin
@@ -271,7 +271,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .body("granteeSubjectName", is(givenNewUser.getName()));
             assertThat(findAllGrantsOf(givencurrentSubjectAsPackageAdmin))
                     .extracting(RbacGrantEntity::toDisplay)
-                    .contains("{ grant role:" + givenOwnPackageAdminRole.getRoleName() +
+                    .contains("{ grant role:" + givenOwnPackageAdminRole.getRoleIdName() +
                             " to user:" + givenNewUser.getName() +
                             " by role:" + givenRoleToGrant + " and assume }");
         }
@@ -283,7 +283,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             final var givenNewUser = createRbacSubject();
             final var givenRoleToGrant = "rbactest.package#xxx00:ADMIN";
             final var givencurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
-            final var givenAlienPackageAdminRole = getRbacRoleByName("rbactest.package#yyy00:ADMIN");
+            final var givenAlienPackageAdminRole = getRbacRoleByIdName("rbactest.package#yyy00:ADMIN");
 
             // when
             final var result = givencurrentSubjectAsPackageAdmin
@@ -312,7 +312,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             final var givenArbitraryUser = createRbacSubject();
             final var givenRoleToGrant = "rbactest.package#xxx00:ADMIN";
             final var givenCurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
-            final var givenOwnPackageAdminRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
+            final var givenOwnPackageAdminRole = getRbacRoleByIdName("rbactest.package#xxx00:ADMIN");
 
             // and given an existing grant
             assumeCreated(givenCurrentSubjectAsPackageAdmin
@@ -321,7 +321,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             assumeGrantExists(
                     givenCurrentSubjectAsPackageAdmin,
                     "{ grant role:%s to user:%s by role:%s and assume }".formatted(
-                            givenOwnPackageAdminRole.getRoleName(),
+                            givenOwnPackageAdminRole.getRoleIdName(),
                             givenArbitraryUser.getName(),
                             givenCurrentSubjectAsPackageAdmin.assumedRole));
 
@@ -503,10 +503,10 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }).assertNotNull().returnedValue();
     }
 
-    RbacRoleEntity getRbacRoleByName(final String roleName) {
+    RbacRoleEntity getRbacRoleByIdName(final String roleIdName) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net", null);
-            return rbacRoleRepository.findByRoleName(roleName);
+            return rbacRoleRepository.findByRoleIdName(roleIdName).getFirst();
         }).assertNotNull().returnedValue();
     }
 }

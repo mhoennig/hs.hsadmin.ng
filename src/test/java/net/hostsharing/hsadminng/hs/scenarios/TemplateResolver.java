@@ -48,7 +48,7 @@ public class TemplateResolver {
         URI_ENCODED('&'){
             @Override
             String convert(final Object value, final Resolver resolver) {
-                return value != null ? URLEncoder.encode(value.toString(), StandardCharsets.UTF_8) : "";
+                return value != null ? encodeQueryParameterValue(value.toString()) : "";
             }
         },
         JSON_ARRAY('@'){
@@ -79,6 +79,10 @@ public class TemplateResolver {
         }
 
         abstract String convert(final Object value, final Resolver resolver);
+    }
+
+    public static String encodeQueryParameterValue(final String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("%2F", "/");
     }
 
     private static final Pattern COMMA_RIGHT_BEFORE_CLOSING_BRACE = Pattern.compile(",(\\s*})", Pattern.MULTILINE);

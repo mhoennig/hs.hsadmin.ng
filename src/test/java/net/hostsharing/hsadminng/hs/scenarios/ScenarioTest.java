@@ -90,11 +90,11 @@ public abstract class ScenarioTest extends ContextBasedTest {
     @SneakyThrows
     protected void beforeScenario(final TestInfo testInfo) {
         try {
-            testInfo.getTestMethod().ifPresent(currentTestMethod -> {
-                callRequiredProducers(currentTestMethod);
-                keepProducesAlias(currentTestMethod);
-            });
+            val currentTestMethod = testInfo.getTestMethod().orElseThrow();
+            callRequiredProducers(currentTestMethod);
+            keepProducesAlias(currentTestMethod);
             testReport.createTestLogMarkdownFile(testInfo);
+            prepareRequiredProducersForReport(currentTestMethod);
         } catch (final Exception exc) {
             throw exc;
         }
@@ -159,6 +159,27 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
     private static boolean thatMethodDoesNotProduceAnythingWeAlreadyHave(final Set<String> testMethodProduces) {
         return areDisjunct(testMethodProduces, knowVariables().keySet());
+    }
+
+    private void prepareRequiredProducersForReport(final Method currentTestMethod) {
+        val requiresAnnot = currentTestMethod.getAnnotation(Requires.class);
+        if (requiresAnnot == null) {
+            return;
+        }
+
+        testReport.setRequiredProducerLinks(
+                stream(requiresAnnot.value())
+                        .map(requiredAlias -> "- `" + requiredAlias + "` " + producerLinkFor(requiredAlias))
+                        .toList());
+    }
+
+    private String producerLinkFor(final String requiredAlias) {
+        val producerMethod = stream(getPotentialProducerMethods())
+                .filter(method -> producedAliases(method.getAnnotation(Produces.class)).contains(requiredAlias))
+                .findFirst();
+        return producerMethod
+                .map(method -> "from [" + TestReport.reportTitle(method) + "](<" + TestReport.reportFileName(method) + ">)")
+                .orElse("(producer report not found)");
     }
 
     private void keepProducesAlias(final Method currentTestMethod) {

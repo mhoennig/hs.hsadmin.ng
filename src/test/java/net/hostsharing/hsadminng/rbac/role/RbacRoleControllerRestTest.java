@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.role;
 
+import lombok.val;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -65,7 +66,7 @@ class RbacRoleControllerRestTest {
     }
 
     @Test
-    void apiCustomersWillReturnCustomersFromRepository() throws Exception {
+    void getListOfRolesWillReturnRolesFromRbacRolesRepository() throws Exception {
 
         // given
         when(rbacRoleRepository.findAll()).thenReturn(
@@ -80,9 +81,12 @@ class RbacRoleControllerRestTest {
                 // then
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[0].roleName", is("rbac.global#global:ADMIN")))
-                .andExpect(jsonPath("$[1].roleName", is("rbactest.customer#xxx:OWNER")))
-                .andExpect(jsonPath("$[2].roleName", is("rbactest.customer#xxx:ADMIN")))
+                .andExpect(jsonPath("$[0].roleName", is(hostmasterRole.getRoleName())))
+                .andExpect(jsonPath("$[0].roleIdName", is("rbac.global#global:ADMIN")))
+                .andExpect(jsonPath("$[1].roleName", is(customerXxxOwner.getRoleName())))
+                .andExpect(jsonPath("$[1].roleIdName", is("rbactest.customer#xxx:OWNER")))
+                .andExpect(jsonPath("$[2].roleName", is(customerXxxAdmin.getRoleName())))
+                .andExpect(jsonPath("$[2].roleIdName", is("rbactest.customer#xxx:ADMIN")))
                 .andExpect(jsonPath("$[2].uuid", is(customerXxxAdmin.getUuid().toString())))
                 .andExpect(jsonPath("$[2].['object.uuid']", is(customerXxxAdmin.getObjectUuid().toString())))
                 .andExpect(jsonPath("$[2].objectTable", is(customerXxxAdmin.getObjectTable())))
@@ -90,7 +94,31 @@ class RbacRoleControllerRestTest {
     }
 
     @Test
-    void apiRejectsConflictingAssumedRolesHeaders() throws Exception {
+    void getListOfRolesCanFilterRolesByName() throws Exception {
+
+        // given
+        when(rbacRoleRepository.findByRoleIdName("rbactest.customer#xxx:ADMIN")).thenReturn(
+                asList(customerXxxAdmin));
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/roles")
+                        .param("name", "rbactest.customer#xxx:ADMIN")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].roleName", is(customerXxxAdmin.getRoleName())))
+            .andExpect(jsonPath("$[0].roleIdName", is("rbactest.customer#xxx:ADMIN")))
+            .andExpect(jsonPath("$[0].uuid", is(customerXxxAdmin.getUuid().toString())));
+        verify(rbacRoleRepository, never()).findAll();
+    }
+
+    @Test
+    void getListOfRolesRejectsConflictingAssumedRolesHeaders() throws Exception {
 
         // when
         mockMvc.perform(MockMvcRequestBuilders

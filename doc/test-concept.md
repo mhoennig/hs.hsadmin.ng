@@ -101,7 +101,7 @@ But few might be negative tests, which test if specific forbidden data gets reje
 Our scenario tests also generate test-reports which contain the REST-API calls needed for each scenario.
 These reports can be used as examples for the API usage from a business perspective.
 
-There is an extra document regarding scenario-test, see [Scenario-Tests README](../src/test/java/net/hostsharing/hsadminng/hs/office/scenarios/README.md). 
+There is an extra document regarding scenario-test, see [Scenario-Tests README](../src/test/java/net/hostsharing/hsadminng/hs/scenarios/README.md).
 
 
 #### Performance-Tests

@@ -1,6 +1,9 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Immutable;
 
@@ -22,5 +25,4 @@ import jakarta.persistence.Table;
         @AttributeOverride(name = "uuid", column = @Column(name = "uuid"))
 })
 public class RbacSubjectEntity extends Subject<RbacSubjectEntity> {
-
 }

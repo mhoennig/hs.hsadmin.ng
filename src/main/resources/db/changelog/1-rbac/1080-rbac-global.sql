@@ -217,6 +217,22 @@ $$;
 
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-global-TEST-GROUPS context:!without-test-data endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+do language plpgsql $$
+    begin
+        call base.defineContext('creating fake Assembly group subjects', null, null, null);
+        -- Assembly group names are globally unique by customer prefix; the prefix is not a hierarchy level.
+        perform rbac.create_subject('/hsh-Hostmasters', 'GROUP'::rbac.SubjectType);
+        perform rbac.create_subject('/xyz-Team', 'GROUP'::rbac.SubjectType);
+        perform rbac.create_subject('/xyz-Service', 'GROUP'::rbac.SubjectType);
+    end;
+$$;
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-global-TEST context:!without-test-data runAlways:true endDelimiter:--//
 -- ----------------------------------------------------------------------------
 

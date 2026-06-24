@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.REPRESENTATIVE;
+import static net.hostsharing.hsadminng.rbac.subject.SubjectType.GROUP;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -58,6 +59,9 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     private HsAccountRepository accountRepository;
+
+    @Autowired
+    private JpaAttempt jpaAttempt;
 
     // fetched UUIDs from test-data
     private RealSubjectEntity alexSubject;
@@ -181,6 +185,34 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         final var foundEntity = foundEntityOptional.get();
         assertThat(foundEntity.getVersion()).isEqualTo(0); // Initial version
         assertThat(foundEntity.getGlobalUid()).isEqualTo(2011);
+    }
+
+    @Test
+    void shouldRejectAccountForGroupSubject() {
+        // when
+        final var result = jpaAttempt.transacted(() -> {
+            context(null);
+            final var groupSubject = rbacSubjectRepo.create(RbacSubjectEntity.builder()
+                    .name("test-group-" + System.currentTimeMillis())
+                    .type(GROUP)
+                    .build());
+            final var realGroupSubject = em.find(RealSubjectEntity.class, groupSubject.getUuid());
+
+            final var newAccount = HsAccountEntity.builder()
+                    .subject(realGroupSubject)
+                    .person(em.find(HsOfficePersonRealEntity.class, testUserPerson.getUuid()))
+                    .globalUid(2012)
+                    .globalGid(2012)
+                    .build();
+
+            accountRepository.save(newAccount);
+            em.flush();
+        });
+
+        // then
+        result.assertExceptionWithRootCauseMessage(
+                RuntimeException.class,
+                "must be of type USER, but is GROUP");
     }
 
     private RealSubjectEntity fetchSubjectByName(final String name) {

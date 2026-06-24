@@ -17,7 +17,10 @@ import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -31,12 +34,18 @@ public class TestReport {
 
     private static final File markdownLogFile = new File(BUILD_DOC_SCENARIOS, ".last-debug-log.md");
     private static final ObjectMapper objectMapper = JsonObjectMapperConfiguration.build();
+    private static final Set<String> LOWERCASE_TITLE_WORDS = Set.of(
+            "a", "an", "the",
+            "and", "or", "for",
+            "to", "of", "in", "on", "with", "by");
 
     private final Map<String, UUID> aliases;
     private final PrintWriter markdownLog; // records everything for debugging purposes
     private File markdownReportFile;
     private PrintWriter markdownReport; // records only the use-case under test, without its pre-requisites
     private int silent; // do not print anything to test-report if >0
+    private List<String> requiredProducerLinks = List.of();
+    private boolean previousMarkdownLineWasBlank = true;
 
     static {
         assertThat(BUILD_DOC_SCENARIOS.isDirectory() || BUILD_DOC_SCENARIOS.mkdirs())
@@ -50,13 +59,9 @@ public class TestReport {
     }
 
     public void createTestLogMarkdownFile(final TestInfo testInfo) throws IOException {
-        final var testMethodName = testInfo.getTestMethod().map(Method::getName)
-                .map(TestReport::chopShouldPrefix)
-                .map(TestReport::splitMixedCaseIntoSeparateWords)
-                .orElseThrow();
-        final var testMethodOrder = testInfo.getTestMethod().map(m -> m.getAnnotation(Order.class).value()).orElseThrow();
-        markdownReportFile = new File(BUILD_DOC_SCENARIOS, testMethodOrder + ": " + testMethodName + ".md");
+        markdownReportFile = new File(BUILD_DOC_SCENARIOS, reportFileName(testInfo.getTestMethod().orElseThrow()));
         markdownReport = new PrintWriter(new FileWriter(markdownReportFile));
+        previousMarkdownLineWasBlank = true;
         print("## Scenario #" + determineScenarioTitle(testInfo));
     }
 
@@ -82,6 +87,19 @@ public class TestReport {
         printLine("\n" +output + "\n");
     }
 
+    void setRequiredProducerLinks(final List<String> requiredProducerLinks) {
+        this.requiredProducerLinks = requiredProducerLinks;
+    }
+
+    void printRequiredProducerLinks() {
+        if (requiredProducerLinks.isEmpty()) {
+            return;
+        }
+
+        printPara("#### Required");
+        requiredProducerLinks.forEach(this::printLine);
+    }
+
     @SneakyThrows
     public void printJson(final String json) {
         printLine(prettyJson(json));
@@ -100,15 +118,21 @@ public class TestReport {
             markdownReport.close();
             System.out.println("SCENARIO REPORT: " + asClickableLink(markdownReportFile));
         }
+        requiredProducerLinks = List.of();
         markdownLog.close();
         System.out.println("DEBUG LOG: " + asClickableLink(markdownLogFile));
     }
 
     private static @NotNull String determineScenarioTitle(final TestInfo testInfo) {
-        final var convertedTestMethodName =
-                testInfo.getTestMethod().map(TestReport::orderNumber).orElseThrow() + ": " +
-                testInfo.getTestMethod().map(Method::getName).map(t -> t.replaceAll("([a-z])([A-Z]+)", "$1 $2")).orElseThrow();
-        return convertedTestMethodName.replaceAll(": should ", ": ");
+        return testInfo.getTestMethod().map(TestReport::reportTitle).orElseThrow();
+    }
+
+    static String reportTitle(final Method method) {
+        return orderNumber(method) + ": " + asScenarioTitle(method.getName());
+    }
+
+    static String reportFileName(final Method method) {
+        return reportTitle(method) + ".md";
     }
 
     private static String prettyJson(final String json) throws JsonProcessingException {
@@ -132,19 +156,36 @@ public class TestReport {
         final var result = new StringBuilder();
 
         for (String line : lines) {
+            if (line.startsWith("#") && !previousMarkdownLineWasBlank) {
+                result.append("\n");
+            }
             for (Map.Entry<String, UUID> entry : aliases.entrySet()) {
                 if ( entry.getValue() != null  && line.contains(entry.getValue().toString())) {
-                    line = line + " // " + entry.getKey();
+                    line = appendAliasComment(line, entry.getKey());
                     break;  // only add comment for one UUID per row (in our case, there is only one per row)
                 }
             }
             result.append(line).append("\n");
+            previousMarkdownLineWasBlank = line.isBlank();
         }
         return result.toString();
     }
 
+    private String appendAliasComment(final String line, final String alias) {
+        if (line.endsWith(" \\")) {
+            return line.substring(0, line.length() - 2) + " // " + alias + " \\";
+        }
+        return line + " // " + alias;
+    }
+
     private static String chopShouldPrefix(final String text) {
         return text.replaceAll("^should", "");
+    }
+
+    private static String asScenarioTitle(final String methodName) {
+        final var withoutShouldPrefix = chopShouldPrefix(methodName);
+        final var separatedWords = splitMixedCaseIntoSeparateWords(withoutShouldPrefix);
+        return capitalizeFirstLetter(lowercaseTitleWords(separatedWords));
     }
 
     private static String splitMixedCaseIntoSeparateWords(final String text) {
@@ -153,6 +194,20 @@ public class TestReport {
         final var words = new ArrayList<String>();
         while (matcher.find()) {
             words.add(matcher.group(0));
+        }
+        return join(" ", words);
+    }
+
+    private static String capitalizeFirstLetter(final String words) {
+        return Character.toUpperCase(words.charAt(0)) + words.substring(1);
+    }
+
+    private static String lowercaseTitleWords(final String separatedWords) {
+        final var words = separatedWords.split(" ");
+        for (int i = 1; i < words.length - 1; ++i) {
+            if (LOWERCASE_TITLE_WORDS.contains(words[i].toLowerCase(Locale.ROOT))) {
+                words[i] = words[i].toLowerCase(Locale.ROOT);
+            }
         }
         return join(" ", words);
     }

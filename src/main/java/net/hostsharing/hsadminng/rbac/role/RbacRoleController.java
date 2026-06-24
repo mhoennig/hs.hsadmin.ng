@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 @RestController
 @PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "bearerAuth")
@@ -32,11 +34,14 @@ public class RbacRoleController implements RbacRolesApi {
     @Transactional(readOnly = true)
     @Timed("app.rbac.roles.api.getListOfRoles")
     public ResponseEntity<List<RbacRoleResource>> getListOfRoles(
-            final String assumedRoles) {
+            final String assumedRoles,
+            final String roleIdName) {
 
         context.assumeRoles(assumedRoles);
 
-        final List<RbacRoleEntity> result = rbacRoleRepository.findAll();
+        final List<RbacRoleEntity> result = isBlank(roleIdName)
+                ? rbacRoleRepository.findAll()
+                : rbacRoleRepository.findByRoleIdName(roleIdName);
 
         return ResponseEntity.ok(mapper.mapList(result, RbacRoleResource.class));
     }

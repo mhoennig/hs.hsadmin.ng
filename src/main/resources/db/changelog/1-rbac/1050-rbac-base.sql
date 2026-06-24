@@ -241,7 +241,7 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-IDNAME-FUNCTIONS endDelimiter:--//
+--changeset michael.hoennig:rbac-base-IDNAME-FUNCTIONS runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 create or replace function rbac.findObjectUuidByIdName(objectTable varchar, objectIdName varchar)
     returns uuid
@@ -257,15 +257,14 @@ begin
     begin
         execute sql into uuid;
     exception
+        -- PostgreSQL SQLSTATE P0002 = no_data_found, raised by the generated *_uuid_by_id_name function's SELECT INTO STRICT
+        when sqlstate 'P0002' then
+            return null;
         when others then
             raise exception 'function %_uuid_by_id_name(''%'') failed: %, SQLSTATE: %. If the function itself could not be found, add identity view support to %\nSQL:%',
                 objectTable, objectIdName, SQLERRM, SQLSTATE, objectTable, sql;
     end;
-    if uuid is null then
-        raise exception 'SQL returned null: %', sql;
-    else
-        return uuid;
-    end if;
+    return uuid;
 end ; $$;
 
 create or replace function rbac.findIdNameByObjectUuid(objectTable varchar, objectUuid uuid)
@@ -844,6 +843,38 @@ select perm.*
 $$;
 
 --//
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-TYPE endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create type rbac.SubjectType as enum ('USER', 'GROUP');
+alter table rbac.subject
+    add column type rbac.SubjectType not null default 'USER';
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-TYPE-FUNCTIONS runOnChange:true validCheckSum:ANY endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace function rbac.create_subject(subjectName varchar, subjectType rbac.SubjectType)
+    returns uuid
+    returns null on null input
+    language plpgsql as $$
+declare
+    stableUuidNamespace uuid;
+    subjectUuid uuid;
+begin
+    stableUuidNamespace := '6ba7b810-9dad-11d1-80b4-00c04fd430c8'::uuid;
+    subjectUuid := uuid_generate_v5(stableUuidNamespace, subjectName);
+    insert into rbac.reference (uuid, type) values (subjectUuid, 'rbac.subject');
+    insert into rbac.subject (uuid, name, type) values (subjectUuid, subjectName, subjectType);
+    return subjectUuid;
+end;
+$$;
+--//
+
 
 -- ============================================================================
 --changeset michael.hoennig:rbac-base-QUERY-SUBJECTS-WITH-PERMISSION-FOR-OBJECT endDelimiter:--//

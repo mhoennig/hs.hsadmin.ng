@@ -13,8 +13,8 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.http.HttpStatus;
 
-import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asSubject;
 import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asSubject;
 
 class AccountScenarioTests extends ScenarioTest {
 
@@ -36,6 +36,7 @@ class AccountScenarioTests extends ScenarioTest {
             new FetchRbacContext(scenarioTest)
                     .given("subjectName", "superuser-fran@hostsharing.net")
                     .given("assumedRoles", "rbactest.package#xxx00:ADMIN;rbactest.package#yyy00:ADMIN")
+                    .given("expectedSubjectType", "USER")
                     .given("expectedToBeGlobalAdmin", true)
                     .thenExpect(HttpStatus.OK)
                     .keep();
@@ -229,4 +230,59 @@ class AccountScenarioTests extends ScenarioTest {
                     .thenExpect(HttpStatus.OK);
         }
     }
+
+    @Nested
+    @Order(95)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class ScenariosForGroupGrants {
+
+        @Test
+        @Order(9520)
+        @Produces("GrantOfProjectAdminRoleToGroupSubject")
+        void grantingAProjectAdminRoleToAGroup() {
+            new GrantProjectAdminRoleToGroup(
+                    scenarioTest,
+                    asSubject("person-FirbySusan@example.com")
+                            .whichIs("a Debitor-Admin, here concretely the Partner-Representative")
+                            .withGroups("/xyz-Service"))
+                    .given("roleIdNameToAssume", "hs_office.relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT")
+                    .given("projectCaption", "D-1000111 default project")
+                    .given("projectIdName", "D-1000111-D-1000111defaultproject")
+                    .given("nameOfGroupSubject", "/xyz-Service")
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
+        }
+
+        @Test
+        @Order(9521)
+        @Requires("GrantOfProjectAdminRoleToGroupSubject")
+        void usersOfAGroupCanAssumeARoleGrantedToThatGroup() {
+            new AssumeBookingProjectAdminRoleAsGroupMember(
+                    scenarioTest,
+                    asSubject("selfregistered-user-drew@hostsharing.org")
+                            .whichIs("any user which does not even need to have any roles granted yet")
+                            .withGroups("/xyz-Service"))
+                    .expected("expectedAssumedRoleIdName", "hs_booking.project#D-1000111-D-1000111defaultproject:ADMIN")
+                    .given("nameOfGroupSubject", "/xyz-Service")
+                    .given("nameOfUserSubject", "selfregistered-user-drew@hostsharing.org")
+                    .given("projectCaption", "D-1000111 default project")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(9522)
+        @Requires("GrantOfProjectAdminRoleToGroupSubject")
+        void usersOfAGroupCanViewHostingAssetsBelowTheAssumedProject() {
+            new ViewHostingAssetsAsGroupMember(
+                    scenarioTest,
+                    asSubject("selfregistered-user-drew@hostsharing.org")
+                            .whichIs("any user which does not even need to have any roles granted yet")
+                            .withGroups("/xyz-Service"))
+                    .given("nameOfGroupSubject", "/xyz-Service")
+                    .given("nameOfUserSubject", "selfregistered-user-drew@hostsharing.org")
+                    .given("projectCaption", "D-1000111 default project")
+                    .thenExpect(HttpStatus.OK);
+        }
+    }
+
 }

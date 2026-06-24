@@ -74,7 +74,7 @@ public abstract class BaseWebSecurityConfig {
     @Bean
     @Profile("!fake-jwt")
     public JwtDecoder jwtDecoder(
-            // FIXME: Maybe move all defaults from the application.yml to here?
+            // TODO.impl [for Story#458]: Maybe move all defaults from the application.yml to here?
             @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") final String issuerUri,
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") final String jwkSetUri,
             @Value("${spring.security.oauth2.resourceserver.jwt.hmac-secret:${HSADMINNG_JWT_HMAC_SECRET:}}") final String hmacSecret) {

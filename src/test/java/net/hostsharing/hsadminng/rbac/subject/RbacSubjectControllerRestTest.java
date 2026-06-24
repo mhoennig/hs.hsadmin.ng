@@ -49,6 +49,9 @@ class RbacSubjectControllerRestTest {
     RbacSubjectRepository rbacSubjectRepository;
 
     @MockitoBean
+    RbacSubjectListService rbacSubjectListService;
+
+    @MockitoBean
     EntityManagerWrapper em;
 
     @BeforeEach
@@ -79,7 +82,8 @@ class RbacSubjectControllerRestTest {
         result
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", "http://localhost/api/rbac/subjects/" + givenUuid))
-            .andExpect(jsonPath("uuid", is(givenUuid.toString())));
+            .andExpect(jsonPath("uuid", is(givenUuid.toString())))
+                .andExpect(jsonPath("type", is("USER")));
         verify(rbacSubjectRepository).create(argThat(entity -> entity.getUuid().equals(givenUuid)));
     }
 
@@ -104,7 +108,7 @@ class RbacSubjectControllerRestTest {
     void getListOfSubjectsReturnsSubjectsFromRepository() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
-        when(rbacSubjectRepository.findByOptionalNameLike("some-user")).thenReturn(List.of(
+        when(rbacSubjectListService.findByOptionalNameLikeAndOptionalType("some-user", null)).thenReturn(List.of(
                 RbacSubjectEntity.builder()
                         .uuid(givenSubjectUuid)
                         .name("some-user@example.org")
@@ -252,5 +256,65 @@ class RbacSubjectControllerRestTest {
                 return objectUuid;
             }
         };
+    }
+
+    @Test
+    void getListOfSubjectsFiltersByType() throws Exception {
+        // given
+        final var givenUuid = UUID.randomUUID();
+        given(rbacSubjectListService.findByOptionalNameLikeAndOptionalType(null, SubjectType.GROUP))
+                .willReturn(List.of(RbacSubjectEntity.builder()
+                        .uuid(givenUuid)
+                        .name("/xyz-Team")
+                        .type(SubjectType.GROUP)
+                        .build()));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/subjects?type=GROUP")
+                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("[0].uuid", is(givenUuid.toString())))
+                .andExpect(jsonPath("[0].name", is("/xyz-Team")))
+                .andExpect(jsonPath("[0].type", is("GROUP")));
+
+        // then
+        verify(rbacSubjectListService).findByOptionalNameLikeAndOptionalType(null, SubjectType.GROUP);
+    }
+
+    @Test
+    void getListOfSubjectsDelegatesGroupVisibilityToService() throws Exception {
+        // given
+        final var givenUuid = UUID.randomUUID();
+        given(rbacSubjectListService.findByOptionalNameLikeAndOptionalType(
+                "/xyz-Team",
+                SubjectType.GROUP))
+                .willReturn(List.of(RealSubjectEntity.builder()
+                        .uuid(givenUuid)
+                        .name("/xyz-Team")
+                        .type(SubjectType.GROUP)
+                        .build()));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/subjects?name=/xyz-Team&type=GROUP")
+                        .header("Authorization", bearer(
+                                "person-FirbySusan@example.com",
+                                List.of("/xyz-Team")))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("[0].uuid", is(givenUuid.toString())))
+                .andExpect(jsonPath("[0].name", is("/xyz-Team")))
+                .andExpect(jsonPath("[0].type", is("GROUP")));
+
+        // then
+        verify(rbacSubjectListService).findByOptionalNameLikeAndOptionalType(
+                "/xyz-Team",
+                SubjectType.GROUP);
     }
 }

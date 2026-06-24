@@ -19,6 +19,46 @@ create table hs_accounts.account
 
 
 -- ============================================================================
+--changeset michael.hoennig:hs-accounts-ACCOUNT-SUBJECT-MUST-BE-USER runOnChange:true validCheckSum:ANY endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace function rbac.assert_subject_type(subjectUuid uuid, expectedType rbac.SubjectType)
+    returns void
+    language plpgsql as $$
+declare
+    actualType rbac.SubjectType;
+begin
+    select type into actualType
+        from rbac.subject
+        where uuid = subjectUuid;
+
+    if not found then
+        raise exception '[400] subject % does not exist', subjectUuid;
+    end if;
+
+    if actualType is distinct from expectedType then
+        raise exception '[400] subject % must be of type %, but is %', subjectUuid, expectedType, actualType;
+    end if;
+end; $$;
+
+create or replace function hs_accounts.assert_account_subject_is_user_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    perform rbac.assert_subject_type(new.uuid, 'USER'::rbac.SubjectType);
+    return new;
+end; $$;
+
+drop trigger if exists assert_account_subject_is_user_tg on hs_accounts.account;
+
+create trigger assert_account_subject_is_user_tg
+    before insert or update on hs_accounts.account
+    for each row
+execute function hs_accounts.assert_account_subject_is_user_tf();
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:hs-hs_accounts-JOURNALS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 

@@ -16,10 +16,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
@@ -49,7 +51,7 @@ public class Context {
     @Transactional(propagation = MANDATORY)
     public void define() {
         val auth = SecurityContextHolder.getContext().getAuthentication();
-        // FIXME: this code works for simplified JWT in tests as well as the real Keycloak, but there should be only one way
+        // TODO.impl [for Story#458]: this code works for simplified JWT in tests as well as the real Keycloak, but there should be only one way
         // if "preferred_username" is set, use it, otherwise use "sub"
         val username = Optional.of(auth)
                 .filter(JwtAuthenticationToken.class::isInstance)
@@ -58,18 +60,18 @@ public class Context {
                 .map(token -> token.getClaimAsString("preferred_username"))
                 .filter(claim -> !claim.isBlank()) // force to getName ("sub") if blank
                 .orElseGet(auth::getName);
-        define(username, null);
+        define(toTask(request), toCurl(request), username, null, currentSubjectGroupNamesFromJWT());
     }
 
     @Transactional(propagation = MANDATORY)
     public void define(final String currentSubject, final String assumedRoles) {
-        define(toTask(request), toCurl(request), currentSubject, assumedRoles);
+        define(toTask(request), toCurl(request), currentSubject, assumedRoles, null);
     }
 
     @Transactional(propagation = MANDATORY)
     public void assumeRoles(final String assumedRoles) {
         final var currentSubject = SecurityContextHolder.getContext().getAuthentication().getName();
-        define(toTask(request), toCurl(request), currentSubject, assumedRoles);
+        define(toTask(request), toCurl(request), currentSubject, assumedRoles, currentSubjectGroupNamesFromJWT());
     }
 
     @Transactional(propagation = MANDATORY)
@@ -78,17 +80,30 @@ public class Context {
             final String currentRequest,
             final String currentSubject,
             final String assumedRoles) {
+        define(currentTask, currentRequest, currentSubject, assumedRoles, null);
+    }
+
+    // TODO.refa: this method has to many String parameters, maybe reafactor to a builder-pattern?
+    @Transactional(propagation = MANDATORY)
+    public void define(
+            final String currentTask,
+            final String currentRequest,
+            final String currentSubject,
+            final String assumedRoles,
+            final String currentSubjectGroups) {
         final var query = em.createNativeQuery("""
                 call base.defineContext(
                     cast(:currentTask as varchar(127)),
                     cast(:currentRequest as text),
                     cast(:currentSubject as varchar(63)),
-                    cast(:assumedRoles as text));
+                    cast(:assumedRoles as text),
+                    cast(:currentSubjectGroups as text));
                 """);
         query.setParameter("currentTask", shortenToMaxLength(currentTask, 127));
         query.setParameter("currentRequest", currentRequest);
         query.setParameter("currentSubject", subjectName(currentSubject));
         query.setParameter("assumedRoles", assumedRoles != null ? assumedRoles : "");
+        query.setParameter("currentSubjectGroups", currentSubjectGroups != null ? currentSubjectGroups : "");
         query.executeUpdate();
     }
 
@@ -151,6 +166,29 @@ public class Context {
         return Optional.ofNullable(em.createNativeQuery("SELECT name FROM rbac.subject s WHERE s.uuid=:uuid")
                 .setParameter("uuid", authenticatedUuid)
                 .getSingleResult()).map(Object::toString);
+    }
+
+    private String currentSubjectGroupNamesFromJWT() {
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+                .filter(JwtAuthenticationToken.class::isInstance)
+                .map(JwtAuthenticationToken.class::cast)
+                .map(JwtAuthenticationToken::getToken)
+                .map(token -> token.getClaim("groups"))
+                .map(Context::groupNamesFromClaim)
+                .orElse("");
+    }
+
+    private static String groupNamesFromClaim(final Object semicolonSeparatedGroupsClaim) {
+        final Stream<?> groupNames = semicolonSeparatedGroupsClaim instanceof Collection<?> groups
+                ? groups.stream()
+                : Stream.of(semicolonSeparatedGroupsClaim);
+
+        return groupNames
+                .map(String::valueOf)
+                .map(String::trim)
+                .filter(not(String::isBlank))
+                .distinct()
+                .collect(Collectors.joining(";"));
     }
 
     private String toTask(final HttpServletRequest request) {

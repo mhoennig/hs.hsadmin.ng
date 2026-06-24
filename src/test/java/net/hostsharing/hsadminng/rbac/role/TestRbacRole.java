@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.rbac.role;
 
+import lombok.val;
+
 import static java.util.UUID.randomUUID;
 
 public class TestRbacRole {
@@ -9,6 +11,14 @@ public class TestRbacRole {
     static final RbacRoleEntity customerXxxAdmin = rbacRole("rbactest.customer", "xxx", RbacRoleType.ADMIN);
 
     static public RbacRoleEntity rbacRole(final String objectTable, final String objectIdName, final RbacRoleType roleType) {
-        return new RbacRoleEntity(randomUUID(), randomUUID(), objectTable, objectIdName, roleType, objectTable+'#'+objectIdName+':'+roleType);
+        val objectUuid = randomUUID();
+        return new RbacRoleEntity(
+                randomUUID(),
+                objectUuid,
+                objectTable,
+                objectIdName,
+                roleType,
+                objectTable + '#' + objectUuid + ':' + roleType,
+                objectTable + '#' + objectIdName + ':' + roleType);
     }
 }

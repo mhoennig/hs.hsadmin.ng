@@ -158,22 +158,67 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         void customerAdmin_withoutAssumedRole_canFindItsOwnRolesByName() {
             context.define("customer-admin@xxx.example.com");
+            final var givenRoleName = rbacRoleRepository.findByRoleIdName("rbactest.customer#xxx:ADMIN")
+                    .getFirst()
+                    .getRoleName();
 
-            final var result = rbacRoleRepository.findByRoleName("rbactest.customer#xxx:ADMIN");
+            final var result = rbacRoleRepository.findByRoleName(givenRoleName);
 
             assertThat(result).isNotNull();
             assertThat(result.getObjectTable()).isEqualTo("rbactest.customer");
             assertThat(result.getObjectIdName()).isEqualTo("xxx");
             assertThat(result.getRoleType()).isEqualTo(RbacRoleType.ADMIN);
+            assertThat(result.getRoleName()).isEqualTo("rbactest.customer#" + result.getObjectUuid() + ":ADMIN");
+            assertThat(result.getRoleIdName()).isEqualTo("rbactest.customer#xxx:ADMIN");
         }
 
         @Test
         void customerAdmin_withoutAssumedRole_canNotFindAlienRolesByName() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenAlienRoleName = rbacRoleRepository.findByRoleIdName("rbactest.customer#yyy:ADMIN")
+                    .getFirst()
+                    .getRoleName();
             context.define("customer-admin@xxx.example.com");
 
-            final var result = rbacRoleRepository.findByRoleName("rbactest.customer#bbb:ADMIN");
+            final var result = rbacRoleRepository.findByRoleName(givenAlienRoleName);
 
             assertThat(result).isNull();
+        }
+
+        @Test
+        void customerAdmin_withoutAssumedRole_canNotFindRoleIdNameByRoleName() {
+            context.define("customer-admin@xxx.example.com");
+
+            final var result = rbacRoleRepository.findByRoleName("rbactest.customer#xxx:ADMIN");
+
+            assertThat(result).isNull();
+        }
+    }
+
+    @Nested
+    class FindByRoleIdName {
+
+        @Test
+        void customerAdmin_withoutAssumedRole_canFindItsOwnRolesByRoleIdName() {
+            context.define("customer-admin@xxx.example.com");
+
+            final var result = rbacRoleRepository.findByRoleIdName("rbactest.customer#xxx:ADMIN");
+
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().getObjectTable()).isEqualTo("rbactest.customer");
+            assertThat(result.getFirst().getObjectIdName()).isEqualTo("xxx");
+            assertThat(result.getFirst().getRoleType()).isEqualTo(RbacRoleType.ADMIN);
+            assertThat(result.getFirst().getRoleName()).isEqualTo("rbactest.customer#" + result.getFirst().getObjectUuid() + ":ADMIN");
+            assertThat(result.getFirst().getRoleIdName()).isEqualTo("rbactest.customer#xxx:ADMIN");
+        }
+
+        @Test
+        void customerAdmin_withoutAssumedRole_canNotFindAlienRolesByRoleIdName() {
+            context.define("customer-admin@xxx.example.com");
+
+            final var result = rbacRoleRepository.findByRoleIdName("rbactest.customer#yyy:ADMIN");
+
+            assertThat(result).isEmpty();
         }
     }
 
@@ -197,26 +242,26 @@ class RbacRoleRepositoryIntegrationTest {
             final var result = rbacRoleRepository.fetchAssumedRoles();
 
             assertThat(result).isNotNull().hasSize(3)
-                    .extracting(RbacRoleEntity::getRoleName)
+                    .extracting(RbacRoleEntity::getRoleIdName)
                     .contains("rbactest.package#xxx00:OWNER", "rbactest.package#xxx01:OWNER", "rbactest.package#xxx02:OWNER");
         }
     }
 
     void exactlyTheseRbacRolesAreReturned(final List<RbacRoleEntity> actualResult, final String... expectedRoleNames) {
         assertThat(actualResult)
-                .extracting(RbacRoleEntity::getRoleName)
+                .extracting(RbacRoleEntity::getRoleIdName)
                 .containsExactlyInAnyOrder(expectedRoleNames);
     }
 
     void allTheseRbacRolesAreReturned(final List<RbacRoleEntity> actualResult, final String... expectedRoleNames) {
         assertThat(actualResult)
-                .extracting(RbacRoleEntity::getRoleName)
+                .extracting(RbacRoleEntity::getRoleIdName)
                 .contains(expectedRoleNames);
     }
 
     void noneOfTheseRbacRolesIsReturned(final List<RbacRoleEntity> actualResult, final String... unexpectedRoleNames) {
         assertThat(actualResult)
-                .extracting(RbacRoleEntity::getRoleName)
+                .extracting(RbacRoleEntity::getRoleIdName)
                 .doesNotContain(unexpectedRoleNames);
     }
 

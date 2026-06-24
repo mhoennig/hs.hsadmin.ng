@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.rbac.context;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,15 +11,19 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,9 +47,16 @@ class ContextIntegrationTests {
     @PersistenceContext
     private EntityManager em;
 
+    private RbacGrantTestHelper rbacGranter;
+
     @BeforeAll
     static void disableRyuk() {
         System.setProperty("testcontainers.ryuk.disabled", "true");
+    }
+
+    @BeforeEach
+    void initTestHelpers() {
+        rbacGranter = new RbacGrantTestHelper(context, em);
     }
 
     @Test
@@ -95,6 +107,58 @@ class ContextIntegrationTests {
 
     @Test
     @Transactional
+    void contextDefineWithJwtContainingGroupsWillIncludeSynchronizedGroupsInEffectiveSubjects() {
+        // given:
+        // Some GROUP subjects that got created by rbac-global-TEST-GROUP-PATHS test data changeset.
+        assertThat(subjectExists("/xyz-Team")).as("precondition failed").isTrue();
+        assertThat(subjectExists("/xyz-Service")).as("precondition failed").isTrue();
+        assertThat(subjectExists("not-synchronized-group")).as("precondition failed").isFalse();
+
+        // when:
+        givenJwtAuthentication("selfregistered-user-drew@hostsharing.org", List.of(
+                "/xyz-Team",
+                "/xyz-Service",
+                "not-synchronized-group"));
+        context.define();
+
+        // then
+        assertThat(context.fetchCurrentSubject()).
+                isEqualTo("selfregistered-user-drew@hostsharing.org");
+
+        assertThat(context.fetchAssumedRolesNames()).isEmpty();
+
+        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
+                .containsExactlyInAnyOrder(
+                        uuidOfSubjectName("selfregistered-user-drew@hostsharing.org"),
+                        uuidOfSubjectName("/xyz-Team"),
+                        uuidOfSubjectName("/xyz-Service"));
+    }
+
+    @Test
+    @Transactional
+    void contextDefineWithJwtContainingNestedGroupWillIncludeSynchronizedSuperGroupsInEffectiveSubjects() {
+        // given:
+        context.define("superuser-alex@hostsharing.net");
+        final var teamGroupUuid = createGroupSubject("/test-Team");
+        final var serviceGroupUuid = createGroupSubject("/test-Team/test-Service");
+        final var backendGroupUuid = createGroupSubject("/test-Team/test-Service/test-Backend");
+
+        // when:
+        givenJwtAuthentication("selfregistered-user-drew@hostsharing.org", List.of(
+                "/test-Team/test-Service/test-Backend"));
+        context.define();
+
+        // then
+        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
+                .containsExactlyInAnyOrder(
+                        uuidOfSubjectName("selfregistered-user-drew@hostsharing.org"),
+                        teamGroupUuid,
+                        serviceGroupUuid,
+                        backendGroupUuid);
+    }
+
+    @Test
+    @Transactional
     void assumeRoles() {
         // given
         final var authentication = new UsernamePasswordAuthenticationToken("superuser-fran@hostsharing.net", null, null);
@@ -113,6 +177,48 @@ class ContextIntegrationTests {
 
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
                 .containsExactly(context.fetchCurrentSubjectOrAssumedRolesUuids());
+    }
+
+    @Test
+    @Transactional
+    void findObjectUuidByIdNameReturnsNullForUnknownIdName() {
+        assertThat(em.createNativeQuery("select rbac.findObjectUuidByIdName('rbactest.package', 'unknown')").getSingleResult())
+                .isNull();
+    }
+
+    @Test
+    @Transactional
+    void assumedRolesGetAuthorizedViaGroupFromJwtButOnlyAssumedRolesRemainAsEffectiveSubject() {
+        // given
+        rbacGranter.as("rbactest.customer#xxx:OWNER")
+                .grant("rbactest.customer#xxx:ADMIN")
+                .to("/xyz-Service");
+        rbacGranter.as("rbactest.customer#yyy:OWNER")
+                .grant("rbactest.customer#yyy:ADMIN")
+                .to("/xyz-Team");
+        givenJwtAuthentication("selfregistered-user-drew@hostsharing.org", List.of(
+                "/xyz-Team",
+                "/xyz-Service"));
+
+        // when
+        context.assumeRoles("rbactest.package#xxx00:ADMIN;rbactest.package#yyy00:ADMIN");
+
+        // then
+        assertThat(context.fetchCurrentSubject()).
+                isEqualTo("selfregistered-user-drew@hostsharing.org");
+
+        assertThat(context.fetchAssumedRolesNames()).isEqualTo(Array.of(
+                "rbactest.package#xxx00:ADMIN",
+                "rbactest.package#yyy00:ADMIN"));
+
+        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
+                .containsExactly(
+                        uuidOfRoleName("rbactest.package#xxx00:ADMIN"),
+                        uuidOfRoleName("rbactest.package#yyy00:ADMIN"))
+                .doesNotContain(
+                        uuidOfSubjectName("selfregistered-user-drew@hostsharing.org"),
+                        uuidOfSubjectName("/xyz-Team"),
+                        uuidOfSubjectName("/xyz-Service"));
     }
 
     @Test
@@ -282,6 +388,32 @@ class ContextIntegrationTests {
     private UUID uuidOfSubjectName(final String name) {
         return UUID.fromString(em.createNativeQuery("SELECT uuid FROM rbac.subject WHERE name = :name")
                 .setParameter("name", name).getSingleResult().toString());
+    }
+
+    private UUID createGroupSubject(final String name) {
+        return (UUID) em.createNativeQuery("SELECT rbac.create_subject(:name, 'GROUP'::rbac.SubjectType)", UUID.class)
+                .setParameter("name", name)
+                .getSingleResult();
+    }
+
+    private boolean subjectExists(final String name) {
+        return ((Number) em.createNativeQuery("SELECT count(*) FROM rbac.subject WHERE name = :name")
+                .setParameter("name", name).getSingleResult()).longValue() > 0;
+    }
+
+    private UUID uuidOfRoleName(final String roleName) {
+        return UUID.fromString(em.createNativeQuery("SELECT rbac.findRoleId(:roleName)")
+                .setParameter("roleName", roleName).getSingleResult().toString());
+    }
+
+    private void givenJwtAuthentication(final String subject, final List<String> groups) {
+        final var jwt = new Jwt(
+                "token",
+                Instant.now(),
+                Instant.now().plusSeconds(3600),
+                Map.of("alg", "none"),
+                Map.of("sub", subject, "groups", groups));
+        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
     }
 
     private boolean hasGlobalAdminRole() {

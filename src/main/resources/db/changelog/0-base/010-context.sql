@@ -2,21 +2,32 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:context-DEFINE endDelimiter:--//
+--changeset michael.hoennig:context-DEFINE runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Callback which is called after the context has been (re-) defined.
+    Callback, which is called after the context has been (re-) defined.
     This function will be overwritten by later changesets.
+
+    To avoid that we do not temporarily have an empty context check during a DB schema migration,
+    we do NOT use `create or replace` but ignore the duplicate-function error, in case the procedure already exists.
+    When it gets overridden later with the actual implementation, it will be replaced with the new version.
  */
-create procedure base.contextDefined(
-    currentTask varchar(127),
-    currentRequest text,
-    currentSubject varchar(63),
-    assumedRoles varchar(4096)
-)
-    language plpgsql as $$
+do $$
 begin
+    create procedure base.contextDefined(
+        currentTask varchar(127),
+        currentRequest text,
+        currentSubject varchar(63),
+        assumedRoles varchar(4096),
+        currentSubjectGroups text = null
+    )
+        language plpgsql as $procedure$
+    begin
+    end; $procedure$;
+exception
+    when duplicate_function then
+        null;
 end; $$;
 
 /*
@@ -26,7 +37,8 @@ create or replace procedure base.defineContext(
     currentTask varchar(127),
     currentRequest text = null,
     currentSubject varchar(63) = null,
-    assumedRoles text = null
+    assumedRoles text = null,
+    currentSubjectGroups text = null
 )
     language plpgsql as $$
 begin
@@ -46,7 +58,11 @@ begin
     assert length(assumedRoles) <= 4096, FORMAT('assumedRoles must not be longer than 4096 characters: "%s"', assumedRoles);
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
 
-    call base.contextDefined(currentTask, currentRequest, currentSubject, assumedRoles);
+    currentSubjectGroups := coalesce(currentSubjectGroups, '');
+    assert length(currentSubjectGroups) <= 4096, FORMAT('currentSubjectGroups must not be longer than 4096 characters: "%s"', currentSubjectGroups);
+    execute format('set local hsadminng.currentSubjectGroups to %L', currentSubjectGroups);
+
+    call base.contextDefined(currentTask, currentRequest, currentSubject, assumedRoles, currentSubjectGroups);
 end; $$;
 --//
 
@@ -191,4 +207,3 @@ begin
     return array_length(base.assumedRoles(), 1) > 0;
 end; $$;
 --//
-

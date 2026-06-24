@@ -10,7 +10,9 @@ import com.nimbusds.jwt.SignedJWT;
 import lombok.SneakyThrows;
 import lombok.val;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Provides a fake JWT bearer generator.
@@ -21,10 +23,16 @@ public class JwtFakeBearer {
 
     @SneakyThrows
     public static String bearer(final String subject) {
+        return bearer(subject, List.of());
+    }
+
+    @SneakyThrows
+    public static String bearer(final String subject, final Collection<String> groups) {
         val claims = new JWTClaimsSet.Builder()
                 .subject(subject)
                 .issuer("http://test-issuer")
                 .audience("api")
+                .claim("groups", groups)
                 .expirationTime(new Date(System.currentTimeMillis() + 3600_000))
                 .build();
 

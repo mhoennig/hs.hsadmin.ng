@@ -1,1 +1,5 @@
+---
+apply: always
+---
+
 ../../AGENTS.md

@@ -3,6 +3,12 @@ components:
 
     schemas:
 
+        SubjectType:
+            type: string
+            enum:
+                - USER
+                - GROUP
+
         RbacSubject:
             type: object
             properties:
@@ -11,6 +17,8 @@ components:
                     format: uuid
                 name:
                     type: string
+                type:
+                    $ref: '#/components/schemas/SubjectType'
         RbacSubjectPermission:
             type: object
             properties:

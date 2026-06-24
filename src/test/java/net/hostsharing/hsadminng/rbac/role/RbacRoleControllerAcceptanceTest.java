@@ -15,6 +15,8 @@ import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.matchesRegex;
 import static org.hamcrest.Matchers.not;
 
 @Tag("generalIntegrationTest")
@@ -49,15 +51,35 @@ class RbacRoleControllerAcceptanceTest {
             .then().assertThat()
                 .statusCode(200)
                 .contentType("application/json")
-                .body("", hasItem(hasEntry("roleName", "rbactest.customer#xxx:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.customer#xxx:OWNER")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.customer#xxx:TENANT")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.customer#xxx:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.customer#xxx:OWNER")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.customer#xxx:TENANT")))
                 // ...
-                .body("", hasItem(hasEntry("roleName", "rbac.global#global:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.customer#yyy:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.package#yyy00:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:OWNER")))
+                .body("", hasItem(hasEntry("roleIdName", "rbac.global#global:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.customer#yyy:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.package#yyy00:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.domain#yyy00-aaaa:OWNER")))
                 .body( "size()", greaterThanOrEqualTo(73)); // increases with new test data
+        // @formatter:on
+    }
+
+    @Test
+    void globalAdmin_withoutAssumedRole_canViewRoleByName() {
+
+        // @formatter:off
+        RestAssured
+            .given()
+                .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                .queryParam("name", "rbactest.customer#yyy:ADMIN")
+                .port(port)
+            .when()
+                .get("http://localhost/api/rbac/roles")
+            .then().assertThat()
+                .statusCode(200)
+                .contentType("application/json")
+                .body("[0].roleName", matchesRegex("rbactest\\.customer#[0-9a-f-]{36}:ADMIN"))
+                .body("[0].roleIdName", is("rbactest.customer#yyy:ADMIN"))
+                .body("size()", is(1));
         // @formatter:on
     }
 
@@ -78,18 +100,18 @@ class RbacRoleControllerAcceptanceTest {
                 .statusCode(200)
                 .contentType("application/json")
 
-                .body("", hasItem(hasEntry("roleName", "rbactest.customer#yyy:TENANT")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:OWNER")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaab:OWNER")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaab:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.package#yyy00:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.package#yyy00:TENANT")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.customer#yyy:TENANT")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.domain#yyy00-aaaa:OWNER")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.domain#yyy00-aaaa:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.domain#yyy00-aaab:OWNER")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.domain#yyy00-aaab:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.package#yyy00:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.package#yyy00:TENANT")))
 
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.customer#xxx:TENANT"))))
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.domain#xxx00-aaaa:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#xxx00:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#xxx00:TENANT"))))
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.customer#xxx:TENANT"))))
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.domain#xxx00-aaaa:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.package#xxx00:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.package#xxx00:TENANT"))))
         ;
         // @formatter:on
     }
@@ -108,15 +130,15 @@ class RbacRoleControllerAcceptanceTest {
                 .statusCode(200)
                 .contentType("application/json")
 
-                .body("", hasItem(hasEntry("roleName", "rbactest.customer#zzz:TENANT")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.domain#zzz00-aaaa:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.package#zzz00:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "rbactest.package#zzz00:TENANT")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.customer#zzz:TENANT")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.domain#zzz00-aaaa:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.package#zzz00:ADMIN")))
+                .body("", hasItem(hasEntry("roleIdName", "rbactest.package#zzz00:TENANT")))
 
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.customer#yyy:TENANT"))))
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#yyy00:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#yyy00:TENANT"))));
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.customer#yyy:TENANT"))))
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.domain#yyy00-aaaa:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.package#yyy00:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleIdName", "rbactest.package#yyy00:TENANT"))));
         // @formatter:on
     }
 }

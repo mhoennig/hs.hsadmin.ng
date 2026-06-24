@@ -27,3 +27,7 @@ components:
                         - GUEST
                 roleName:
                     type: string
+                    description: Unambiguous role name using the object UUID, e.g. rbactest.customer#055df25f-f43e-4cc6-a3a8-e6b283e55514:ADMIN.
+                roleIdName:
+                    type: string
+                    description: Potentially ambiguous symbolic role name using the object's idName, e.g. rbactest.customer#xyz:ADMIN.

@@ -67,6 +67,21 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
+        public void globalAdmin_withTwoAssumedPackageAdminRoles_canViewPackagesOfBothRoles() {
+            // given
+            context.define(
+                    "superuser-alex@hostsharing.net",
+                    "rbactest.package#xxx00:ADMIN;rbactest.package#yyy00:ADMIN"
+            );
+
+            // when
+            final var result = testPackageRepository.findAllByOptionalNameLike(null);
+
+            // then
+            exactlyThesePackagesAreReturned(result, "xxx00", "yyy00");
+        }
+
+        @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnPackages() {
             // given:
             context.define("customer-admin@xxx.example.com");

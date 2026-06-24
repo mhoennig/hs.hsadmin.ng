@@ -14,6 +14,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 import static java.util.UUID.randomUUID;
@@ -198,9 +199,53 @@ class RbacSubjectControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType("application/json")
                     .body("[0].name", is("pac-admin-zzz00@zzz.example.com"))
+                    .body("[0].type", is("USER"))
                     .body("[1].name", is("pac-admin-zzz01@zzz.example.com"))
                     .body("[2].name", is("pac-admin-zzz02@zzz.example.com"))
                     .body("size()", is(3));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canViewSubjectsByType() {
+
+            // @formatter:off
+            RestAssured
+                .given()
+                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac/subjects?type=GROUP")
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(hasEntry("name", "/hsh-Hostmasters")))
+                    .body("", hasItem(hasEntry("type", "GROUP")))
+                    .body("findAll { it.type != 'GROUP' }.size()", is(0))
+                    .body("size()", greaterThanOrEqualTo(3));
+            // @formatter:on
+        }
+
+        @Test
+        void user_withJwtGroupMembership_canViewThatGroupSubject() {
+
+            // @formatter:off
+            RestAssured
+                .given()
+                    .header("Authorization", bearer(
+                            "person-FirbySusan@example.com",
+                            List.of("/xyz-Service")))
+                    .queryParam("name", "/xyz-Service")
+                    .queryParam("type", "GROUP")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac/subjects")
+                .then().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("[0].name", is("/xyz-Service"))
+                    .body("[0].type", is("GROUP"))
+                    .body("size()", is(1));
             // @formatter:on
         }
 

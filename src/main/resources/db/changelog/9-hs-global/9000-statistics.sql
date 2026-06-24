@@ -1,8 +1,9 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset michael.hoennig:hs-global-object-statistics endDelimiter:--//
+--changeset michael.hoennig:hs-global-object-statistics runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
+DROP VIEW IF EXISTS hs_statistics_v;
 CREATE VIEW hs_statistics_v AS
 select *
     from (select count, "table" as "rbac-table", '' as "hs-table", '' as "type"

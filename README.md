@@ -92,7 +92,7 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
                         # You can use `gw-test` instead use .tc-environment, if you've tinkered with your env.
                         # `gw-test` also starts separate runs for groups of tests to avoid PostgreSQL connection problems.
     gw scenarioTest     # compiles and scenario-tests - takes ~1min on a decent machine
-                        # Youz can `gw-test scenarioTest` for same reasons as mentioned above.
+                        # You can use `gw-test scenarioTest` for same reasons as mentioned above.
                         
     howto test          # shows more test information about how to run tests
     

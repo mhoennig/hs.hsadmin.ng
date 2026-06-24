@@ -4,6 +4,12 @@ get:
     operationId: getListOfRoles
     parameters:
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: name
+          in: query
+          required: false
+          schema:
+              type: string
+          description: IdName of the role
     responses:
         "200":
             description: OK

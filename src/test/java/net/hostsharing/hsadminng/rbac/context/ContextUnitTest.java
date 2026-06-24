@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.context;
 
 import lombok.val;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -16,6 +21,8 @@ import jakarta.persistence.Query;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -35,7 +42,8 @@ class ContextUnitTest {
                cast(:currentTask as varchar(127)),
                cast(:currentRequest as text),
                cast(:currentSubject as varchar(63)),
-               cast(:assumedRoles as text));
+               cast(:assumedRoles as text),
+               cast(:currentSubjectGroups as text));
            """;
 
     @Nested
@@ -52,8 +60,14 @@ class ContextUnitTest {
 
         @BeforeEach
         void setup() {
+            SecurityContextHolder.clearContext();
             RequestContextHolder.setRequestAttributes(null);
             lenient().when(em.createNativeQuery(any())).thenReturn(nativeQuery);
+        }
+
+        @AfterEach
+        void cleanup() {
+            SecurityContextHolder.clearContext();
         }
 
         @Test
@@ -66,6 +80,16 @@ class ContextUnitTest {
             verify(nativeQuery).setParameter(
                     "currentTask",
                     "WithoutHttpRequest.registerWithoutHttpServletRequestUsesCallStackForTask");
+        }
+
+        @Test
+        void registerWithSubjectGroupsUsesSubjectGroupsParameter() {
+            given(em.createNativeQuery(any())).willReturn(nativeQuery);
+
+            context.define("current-task", "current-request", "current-subject", "assumed-roles", "/some/group");
+
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
+            verify(nativeQuery).setParameter("currentSubjectGroups", "/some/group");
         }
 
         @Test
@@ -152,6 +176,52 @@ class ContextUnitTest {
 
             assertThat(result).isTrue();
         }
+
+        @Test
+        void registerWithJwtAuthenticationUsesCurrentSubjectGroupsFromGroupsClaim() {
+            givenJwtAuthentication("given-subject@example.org", List.of(
+                    " /customer-admins ",
+                    "",
+                    "/customer-admins",
+                    "/support"));
+
+            context.define();
+
+            verify(nativeQuery).setParameter("currentSubject", "given-subject@example.org");
+            verify(nativeQuery).setParameter("currentSubjectGroups", "/customer-admins;/support");
+        }
+
+        @Test
+        void registerWithJwtAuthenticationAcceptsSingleGroupClaimValue() {
+            givenJwtAuthentication("given-subject@example.org", " /single-group ");
+
+            context.define();
+
+            verify(nativeQuery).setParameter("currentSubjectGroups", "/single-group");
+        }
+
+        @Test
+        void assumeRolesWithNonJwtAuthenticationUsesEmptyCurrentSubjectGroups() {
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken("given-subject@example.org", null, null));
+
+            context.assumeRoles("rbactest.package#yyy00:ADMIN");
+
+            verify(nativeQuery).setParameter("currentSubjectGroups", "");
+        }
+
+        private void givenJwtAuthentication(final String subject, final Object groupsClaim) {
+            val jwt = new Jwt(
+                    "token",
+                    Instant.now(),
+                    Instant.now().plusSeconds(3600),
+                    Map.of("alg", "none"),
+                    Map.of(
+                            "sub", subject,
+                            "preferred_username", subject,
+                            "groups", groupsClaim));
+            SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
+        }
     }
 
     @Nested
@@ -180,8 +250,14 @@ class ContextUnitTest {
 
         @BeforeEach
         void setup() {
+            SecurityContextHolder.clearContext();
             RequestContextHolder.setRequestAttributes(requestAttributes);
             lenient().when(em.createNativeQuery(any())).thenReturn(nativeQuery);
+        }
+
+        @AfterEach
+        void cleanup() {
+            SecurityContextHolder.clearContext();
         }
 
         @Test

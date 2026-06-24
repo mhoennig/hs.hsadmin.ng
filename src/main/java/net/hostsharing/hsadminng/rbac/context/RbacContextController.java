@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacContextApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacContextResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.SubjectTypeResource;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
@@ -69,6 +70,7 @@ public class RbacContextController implements RbacContextApi {
         final var currentSubjectResource = new RbacSubjectResource();
         currentSubjectResource.setUuid(currentSubjectUuid);
         currentSubjectResource.setName(currentSubject.getName());
+        currentSubjectResource.setType(SubjectTypeResource.valueOf(currentSubject.getType().name()));
         result.setSubject(currentSubjectResource);
         result.setGlobalAdmin(isGlobalAdmin);
         final var assumedRolesResource = mapper.mapList(assumedRoles, RbacRoleResource.class);

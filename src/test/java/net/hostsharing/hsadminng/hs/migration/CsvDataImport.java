@@ -272,7 +272,6 @@ public class CsvDataImport extends ContextBasedTest {
 
     protected void makeSureThatTheImportAdminUserExists() {
         jpaAttempt.transacted(() -> {
-            context(null);
             em.createNativeQuery("""
                 do language plpgsql $$
                     declare

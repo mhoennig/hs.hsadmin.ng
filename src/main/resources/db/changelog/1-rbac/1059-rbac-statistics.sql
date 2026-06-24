@@ -1,13 +1,16 @@
 --liquibase formatted sql
 
---changeset michael.hoennig:rbac-statistics endDelimiter:--//
+-- ============================================================================
+--changeset michael.hoennig:rbac-statistics runOnChange:true validCheckSum:ANY endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 /*
     Creates a view which presents some statistics about the RBAC tables.
  */
+drop view if exists rbac.statistics_v cascade;
 create view rbac.statistics_v as
 select no, to_char("count", '9 999 999 999') as "count", "table"
-    from (select 1 as no, count(*) as "count", 'login users' as "table"
+    from (select 1 as no, count(*) as "count", 'subjects' as "table"
               from rbac.subject
           union
           select 2 as no, count(*) as "count", 'roles' as "table"

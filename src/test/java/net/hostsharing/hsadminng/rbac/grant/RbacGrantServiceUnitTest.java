@@ -31,12 +31,14 @@ class RbacGrantServiceUnitTest {
     void grantToSubjectPersistsAnAssumedGrantForRoleAndSubject() {
 
         // given
+        final var objectUuid = UUID.randomUUID();
         final var role = new RbacRoleEntity(
                 GIVEN_ROLE_UUID,
-                UUID.randomUUID(),
+                objectUuid,
                 "rbactest.customer",
                 "xxx",
                 RbacRoleType.ADMIN,
+                "rbactest.customer#" + objectUuid + ":ADMIN",
                 "rbactest.customer#xxx:ADMIN");
         final var subject = RbacSubjectEntity.builder().uuid(GIVEN_SUBJECT_UUID).build();
 

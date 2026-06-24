@@ -224,7 +224,7 @@ select distinct *
 --changeset michael.hoennig:rbac-views-USER-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Creates a view to the users table with row-level limitation
+    Creates a view to the subjects-table with row-level limitation
     based on the grants of the current user or assumed roles.
  */
 create or replace view rbac.subject_rv as
@@ -248,35 +248,34 @@ grant all privileges on rbac.subject_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERN
 --//
 
 -- ============================================================================
---changeset michael.hoennig:rbac-views-USER-RV-INSERT-TRIGGER endDelimiter:--//
+--changeset michael.hoennig:rbac-views-USER-RV-INSERT-TRIGGER runOnChange:true validCheckSum:ANY endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
-    Instead of insert trigger function for rbac.subject_rv.
+    Replaces the insert trigger function for rbac.subject_rv to also handle the type column.
  */
 create or replace function rbac.insert_subject_tf()
     returns trigger
     language plpgsql as $$
 declare
     refUuid uuid;
-    newUser rbac.subject;
+    newSubject rbac.subject;
 begin
     insert
         into  rbac.reference as r (uuid, type)
         values( new.uuid, 'rbac.subject')
         returning r.uuid into refUuid;
     insert
-        into rbac.subject (uuid, name)
-        values (refUuid, new.name)
-        returning * into newUser;
-    return newUser;
-end;
-$$;
+        into rbac.subject (uuid, name, type)
+        values (refUuid, new.name, coalesce(new.type, 'USER'::rbac.SubjectType))
+        returning * into newSubject;
+    return newSubject;
+end; $$;
 
 /*
-    Creates an instead of insert trigger for the rbac.subject_rv view.
+    Creates an instead-of insert trigger for the rbac.subject_rv view.
  */
-create trigger insert_subject_tg
+create or replace trigger insert_subject_tg
     instead of insert
     on rbac.subject_rv
     for each row

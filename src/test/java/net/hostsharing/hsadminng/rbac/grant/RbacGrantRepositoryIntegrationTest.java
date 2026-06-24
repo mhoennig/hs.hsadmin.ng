@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.grant;
 
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.role.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
@@ -112,7 +113,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // given
             context("customer-admin@xxx.example.com", "rbactest.customer#xxx:ADMIN");
             final var givenArbitrarySubjectUuid = rbacSubjectRepository.findByName("pac-admin-zzz00@zzz.example.com").getUuid();
-            final var givenOwnPackageRoleUuid = rbacRoleRepository.findByRoleName("rbactest.package#xxx00:ADMIN").getUuid();
+            final var givenOwnPackageRoleUuid = findByRoleIdName("rbactest.package#xxx00:ADMIN").getUuid();
 
             // when
             final var grant = RbacGrantEntity.builder()
@@ -141,7 +142,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
                 context("customer-admin@xxx.example.com", null);
                 return new Given(
                         createNewUser(),
-                        rbacRoleRepository.findByRoleName("rbactest.package#xxx00:OWNER").getUuid()
+                        findByRoleIdName("rbactest.package#xxx00:OWNER").getUuid()
                 );
             }).assumeSuccessful().returnedValue();
 
@@ -221,7 +222,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             final var grant = create(grant()
                     .byUser("customer-admin@xxx.example.com").withAssumedRole("rbactest.package#xxx00:OWNER")
                     .grantingRole("rbactest.package#xxx00:ADMIN").toUser("pac-admin-zzz00@zzz.example.com"));
-            final var grantedByRole = rbacRoleRepository.findByRoleName("rbactest.package#xxx00:OWNER");
+            final var grantedByRole = findByRoleIdName("rbactest.package#xxx00:OWNER");
 
             // when
             context("pac-admin-xxx00@xxx.example.com", "rbactest.package#xxx00:ADMIN");
@@ -239,7 +240,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         private RbacGrantEntity create(GrantBuilder with) {
             context(with.byUserName, with.assumedRole);
             final var givenArbitrarySubjectUuid = rbacSubjectRepository.findByName(with.granteeSubjectName).getUuid();
-            final var givenOwnPackageRoleUuid = rbacRoleRepository.findByRoleName(with.grantedRole).getUuid();
+            final var givenOwnPackageRoleUuid = findByRoleIdName(with.grantedRole).getUuid();
 
             final var grant = RbacGrantEntity.builder()
                     .granteeSubjectUuid(givenArbitrarySubjectUuid).grantedRoleUuid(givenOwnPackageRoleUuid)
@@ -329,6 +330,10 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
     private RbacSubjectEntity createNewUser() {
         return rbacSubjectRepository.create(
                 RbacSubjectEntity.builder().name("test-user-" + System.currentTimeMillis() + "@example.com").build());
+    }
+
+    private RbacRoleEntity findByRoleIdName(final String roleIdName) {
+        return rbacRoleRepository.findByRoleIdName(roleIdName).getFirst();
     }
 
     void exactlyTheseRbacGrantsAreReturned(final List<RbacGrantEntity> actualResult, final String... expectedGrant) {

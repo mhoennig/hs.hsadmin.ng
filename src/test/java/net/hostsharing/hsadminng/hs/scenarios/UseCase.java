@@ -1,6 +1,8 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
@@ -22,7 +24,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -32,10 +33,11 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-import static java.net.URLEncoder.encode;
 import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.hs.scenarios.MarkdownTableCellRenderer.toMarkdownTableCell;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.encodeQueryParameterValue;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
 import static net.hostsharing.hsadminng.test.DebuggerDetection.isDebuggerAttached;
@@ -47,6 +49,11 @@ import static org.junit.platform.commons.util.StringUtils.isNotBlank;
 public abstract class UseCase<T extends UseCase<?>> {
 
     private static final HttpClient client = HttpClient.newHttpClient();
+    private static final ObjectMapper REPORT_OBJECT_MAPPER = new ObjectMapper();
+    private static final String AUTH_HEADER_KEY = "Authorization";
+    private static final String FAKE_AUTH_HEADER_KEY = "X-Fake-Authorization";
+    private static final String ASSUMED_ROLES_HEADER_KEY = "Hostsharing-Assumed-Roles";
+    private static final String CONTENT_TYPE_HEADER_KEY = "Content-Type";
     private static final String HTTP_TIMEOUT_SECONDS_ENV_VAR = "HSADMINNG_SCENARIO_HTTP_TIMEOUT_SECONDS";
     public static final int HTTP_TIMEOUT_SECONDS_DEFAULT = 20;
     private static final int HTTP_TIMEOUT_SECONDS = httpTimeoutSeconds(HTTP_TIMEOUT_SECONDS_DEFAULT);
@@ -60,6 +67,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     private final Map<String, Object> expectedProperties = new LinkedHashMap<>();
 
     private String nextTitle; // just temporary to override resultAlias for sub-use-cases
+    private String nextRequestInfo;
     private String introduction;
 
     public UseCase(final ScenarioTest testSuite) {
@@ -84,6 +92,7 @@ public abstract class UseCase<T extends UseCase<?>> {
             testReport.printPara(introduction);
         }
         testReport.printPara("### Properties");
+        testReport.printRequiredProducerLinks();
         renderProperties("Given", givenProperties);
         renderProperties("Expected", expectedProperties);
 
@@ -181,11 +190,21 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public HttpResponse withTitle(final String resolvableTitle, final Supplier<HttpResponse> httpCall, final String... extraInfo) {
+        return withTitleAndRequestInfo(resolvableTitle, null, httpCall, extraInfo);
+    }
+
+    public HttpResponse withTitleAndRequestInfo(
+            final String resolvableTitle,
+            final String requestInfo,
+            final Supplier<HttpResponse> httpCall,
+            final String... extraInfo) {
         this.nextTitle = resolvableTitle;
+        this.nextRequestInfo = requestInfo;
         final var response = httpCall.get();
         response.optionallyReportRequestAndResponse();
         Arrays.stream(extraInfo).forEach(testReport::printPara);
         this.nextTitle = null;
+        this.nextRequestInfo = null;
         return response;
     }
 
@@ -199,11 +218,11 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]");
+                .header("X-Fake-Authorization", loginUser.reportableBearer());
         final var customizedRequestBuilder = requestCustomizer.apply(requestBuilder);
         final var request = customizedRequestBuilder.build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.GET, uriPath, null, response, null);
+        return new HttpResponse(HttpMethod.GET, uriPath, null, response);
     }
 
     public final HttpResponse httpGet(
@@ -216,18 +235,26 @@ public abstract class UseCase<T extends UseCase<?>> {
     public final HttpResponse httpPost(
             final FakeLoginUser loginUser, final String uriPathWithPlaceholders,
             final JsonTemplate bodyJsonTemplate) {
+        return httpPost(loginUser, uriPathWithPlaceholders, bodyJsonTemplate, requestBuilder -> requestBuilder);
+    }
+
+    @SneakyThrows
+    public final HttpResponse httpPost(
+            final FakeLoginUser loginUser, final String uriPathWithPlaceholders,
+            final JsonTemplate bodyJsonTemplate,
+            final Function<HttpRequest.Builder, HttpRequest.Builder> requestCustomizer) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
-        final var request = HttpRequest.newBuilder()
+        final var requestBuilder = HttpRequest.newBuilder()
                 .POST(BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]")
-                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
-                .build();
+                .header("X-Fake-Authorization", loginUser.reportableBearer())
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS));
+        final var request = requestCustomizer.apply(requestBuilder).build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.POST, uriPath, requestBody, response, loginUser);
+        return new HttpResponse(HttpMethod.POST, uriPath, requestBody, response);
     }
 
     @SneakyThrows
@@ -242,11 +269,11 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]")
+                .header("X-Fake-Authorization", loginUser.reportableBearer())
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.PATCH, uriPath, requestBody, response, loginUser);
+        return new HttpResponse(HttpMethod.PATCH, uriPath, requestBody, response);
     }
 
     @SneakyThrows
@@ -257,11 +284,11 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", "Bearer [" + loginUser.name() + "]")
+                .header("X-Fake-Authorization", loginUser.reportableBearer())
                 .timeout(seconds(HTTP_TIMEOUT_SECONDS))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
-        return new HttpResponse(HttpMethod.DELETE, uriPath, null, response, loginUser);
+        return new HttpResponse(HttpMethod.DELETE, uriPath, null, response);
     }
 
     protected PathAssertion path(final String path) {
@@ -285,7 +312,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public String uriEncoded(final String text) {
-        return encode(ScenarioTest.resolve(text, DROP_COMMENTS), StandardCharsets.UTF_8);
+        return encodeQueryParameterValue(ScenarioTest.resolve(text, DROP_COMMENTS));
     }
 
     public static class JsonTemplate {
@@ -329,17 +356,70 @@ public abstract class UseCase<T extends UseCase<?>> {
         throw new IllegalArgumentException(HTTP_TIMEOUT_SECONDS_ENV_VAR + " must be a positive integer");
     }
 
+    // Scenario reports hide the real JWT and show the readable fake-auth header as Authorization.
+    static String reportableRequestHeaderName(final String headerName) {
+        return FAKE_AUTH_HEADER_KEY.equalsIgnoreCase(headerName) ? AUTH_HEADER_KEY : headerName;
+    }
+
+    static List<Map.Entry<String, List<String>>> reportableRequestHeaders(
+            final Map<String, List<String>> requestHeaders,
+            final boolean requestHasBody) {
+        return requestHeaders.entrySet().stream()
+                // the Authorization header with the long Bearer token is of no value here
+                .filter(entry -> !AUTH_HEADER_KEY.equalsIgnoreCase(entry.getKey()))
+                // instead, use the X-Fake-Authorization header as if it was the real Authorization header
+                .map(entry -> Map.entry(reportableRequestHeaderName(entry.getKey()), entry.getValue()))
+                .sorted((left, right) -> {
+                    final var rankComparison = Integer.compare(
+                            reportableRequestHeaderRank(left.getKey(), requestHasBody),
+                            reportableRequestHeaderRank(right.getKey(), requestHasBody));
+                    return rankComparison != 0
+                            ? rankComparison
+                            : String.CASE_INSENSITIVE_ORDER.compare(left.getKey(), right.getKey());
+                })
+                .toList();
+    }
+
+    private static int reportableRequestHeaderRank(final String headerName, final boolean requestHasBody) {
+        if (AUTH_HEADER_KEY.equalsIgnoreCase(headerName)) {
+            return 0;
+        }
+        if (ASSUMED_ROLES_HEADER_KEY.equalsIgnoreCase(headerName)) {
+            return 1;
+        }
+        if (requestHasBody && CONTENT_TYPE_HEADER_KEY.equalsIgnoreCase(headerName)) {
+            return 3;
+        }
+        return 2;
+    }
+
+    @SneakyThrows
+    static String requestBodyArgument(final String requestBody) {
+        final var json = REPORT_OBJECT_MAPPER.readTree(requestBody);
+        return "-d '" + REPORT_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(json) + "'";
+    }
+
+    @SneakyThrows
+    static String reportableRequestHeaderValue(final String headerName, final String headerValue) {
+        final var bearerJwtPrefix = "Bearer JWT ";
+        if (AUTH_HEADER_KEY.equalsIgnoreCase(headerName) && headerValue.startsWith(bearerJwtPrefix)) {
+            final var jwtClaims = REPORT_OBJECT_MAPPER.readTree(headerValue.substring(bearerJwtPrefix.length()));
+            final var prettyPrinter = new DefaultPrettyPrinter();
+            prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+            return bearerJwtPrefix + REPORT_OBJECT_MAPPER.writer(prettyPrinter).writeValueAsString(jwtClaims);
+        }
+        return headerValue;
+    }
+
     private void resetProperties() {
         givenProperties.forEach((propName, val) -> ScenarioTest.removeProperty(propName));
     }
 
     public final class HttpResponse {
 
-        private static final String AUTH_HEADER_KEY = "Authorization";
         private final HttpMethod httpMethod;
         private final String uri;
         private final String requestBody;
-        private final @Nullable String authUserName;
 
         @Getter
         private final java.net.http.HttpResponse<String> response;
@@ -358,14 +438,12 @@ public abstract class UseCase<T extends UseCase<?>> {
                 final HttpMethod httpMethod,
                 final String uri,
                 final String requestBody,
-                final java.net.http.HttpResponse<String> response,
-                final @Nullable FakeLoginUser loginUser
+                final java.net.http.HttpResponse<String> response
         ) {
             this.httpMethod = httpMethod;
             this.uri = uri;
             this.requestBody = requestBody;
             this.response = response;
-            this.authUserName = loginUser == null ? null : loginUser.name();
             this.status = HttpStatus.valueOf(response.statusCode());
             if (this.status == HttpStatus.CREATED) {
                 final var location = response.headers().firstValue("Location").orElseThrow();
@@ -482,18 +560,21 @@ public abstract class UseCase<T extends UseCase<?>> {
             } else {
                 fail("please wrap the http...-call in the UseCase using `withTitle(...)`");
             }
+            if (nextRequestInfo != null) {
+                testReport.printPara(ScenarioTest.resolve(nextRequestInfo, KEEP_COMMENTS));
+            }
 
             // the request
             testReport.printLine("```");
-            testReport.printLine(httpMethod.name() + " '" + uri + "'");
-            printRequestHeaders();
-            testReport.printJson(requestBody);
+            printRequest();
 
             // the response
             testReport.printLine("=> status: " + status + " " + (locationUuid != null ? locationUuid : ""));
             if (unconditionallyWithResponse || httpMethod == HttpMethod.GET || status.isError()) {
-                testReport.printJson(response.body());
-                this.reportGeneratedWithResponse = true;
+                if (hasReportableResponseBody(response.body())) {
+                    testReport.printJson(response.body());
+                    this.reportGeneratedWithResponse = true;
+                }
             }
             testReport.printLine("```");
             testReport.printLine("");
@@ -501,31 +582,46 @@ public abstract class UseCase<T extends UseCase<?>> {
             return this;
         }
 
-        private void printRequestHeaders() {
+        private void printRequest() {
+            final var requestArguments = requestArguments();
+            testReport.printLine("HTTP " + httpMethod.name() + " '" + uri + "'" + (requestArguments.isEmpty() ? "" : " \\"));
+            for (int i = 0; i < requestArguments.size(); ++i) {
+                printRequestArgument(requestArguments.get(i), i < requestArguments.size() - 1);
+            }
+            testReport.printLine("");
+        }
+
+        private List<String> requestArguments() {
             final var request = response.request();
             if (request == null) {
-                return;
+                return List.of();
             }
-            request.headers().map().entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
-                    // the Authorization header with the long Bearer token is of no value here
-                    .filter(entry -> !AUTH_HEADER_KEY.equalsIgnoreCase(entry.getKey()))
-                    // instead, use the X-Fake-Authorization header as if it was the real Authorization header
-                    .map(entry -> Map.entry(AUTH_HEADER_KEY, entry.getValue()))
-                    .forEach(entry -> {
-                        testReport.printLine("- " + entry.getKey() + ": " + headerValue(entry));
-                    });
+            final var arguments = reportableRequestHeaders(request.headers().map(), hasRequestBody()).stream()
+                    .map(entry -> "-H '" + entry.getKey() + ": " + headerValue(entry) + "'")
+                    .toList();
+            if (!hasRequestBody()) {
+                return arguments;
+            }
+            return Stream.concat(arguments.stream(), Stream.of(requestBodyArgument(requestBody))).toList();
+        }
+
+        private void printRequestArgument(final String requestArgument, final boolean continued) {
+            final var lines = requestArgument.split("\\R", -1);
+            for (int i = 0; i < lines.length; ++i) {
+                testReport.printLine("  " + lines[i] + (continued && i == lines.length - 1 ? " \\" : ""));
+            }
+        }
+
+        private boolean hasRequestBody() {
+            return requestBody != null && !requestBody.isBlank();
+        }
+
+        static boolean hasReportableResponseBody(final String responseBody) {
+            return isNotBlank(responseBody) && !"null".equals(responseBody.trim());
         }
 
         private String headerValue(final Map.Entry<String, List<String>> entry) {
-            if ("X-Fake-Authorization".equalsIgnoreCase(entry.getKey())) {
-                return fakeAuthorizationValue();
-            }
-            return String.join(", ", entry.getValue());
-        }
-
-        private String fakeAuthorizationValue() {
-            return authUserName == null ? "" : "Bearer <" + authUserName + ">";
+            return reportableRequestHeaderValue(entry.getKey(), String.join(", ", entry.getValue()));
         }
 
         @SneakyThrows

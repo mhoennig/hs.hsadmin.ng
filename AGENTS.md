@@ -60,6 +60,21 @@ You can check Liquibase migration compatibility by running the tests
 `LiquibaseCompatibilityIntegrationTest` and `ImportHostingAssets` via the tag "migrationTest"
 as follows: `. .tc-environment; ./gradlew migrationTest`.
 
+## Liquibase Changeset Rules
+
+- Generally, existing changesets must not be changed after they have been released. But there are exceptions, as follows.
+- Add a new follow-up changeset for amendments to released database structures, for example `alter table` after an earlier changeset with the related `create table`.
+- Existing changesets may be changed if they are marked with `runOnChange:true validCheckSum:ANY` and are repeatable.
+- A changeset is repeatable only if it defines or updates procedures, functions, triggers, views, or similar database code using `create or replace`, `drop ... if exists`, guarded creation, or equivalent idempotent patterns.
+- Do not add a separate changeset just to update existing procedures, functions, triggers, or views if the existing repeatable changeset can be updated safely.
+- If a new changeset is needed for a related database change, prefer placing it in the same changelog file after the original related changeset instead of creating a new changelog file.
+- Do not mix repeatable database code such as procedures or functions with tables, types, or other non-repeatable schema objects in the same changeset.
+- Existing mixed changesets are a legacy. Keep them working, but do not use them as a pattern for new changesets.
+
+You can check Liquibase migration compatibility by running the tests 
+`LiquibaseCompatibilityIntegrationTest` and `ImportHostingAssets` via the tag "migrationTest"
+as follows: `. .tc-environment; ./gradlew migrationTest`.
+
 ## Coding Conventions
 
 - Follow existing Java style and formatting. Run `./gradlew spotlessApply -x test` for Java formatting.
@@ -88,6 +103,25 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
   - `. .tc-environment; ./gradlew jacocoTestCoverageVerification migrationTest` for a quick and yet broad check without integration/acceptance/scenario tests - will need about 2 min
   - `./gradlew spotlessJavaCheck -x test`
 - Never run a full `./gradlew test`, it's extremely slow.
+
+## Scenario Test Conventions
+
+- Scenario use cases extend `UseCase<T>` from `net.hostsharing.hsadminng.hs.scenarios`.
+- Each scenario test method should instantiate and execute exactly one top-level `UseCase` directly; only the given/expected parameters should vary.
+- Scenario test methods declare cross-scenario dependencies with `@Produces` and `@Requires`.
+- A `UseCase` may call other use cases internally when that is part of the workflow.
+- Each `UseCase` should act as a single login subject/user. If a workflow needs multiple acting users, split it into multiple use cases and scenario test methods connected via `@Produces`/`@Requires`.
+- The main scenario action should be the `HttpResponse` returned from the overridden `run(...)` method.
+- Override `run(HttpStatus expectedStatus)` when the main request can expect a status other than `200 OK`; plain `run()` is only suitable for legacy/simple `200 OK` use cases.
+- Put semantic assertions in `verify(HttpResponse)`. Do not hide the actual verification logic inside `run(...)`.
+- Verification may either assert the returned main response directly or perform additional HTTP requests needed to verify the outcome.
+- A scenario test annotated with `@Produces` should call `.keep()` when the produced alias should refer to the UUID from the main response `Location` header.
+- Keep one-off HTTP commands inline in the use case. Extract private helper methods only for reused commands or clearly repeated workflows.
+- Use `withTitle(...)` for report sections and `withTitleAndRequestInfo(...)` when the report needs explanatory text before the HTTP command.
+- Use meaningful aliases for extracted UUIDs, for example `roleUuidToGrant`, not names that imply the action already happened.
+- Scenario test method names are converted into report titles. Choose method names as human-readable scenario titles.
+- Prefer real API endpoints for lookups needed by a scenario. Do not use unrelated endpoints or temporary assumed-role context changes just to resolve data.
+- When an API surface is missing for a scenario, update the OpenAPI YAML, regenerate interfaces with `./gradlew openApiGenerate`, and adapt controller/repository/tests.
 
 ## Local Environment Notes
 

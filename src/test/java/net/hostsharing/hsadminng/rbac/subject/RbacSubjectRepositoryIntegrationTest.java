@@ -23,6 +23,8 @@ import java.util.UUID;
 
 import static java.util.Comparator.comparing;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
+import static net.hostsharing.hsadminng.rbac.subject.SubjectType.GROUP;
+import static net.hostsharing.hsadminng.rbac.subject.SubjectType.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -47,7 +49,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         @Transactional(propagation = Propagation.NEVER)
-        void anyoneCanCreateTheirOwnUser() {
+        void subjectCreatedWithoutExplicitType_getsTypeUser() {
 
             // given:
             final var givenUuid = UUID.randomUUID();
@@ -61,9 +63,86 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
             // then:
             assertThat(result.wasSuccessful()).isTrue();
-            assertThat(result.returnedValue()).isNotNull()
-                    .extracting(RbacSubjectEntity::getUuid).isEqualTo(givenUuid);
-            assertThat(rbacSubjectRepository.findByName(result.returnedValue().getName())).isNotNull();
+            assertThat(rbacSubjectRepository.findByName(newUserName).getType()).isEqualTo(USER);
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        void subjectCreatedWithExplicitUserType_getsTypeUser() {
+
+            // given:
+            final var givenUuid = UUID.randomUUID();
+            final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+
+            // when:
+            final var result = jpaAttempt.transacted(() -> {
+                context(null);
+                return rbacSubjectRepository.create(RbacSubjectEntity.builder().uuid(givenUuid).name(newUserName).type(USER).build());
+            });
+
+            // then:
+            assertThat(result.wasSuccessful()).isTrue();
+            assertThat(rbacSubjectRepository.findByName(newUserName).getType()).isEqualTo(USER);
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        void subjectCreatedWithExplicitGroupType_getsTypeGroup() {
+
+            // given:
+            final var givenUuid = UUID.randomUUID();
+            final var newGroupName = "test-group-" + System.currentTimeMillis();
+
+            // when:
+            final var result = jpaAttempt.transacted(() -> {
+                context(null);
+                return rbacSubjectRepository.create(RbacSubjectEntity.builder().uuid(givenUuid).name(newGroupName).type(GROUP).build());
+            });
+
+            // then:
+            assertThat(result.wasSuccessful()).isTrue();
+            assertThat(rbacSubjectRepository.findByName(newGroupName).getType()).isEqualTo(GROUP);
+        }
+    }
+
+    @Nested
+    class FindSubjectsByType {
+
+        @Test
+        public void testDataGroupSubjects_haveTypeGroup() {
+            // when:
+            final var adminGroup = rbacSubjectRepository.findByName("/hsh-Hostmasters");
+            final var customerGroup = rbacSubjectRepository.findByName("/xyz-Team");
+
+            // then:
+            assertThat(adminGroup.getType()).isEqualTo(GROUP);
+            assertThat(customerGroup.getType()).isEqualTo(GROUP);
+        }
+
+        @Test
+        public void testDataUserSubjects_haveTypeUser() {
+            // when:
+            final var alex = rbacSubjectRepository.findByName("superuser-alex@hostsharing.net");
+
+            // then:
+            assertThat(alex.getType()).isEqualTo(USER);
+        }
+
+        @Test
+        public void globalAdmin_canFilterSubjectsByType() {
+            // given:
+            context("superuser-alex@hostsharing.net");
+
+            // when:
+            final var result = rbacSubjectRepository.findByOptionalNameLikeAndOptionalType(null, GROUP);
+
+            // then:
+            assertThat(result)
+                    .extracting(RbacSubjectEntity::getType)
+                    .containsOnly(GROUP);
+            assertThat(result)
+                    .extracting(RbacSubjectEntity::getName)
+                    .contains("/hsh-Hostmasters", "/xyz-Team");
         }
     }
 

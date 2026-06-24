@@ -23,7 +23,52 @@ begin
     return currentSubjectUuid;
 end; $$;
 
-create or replace function rbac.determinecurrentsubjectorassumedrolesuuids(currentSubjectOrAssumedRolesUuids uuid, assumedRoles text)
+create or replace function rbac.determineCurrentSubjectGroupUuids(currentSubjectGroups text)
+    returns uuid[]
+    stable -- leakproof
+    language plpgsql as $$
+declare
+    groupSubjectUuids uuid[];
+begin
+    if length(coalesce(currentSubjectGroups, '')) = 0 then
+        return array[]::uuid[];
+    end if;
+
+    select coalesce(array_agg(distinct s.uuid order by s.uuid), array[]::uuid[])
+        from (
+            select trim(groupName) as rawGroupName
+                from unnest(string_to_array(currentSubjectGroups, ';')) groupName
+                where length(trim(groupName)) > 0
+        ) givenGroups
+        cross join lateral (
+            with recursive pathParts as (
+                select
+                    string_to_array(ltrim(givenGroups.rawGroupName, '/'), '/') as parts,
+                    1 as partIndex
+                union all
+                select
+                    parts,
+                    partIndex + 1
+                from pathParts
+                where partIndex < array_length(parts, 1)
+            )
+            select '/' || array_to_string(parts[1:partIndex], '/') as name
+                from pathParts
+                where array_length(parts, 1) > 1
+            union
+            select givenGroups.rawGroupName
+        ) groupNames
+        join rbac.subject s
+            on s.type = 'GROUP'::rbac.SubjectType
+           and s.name = groupNames.name
+        into groupSubjectUuids;
+
+    return groupSubjectUuids;
+end; $$;
+
+drop function if exists rbac.determineCurrentSubjectOrAssumedRolesUuids(uuid, text);
+
+create or replace function rbac.determinecurrentsubjectorassumedrolesuuids(effectiveSubjectUuids uuid[], assumedRoles text)
     returns uuid[]
     stable -- leakproof
     language plpgsql as $$
@@ -37,7 +82,7 @@ declare
     roleIdsToAssume     uuid[];
     roleUuidToAssume    uuid;
 begin
-    if currentSubjectOrAssumedRolesUuids is null then
+    if cardinality(effectiveSubjectUuids) = 0 then
         if length(coalesce(assumedRoles, '')) > 0 then
             raise exception '[403] undefined has no permission to assume role %', assumedRoles;
         else
@@ -45,7 +90,7 @@ begin
         end if;
     end if;
     if  length(coalesce(assumedRoles, '')) = 0 then
-        return array [currentSubjectOrAssumedRolesUuids];
+        return effectiveSubjectUuids;
     end if;
 
     foreach roleName in array string_to_array(assumedRoles, ';')
@@ -73,7 +118,7 @@ begin
             if roleUuidToAssume is null then
                 raise exception '[403] role % does not exist or is not accessible for subject %', roleName, base.currentSubject();
             end if;
-            if not rbac.isGranted(currentSubjectOrAssumedRolesUuids, roleUuidToAssume) then
+            if not rbac.isGranted(effectiveSubjectUuids, roleUuidToAssume) then
                 raise exception '[403] subject % has no permission to assume role %', base.currentSubject(), roleName;
             end if;
             roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
@@ -89,15 +134,20 @@ end; $$;
     This callback gets called after the context has been (re-) defined.
     This function will be overwritten by later changesets.
  */
+drop procedure if exists base.contextDefined(varchar, text, varchar, varchar);
+
 create or replace procedure base.contextDefined(
     currentTask varchar(127),
     currentRequest text,
     currentSubject varchar(63),
-    assumedRoles varchar(4096)
+    assumedRoles varchar(4096),
+    currentSubjectGroups text = null
 )
     language plpgsql as $$
 declare
     currentSubjectUuid uuid;
+    currentSubjectGroupUuids uuid[];
+    effectiveSubjectUuids uuid[];
     currentSubjectOrAssumedRolesUuids uuid[];
     globalAdminRoleUuid uuid;
     currentSubjectHasGlobalAdminRole boolean;
@@ -112,15 +162,21 @@ begin
     execute format('set local hsadminng.currentSubjectUuid to %L', coalesce(currentSubjectUuid::text, ''));
 
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
-    currentSubjectOrAssumedRolesUuids := rbac.determineCurrentSubjectOrAssumedRolesUuids(currentSubjectUuid, assumedRoles);
+    execute format('set local hsadminng.currentSubjectGroups to %L', currentSubjectGroups);
+    currentSubjectGroupUuids := rbac.determineCurrentSubjectGroupUuids(currentSubjectGroups);
+    effectiveSubjectUuids := case
+        when currentSubjectUuid is null then currentSubjectGroupUuids
+        else array[currentSubjectUuid] || currentSubjectGroupUuids
+    end;
+    currentSubjectOrAssumedRolesUuids := rbac.determineCurrentSubjectOrAssumedRolesUuids(effectiveSubjectUuids, assumedRoles);
     execute format('set local hsadminng.currentSubjectOrAssumedRolesUuids to %L',
        (select array_to_string(currentSubjectOrAssumedRolesUuids, ';')));
 
-    if currentSubjectUuid is null then
+    if cardinality(effectiveSubjectUuids) = 0 then
         currentSubjectHasGlobalAdminRole := false;
     else
         globalAdminRoleUuid := rbac.findRoleId(rbac.global_ADMIN());
-        currentSubjectHasGlobalAdminRole := rbac.isGranted(array[currentSubjectUuid], globalAdminRoleUuid);
+        currentSubjectHasGlobalAdminRole := rbac.isGranted(effectiveSubjectUuids, globalAdminRoleUuid);
     end if;
     execute format('set local hsadminng.isGlobalAdmin to %L', currentSubjectHasGlobalAdminRole::text);
 
@@ -133,6 +189,40 @@ begin
     execute format('set local hsadminng.hasGlobalAdminRole to %L', currentSubjectHasEffectiveGlobalAdminRole::text);
 
     raise notice 'Context defined as: %, %, %, [%]', currentTask, currentRequest, currentSubject, assumedRoles;
+end; $$;
+
+drop procedure if exists base.defineContext(varchar, text, varchar, text);
+
+create or replace procedure base.defineContext(
+    currentTask varchar(127),
+    currentRequest text = null,
+    currentSubject varchar(63) = null,
+    assumedRoles text = null,
+    currentSubjectGroups text = null
+)
+    language plpgsql as $$
+begin
+    currentTask := coalesce(currentTask, '');
+    assert length(currentTask) <= 127, FORMAT('currentTask must not be longer than 127 characters: "%s"', currentTask);
+    assert length(currentTask) >= 12, FORMAT('currentTask must be at least 12 characters long: "%s""', currentTask);
+    execute format('set local hsadminng.currentTask to %L', currentTask);
+
+    currentRequest := coalesce(currentRequest, '');
+    execute format('set local hsadminng.currentRequest to %L', currentRequest);
+
+    currentSubject := coalesce(currentSubject, '');
+    assert length(currentSubject) <= 63, FORMAT('currentSubject must not be longer than 63 characters: "%s"', currentSubject);
+    execute format('set local hsadminng.currentSubject to %L', currentSubject);
+
+    assumedRoles := coalesce(assumedRoles, '');
+    assert length(assumedRoles) <= 4096, FORMAT('assumedRoles must not be longer than 4096 characters: "%s"', assumedRoles);
+    execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
+
+    currentSubjectGroups := coalesce(currentSubjectGroups, '');
+    assert length(currentSubjectGroups) <= 4096, FORMAT('currentSubjectGroups must not be longer than 4096 characters: "%s"', currentSubjectGroups);
+    execute format('set local hsadminng.currentSubjectGroups to %L', currentSubjectGroups);
+
+    call base.contextDefined(currentTask, currentRequest, currentSubject, assumedRoles, currentSubjectGroups);
 end; $$;
 
 

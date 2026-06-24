@@ -44,6 +44,7 @@ class TemplateResolverUnitTest {
                     &{simple placeholder},
                     &{nested %{name}},
                     &{with-special-chars}
+                    &{path-like-query-value}
                     """,
                 orderedMapOfElementsWithNullValues(
                     entry("arrayWithMixedValues", new Object[] { "some string", true, 1234, "another string" }),
@@ -64,7 +65,8 @@ class TemplateResolverUnitTest {
                     entry("numeric", 42),
                     entry("simple placeholder", "einfach"),
                     entry("nested placeholder", "verschachtelt"),
-                    entry("with-special-chars", "3&3 AG")
+                    entry("with-special-chars", "3&3 AG"),
+                    entry("path-like-query-value", "/xyz-Group One")
                 )).resolve(DROP_COMMENTS);
 
         assertThat(resolved).isEqualTo("""
@@ -96,6 +98,7 @@ class TemplateResolverUnitTest {
                 einfach,
                 verschachtelt,
                 3%263+AG
+                /xyz-Group+One
                 """.trim());
     }
 

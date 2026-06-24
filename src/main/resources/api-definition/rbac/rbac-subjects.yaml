@@ -1,7 +1,7 @@
 get:
     tags:
         - rbac-subjects
-    description: List accessible RBAC subjects with optional filter by name.
+    description: List accessible RBAC subjects with optional filters by name and type.
     operationId: getListOfSubjects
     parameters:
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -10,6 +10,11 @@ get:
           required: false
           schema:
               type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+              $ref: 'rbac-subject-schemas.yaml#/components/schemas/SubjectType'
     responses:
         '200':
             description: OK
@@ -44,4 +49,3 @@ post:
                         $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
         '409':
             $ref: 'error-responses.yaml#/components/responses/Conflict'
-
