@@ -39,7 +39,7 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call base.defineContext('creating booking-project test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+        call base.defineContext('creating booking-project test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
         call hs_booking.project_create_test_data(10001, '11');
         call hs_booking.project_create_test_data(10002, '12');

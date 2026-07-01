@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('rbactest.customer');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:rbactest-customer-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-customer-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -125,7 +126,8 @@ execute procedure rbactest.customer_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:rbactest-customer-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-customer-rbac-CHECKING-INSERT-PERMISSION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /**
@@ -165,7 +167,8 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.customer',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:rbactest-customer-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:rbactest-customer-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('rbactest.customer',
     $orderBy$
@@ -181,7 +184,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:rbactest-customer-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:rbactest-customer-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table rbactest.customer after changing its RBAC specification.

@@ -19,7 +19,8 @@ create table hs_accounts.account
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-accounts-ACCOUNT-SUBJECT-MUST-BE-USER runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:hs-accounts-ACCOUNT-SUBJECT-MUST-BE-USER runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 create or replace function rbac.assert_subject_type(subjectUuid uuid, expectedType rbac.SubjectType)

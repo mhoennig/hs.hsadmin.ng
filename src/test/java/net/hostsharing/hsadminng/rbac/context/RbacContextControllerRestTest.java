@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"fake-jwt", "test"})
 class RbacContextControllerRestTest {
 
-    private static final String GIVEN_SUBJECT_NAME = "superuser-alex@hostsharing.net";
+    private static final String GIVEN_SUBJECT_NAME = "hsh-alex_superuser";
     private static final SubjectType GIVEN_SUBJECT_TYPE = SubjectType.USER;
     private static final boolean GIVEN_GLOBAL_ADMIN = true;
     private static final String GIVEN_ASSUMED_ROLES = "rbactest.package#xxx00:OWNER;rbactest.package#yyy00:OWNER";

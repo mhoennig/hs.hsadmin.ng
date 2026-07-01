@@ -45,13 +45,14 @@ end; $$;
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-coopAssetsTransaction-TEST-DATA-GENERATION context:!without-test-data endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
         call base.defineContext('creating coopAssetsTransaction test-data',
                                 null,
-                                'superuser-alex@hostsharing.net',
+                                'hsh-alex_superuser',
                                 'rbac.global#global:ADMIN');
         SET CONSTRAINTS ALL DEFERRED;
 

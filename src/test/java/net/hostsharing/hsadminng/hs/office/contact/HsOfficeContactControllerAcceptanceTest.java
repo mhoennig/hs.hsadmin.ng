@@ -68,7 +68,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/contacts")
@@ -102,11 +102,11 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canAddContact() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -150,12 +150,12 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryContact() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenContactUuid = contactRepo.findContactByOptionalCaptionLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/contacts/" + givenContactUuid)
@@ -171,12 +171,12 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void normalUser_canNotGetUnrelatedContact() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenContactUuid = contactRepo.findContactByOptionalCaptionLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/contacts/" + givenContactUuid)
@@ -186,12 +186,12 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void contactAdminUser_canGetRelatedContact() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenContactUuid = contactRepo.findContactByOptionalCaptionLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("contact-admin@firstcontact.example.com"))
+                    .header("Authorization", bearer("tst-contact_admin_firstcontact"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/contacts/" + givenContactUuid)
@@ -218,12 +218,12 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canPatchAllPropertiesOfArbitraryContact() {
 
-            context.define("superuser-alex@hostsharing.net");
-            final var givenContact = givenSomeTemporaryContactCreatedBy("selfregistered-test-user@hostsharing.org");
+            context.define("hsh-alex_superuser");
+            final var givenContact = givenSomeTemporaryContactCreatedBy("tst-rene_selfregistered");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                        {
@@ -258,7 +258,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                 // @formatter:on
 
             // finally, the contact is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(contactRepo.findByUuid(givenContact.getUuid())).isPresent().get()
                     .matches(person -> {
                         assertThat(person.getCaption()).isEqualTo("Temp patched contact");
@@ -276,12 +276,12 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canPatchPartialPropertiesOfArbitraryContact() {
 
-            context.define("superuser-alex@hostsharing.net");
-            final var givenContact = givenSomeTemporaryContactCreatedBy("selfregistered-test-user@hostsharing.org");
+            context.define("hsh-alex_superuser");
+            final var givenContact = givenSomeTemporaryContactCreatedBy("tst-rene_selfregistered");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                        {
@@ -322,12 +322,12 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void globalAdmin_withoutAssumedRole_canDeleteArbitraryContact() {
-            context.define("superuser-alex@hostsharing.net");
-            final var givenContact = givenSomeTemporaryContactCreatedBy("selfregistered-test-user@hostsharing.org");
+            context.define("hsh-alex_superuser");
+            final var givenContact = givenSomeTemporaryContactCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/contacts/" + givenContact.getUuid())
@@ -336,18 +336,18 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             // then the given contact is gone
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 assertThat(contactRepo.findByUuid(givenContact.getUuid())).isEmpty();
             }).assertSuccessful();
         }
 
         @Test
         void contactOwner_canDeleteRelatedContact() {
-            final var givenContact = givenSomeTemporaryContactCreatedBy("selfregistered-test-user@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContactCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-test-user@hostsharing.org"))
+                    .header("Authorization", bearer("tst-rene_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/contacts/" + givenContact.getUuid())
@@ -356,19 +356,19 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             // then the given contact is still there
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 assertThat(contactRepo.findByUuid(givenContact.getUuid())).isEmpty();
             }).assertSuccessful();
         }
 
         @Test
         void normalUser_canNotDeleteUnrelatedContact() {
-            context.define("superuser-alex@hostsharing.net");
-            final var givenContact = givenSomeTemporaryContactCreatedBy("selfregistered-test-user@hostsharing.org");
+            context.define("hsh-alex_superuser");
+            final var givenContact = givenSomeTemporaryContactCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/contacts/" + givenContact.getUuid())
@@ -404,7 +404,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             em.createQuery("DELETE FROM HsOfficeContactRbacEntity c WHERE c.caption LIKE 'Temp %'").executeUpdate();
         }).assertSuccessful();
     }

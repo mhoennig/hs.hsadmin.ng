@@ -73,9 +73,16 @@ Optionally, the following tools are suggested:
 
 - PostgreSQL Server 17.7-trixie, if you want to use the database directly, not just via Docker.
   (see instructions below to install and run in Docker)
-- An IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI frontend for *PostgreSQL* like *Postbird*.
+- An IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)*) and a GUI frontend for *PostgreSQL* like *Postbird*.
   - IntelliJ IDEA Ultimate contains a great SQL GUI frontend, and for its Community edition, there is a community plugin.
-- Python 3 is expected in /usr/bin/python3 if you want to run the `howto` tool (see `bin/howto`)
+- Python 3 on your `PATH` if you want to run the Python tools such as `howto` and `fixmes` (see `tools/howto` and `tools/fixmes`)
+
+> **Tip:** A minimal, reproducible build environment containing exactly these prerequisites is defined under
+> [`etc/local-reference-build-env`](etc/local-reference-build-env).
+> It runs a build (or the full Testcontainers test suite) in a container that matches the documented setup — handy to check whether a build relies on anything undocumented.
+> See `make -f etc/local-reference-build-env/Makefile help`.
+> It's meant to test tool-requirements, not to offer all features for all tools. 
+> And of course, this needs `make` and a Docker-deamon as prerequisites.
 
 If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
@@ -120,7 +127,7 @@ At the beginning of the output, you'll see the full `./gradlew`-call like this:
 The meaning of the listed profiles is:
 
 - **dev**: the PostgreSQL users are created via Liquibase
-- **fake-jwt**: the app starts with a build-in fake OAuth2/JWT server
+- **fake-jwt**: the app starts with a built-in fake OAuth2/JWT server
 - **complete**: all modules (rbac, office, account, hosting) are started
 - **test-data**: some test data gets inserted at startup 
 
@@ -322,7 +329,7 @@ If you have figured out how it works, please add instructions above this section
 
 #### Render Markdown Embedded Mermaid Diagrams
 
-The source of RBAC role diagrams are much easier to read with Mermaid than with PlantUML or GraphViz, that's also the main reason Mermaid is used.
+The source of the RBAC role diagrams is much easier to read with Mermaid than with PlantUML or GraphViz; that's also the main reason Mermaid is used.
 
 Can you see the following diagram right in your IDE?
 I mean a real graphic diagram, not just some markup code.
@@ -346,9 +353,9 @@ If not, you need to install some tooling.
 
 ##### for IntelliJ IDEA (or derived products)
 
-1. Activate the bundled Jebrains Markdown PlantUML Extension via
+1. Activate the bundled JetBrains Markdown PlantUML Extension via
     [File | Settings | Languages & Frameworks | Markdown](jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown)  
-2. Install the Jetbrains Mermaid plugin: https://plugins.jetbrains.com/plugin/20146-mermaid, it also works embedded in Markdown files.
+2. Install the JetBrains Mermaid plugin: https://plugins.jetbrains.com/plugin/20146-mermaid, it also works embedded in Markdown files.
 
 Now the above diagram should be rendered.
 
@@ -356,13 +363,13 @@ Now the above diagram should be rendered.
 
 If you have figured out how it works, please add instructions above this section.
 
-### IDE Specific Settings
+### IDE-Specific Settings
 
 #### IntelliJ IDEA
 
 ##### Build Settings
 
-Go to [Gradle Settings}(jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Build+Tools--Gradle) and select "Build and run using" and "Run tests using" both to "gradle".
+Go to [Gradle Settings](jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Build+Tools--Gradle) and select "Build and run using" and "Run tests using" both to "gradle".
 Otherwise, settings from `build.gradle.kts`, like compiler arguments, are not applied when compiling through *IntelliJ IDEA*.
 
 ##### Annotation Processor
@@ -374,7 +381,7 @@ and will show false errors (missing identifiers).
 
 ##### Suggested Plugins
 
-- [Jetbrains Mermaid Integration](https://plugins.jetbrains.com/plugin/20146-mermaid)
+- [JetBrains Mermaid Integration](https://plugins.jetbrains.com/plugin/20146-mermaid)
 - [Vojtěch Krása PlantUML Integration](https://plugins.jetbrains.com/plugin/7017-plantuml-integration)
 
 ### Other Tools
@@ -422,7 +429,7 @@ You can explore the prototype as follows:
     Canonical project guidance for AI coding agents.
 
 `build/`
-    Output directory for gradle build results. Ignored by git.
+    Output directory for Gradle build results. Ignored by git.
 
 `build.gradle.kts`
     Gradle build-file (Kotlin-Script). Contains dependencies and build configurations.
@@ -455,9 +462,9 @@ You can explore the prototype as follows:
     Config files created by `gradle wrapper`. Ignored by git.
 
 `gradle/`
-    The gradle distribution downloaded by `gradle wrapper`. Ignored by git.
+    The Gradle distribution downloaded by `gradle wrapper`. Ignored by git.
 
-`gradlew` and `gradlew.bat` use these batches to run gradle for builds etc. 
+`gradlew` and `gradlew.bat` use these batches to run Gradle for builds etc. 
 
 `.idea/` (optional)
     Config and cache files created by *IntelliJ IDEA*. Ignore by git.
@@ -469,7 +476,7 @@ You can explore the prototype as follows:
     Contains the license used for this software.
 
 `out/` (optional)
-    Build output created by *IntelliJ IDEA". Ignored by git. 
+    Build output created by *IntelliJ IDEA*. Ignored by git. 
 
 `README.md`
     Contains an overview about how to build the project and the used tools. 
@@ -478,11 +485,11 @@ You can explore the prototype as follows:
     Created by *IntelliJ IDEA* to contain run and debug configurations.
 
 `settings.gradle`
-    Configuration file for gradle.
+    Configuration file for Gradle.
 
 `sql/`
     Contains SQL scripts for experiments and useful tasks.
-    Most of this will sooner or later be moved to Liquibase-scripts.
+    Most of this will sooner or later be moved to Liquibase scripts.
 
 `src/`
     The actual source-code, see [Source Code Package Structure](#source-code-package-structure) for details.
@@ -512,16 +519,16 @@ The Java package structure below contains:
 - config and global (utility) packages,
   these should not access any other packages within the project
 - rbac, containing all packages related to the RBAC subsystem
-- hs, containing Hostsharing business object related packages
+- hs, containing Hostsharing business object-related packages
 
-Underneath of rbac and hs, the structure is business oriented, NOT technical / layer -oriented.
+Underneath of rbac and hs, the structure is business-oriented, NOT technical / layer-oriented.
 
 Some of these rules are checked with *ArchUnit* unit tests.
 
 
 ### Run Tests from Command Line
 
-Run all unit-, integration- and acceptance-tests which have not yet been passed with the current source code:
+Run all unit-, integration- and acceptance-tests that have not yet been passed with the current source code:
 
 ```shell
 gw test # uses the current environment, especially HSADMINNG_POSTGRES_JDBC_URL
@@ -553,7 +560,7 @@ To apply formatting rules, use:
 gw-spotless
 ```
 
-The gradle task spotlessCheck is also included in `gw build` and `gw check`,
+The Gradle task spotlessCheck is also included in `gw build` and `gw check`,
 thus if the formatting is not compliant to the rules, the build is going to fail. 
 
 
@@ -599,8 +606,8 @@ A link to the report is also printed after the `pitest` run.
 #### Remark
 
 In this project, there is a large amount of code is in *plsql*, especially for RBAC. 
-*Java* ist mostly used for mapping and validating REST calls to database queries.
-This mapping ist mostly done through *Spring* annotations and other implicit code.
+*Java* is mostly used for mapping and validating REST calls to database queries.
+This mapping is mostly done through *Spring* annotations and other implicit code.
 
 Therefore, there are only few unit tests and thus mutation testing has limited value.
 We'll see if this changes when the project progresses and more validations are added.
@@ -640,9 +647,9 @@ If any dependency violates the configured [list of allowed licenses](etc/allowed
 New licenses can be added to that list after a legal investigation.
 
 <big>**&#9888;**</big>
-*GPL* (*GNU General Public License*) is only allowed with classpath exception.
+*GPL* (*GNU General Public License*) is only allowed with a classpath exception.
 Do <u>not</u> use any dependencies under *GPL* without this exception,
-except if these offer an alternative license which is allowed.
+except if these offer an alternative license, which is allowed.
 *LGPL* (*GNU <u>Library</u> General Public License*) is also allowed.
 
 To run just the dependency-license-compatibility check, use:
@@ -674,7 +681,7 @@ gw useLatestVersions
 Afterward, `gw check` is automatically started.
 Please only commit+push to master if the check run shows no errors.
 
-More infos, e.g. on blacklists see on the [project's website](https://github.com/patrikerdes/gradle-use-latest-versions-plugin).
+More information, e.g. on blacklists see on the [project's website](https://github.com/patrikerdes/gradle-use-latest-versions-plugin).
 
 
 ## Biggest Flaws in our Architecture
@@ -682,9 +689,9 @@ More infos, e.g. on blacklists see on the [project's website](https://github.com
 ### The RBAC System is too Complicated
 
 Now, where we have a better experience with what we really need from the RBAC system, we have learned
-that and creates too many (grant- and role-) rows and too even tables which could be avoided completely.
+that it creates too many (grant- and role-) rows and too even tables which could be avoided completely.
 
-The basic idea is always to always have a fixed set of ordered role-types which apply for all DB-tables under RBAC,
+The basic idea is to always have a fixed set of ordered role-types which apply for all DB-tables under RBAC;
 e.g. OWNER>ADMIN>AGENT\[>PROXY?\]>TENENT>REFERRER.
 Grants between these for the same DB-row would be implicit by order comparison.
 This way we would get rid of all explicit grants within the same DB-row
@@ -804,7 +811,7 @@ As an alternative, this chapter shows how you can run a Podman daemon in user-sp
 
 #### Install and Run Podman
 
-You can find directions in [this project on Github](https://stackoverflow.com/questions/71549856/testcontainers-with-podman-in-java-tests) 
+You can find directions in [this project on GitHub](https://stackoverflow.com/questions/71549856/testcontainers-with-podman-in-java-tests) 
 
 Summary for Debian-based Linux systems:
 
@@ -957,10 +964,10 @@ create a new changeset and apply `ALTER`, `DROP`, `CREATE OR REPLACE` or whateve
 These changes will be automatically applied once the application starts up again.
 This way, any staging or production database will always match the application code. 
 
-But, during initial development that can be a big hassle because the database structure changes a lot in that stage.
+But, during initial development that can be a big hassle because the database structure changes a lot at that stage.
 Also, the actual structure of the database won't be easily recognized anymore through lots of migration changesets.
 
-Therefore, during initial development, it's good approach just to amend the existing changesets and delete the database:
+Therefore, during initial development, it's a good approach just to amend the existing changesets and delete the database:
 
 ```shell
 pg-sql-reset
@@ -978,7 +985,7 @@ Once generated, the interfaces for the Spring-Controllers can be found in `build
 
 These interfaces have to be implemented by subclasses named `*Controller`.
 
-All gradle tasks which need the generated interfaces depend on the Gradle task  `openApiGenerate` which controls the code generation.
+All Gradle tasks that need the generated interfaces depend on the Gradle task  `openApiGenerate` which controls the code generation.
 It can also be executed directly:
 
 ```shell
@@ -1113,13 +1120,13 @@ So, I told the _aider AI_ about it:
 > Please doublecheck if you followed all conventions.
   Any other amendments necessary to support the new field `notes` in the partner details?   
 
-Then I saw, that _aider AI_ did add some notes to the test data, but not to the assertions.
+Then I saw that _aider AI_ did add some notes to the test data, but not to the assertions.
 I decided that the changes in the test-data are not necessary and reverted thos files using git.
 
 Now, all tests passed.
 
 Try it yourself, but keep in mind that LLMs use a concept called _temperature_ which specifies a level of randomness.
-This means, you might get different results.
+This means you might get different results.
 
 #### Security
 

@@ -83,13 +83,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void globalAdmin_canViewAllAssetsOfArbitraryDebitor() {
 
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenProject = realProjectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow();
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/hosting/assets?projectUuid=" + givenProject.getUuid() + "&type=MANAGED_WEBSPACE")
@@ -113,11 +113,11 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void webspaceAgent_canViewAllAssetsByType() {
 
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "hs_hosting.asset#fir01:AGENT")
                     .port(port)
                     .when()
@@ -152,7 +152,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canAddBookedAsset() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingItem = newBookingItem(
                     "D-1000111 default project",
                     HsBookingItemType.MANAGED_WEBSPACE, "separate ManagedWebspace BI",
@@ -166,7 +166,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -228,7 +228,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "hs_hosting.asset#vm1011:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -266,7 +266,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canAddTopLevelAsset() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             Dns.fakeResultForDomain("example.com", new Dns.Result(Dns.Status.NAME_NOT_FOUND, null, null));
             final var givenProject = realProjectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow();
@@ -282,7 +282,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -320,7 +320,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void propertyValidationsArePerformend_whenAddingAsset() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingItem = givenSomeNewBookingItem(
                     "D-1000111 default project",
                     HsBookingItemType.MANAGED_SERVER,
@@ -328,7 +328,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                 {
@@ -360,7 +360,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void totalsLimitValidationsArePerformend_whenAddingAsset() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenHostingAsset = givenRealHostingAsset(MANAGED_WEBSPACE, "fir01");
             assertThat(givenHostingAsset.getBookingItem().getResources().get("Multi"))
                     .as("precondition failed")
@@ -370,7 +370,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final var UNIX_USER_PER_MULTI_OPTION = 25;
 
             jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net");
+                context.define("hsh-alex_superuser");
                 for (int n = 0; n < UNIX_USER_PER_MULTI_OPTION - preExistingUnixUserCount; ++n) {
                     toCleanup(realAssetRepo.save(
                             HsHostingAssetRealEntity.builder()
@@ -384,7 +384,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                     {
@@ -416,14 +416,14 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
         @Test
         void globalAdmin_canGetArbitraryAsset() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAssetUuid = realAssetRepo.findByIdentifier("vm1011").stream()
                     .filter(bi -> bi.getBookingItem().getProject().getCaption().equals("D-1000111 default project"))
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)
@@ -440,7 +440,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
         @Test
         void normalUser_canNotGetUnrelatedAsset() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAssetUuid = realAssetRepo.findByIdentifier("vm1012").stream()
                     .filter(bi -> bi.getBookingItem().getProject().getCaption().equals("D-1000212 default project"))
                     .map(HsHostingAssetRealEntity::getUuid)
@@ -448,7 +448,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)
@@ -458,14 +458,14 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
         @Test
         void projectAgentUser_canGetRelatedAsset() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAssetUuid = realAssetRepo.findByIdentifier("vm1013").stream()
                     .filter(bi -> bi.getBookingItem().getProject().getCaption().equals("D-1000313 default project"))
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("person-TuckerJack@example.com"))
+                    .header("Authorization", bearer("tst-person_tuckerjack"))
                     .header("Hostsharing-Assumed-Roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                     .when()
@@ -510,7 +510,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                         {
@@ -583,7 +583,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     // TODO.impl: found this commeted out and it does not work, but should work with fir01, was vm2001 before
                     //.header("Hostsharing-Assumed-Roles", "hs_hosting.asset#fir01:ADMIN")
                     .contentType(ContentType.JSON)
@@ -648,7 +648,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
         @Test
         void globalAdmin_canDeleteArbitraryAsset() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAsset = givenSomeTemporaryHostingAsset(() ->
                     HsHostingAssetRealEntity.builder()
                             .bookingItem(givenSomeNewBookingItem(
@@ -667,7 +667,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             .build());
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                     .when()
                     .delete("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
@@ -680,7 +680,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
         @Test
         void normalUser_canNotDeleteUnrelatedAsset() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAsset = givenSomeTemporaryHostingAsset(() ->
                     HsHostingAssetRealEntity.builder()
                             .bookingItem(givenSomeNewBookingItem(
@@ -699,7 +699,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             .build());
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                     .when()
                     .delete("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
@@ -721,7 +721,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final String projectCaption,
             final HsBookingItemType type, final String bookingItemCaption, final Map<String, Object> resources) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var project = realProjectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
             final var bookingItem = HsBookingItemRealEntity.builder()
@@ -739,7 +739,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final HsBookingItemType bookingItemType,
             final String bookingItemCaption) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var project = realProjectRepo.findByCaption(projectCaption).getFirst();
             final var resources = switch (bookingItemType) {
                 case MANAGED_SERVER -> Map.<String, Object>ofEntries(
@@ -761,7 +761,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
     private HsBookingItemRealEntity givenSomeTemporaryBookingItem(final Supplier<HsBookingItemRealEntity> newBookingItem) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net"); // needed to determine creator
+            context.define("hsh-alex_superuser"); // needed to determine creator
             return toCleanup(realBookingItemRepo.save(newBookingItem.get()));
         }).assertSuccessful().returnedValue();
     }
@@ -775,14 +775,14 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
     private HsHostingAssetRealEntity givenSomeTemporaryHostingAsset(final Supplier<HsHostingAssetRealEntity> newAsset) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net"); // needed to determine creator
+            context.define("hsh-alex_superuser"); // needed to determine creator
             return toCleanup(realAssetRepo.save(newAsset.get()));
         }).assertSuccessful().returnedValue();
     }
 
     private HsOfficeContactRealEntity givenContact() {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net"); // needed to determine creator
+            context.define("hsh-alex_superuser"); // needed to determine creator
             return realContactRepo.findContactByOptionalCaptionLike("second").stream().findFirst().orElseThrow();
         }).returnedValue();
     }

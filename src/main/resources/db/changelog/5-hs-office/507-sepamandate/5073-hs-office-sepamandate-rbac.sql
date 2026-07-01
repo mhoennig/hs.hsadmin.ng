@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('hs_office.sepamandate');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-sepamandate-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-sepamandate-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -150,7 +151,8 @@ execute procedure hs_office.sepamandate_grants_insert_to_relation_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-sepamandate-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-sepamandate-rbac-CHECKING-INSERT-PERMISSION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /**
@@ -198,7 +200,8 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.sepamandate',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-sepamandate-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-sepamandate-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.sepamandate',
     $orderBy$
@@ -214,7 +217,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-sepamandate-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-sepamandate-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.sepamandate after changing its RBAC specification.

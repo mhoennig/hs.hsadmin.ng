@@ -1,6 +1,12 @@
 components:
 
     responses:
+        BadRequest:
+            description: The request body or parameters are invalid.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
         NotFound:
             description: The specified  was not found.
             content:

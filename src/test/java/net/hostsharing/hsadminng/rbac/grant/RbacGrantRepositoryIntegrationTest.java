@@ -62,7 +62,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void packageAdmin_canViewItsRbacGrants() {
             // given
-            context("pac-admin-xxx00@xxx.example.com", null);
+            context("tst-pac_admin_xxx00", null);
 
             // when
             final var result = rbacGrantRepository.findAll();
@@ -70,13 +70,13 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant role:rbactest.package#xxx00:ADMIN to user:pac-admin-xxx00@xxx.example.com by role:rbactest.customer#xxx:ADMIN and assume }");
+                    "{ grant role:rbactest.package#xxx00:ADMIN to user:tst-pac_admin_xxx00 by role:rbactest.customer#xxx:ADMIN and assume }");
         }
 
         @Test
         public void customerAdmin_canViewItsRbacGrants() {
             // given
-            context("customer-admin@xxx.example.com", null);
+            context("tst-customer_admin_xxx", null);
 
             // when
             final var result = rbacGrantRepository.findAll();
@@ -84,16 +84,16 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant role:rbactest.customer#xxx:ADMIN to user:customer-admin@xxx.example.com by role:rbactest.customer#xxx:OWNER and assume }",
-                    "{ grant role:rbactest.package#xxx00:ADMIN to user:pac-admin-xxx00@xxx.example.com by role:rbactest.customer#xxx:ADMIN and assume }",
-                    "{ grant role:rbactest.package#xxx01:ADMIN to user:pac-admin-xxx01@xxx.example.com by role:rbactest.customer#xxx:ADMIN and assume }",
-                    "{ grant role:rbactest.package#xxx02:ADMIN to user:pac-admin-xxx02@xxx.example.com by role:rbactest.customer#xxx:ADMIN and assume }");
+                    "{ grant role:rbactest.customer#xxx:ADMIN to user:tst-customer_admin_xxx by role:rbactest.customer#xxx:OWNER and assume }",
+                    "{ grant role:rbactest.package#xxx00:ADMIN to user:tst-pac_admin_xxx00 by role:rbactest.customer#xxx:ADMIN and assume }",
+                    "{ grant role:rbactest.package#xxx01:ADMIN to user:tst-pac_admin_xxx01 by role:rbactest.customer#xxx:ADMIN and assume }",
+                    "{ grant role:rbactest.package#xxx02:ADMIN to user:tst-pac_admin_xxx02 by role:rbactest.customer#xxx:ADMIN and assume }");
         }
 
         @Test
         public void customerAdmin_withAssumedRole_canOnlyViewRbacGrantsVisibleByAssumedRole() {
             // given:
-            context("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+            context("tst-customer_admin_xxx", "rbactest.package#xxx00:ADMIN");
 
             // when
             final var result = rbacGrantRepository.findAll();
@@ -101,7 +101,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant role:rbactest.package#xxx00:ADMIN to user:pac-admin-xxx00@xxx.example.com by role:rbactest.customer#xxx:ADMIN and assume }");
+                    "{ grant role:rbactest.package#xxx00:ADMIN to user:tst-pac_admin_xxx00 by role:rbactest.customer#xxx:ADMIN and assume }");
         }
     }
 
@@ -111,8 +111,8 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_canGrantOwnPackageAdminRole_toArbitraryUser() {
             // given
-            context("customer-admin@xxx.example.com", "rbactest.customer#xxx:ADMIN");
-            final var givenArbitrarySubjectUuid = rbacSubjectRepository.findByName("pac-admin-zzz00@zzz.example.com").getUuid();
+            context("tst-customer_admin_xxx", "rbactest.customer#xxx:ADMIN");
+            final var givenArbitrarySubjectUuid = rbacSubjectRepository.findByName("tst-pac_admin_zzz00").getUuid();
             final var givenOwnPackageRoleUuid = findByRoleIdName("rbactest.package#xxx00:ADMIN").getUuid();
 
             // when
@@ -129,7 +129,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(rbacGrantRepository.findAll())
                     .extracting(RbacGrantEntity::toDisplay)
                     .contains(
-                            "{ grant role:rbactest.package#xxx00:ADMIN to user:pac-admin-zzz00@zzz.example.com by role:rbactest.customer#xxx:ADMIN and assume }");
+                            "{ grant role:rbactest.package#xxx00:ADMIN to user:tst-pac_admin_zzz00 by role:rbactest.customer#xxx:ADMIN and assume }");
         }
 
         @Test
@@ -139,7 +139,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             record Given(RbacSubjectEntity arbitraryUser, UUID packageOwnerRoleUuid) {}
             final var given = jpaAttempt.transacted(() -> {
                 // to find the uuids of we need to have access rights to these
-                context("customer-admin@xxx.example.com", null);
+                context("tst-customer_admin_xxx", null);
                 return new Given(
                         createNewUser(),
                         findByRoleIdName("rbactest.package#xxx00:OWNER").getUuid()
@@ -149,7 +149,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var attempt = jpaAttempt.transacted(() -> {
                 // now we try to use these uuids as a less privileged user
-                context("pac-admin-xxx00@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+                context("tst-pac_admin_xxx00", "rbactest.package#xxx00:ADMIN");
                 final var grant = RbacGrantEntity.builder()
                         .granteeSubjectUuid(given.arbitraryUser.getUuid())
                         .grantedRoleUuid(given.packageOwnerRoleUuid)
@@ -179,20 +179,20 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         public void customerAdmin_canRevokeSelfGrantedPackageAdminRole() {
             // given
             final var grant = create(grant()
-                    .byUser("customer-admin@xxx.example.com").withAssumedRole("rbactest.customer#xxx:ADMIN")
-                    .grantingRole("rbactest.package#xxx00:ADMIN").toUser("pac-admin-zzz00@zzz.example.com"));
+                    .byUser("tst-customer_admin_xxx").withAssumedRole("rbactest.customer#xxx:ADMIN")
+                    .grantingRole("rbactest.package#xxx00:ADMIN").toUser("tst-pac_admin_zzz00"));
 
             // when
-            context("customer-admin@xxx.example.com", "rbactest.customer#xxx:ADMIN");
+            context("tst-customer_admin_xxx", "rbactest.customer#xxx:ADMIN");
             final var revokeAttempt = attempt(em, () ->
                     rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId()));
 
             // then
-            context("customer-admin@xxx.example.com", "rbactest.customer#xxx:ADMIN");
+            context("tst-customer_admin_xxx", "rbactest.customer#xxx:ADMIN");
             assertThat(revokeAttempt.caughtExceptionsRootCause()).isNull();
             assertThat(rbacGrantRepository.findAll())
                     .extracting(RbacGrantEntity::getGranteeSubjectName)
-                    .doesNotContain("pac-admin-zzz00@zzz.example.com");
+                    .doesNotContain("tst-pac_admin_zzz00");
         }
 
         @Test
@@ -200,32 +200,32 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // given
             final var newUser = createNewUserTransacted();
             final var grant = create(grant()
-                    .byUser("customer-admin@xxx.example.com").withAssumedRole("rbactest.package#xxx00:ADMIN")
+                    .byUser("tst-customer_admin_xxx").withAssumedRole("rbactest.package#xxx00:ADMIN")
                     .grantingRole("rbactest.package#xxx00:ADMIN").toUser(newUser.getName()));
 
             // when
-            context("pac-admin-xxx00@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+            context("tst-pac_admin_xxx00", "rbactest.package#xxx00:ADMIN");
             final var revokeAttempt = attempt(em, () ->
                     rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId()));
 
             // then
             assertThat(revokeAttempt.caughtExceptionsRootCause()).isNull();
-            context("customer-admin@xxx.example.com", "rbactest.customer#xxx:ADMIN");
+            context("tst-customer_admin_xxx", "rbactest.customer#xxx:ADMIN");
             assertThat(rbacGrantRepository.findAll())
                     .extracting(RbacGrantEntity::getGranteeSubjectName)
-                    .doesNotContain("pac-admin-zzz00@zzz.example.com");
+                    .doesNotContain("tst-pac_admin_zzz00");
         }
 
         @Test
         public void packageAdmin_canNotRevokeOwnPackageAdminRoleGrantedByOwnerRoleOfThatPackage() {
             // given
             final var grant = create(grant()
-                    .byUser("customer-admin@xxx.example.com").withAssumedRole("rbactest.package#xxx00:OWNER")
-                    .grantingRole("rbactest.package#xxx00:ADMIN").toUser("pac-admin-zzz00@zzz.example.com"));
+                    .byUser("tst-customer_admin_xxx").withAssumedRole("rbactest.package#xxx00:OWNER")
+                    .grantingRole("rbactest.package#xxx00:ADMIN").toUser("tst-pac_admin_zzz00"));
             final var grantedByRole = findByRoleIdName("rbactest.package#xxx00:OWNER");
 
             // when
-            context("pac-admin-xxx00@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+            context("tst-pac_admin_xxx00", "rbactest.package#xxx00:ADMIN");
             final var revokeAttempt = attempt(em, () ->
                     rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId()));
 
@@ -321,7 +321,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
     private RbacSubjectEntity createNewUserTransacted() {
         return jpaAttempt.transacted(() -> {
-            final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+            final var newUserName = "tst-user_" + System.currentTimeMillis();
             context(null);
             return rbacSubjectRepository.create(RbacSubjectEntity.builder().name(newUserName).build());
         }).assumeSuccessful().returnedValue();
@@ -329,7 +329,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
     private RbacSubjectEntity createNewUser() {
         return rbacSubjectRepository.create(
-                RbacSubjectEntity.builder().name("test-user-" + System.currentTimeMillis() + "@example.com").build());
+                RbacSubjectEntity.builder().name("tst-user_" + System.currentTimeMillis()).build());
     }
 
     private RbacRoleEntity findByRoleIdName(final String roleIdName) {
@@ -338,7 +338,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
     void exactlyTheseRbacGrantsAreReturned(final List<RbacGrantEntity> actualResult, final String... expectedGrant) {
         assertThat(actualResult)
-                .filteredOn(g -> !g.getGranteeSubjectName().startsWith("test-user-")) // ignore test-users created by other tests
+                .filteredOn(g -> !g.getGranteeSubjectName().startsWith("tst-user_")) // ignore test-users created by other tests
                 .extracting(RbacGrantEntity::toDisplay)
                 .containsExactlyInAnyOrder(expectedGrant);
     }

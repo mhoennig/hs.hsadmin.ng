@@ -78,7 +78,7 @@ class TestCustomerControllerRestTest {
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/test/customers?prefix=xxx")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Hostsharing-Assumed-Roles", "rbac.global#global:ADMIN")
                         .accept(MediaType.APPLICATION_JSON));
 
@@ -106,7 +106,7 @@ class TestCustomerControllerRestTest {
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/test/customers")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

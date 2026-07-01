@@ -66,7 +66,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewMembership() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = membershipRepo.count();
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
 
@@ -92,7 +92,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void creatingMembershipForSamePartnerIsDisallowedIfAnotherOneIsStillActive() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").getFirst();
 
             // when
@@ -117,7 +117,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("hs_office.", ""))
@@ -153,7 +153,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
                             // owner
                             "{ grant perm:membership#M-1000117:DELETE to role:membership#M-1000117:ADMIN by system and assume }",
-                            "{ grant role:membership#M-1000117:OWNER to user:superuser-alex@hostsharing.net by membership#M-1000117:OWNER and assume }",
+                            "{ grant role:membership#M-1000117:OWNER to user:hsh-alex_superuser by membership#M-1000117:OWNER and assume }",
 
                             // admin
                             "{ grant perm:membership#M-1000117:UPDATE to role:membership#M-1000117:ADMIN by system and assume }",
@@ -183,7 +183,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllMemberships() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = membershipRepo.findAll();
@@ -199,7 +199,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canFindAllMembershipByPartnerUuid() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
 
             // when
@@ -214,7 +214,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canFindAllMemberships() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
@@ -229,7 +229,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canFindAllMembershipsByPartnerNumberAndSuffix() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = membershipRepo.findMembershipByPartnerNumberAndSuffix(10002, "02").orElseThrow();
@@ -244,7 +244,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canFindAllMembershipsByPartnerNumber() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = membershipRepo.findMembershipsByPartnerNumber(10002);
@@ -262,15 +262,15 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_canUpdateValidityOfArbitraryMembership() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenMembership = givenSomeTemporaryMembership("First", "11");
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             final var newValidityEnd = LocalDate.now();
 
             // when
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenMembership.setValidity(Range.closedOpen(
                         givenMembership.getValidity().lower(), newValidityEnd));
                 givenMembership.setStatus(HsOfficeMembershipStatus.CANCELLED);
@@ -285,7 +285,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void membershipAgent_canViewButNotUpdateRelatedMembership() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenMembership = givenSomeTemporaryMembership("First", "13");
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             assertThatMembershipIsVisibleForRole(
@@ -296,7 +296,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             // when
             final var result = jpaAttempt.transacted(() -> {
                 // TODO: we should test with debitor- and partner-admin as well
-                context("superuser-alex@hostsharing.net", "hs_office.membership#M-1000113:AGENT");
+                context("hsh-alex_superuser", "hs_office.membership#M-1000113:AGENT");
                 givenMembership.setValidity(
                         Range.closedOpen(givenMembership.getValidity().lower(), newValidityEnd));
                 return membershipRepo.save(givenMembership);
@@ -318,7 +318,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                 final HsOfficeMembershipEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 assertThatMembershipExistsAndIsAccessibleToCurrentContext(entity);
             }).assertSuccessful();
         }
@@ -330,19 +330,19 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyMembership() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenMembership = givenSomeTemporaryMembership("First", "12");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 membershipRepo.deleteByUuid(givenMembership.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-fran@hostsharing.net", null);
+                context("hsh-fran_superuser", null);
                 return membershipRepo.findByUuid(givenMembership.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
@@ -350,12 +350,12 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void partnerRelationAgent_canNotDeleteTheirRelatedMembership() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenMembership = givenSomeTemporaryMembership("First", "14");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT");
+                context("hsh-alex_superuser", "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT");
                 assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent();
 
                 membershipRepo.deleteByUuid(givenMembership.getUuid());
@@ -366,7 +366,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                     JpaSystemException.class,
                     "[403] Subject ", " not allowed to delete hs_office.membership");
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return membershipRepo.findByUuid(givenMembership.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
@@ -374,14 +374,14 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void deletingAMembershipAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenMembership = givenSomeTemporaryMembership("First", "15");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return membershipRepo.deleteByUuid(givenMembership.getUuid());
             });
 
@@ -416,7 +416,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             final String partnerTradeName,
             final String memberNumberSuffix) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike(partnerTradeName).get(0);
             final var newMembership = HsOfficeMembershipEntity.builder()
                     .memberNumberSuffix(memberNumberSuffix)

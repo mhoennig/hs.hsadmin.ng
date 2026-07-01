@@ -57,7 +57,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewPerson() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = personRbacRepo.count();
 
             // when
@@ -74,7 +74,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void arbitraryUser_canCreateNewPerson() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var count = personRbacRepo.count();
 
             // when
@@ -91,7 +91,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
@@ -113,7 +113,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
                             initialGrantNames,
                             "{ grant perm:hs_office.person#anothernewperson:INSERT>hs_office.relation to role:hs_office.person#anothernewperson:ADMIN by system and assume }",
 
-                            "{ grant role:hs_office.person#anothernewperson:OWNER       to user:selfregistered-user-drew@hostsharing.org by hs_office.person#anothernewperson:OWNER and assume }",
+                            "{ grant role:hs_office.person#anothernewperson:OWNER       to user:tst-drew_selfregistered by hs_office.person#anothernewperson:OWNER and assume }",
                             "{ grant role:hs_office.person#anothernewperson:OWNER       to role:rbac.global#global:ADMIN by system and assume }",
                             "{ grant perm:hs_office.person#anothernewperson:UPDATE      to role:hs_office.person#anothernewperson:ADMIN by system and assume }",
                             "{ grant perm:hs_office.person#anothernewperson:DELETE      to role:hs_office.person#anothernewperson:OWNER by system and assume }",
@@ -136,7 +136,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPersons() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = personRbacRepo.findPersonByOptionalNameLike(null);
@@ -153,10 +153,10 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void arbitraryUser_canViewOnlyItsOwnPerson() {
             // given:
-            final var givenPerson = givenSomeTemporaryPerson("pac-admin-zzz00@zzz.example.com");
+            final var givenPerson = givenSomeTemporaryPerson("tst-pac_admin_zzz00");
 
             // when:
-            context("pac-admin-zzz00@zzz.example.com");
+            context("tst-pac_admin_zzz00");
             final var result = personRbacRepo.findPersonByOptionalNameLike(null);
 
             // then:
@@ -170,7 +170,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPersons() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
 
             // when
             final var result = personRbacRepo.findPersonByOptionalNameLike("Peter Smith - The Second Hand%");
@@ -182,10 +182,10 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void arbitraryUser_withoutAssumedRole_canViewOnlyItsOwnPerson() {
             // given:
-            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("tst-drew_selfregistered");
 
             // when:
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var result = personRbacRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
 
             // then:
@@ -199,18 +199,18 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyPerson() {
             // given
-            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 personRbacRepo.deleteByUuid(givenPerson.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 return personRbacRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -218,18 +218,18 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void arbitraryUser_withoutAssumedRole_canDeleteAPersonCreatedByItself() {
             // given
-            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("selfregistered-user-drew@hostsharing.org", null);
+                context("tst-drew_selfregistered", null);
                 personRbacRepo.deleteByUuid(givenPerson.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 return personRbacRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -239,14 +239,14 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void deletingAPersonAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("selfregistered-user-drew@hostsharing.org", null);
+            context("tst-drew_selfregistered", null);
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
-            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("selfregistered-user-drew@hostsharing.org", null);
+                context("tst-drew_selfregistered", null);
                 return personRbacRepo.deleteByUuid(givenPerson.getUuid());
             });
 
@@ -262,7 +262,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
     public void findPersonsRepresentedByPersonWithUuid() {
 
         // given
-        context("superuser-alex@hostsharing.net");
+        context("hsh-alex_superuser");
         final var personUuid = personRbacRepo.findPersonByOptionalNameLike("Fouler").getFirst().getUuid();
 
         // when

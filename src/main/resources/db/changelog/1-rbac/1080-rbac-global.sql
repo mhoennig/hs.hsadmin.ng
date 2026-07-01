@@ -1,7 +1,8 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-OBJECT runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-global-OBJECT runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     The purpose of this table is provide root business objects
@@ -23,7 +24,8 @@ grant select on rbac.global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-IS-GLOBAL-ADMIN runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-global-IS-GLOBAL-ADMIN runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ------------------------------------------------------------------
 /*
     Returns true if the current subject itself has the rbac.global ADMIN role.
@@ -50,7 +52,8 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-HAS-GLOBAL-ADMIN-ROLE runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-global-HAS-GLOBAL-ADMIN-ROLE runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Returns true if the current effective RBAC context has effective global-admin
@@ -94,7 +97,8 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-IDENTITY-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-global-IDENTITY-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -167,7 +171,8 @@ commit;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-GUEST-ROLE runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-global-GUEST-ROLE runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     A rbac.Global guest role.
@@ -196,6 +201,7 @@ $$;
 
 -- ============================================================================
 --changeset michael.hoennig:rbac-global-ADMIN-USERS context:!without-test-data endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Create two users and assign both to the administrators' role.
@@ -207,10 +213,30 @@ do language plpgsql $$
         call base.defineContext('creating fake test-realm admin users', null, null, null);
 
         admins = rbac.findRoleId(rbac.global_ADMIN());
-        call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('superuser-alex@hostsharing.net'));
-        call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('superuser-fran@hostsharing.net'));
-        perform rbac.create_subject('selfregistered-user-drew@hostsharing.org');
-        perform rbac.create_subject('selfregistered-test-user@hostsharing.org');
+        call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('hsh-alex_superuser'));
+        call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('hsh-fran_superuser'));
+        perform rbac.create_subject('tst-drew_selfregistered');
+        perform rbac.create_subject('tst-rene_selfregistered');
+    end;
+$$;
+--//
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-global-RENAME-SEED-SUBJECTS endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Renames the known global subjects from the old email-address format to the new
+    realm-prefixed format. Safe to run on a fresh install (no rows match) or
+    multiple times (already-renamed rows are not touched).
+ */
+do language plpgsql $$
+    begin
+        call base.defineContext('renaming seed subjects to realm-prefixed format', null, null, null);
+        update rbac.subject set name = 'hsh-alex_superuser'      where name = 'superuser-alex@hostsharing.net';
+        update rbac.subject set name = 'hsh-fran_superuser'      where name = 'superuser-fran@hostsharing.net';
+        update rbac.subject set name = 'tst-drew_selfregistered' where name = 'selfregistered-user-drew@hostsharing.org';
+        update rbac.subject set name = 'tst-rene_selfregistered' where name = 'selfregistered-test-user@hostsharing.org';
+        update rbac.subject set name = 'hsh-import_superuser'    where name = 'import-superuser@hostsharing.net';
     end;
 $$;
 --//
@@ -233,7 +259,8 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-global-TEST context:!without-test-data runAlways:true endDelimiter:--//
+--changeset michael.hoennig:rbac-global-TEST context:!without-test-data runAlways:true validCheckSum:ANY endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -244,15 +271,15 @@ do language plpgsql $$
     declare
         userName varchar;
     begin
-        call base.defineContext('testing currentSubjectUuid', null, 'superuser-fran@hostsharing.net', null);
+        call base.defineContext('testing currentSubjectUuid', null, 'hsh-fran_superuser', null);
         select userName from rbac.subject where uuid = rbac.currentSubjectUuid() into userName;
-        if userName <> 'superuser-fran@hostsharing.net' then
+        if userName <> 'hsh-fran_superuser' then
             raise exception 'setting or fetching initial currentSubject failed, got: %', userName;
         end if;
 
-        call base.defineContext('testing currentSubjectUuid', null, 'superuser-alex@hostsharing.net', null);
+        call base.defineContext('testing currentSubjectUuid', null, 'hsh-alex_superuser', null);
         select userName from rbac.subject where uuid = rbac.currentSubjectUuid() into userName;
-        if userName = 'superuser-alex@hostsharing.net' then
+        if userName = 'hsh-alex_superuser' then
             raise exception 'currentSubject should not change in one transaction, but did change, got: %', userName;
         end if;
     end; $$;

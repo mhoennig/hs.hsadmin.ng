@@ -91,7 +91,8 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-global-historization-tx-create-historicization runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:hs-global-historization-tx-create-historicization runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 create or replace procedure base.tx_create_historicization(

@@ -101,7 +101,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/booking/items?projectUuid=" + projectUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -125,7 +125,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/booking/items/" + bookingItemUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -144,7 +144,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/booking/items/" + bookingItemUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -169,7 +169,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/booking/items")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     {
@@ -218,7 +218,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/booking/items")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     {
@@ -258,7 +258,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/booking/items/" + bookingItemUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -274,7 +274,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/booking/items/" + bookingItemUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -294,7 +294,7 @@ class HsBookingItemControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/booking/items/" + bookingItemUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

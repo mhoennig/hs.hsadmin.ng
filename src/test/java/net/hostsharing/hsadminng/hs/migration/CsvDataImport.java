@@ -270,24 +270,6 @@ public class CsvDataImport extends ContextBasedTest {
         return json;
     }
 
-    protected void makeSureThatTheImportAdminUserExists() {
-        jpaAttempt.transacted(() -> {
-            em.createNativeQuery("""
-                do language plpgsql $$
-                    declare
-                        admins uuid;
-                    begin
-                        if not exists (select 1 from rbac.subject where name = '${rbacSuperuser}') then
-                            admins = rbac.findRoleId(rbac.global_ADMIN());
-                            call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('${rbacSuperuser}'));
-                        end if;
-                    end;
-                $$;
-                """.replace("${rbacSuperuser}", rbacSuperuser))
-                .executeUpdate();
-        }).assertSuccessful();
-    }
-
     // makes it possible to fail when an expression is expected
     <T> T failWith(final String message) {
         fail(message);

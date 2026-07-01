@@ -1,7 +1,8 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset michael.hoennig:rbac-statistics runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-statistics runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*

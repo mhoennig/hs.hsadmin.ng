@@ -56,7 +56,7 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
 
     @Test
     void allGrantsToCurrentSubject() {
-        context("superuser-alex@hostsharing.net", "rbactest.domain#xxx00-aaaa:OWNER");
+        context("hsh-alex_superuser", "rbactest.domain#xxx00-aaaa:OWNER");
         final var graph = grantsMermaidService.allGrantsToCurrentSubject(EnumSet.of(Include.TEST_ENTITIES));
 
         assertThat(graph).isEqualTo("""
@@ -71,7 +71,7 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
 
     @Test
     void allGrantsToCurrentSubjectIncludingPermissions() {
-        context("superuser-alex@hostsharing.net", "rbactest.domain#xxx00-aaaa:OWNER");
+        context("hsh-alex_superuser", "rbactest.domain#xxx00-aaaa:OWNER");
         final var graph = grantsMermaidService.allGrantsToCurrentSubject(EnumSet.of(Include.TEST_ENTITIES, Include.PERMISSIONS));
 
         assertThat(graph).isEqualTo("""
@@ -92,8 +92,8 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
     @Test
     @Disabled // enable to generate from a real database
     void print() throws IOException {
-        //context("superuser-alex@hostsharing.net", "hs_office.person#FirbySusan:ADMIN");
-        context("superuser-alex@hostsharing.net");
+        //context("hsh-alex_superuser", "hs_office.person#FirbySusan:ADMIN");
+        context("hsh-alex_superuser");
 
         //final var graph = grantsMermaidService.allGrantsTocurrentSubject(EnumSet.of(Include.NON_TEST_ENTITIES, Include.PERMISSIONS));
 

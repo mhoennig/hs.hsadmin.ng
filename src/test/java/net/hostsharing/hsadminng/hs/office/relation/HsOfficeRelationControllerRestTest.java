@@ -113,7 +113,7 @@ class HsOfficeRelationControllerRestTest {
                             .queryParam("mark", "billing")
                             .queryParam("personData", "miller")
                             .queryParam("contactData", "office")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -136,7 +136,7 @@ class HsOfficeRelationControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/relations/" + relationUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -154,7 +154,7 @@ class HsOfficeRelationControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/relations/" + relationUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -182,7 +182,7 @@ class HsOfficeRelationControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/relations")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -211,7 +211,7 @@ class HsOfficeRelationControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/hs/office/relations/" + relationUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -233,7 +233,7 @@ class HsOfficeRelationControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/office/relations/" + relationUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

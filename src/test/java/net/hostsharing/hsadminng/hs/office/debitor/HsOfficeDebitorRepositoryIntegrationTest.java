@@ -85,7 +85,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canCreateNewDebitor() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = debitorRepo.count();
             final var givenPartner = partnerRepo.findPartnerByPartnerNumber(10001).orElseThrow();
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
@@ -121,7 +121,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @ValueSource(strings = {"", "a", "ab", "a12", "123", "12a"})
         public void canNotCreateNewDebitorWithInvalidDefaultPrefix(final String givenPrefix) {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
             final var givenContact = one(contactRealRepo.findContactByOptionalCaptionLike("eleventh contact"));
 
@@ -151,7 +151,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     // some search+replace to make the output fit into the screen width
@@ -196,7 +196,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:DELETE   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:rbac.global#global:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:person#FirstGmbH:ADMIN by system and assume }",
-                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to user:superuser-alex@hostsharing.net by relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to user:hsh-alex_superuser by relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER and assume }",
 
                     // admin
                     "{ grant perm:debitor#D-1000122:UPDATE                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
@@ -235,7 +235,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canViewAllDebitors() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = debitorRepo.findDebitorsByOptionalNameLike(null);
@@ -257,7 +257,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         })
         public void relatedPersonAdmin_canViewRelatedDebitors(final String assumedRole) {
             // given:
-            context("superuser-alex@hostsharing.net", assumedRole);
+            context("hsh-alex_superuser", assumedRole);
 
             // when:
             final var result = debitorRepo.findDebitorsByOptionalNameLike("");
@@ -271,7 +271,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void unrelatedUser_canNotViewAnyDebitor() {
             // given:
-            context("selfregistered-test-user@hostsharing.org");
+            context("tst-rene_selfregistered");
 
             // when:
             final var result = debitorRepo.findDebitorsByOptionalNameLike(null);
@@ -287,7 +287,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canViewAllDebitors() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = debitorRepo.findDebitorByDebitorNumber(1000313);
@@ -304,7 +304,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canViewAllDebitors() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = debitorRepo.findDebitorsByPartnerNumber(10003);
@@ -321,7 +321,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canViewAllDebitors() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = debitorRepo.findDebitorsByOptionalNameLike("third contact");
@@ -337,7 +337,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canUpdateArbitraryDebitor() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth", "fif");
             final var originalDebitorRel = givenDebitor.getDebitorRel();
 
@@ -354,7 +354,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenDebitor.setDebitorRel(HsOfficeRelationRealEntity.builder()
                         .type(HsOfficeRelationType.DEBITOR)
                         .anchor(givenNewPartnerPerson)
@@ -401,7 +401,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canUpdateNullRefundBankAccountToNotNullBankAccountForArbitraryDebitor() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "tenth contact", null, "fig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
@@ -411,7 +411,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenDebitor.setRefundBankAccount(givenNewBankAccount);
                 return toCleanup(debitorRepo.save(givenDebitor).load());
             });
@@ -431,7 +431,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canUpdateRefundBankAccountToNullForArbitraryDebitor() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth", "fih");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
@@ -440,7 +440,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenDebitor.setRefundBankAccount(null);
                 return toCleanup(debitorRepo.save(givenDebitor).load());
             });
@@ -460,7 +460,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void partnerAgent_canNotUpdateRelatedDebitor() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eighth", "Fourth", "eig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
@@ -469,7 +469,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office.relation#HostsharingeG-with-PARTNER-FourtheG:AGENT");
+                context("hsh-alex_superuser", "hs_office.relation#HostsharingeG-with-PARTNER-FourtheG:AGENT");
                 givenDebitor.setVatId("NEW-VAT-ID");
                 return toCleanup(debitorRepo.save(givenDebitor));
             });
@@ -482,14 +482,14 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void contactAdmin_canNotUpdateRelatedDebitor() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "ninth", "Fourth", "nin");
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
             assertThatDebitorIsVisibleForUserWithRole(givenDebitor, "hs_office.contact#ninthcontact:ADMIN", false);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office.contact#ninthcontact:ADMIN");
+                context("hsh-alex_superuser", "hs_office.contact#ninthcontact:ADMIN");
                 givenDebitor.setVatId("NEW-VAT-ID");
                 final HsOfficeDebitorEntity entity = debitorRepo.save(givenDebitor);
                 return toCleanup(entity.load());
@@ -522,7 +522,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                 final String assumedRoles,
                 final boolean withPartner) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 assertThatDebitorActuallyInDatabase(entity, withPartner);
             }).assertSuccessful();
         }
@@ -531,7 +531,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                 final HsOfficeDebitorEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 final var found = debitorRepo.findByUuid(entity.getUuid());
                 assertThat(found).isEmpty();
             }).assertSuccessful();
@@ -544,19 +544,19 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void globalAdmin_canDeleteAnyDebitor() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "tenth", "Fourth", "ten");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 debitorRepo.deleteByUuid(givenDebitor.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-fran@hostsharing.net", null);
+                context("hsh-fran_superuser", null);
                 return debitorRepo.findByUuid(givenDebitor.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
@@ -564,12 +564,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void debitorAgent_canViewButNotDeleteTheirRelatedDebitor() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eleventh", "Fourth", "ele");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", givenDebitor.getDebitorRel().roleId(ADMIN));
+                context("hsh-alex_superuser", givenDebitor.getDebitorRel().roleId(ADMIN));
                 assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent();
 
                 debitorRepo.deleteByUuid(givenDebitor.getUuid());
@@ -580,7 +580,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     JpaSystemException.class,
                     "[403] Subject ", " not allowed to delete hs_office.debitor");
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return debitorRepo.findByUuid(givenDebitor.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
@@ -588,14 +588,14 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @Test
         public void deletingADebitorAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "twelfth", "Fourth", "twi");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return debitorRepo.deleteByUuid(givenDebitor.getUuid());
             });
 
@@ -632,7 +632,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final String bankAccountHolder,
             final String defaultPrefix) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenPartner = one(partnerRepo.findPartnerByOptionalNameLike(partnerName));
             final var givenPartnerPerson = givenPartner.getPartnerRel().getHolder();
             final var givenContact = one(contactRealRepo.findContactByOptionalCaptionLike(contactCaption));

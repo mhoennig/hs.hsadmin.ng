@@ -71,7 +71,7 @@ class PingControllerRestTest {
         // when
         final var request = mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/pong")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Accept-Language", "de")
                         .accept(MediaType.TEXT_PLAIN))
                 .andDo(print());
@@ -79,7 +79,7 @@ class PingControllerRestTest {
         // then
         request
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("superuser-alex@hostsharing.net")));
+                .andExpect(content().string(containsString("hsh-alex_superuser")));
     }
 
     @Test
@@ -88,7 +88,7 @@ class PingControllerRestTest {
         // when
         final var request = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/pong")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Accept-Language", "de")
                         .accept(MediaType.TEXT_PLAIN))
                 .andDo(print());
@@ -96,6 +96,6 @@ class PingControllerRestTest {
         // then
         request
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("superuser-alex@hostsharing.net")));
+                .andExpect(content().string(containsString("hsh-alex_superuser")));
     }
 }

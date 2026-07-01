@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('hs_office.contact');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-contact-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-contact-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -88,7 +89,8 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.contact',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-contact-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-contact-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.contact',
     $orderBy$
@@ -105,7 +107,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-contact-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-contact-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.contact after changing its RBAC specification.

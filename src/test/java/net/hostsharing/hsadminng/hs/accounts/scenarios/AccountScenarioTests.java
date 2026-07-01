@@ -34,7 +34,7 @@ class AccountScenarioTests extends ScenarioTest {
         @Produces("RBAC Context")
         void shouldFetchRbacContext() {
             new FetchRbacContext(scenarioTest)
-                    .given("subjectName", "superuser-fran@hostsharing.net")
+                    .given("subjectName", "hsh-fran_superuser")
                     .given("assumedRoles", "rbactest.package#xxx00:ADMIN;rbactest.package#yyy00:ADMIN")
                     .given("expectedSubjectType", "USER")
                     .given("expectedToBeGlobalAdmin", true)
@@ -53,7 +53,7 @@ class AccountScenarioTests extends ScenarioTest {
         @Produces("Current Login User")
         void shouldFetchCurrentLoginUser() {
             new CurrentLoginUser(scenarioTest)
-                    .given("subjectName", "superuser-fran@hostsharing.net")
+                    .given("subjectName", "hsh-fran_superuser")
                     .given("personGivenName", "Fran")
                     .given("expectedToBeGlobalAdmin", true)
                     .thenExpect(HttpStatus.OK)
@@ -242,7 +242,7 @@ class AccountScenarioTests extends ScenarioTest {
         void grantingAProjectAdminRoleToAGroup() {
             new GrantProjectAdminRoleToGroup(
                     scenarioTest,
-                    asSubject("person-FirbySusan@example.com")
+                    asSubject("tst-person_firbysusan")
                             .whichIs("a Debitor-Admin, here concretely the Partner-Representative")
                             .withGroups("/xyz-Service"))
                     .given("roleIdNameToAssume", "hs_office.relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT")
@@ -259,12 +259,12 @@ class AccountScenarioTests extends ScenarioTest {
         void usersOfAGroupCanAssumeARoleGrantedToThatGroup() {
             new AssumeBookingProjectAdminRoleAsGroupMember(
                     scenarioTest,
-                    asSubject("selfregistered-user-drew@hostsharing.org")
+                    asSubject("tst-drew_selfregistered")
                             .whichIs("any user which does not even need to have any roles granted yet")
                             .withGroups("/xyz-Service"))
                     .expected("expectedAssumedRoleIdName", "hs_booking.project#D-1000111-D-1000111defaultproject:ADMIN")
                     .given("nameOfGroupSubject", "/xyz-Service")
-                    .given("nameOfUserSubject", "selfregistered-user-drew@hostsharing.org")
+                    .given("nameOfUserSubject", "tst-drew_selfregistered")
                     .given("projectCaption", "D-1000111 default project")
                     .thenExpect(HttpStatus.OK);
         }
@@ -275,11 +275,11 @@ class AccountScenarioTests extends ScenarioTest {
         void usersOfAGroupCanViewHostingAssetsBelowTheAssumedProject() {
             new ViewHostingAssetsAsGroupMember(
                     scenarioTest,
-                    asSubject("selfregistered-user-drew@hostsharing.org")
+                    asSubject("tst-drew_selfregistered")
                             .whichIs("any user which does not even need to have any roles granted yet")
                             .withGroups("/xyz-Service"))
                     .given("nameOfGroupSubject", "/xyz-Service")
-                    .given("nameOfUserSubject", "selfregistered-user-drew@hostsharing.org")
+                    .given("nameOfUserSubject", "tst-drew_selfregistered")
                     .given("projectCaption", "D-1000111 default project")
                     .thenExpect(HttpStatus.OK);
         }

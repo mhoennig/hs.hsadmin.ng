@@ -108,7 +108,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewBookingProject() {
             // given
-            context("superuser-alex@hostsharing.net"); // TODO.test: remove once we have a realDebitorRepo
+            context("hsh-alex_superuser"); // TODO.test: remove once we have a realDebitorRepo
             final var count = realProjectRepo.count();
             final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).get(0);
 
@@ -131,7 +131,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("hs_office.", ""))
@@ -200,7 +200,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         @EnumSource(TestCase.class)
         public void globalAdmin_withoutAssumedRole_canViewAllBookingProjectsOfArbitraryDebitor(final TestCase testCase) {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var debitorUuid = debitorRepo.findByDebitorNumber(1000212).stream()
                     .findAny().orElseThrow().getUuid();
 
@@ -218,7 +218,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         public void packetAgent_canViewOnlyRelatedBookingProjects(final TestCase testCase) {
 
             // given:
-            context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context("tst-person_firbysusan", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var debitorUuid = debitorRepo.findByDebitorNumber(1000111).stream()
                     .findAny().orElseThrow().getUuid();
 
@@ -242,7 +242,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-sometempproject:ADMIN");
+                context("hsh-alex_superuser", "hs_booking.project#D-1000111-sometempproject:ADMIN");
                 final var foundBookingProject = em.find(HsBookingProjectRbacEntity.class, givenBookingProjectUuid);
                 foundBookingProject.setCaption("updated caption");
                 return toCleanup(repoUnderTest(testCase).save(foundBookingProject));
@@ -270,19 +270,19 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         @EnumSource(TestCase.class)
         public void globalAdmin_withoutAssumedRole_canDeleteAnyBookingProject(final TestCase testCase) {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenBookingProject = givenSomeTemporaryBookingProject(1000111);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 repoUnderTest(testCase).deleteByUuid(givenBookingProject.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-fran@hostsharing.net", null);
+                context("hsh-fran_superuser", null);
                 return rbacProjectRepo.findByUuid(givenBookingProject.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
@@ -294,7 +294,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-sometempproject:AGENT");
+                context("tst-person_firbysusan", "hs_booking.project#D-1000111-sometempproject:AGENT");
                 assertThat(rbacProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent();
 
                 repoUnderTest(TestCase.RBAC).deleteByUuid(givenBookingProject.getUuid());
@@ -305,7 +305,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                     JpaSystemException.class,
                     "[403] Subject ", " is not allowed to delete hs_booking.project");
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return rbacProjectRepo.findByUuid(givenBookingProject.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
@@ -314,14 +314,14 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         @EnumSource(TestCase.class)
         public void deletingABookingProjectAlsoDeletesRelatedRolesAndGrants(final TestCase testCase) {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenBookingProject = givenSomeTemporaryBookingProject(1000111);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return repoUnderTest(testCase).deleteByUuid(givenBookingProject.getUuid());
             });
 
@@ -335,7 +335,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
 
     private HsBookingProjectRealEntity givenSomeTemporaryBookingProject(final int debitorNumber) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findByDebitorNumber(debitorNumber).get(0);
             final var newBookingProject = HsBookingProjectRealEntity.builder()
                     .debitor(givenDebitor)

@@ -99,7 +99,7 @@ class HsOfficeSepaMandateControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/sepamandates?iban=DE123")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON))
 
@@ -141,7 +141,7 @@ class HsOfficeSepaMandateControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/sepamandates/" + mandateUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -160,7 +160,7 @@ class HsOfficeSepaMandateControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/sepamandates/" + mandateUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -185,7 +185,7 @@ class HsOfficeSepaMandateControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/sepamandates")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                   {
@@ -218,7 +218,7 @@ class HsOfficeSepaMandateControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/office/sepamandates/" + mandateUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -234,7 +234,7 @@ class HsOfficeSepaMandateControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/office/sepamandates/" + mandateUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -252,7 +252,7 @@ class HsOfficeSepaMandateControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/office/sepamandates/" + mandateUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                   {

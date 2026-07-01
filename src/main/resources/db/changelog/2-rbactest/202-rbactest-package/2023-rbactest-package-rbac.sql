@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('rbactest.package');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:rbactest-package-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-package-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -81,7 +82,8 @@ execute procedure rbactest.package_build_rbac_system_after_insert_tf();
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:rbactest-package-rbac-update-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-package-rbac-update-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -190,7 +192,8 @@ execute procedure rbactest.package_grants_insert_to_customer_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:rbactest-package-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-package-rbac-CHECKING-INSERT-PERMISSION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /**
@@ -230,7 +233,8 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.package',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:rbactest-package-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:rbactest-package-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('rbactest.package',
     $orderBy$
@@ -246,7 +250,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:rbactest-package-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:rbactest-package-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table rbactest.package after changing its RBAC specification.

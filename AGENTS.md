@@ -49,25 +49,12 @@ Use these instructions when working in this repository.
 
 - Generally, existing changesets must not be changed after they have been released. But there are exceptions, as follows.
 - Add a new follow-up changeset for amendments to released database structures, for example `alter table` after an earlier changeset with the related `create table`.
-- Existing changesets may be changed if they are marked with `runOnChange:true validCheckSum:ANY` and are repeatable.
-- A changeset is repeatable only if it defines or updates procedures, functions, triggers, views, or similar database code using `create or replace`, `drop ... if exists`, guarded creation, or equivalent idempotent patterns.
+- Existing changesets may be changed if they are introduced with this branch, or are marked with either `runOnChange:true` or `--validCheckSum: ANY`.
+- A changeset can be marked with `runOnChange:true` or `--validCheckSum: ANY` if it is repeatable only if it defines or updates procedures, functions, triggers, views, or similar database code using `create or replace`, `drop ... if exists`, guarded creation, or equivalent idempotent patterns.
+- In Liquibase formatted SQL, keep changeset attributes such as `runOnChange:true`, `context:...`, and `endDelimiter:--//` on the same `--changeset` line as the changeset id.
+- In Liquibase formatted SQL, put checksum allowances on a separate line inside the changeset as `--validCheckSum: ANY`; it has no effect in the `--changeset` line.
 - Do not add a separate changeset just to update existing procedures, functions, triggers, or views if the existing repeatable changeset can be updated safely.
-- If a new changeset is needed for a related database change, prefer placing it in the same changelog file after the original related changeset instead of creating a new changelog file.
-- Do not mix repeatable database code such as procedures or functions with tables, types, or other non-repeatable schema objects in the same changeset.
-- Existing mixed changesets are a legacy. Keep them working, but do not use them as a pattern for new changesets.
-
-You can check Liquibase migration compatibility by running the tests 
-`LiquibaseCompatibilityIntegrationTest` and `ImportHostingAssets` via the tag "migrationTest"
-as follows: `. .tc-environment; ./gradlew migrationTest`.
-
-## Liquibase Changeset Rules
-
-- Generally, existing changesets must not be changed after they have been released. But there are exceptions, as follows.
-- Add a new follow-up changeset for amendments to released database structures, for example `alter table` after an earlier changeset with the related `create table`.
-- Existing changesets may be changed if they are marked with `runOnChange:true validCheckSum:ANY` and are repeatable.
-- A changeset is repeatable only if it defines or updates procedures, functions, triggers, views, or similar database code using `create or replace`, `drop ... if exists`, guarded creation, or equivalent idempotent patterns.
-- Do not add a separate changeset just to update existing procedures, functions, triggers, or views if the existing repeatable changeset can be updated safely.
-- If a new changeset is needed for a related database change, prefer placing it in the same changelog file after the original related changeset instead of creating a new changelog file.
+- If new changes are needed for a related database change, prefer placing it in the same changelog file after the original related changeset instead of creating a new changelog file.
 - Do not mix repeatable database code such as procedures or functions with tables, types, or other non-repeatable schema objects in the same changeset.
 - Existing mixed changesets are a legacy. Keep them working, but do not use them as a pattern for new changesets.
 
@@ -100,7 +87,7 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 - Useful checks:
   - `./gradlew openApiGenerate`
   - `./gradlew test --tests ...`
-  - `. .tc-environment; ./gradlew jacocoTestCoverageVerification migrationTest` for a quick and yet broad check without integration/acceptance/scenario tests - will need about 2 min
+  - `. .tc-environment; ./gradlew jacocoTestCoverageVerification migrationTest` for a quick and yet broad check without integration/acceptance/scenario tests – will need about 2 min
   - `./gradlew spotlessJavaCheck -x test`
 - Never run a full `./gradlew test`, it's extremely slow.
 
@@ -122,6 +109,25 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 - Scenario test method names are converted into report titles. Choose method names as human-readable scenario titles.
 - Prefer real API endpoints for lookups needed by a scenario. Do not use unrelated endpoints or temporary assumed-role context changes just to resolve data.
 - When an API surface is missing for a scenario, update the OpenAPI YAML, regenerate interfaces with `./gradlew openApiGenerate`, and adapt controller/repository/tests.
+
+## Code Review
+
+Use this procedure when asked to "review" or "code-review" a branch or PR.
+
+- Determine the review base: the PR's target branch (e.g. `origin/<base>`), `master` is default. Review the diff `git diff <base>...HEAD`.
+- Also, examine the diff-changes in the final code context of the branch under review.
+- To understand intent and scope, first read the PR document under `doc/PR/`, which belongs to the branch under review.
+- The PR-document must exist, otherwise create it and make a review-comment that it was missing.
+- Separate signal from noise: focus on the substantive core (logic, SQL, constraints, migrations, API contracts); do not get lost in mechanical churn such as bulk renames.
+<!-- disable:fixmes -->
+- Mark every finding with a terse in-code comment using a `FIXME:` marker on the first line of your review-comment, at the exact finding location: 
+  - Java: `// FIXME.review: <terse note>`
+  - SQL: `-- FIXME.review: <terse note>`
+  - YAML: `# FIXME.review: <terse note>`
+  - Markdown: `<!-- FIXME.review: <terse note> -->`
+<!-- enable:fixmes --> 
+- During a review, add ONLY such comments. Do not modify implementation, tests, or documentation unless the user explicitly asks.
+- In order not to break any tests with these review-comments, respect the Liquibase Changeset Rules when commenting inside changelogs: only add comments to new changesets or to repeatable ones (`runOnChange:true` or `--validCheckSum: ANY`).
 
 ## Local Environment Notes
 

@@ -69,7 +69,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
     private void createHostsharingPerson() {
         jpaAttempt.transacted(() ->
                 {
-                    context.define("superuser-alex@hostsharing.net");
+                    context.define("hsh-alex_superuser");
                     putAlias(
                             "Person: Hostsharing eG",
                             personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream()

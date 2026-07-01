@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-contact-TEST-DATA-GENERATOR endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-TEST-DATA-GENERATOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -11,12 +12,14 @@
 create or replace procedure hs_office.contact_create_test_data(contCaption varchar)
     language plpgsql as $$
 declare
+    subjectName     varchar;
     emailAddr       varchar;
 begin
+    subjectName = 'tst-contact_admin_' || lower(base.cleanIdentifier(contCaption));
     emailAddr = 'contact-admin@' || base.cleanIdentifier(contCaption) || '.example.com';
     call base.defineContext('creating contact test-data');
-    perform rbac.create_subject(emailAddr);
-    call base.defineContext('creating contact test-data', null, emailAddr);
+    perform rbac.create_subject(subjectName);
+    call base.defineContext('creating contact test-data', null, subjectName);
 
     raise notice 'creating test contact: %', contCaption;
     insert

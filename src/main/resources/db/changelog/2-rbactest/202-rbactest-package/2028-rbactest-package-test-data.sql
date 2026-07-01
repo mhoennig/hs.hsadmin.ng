@@ -1,7 +1,8 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset michael.hoennig:test-package-TEST-DATA-GENERATOR endDelimiter:--//
+--changeset michael.hoennig:test-package-TEST-DATA-GENERATOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Creates the given number of test packages for the given customer.
@@ -20,9 +21,9 @@ begin
     for t in 0..(pacCount-1)
         loop
             pacName = cust.prefix || to_char(t, 'fm00');
-            custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
+            custAdminUser = 'tst-customer_admin_' || cust.prefix;
             custAdminRole = 'rbactest.customer#' || cust.prefix || ':ADMIN';
-            call base.defineContext('creating RBAC test package', null, 'superuser-fran@hostsharing.net', custAdminRole);
+            call base.defineContext('creating RBAC test package', null, 'hsh-fran_superuser', custAdminRole);
 
             insert
                 into rbactest.package (customerUuid, name, description)
@@ -32,7 +33,7 @@ begin
             call rbac.grantRoleToSubject(
                     rbac.getRoleId(rbactest.customer_ADMIN(cust)),
                     rbac.findRoleId(rbactest.package_ADMIN(pac)),
-                    rbac.create_subject('pac-admin-' || pacName || '@' || cust.prefix || '.example.com'),
+                    rbac.create_subject('tst-pac_admin_' || pacName),
                     true);
 
         end loop;

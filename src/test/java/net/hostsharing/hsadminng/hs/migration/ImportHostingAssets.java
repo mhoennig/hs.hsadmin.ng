@@ -98,7 +98,7 @@ import static org.springframework.util.FileCopyUtils.copyToByteArray;
         "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:17.7-trixie:///importHostingAssetsTC}",
         "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
-        "hsadminng.superuser=${HSADMINNG_SUPERUSER:import-superuser@hostsharing.net}",
+        "hsadminng.superuser=${HSADMINNG_SUPERUSER:hsh-import_superuser}",
         "spring.liquibase.enabled=false" // @Sql should go first, Liquibase will be initialized programmatically
 })
 @DirtiesContext
@@ -164,7 +164,6 @@ public class ImportHostingAssets extends CsvDataImport {
     void liquibaseMigrationForBookingAndHosting() {
         executeSqlScript(officeSchemaAndDataSqlFile);
         liquibase.assertReferenceStatusAfterRestore(286, "hs-booking-SCHEMA");
-        makeSureThatTheImportAdminUserExists();
         PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-prod-schema-with-import-test-data.sql"));
         liquibase.runWithContexts("migration", "without-test-data");
         liquibase.assertThatCurrentMigrationsGotApplied(331, "hs-booking-SCHEMA");

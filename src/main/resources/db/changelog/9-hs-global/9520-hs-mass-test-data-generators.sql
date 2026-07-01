@@ -17,7 +17,7 @@ create or replace procedure hs_office.contact_create_mass_test_data(
 begin
     for t in startCount..endCount
         loop
-            call base.defineContext('mass contact test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass contact test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             call hs_office.contact_create_test_data(captionPrefix || base.intToVarChar(t, 4));
             commit;
         end loop;
@@ -34,7 +34,7 @@ declare
 begin
     for t in startCount..endCount
         loop
-            call base.defineContext('mass person test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass person test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             idx := base.intToVarChar(t, 4);
             if t % 5 = 0 then
                 call hs_office.person_create_test_data('NP', null, 'MassFamily' || idx, 'MassGiven' || idx, true);
@@ -71,7 +71,7 @@ begin
 
     for t in startCount..endCount
         loop
-            call base.defineContext('mass relation test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass relation test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             idx := base.intToVarChar(t, 4);
             partnerPersonName := case when t % 5 = 0 then 'MassFamily' || idx else 'Mass Partner ' || idx || ' GmbH' end;
             representativeFamilyName := 'MassRep' || idx;
@@ -128,7 +128,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass partner test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass partner test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             idx := base.intToVarChar(t, 4);
             partnerPersonName := case when t % 5 = 0 then 'MassFamily' || idx else 'Mass Partner ' || idx || ' GmbH' end;
             contactCaption := contactCaptionPrefix || idx;
@@ -155,7 +155,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass bankaccount test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass bankaccount test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             idx := base.intToVarChar(t, 4);
             v_holder := case when t % 5 = 0 then 'MassFamily' || idx else 'Mass Partner ' || idx || ' GmbH' end;
             v_iban := 'DE' || lpad(t::text, 20, '0');
@@ -187,7 +187,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass debitor test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass debitor test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             idx := base.intToVarChar(t, 4);
             partnerPersonName := case when t % 5 = 0 then 'MassFamily' || idx else 'Mass Partner ' || idx || ' GmbH' end;
             suffixNum := 10 + (t % 90);
@@ -225,7 +225,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass sepa-mandate test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass sepa-mandate test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             suffixText := lpad((10 + (t % 90))::text, 2, '0');
             iban := 'DE' || lpad(t::text, 20, '0');
 
@@ -261,7 +261,7 @@ begin
 
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass membership test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass membership test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             if (t % 100) < withMembershipPercentage then
                 memberSuffix := lpad((10 + (t % 90))::text, 2, '0');
                 call hs_office.membership_create_test_data(t, memberSuffix, daterange('20221001', null, '[]'), 'ACTIVE');
@@ -284,7 +284,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass coop-sharetx test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass coop-sharetx test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             if (t % 100) < withMembershipPercentage then
                 memberSuffix := lpad((10 + (t % 90))::text, 2, '0');
                 select m.uuid into v_membershipUuid
@@ -316,7 +316,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass coop-assettx test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass coop-assettx test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             if (t % 100) < withMembershipPercentage then
                 memberSuffix := lpad((10 + (t % 90))::text, 2, '0');
                 select m.uuid into v_membershipUuid
@@ -346,7 +346,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass booking-project test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass booking-project test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             suffixText := lpad((10 + (t % 90))::text, 2, '0');
             if not exists (
                 select 1 from hs_booking.project p where p.caption = 'D-' || t::text || suffixText || ' default project'
@@ -370,7 +370,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass booking-item test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass booking-item test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             suffixText := lpad((10 + (t % 90))::text, 2, '0');
             select p.uuid into v_projectUuid from hs_booking.project p where p.caption = 'D-' || t::text || suffixText || ' default project';
             if v_projectUuid is not null and not exists (
@@ -397,7 +397,7 @@ declare
 begin
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass hosting-asset test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass hosting-asset test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             suffixText := lpad((10 + (t % 90))::text, 2, '0');
             projectCaption := 'D-' || t::text || suffixText || ' default project';
             select d.debitorNumberSuffix, d.defaultPrefix
@@ -452,7 +452,7 @@ declare
 begin
     for t in startCount..endCount
         loop
-            call base.defineContext('mass account-person test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass account-person test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             idx := base.intToVarChar(t, 4);
             call hs_office.person_create_test_data('NP', null, 'MassAccountFamily' || idx, 'MassAccountGiven' || idx, true);
             commit;
@@ -463,22 +463,22 @@ end; $$;
 create or replace procedure hs_accounts.account_create_mass_test_data(
     startCount integer,
     endCount integer,
-    emailPrefix varchar default 'mass-account-',
+    subjectPrefix varchar default 'tst-account_',
     uidOffset integer default 200000
 )
     language plpgsql as $$
 declare
     t integer;
     idx varchar;
-    accountEmail varchar;
+    subjectName varchar;
     subjectUuid uuid;
     personUuid uuid;
 begin
     for t in startCount..endCount
         loop
-            call base.defineContext('mass profile test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass profile test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             idx := base.intToVarChar(t, 4);
-            accountEmail := emailPrefix || idx || '@example.com';
+            subjectName := subjectPrefix || idx;
             select p.uuid into personUuid
                 from hs_office.person p
                 where p.familyName = 'MassAccountFamily' || idx and p.givenName = 'MassAccountGiven' || idx;
@@ -486,8 +486,8 @@ begin
             if personUuid is not null and not exists (
                 select 1 from hs_accounts.account pr where pr.person_uuid = personUuid
             ) then
-                perform rbac.create_subject(accountEmail);
-                select s.uuid into subjectUuid from rbac.subject s where s.name = accountEmail;
+                perform rbac.create_subject(subjectName);
+                select s.uuid into subjectUuid from rbac.subject s where s.name = subjectName;
 
                 insert into hs_accounts.account (
                     uuid, version, person_uuid,
@@ -512,10 +512,10 @@ declare
     t integer;
     idx varchar;
     personUuid uuid;
-    accountEmail varchar;
+    subjectName varchar;
     subjectUuid uuid;
 begin
-    call base.defineContext('creating mass partner bundle test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+    call base.defineContext('creating mass partner bundle test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
     set constraints all deferred;
 
     call hs_office.contact_create_mass_test_data(startPartnerNumber::integer, endPartnerNumber::integer);
@@ -536,7 +536,7 @@ begin
 
     for t in startPartnerNumber::integer..endPartnerNumber::integer
         loop
-            call base.defineContext('mass partner bundle account test-data #' || t, null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+            call base.defineContext('mass partner bundle account test-data #' || t, null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
             if t % 5 = 0 then
                 idx := base.intToVarChar(t, 4);
                 select p.uuid into personUuid
@@ -546,9 +546,9 @@ begin
                 if personUuid is not null and not exists (
                     select 1 from hs_accounts.account pr where pr.person_uuid = personUuid
                 ) then
-                    accountEmail := 'mass-person-' || idx || '@example.com';
-                    perform rbac.create_subject(accountEmail);
-                    select s.uuid into subjectUuid from rbac.subject s where s.name = accountEmail;
+                    subjectName := 'tst-person_' || idx;
+                    perform rbac.create_subject(subjectName);
+                    select s.uuid into subjectUuid from rbac.subject s where s.name = subjectName;
 
                     insert into hs_accounts.account (
                         uuid, version, person_uuid,
@@ -568,9 +568,9 @@ begin
             if personUuid is not null and not exists (
                 select 1 from hs_accounts.account pr where pr.person_uuid = personUuid
             ) then
-                accountEmail := 'mass-rep-' || idx || '@example.com';
-                perform rbac.create_subject(accountEmail);
-                select s.uuid into subjectUuid from rbac.subject s where s.name = accountEmail;
+                subjectName := 'tst-rep_' || lower(idx);
+                perform rbac.create_subject(subjectName);
+                select s.uuid into subjectUuid from rbac.subject s where s.name = subjectName;
 
                 insert into hs_accounts.account (
                     uuid, version, person_uuid,

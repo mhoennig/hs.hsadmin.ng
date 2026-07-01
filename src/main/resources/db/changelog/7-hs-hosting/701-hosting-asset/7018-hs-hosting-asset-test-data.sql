@@ -30,7 +30,7 @@ declare
     pgSqlInstanceUuid                   uuid;
     PgSqlSubjectUuid                       uuid;
 begin
-    call base.defineContext('creating hosting-asset test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+    call base.defineContext('creating hosting-asset test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
     select project.* into relatedProject
                   from hs_booking.project project
@@ -110,7 +110,7 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call base.defineContext('creating hosting-asset test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+        call base.defineContext('creating hosting-asset test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
         call hs_hosting.asset_create_test_data('D-1000111 default project');
         call hs_hosting.asset_create_test_data('D-1000212 default project');

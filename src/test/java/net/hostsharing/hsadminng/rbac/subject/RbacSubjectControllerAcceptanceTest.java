@@ -21,6 +21,7 @@ import static java.util.UUID.randomUUID;
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasItem;
@@ -59,7 +60,7 @@ class RbacSubjectControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("""
                               {
-                                "name": "new-user@example.com"
+                                "name": "tst-new_user"
                               }
                               """)
                         .port(port)
@@ -68,7 +69,7 @@ class RbacSubjectControllerAcceptanceTest {
                     .then().assertThat()
                         .statusCode(201)
                         .contentType(ContentType.JSON)
-                        .body("name", is("new-user@example.com"))
+                        .body("name", is("tst-new_user"))
                         .header("Location", startsWith("http://localhost"))
                         .extract().header("Location");
             // @formatter:on
@@ -76,9 +77,78 @@ class RbacSubjectControllerAcceptanceTest {
             // finally, the user can view its own record
             final var newSubjectUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            context.define("new-user@example.com");
+            context.define("tst-new_user");
             assertThat(rbacSubjectRepository.findByUuid(newSubjectUuid))
-                    .extracting(RbacSubjectEntity::getName).isEqualTo("new-user@example.com");
+                    .extracting(RbacSubjectEntity::getName).isEqualTo("tst-new_user");
+        }
+
+        @Test
+        void anybody_cannotCreateAUserWithInvalidName() {
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "invalid-username@example.com"
+                              }
+                              """)
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(400)
+                        .body("message", containsString(
+                                "USER subject name 'invalid-username@example.com' does not match required pattern"
+                        ));
+            // @formatter:on
+        }
+
+        @Test
+        void anybody_canCreateANewGroup() {
+            final var newGroupName = "/xyz-Team-" + System.currentTimeMillis();
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "%s",
+                                "type": "GROUP"
+                              }
+                              """.formatted(newGroupName))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("name", is(newGroupName))
+                        .body("type", is("GROUP"));
+            // @formatter:on
+        }
+
+        @Test
+        void anybody_cannotCreateAGroupWithUserName() {
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "xyz-Team",
+                                "type": "GROUP"
+                              }
+                              """)
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(400);
+            // @formatter:on
         }
     }
 
@@ -87,30 +157,30 @@ class RbacSubjectControllerAcceptanceTest {
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryUser() {
-            final var givenUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_xxx00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
                 .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("name", is("pac-admin-xxx00@xxx.example.com"));
+                    .body("name", is("tst-pac_admin_xxx00"));
             // @formatter:on
         }
 
         @Test
         void globalAdmin_withAssumedCustomerAdminRole_canGetUserWithinInItsRealm() {
-            final var givenUser = findRbacSubjectByName("pac-admin-yyy00@yyy.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -118,36 +188,36 @@ class RbacSubjectControllerAcceptanceTest {
                 .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("name", is("pac-admin-yyy00@yyy.example.com"));
+                    .body("name", is("tst-pac_admin_yyy00"));
             // @formatter:on
         }
 
         @Test
         void customerAdmin_withoutAssumedRole_canGetUserWithinInItsRealm() {
-            final var givenUser = findRbacSubjectByName("pac-admin-yyy00@yyy.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("customer-admin@yyy.example.com"))
+                    .header("Authorization", bearer("tst-customer_admin_yyy"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
                 .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("name", is("pac-admin-yyy00@yyy.example.com"));
+                    .body("name", is("tst-pac_admin_yyy00"));
             // @formatter:on
         }
 
         @Test
         void customerAdmin_withoutAssumedRole_canNotGetUserOutsideOfItsRealm() {
-            final var givenUser = findRbacSubjectByName("pac-admin-yyy00@yyy.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("customer-admin@xxx.example.com"))
+                    .header("Authorization", bearer("tst-customer_admin_xxx"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -166,21 +236,21 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
                 .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("", hasItem(hasEntry("name", "customer-admin@xxx.example.com")))
-                    .body("", hasItem(hasEntry("name", "customer-admin@yyy.example.com")))
-                    .body("", hasItem(hasEntry("name", "customer-admin@zzz.example.com")))
-                    .body("", hasItem(hasEntry("name", "superuser-alex@hostsharing.net")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_xxx")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_yyy")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_zzz")))
+                    .body("", hasItem(hasEntry("name", "hsh-alex_superuser")))
                     // ...
-                    .body("", hasItem(hasEntry("name", "pac-admin-zzz01@zzz.example.com")))
-                    .body("", hasItem(hasEntry("name", "pac-admin-zzz02@zzz.example.com")))
-                    .body("", hasItem(hasEntry("name", "superuser-fran@hostsharing.net")))
+                    .body("", hasItem(hasEntry("name", "tst-pac_admin_zzz01")))
+                    .body("", hasItem(hasEntry("name", "tst-pac_admin_zzz02")))
+                    .body("", hasItem(hasEntry("name", "hsh-fran_superuser")))
                     .body("size()", greaterThanOrEqualTo(14));
             // @formatter:on
         }
@@ -191,17 +261,17 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
-                    .get("http://localhost/api/rbac/subjects?name=pac-admin-zzz0")
+                    .get("http://localhost/api/rbac/subjects?name=tst-pac_admin_zzz0")
                 .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("pac-admin-zzz00@zzz.example.com"))
+                    .body("[0].name", is("tst-pac_admin_zzz00"))
                     .body("[0].type", is("USER"))
-                    .body("[1].name", is("pac-admin-zzz01@zzz.example.com"))
-                    .body("[2].name", is("pac-admin-zzz02@zzz.example.com"))
+                    .body("[1].name", is("tst-pac_admin_zzz01"))
+                    .body("[2].name", is("tst-pac_admin_zzz02"))
                     .body("size()", is(3));
             // @formatter:on
         }
@@ -212,7 +282,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects?type=GROUP")
@@ -233,7 +303,7 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("Authorization", bearer(
-                            "person-FirbySusan@example.com",
+                            "tst-person_firbysusan",
                             List.of("/xyz-Service")))
                     .queryParam("name", "/xyz-Service")
                     .queryParam("type", "GROUP")
@@ -255,7 +325,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -263,10 +333,10 @@ class RbacSubjectControllerAcceptanceTest {
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("customer-admin@yyy.example.com"))
-                    .body("[1].name", is("pac-admin-yyy00@yyy.example.com"))
-                    .body("[2].name", is("pac-admin-yyy01@yyy.example.com"))
-                    .body("[3].name", is("pac-admin-yyy02@yyy.example.com"))
+                    .body("[0].name", is("tst-customer_admin_yyy"))
+                    .body("[1].name", is("tst-pac_admin_yyy00"))
+                    .body("[2].name", is("tst-pac_admin_yyy01"))
+                    .body("[3].name", is("tst-pac_admin_yyy02"))
                     .body("size()", is(4));
             // @formatter:on
         }
@@ -277,17 +347,17 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("customer-admin@yyy.example.com"))
+                    .header("Authorization", bearer("tst-customer_admin_yyy"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("customer-admin@yyy.example.com"))
-                    .body("[1].name", is("pac-admin-yyy00@yyy.example.com"))
-                    .body("[2].name", is("pac-admin-yyy01@yyy.example.com"))
-                    .body("[3].name", is("pac-admin-yyy02@yyy.example.com"))
+                    .body("[0].name", is("tst-customer_admin_yyy"))
+                    .body("[1].name", is("tst-pac_admin_yyy00"))
+                    .body("[2].name", is("tst-pac_admin_yyy01"))
+                    .body("[3].name", is("tst-pac_admin_yyy02"))
                     .body("size()", is(4));
             // @formatter:on
         }
@@ -298,14 +368,14 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("pac-admin-xxx01@xxx.example.com"))
+                    .header("Authorization", bearer("tst-pac_admin_xxx01"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("pac-admin-xxx01@xxx.example.com"))
+                    .body("[0].name", is("tst-pac_admin_xxx01"))
                     .body("size()", is(1));
             // @formatter:on
         }
@@ -316,12 +386,12 @@ class RbacSubjectControllerAcceptanceTest {
 
         @Test
         void globalAdmin_withoutAssumedRole_canViewArbitraryUsersPermissions() {
-            final var givenUser = findRbacSubjectByName("pac-admin-yyy00@yyy.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")
@@ -345,12 +415,12 @@ class RbacSubjectControllerAcceptanceTest {
 
         @Test
         void globalAdmin_withAssumedCustomerAdminRole_canViewArbitraryUsersPermissions() {
-            final var givenUser = findRbacSubjectByName("pac-admin-yyy00@yyy.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -375,12 +445,12 @@ class RbacSubjectControllerAcceptanceTest {
 
         @Test
         void packageAdmin_withoutAssumedRole_canViewPermissionsOfUsersInItsRealm() {
-            final var givenUser = findRbacSubjectByName("pac-admin-yyy00@yyy.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("pac-admin-yyy00@yyy.example.com"))
+                    .header("Authorization", bearer("tst-pac_admin_yyy00"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")
@@ -404,12 +474,12 @@ class RbacSubjectControllerAcceptanceTest {
 
         @Test
         void packageAdmin_canViewPermissionsOfUsersOutsideOfItsRealm() {
-            final var givenUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
+            final var givenUser = findRbacSubjectByName("tst-pac_admin_xxx00");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("Authorization", bearer("pac-admin-yyy00@yyy.example.com"))
+                    .header("Authorization", bearer("tst-pac_admin_yyy00"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")
@@ -454,7 +524,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                     .given()
-                        .header("Authorization", bearer("customer-admin@xxx.example.com"))
+                        .header("Authorization", bearer("tst-customer_admin_xxx"))
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -476,7 +546,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -491,15 +561,15 @@ class RbacSubjectControllerAcceptanceTest {
 
     RbacSubjectEntity findRbacSubjectByName(final String userName) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             return rbacSubjectRepository.findByName(userName);
         }).returnedValue();
     }
 
     RbacSubjectEntity givenANewUser() {
-        final var givenUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+        final var givenUserName = "tst-user_" + System.currentTimeMillis();
         final var givenUser = jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             return rbacSubjectRepository.create(
                     RbacSubjectEntity.builder().uuid(randomUUID()).name(givenUserName).build());
         }).assumeSuccessful().returnedValue();

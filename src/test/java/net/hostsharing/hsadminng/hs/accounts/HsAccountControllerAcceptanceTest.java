@@ -65,7 +65,7 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @BeforeEach
     void setUp() {
-        context.define("superuser-alex@hostsharing.net");
+        context.define("hsh-alex_superuser");
     }
 
     @Nested
@@ -74,18 +74,18 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
         @Test
         void shouldFetchCurrentLoginUser() {
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/accounts/current")
                     .then().log().all().assertThat()
                         .statusCode(200)
                         .contentType("application/json")
-                        .body("subject.name", equalTo("superuser-alex@hostsharing.net"))
+                        .body("subject.name", equalTo("hsh-alex_superuser"))
                         .body("globalAdmin", equalTo(true));
             // @formatter:on
         }
@@ -97,8 +97,8 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
         @Test
         void shouldGetAccountByUuid() {
             // given
-            val legalPerson = givenLegalPerson("selfregistered-user-drew@hostsharing.org");
-            val accountEntity = givenNewAccount("selfregistered-user-drew@hostsharing.org",
+            val legalPerson = givenLegalPerson("tst-drew_selfregistered");
+            val accountEntity = givenNewAccount("tst-drew_selfregistered",
                     "test-subject1", legalPerson, builder -> {
             });
 
@@ -139,11 +139,11 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
             // For now, we only allow global-admins to create new accounts.
 
             // given
-            val testPerson = givenPersonWithUuid("selfregistered-user-drew@hostsharing.org");
+            val testPerson = givenPersonWithUuid("tst-drew_selfregistered");
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
                         .header("Accept-Language", "de")
                         .contentType(ContentType.JSON)
                         .body("""
@@ -160,7 +160,7 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                     .then().log().all().assertThat()
                         .statusCode(403)
                         .contentType("application/json")
-                        .body("message", containsString("Das Subjekt selfregistered-user-drew@hostsharing.org hat keine Berechtigung, die Rolle rbac.global#global:ADMIN anzunehmen"));
+                        .body("message", containsString("Das Subjekt tst-drew_selfregistered hat keine Berechtigung, die Rolle rbac.global#global:ADMIN anzunehmen"));
             // @formatter:on
         }
 
@@ -171,7 +171,7 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Accept-Language", "de")
                         .contentType(ContentType.JSON)
                         .body("""

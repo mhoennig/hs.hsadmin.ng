@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-membership-TEST-DATA-GENERATOR runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:hs-office-membership-TEST-DATA-GENERATOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -41,12 +42,13 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-membership-TEST-DATA-GENERATION runOnChange:true validCheckSum:ANY context:!without-test-data endDelimiter:--//
+--changeset michael.hoennig:hs-office-membership-TEST-DATA-GENERATION context:!without-test-data endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call base.defineContext('creating Membership test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+        call base.defineContext('creating Membership test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
         call hs_office.membership_create_test_data(10001, '01', daterange('20221001' , '20241231', '[)'), 'CANCELLED');
         call hs_office.membership_create_test_data(10002, '02', daterange('20221001' , '20251231', '[]'), 'CANCELLED');

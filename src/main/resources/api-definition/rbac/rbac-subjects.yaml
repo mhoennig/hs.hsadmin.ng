@@ -39,7 +39,7 @@ post:
         content:
             application/json:
                 schema:
-                    $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+                    $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubjectInsert'
     responses:
         '201':
             description: Created
@@ -47,5 +47,7 @@ post:
                 'application/json':
                     schema:
                         $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+        '400':
+            $ref: 'error-responses.yaml#/components/responses/BadRequest'
         '409':
             $ref: 'error-responses.yaml#/components/responses/Conflict'

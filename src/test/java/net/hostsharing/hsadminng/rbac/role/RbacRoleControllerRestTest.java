@@ -75,7 +75,7 @@ class RbacRoleControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/roles")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -104,7 +104,7 @@ class RbacRoleControllerRestTest {
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/roles")
                         .param("name", "rbactest.customer#xxx:ADMIN")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON));
 
         // then
@@ -123,7 +123,7 @@ class RbacRoleControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/roles")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Hostsharing-Assumed-Roles", "rbactest.package#xxx00:OWNER")
                         .header("assumed-roles", "rbactest.package#yyy00:OWNER")
                         .accept(MediaType.APPLICATION_JSON))

@@ -35,13 +35,13 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewCustomer() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var count = testCustomerRepository.count();
 
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        null, 0, "www", 90001, "customer-admin@www.example.com");
+                        null, 0, "www", 90001, "tst-customer_admin_www");
                 return testCustomerRepository.save(newCustomer);
             });
 
@@ -55,12 +55,12 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
+            context("hsh-alex_superuser", "rbactest.customer#xxx:ADMIN");
 
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        null, 0, "www", 90001, "customer-admin@www.example.com");
+                        null, 0, "www", 90001, "tst-customer_admin_www");
                 return testCustomerRepository.save(newCustomer);
             });
 
@@ -74,12 +74,12 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_cannotCreateNewCustomer() {
             // given
-            context("customer-admin@xxx.example.com", null);
+            context("tst-customer_admin_xxx", null);
 
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        null, 0, "www", 90001, "customer-admin@www.example.com");
+                        null, 0, "www", 90001, "tst-customer_admin_www");
                 return testCustomerRepository.save(newCustomer);
             });
 
@@ -87,7 +87,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
                     "ERROR: [403] insert into rbactest.customer ",
-                    " not allowed for current subjects {customer-admin@xxx.example.com}");
+                    " not allowed for current subjects {tst-customer_admin_xxx}");
 
         }
 
@@ -103,7 +103,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -115,7 +115,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerOwnerRole_canViewExactlyThatCustomer() {
             given:
-            context("superuser-alex@hostsharing.net", "rbactest.customer#yyy:OWNER");
+            context("hsh-alex_superuser", "rbactest.customer#yyy:OWNER");
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -127,7 +127,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
             // given:
-            context("customer-admin@xxx.example.com", null);
+            context("tst-customer_admin_xxx", null);
 
             // when:
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -138,9 +138,9 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
-            context("customer-admin@xxx.example.com");
+            context("tst-customer_admin_xxx");
 
-            context("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+            context("tst-customer_admin_xxx", "rbactest.package#xxx00:ADMIN");
 
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
 
@@ -154,7 +154,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike("yyy");
@@ -166,7 +166,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
             // given:
-            context("customer-admin@xxx.example.com", null);
+            context("tst-customer_admin_xxx", null);
 
             // when:
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike("yyy");

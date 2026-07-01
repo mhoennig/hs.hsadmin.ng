@@ -80,7 +80,8 @@ create index on base.tx_journal (targetTable, targetUuid);
 --//
 
 -- ============================================================================
---changeset michael.hoennig:audit-TX-JOURNAL-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:audit-TX-JOURNAL-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     A view combining base.tx_journal with base.tx_context.
@@ -104,7 +105,8 @@ select txc.seqTxId,
 --//
 
 -- ============================================================================
---changeset michael.hoennig:audit-TX-JOURNAL-TRIGGER runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:audit-TX-JOURNAL-TRIGGER runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Trigger function for transaction audit journal.

@@ -22,7 +22,8 @@ select (objectTable || '#' || objectIdName || ':' || roleType) as roleIdName, *
 --//
 
 -- ============================================================================
---changeset michael.hoennig:rbac-views-ROLE-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-views-ROLE-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Creates a view to the role table with row-level limitation
@@ -105,7 +106,8 @@ create or replace view rbac.grant_ev as
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-views-GRANT-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-views-GRANT-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Creates a view to the grants table with row-level limitation
@@ -221,7 +223,8 @@ select distinct *
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-views-USER-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-views-USER-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Creates a view to the subjects-table with row-level limitation
@@ -248,7 +251,8 @@ grant all privileges on rbac.subject_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERN
 --//
 
 -- ============================================================================
---changeset michael.hoennig:rbac-views-USER-RV-INSERT-TRIGGER runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-views-USER-RV-INSERT-TRIGGER runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /**
@@ -313,7 +317,8 @@ execute function rbac.delete_subject_tf();
 --/
 
 -- ============================================================================
---changeset michael.hoennig:rbac-views-OWN-GRANTED-PERMISSIONS-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-views-OWN-GRANTED-PERMISSIONS-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Creates a view to all permissions granted to the current user or

@@ -57,7 +57,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewContact() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = contactRepo.count();
 
             // when
@@ -76,7 +76,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_canCreateNewContact() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var count = contactRepo.count();
 
             // when
@@ -95,7 +95,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
@@ -117,7 +117,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
                     initialGrantNames,
                     "{ grant role:hs_office.contact#anothernewcontact:OWNER     to role:rbac.global#global:ADMIN                          by system and assume }",
                     "{ grant perm:hs_office.contact#anothernewcontact:UPDATE    to role:hs_office.contact#anothernewcontact:ADMIN    by system and assume }",
-                    "{ grant role:hs_office.contact#anothernewcontact:OWNER     to user:selfregistered-user-drew@hostsharing.org     by hs_office.contact#anothernewcontact:OWNER and assume }",
+                    "{ grant role:hs_office.contact#anothernewcontact:OWNER     to user:tst-drew_selfregistered     by hs_office.contact#anothernewcontact:OWNER and assume }",
                     "{ grant perm:hs_office.contact#anothernewcontact:DELETE     to role:hs_office.contact#anothernewcontact:OWNER    by system and assume }",
                     "{ grant role:hs_office.contact#anothernewcontact:ADMIN     to role:hs_office.contact#anothernewcontact:OWNER    by system and assume }",
 
@@ -138,7 +138,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllContacts() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = contactRepo.findContactByOptionalCaptionLike(null);
@@ -150,10 +150,10 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_canViewOnlyItsOwnContact() {
             // given:
-            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("tst-drew_selfregistered");
 
             // when:
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var result = contactRepo.findContactByOptionalCaptionLike(null);
 
             // then:
@@ -167,7 +167,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllContacts() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
 
             // when
             final var result = contactRepo.findContactByOptionalCaptionLike("second");
@@ -179,10 +179,10 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_withoutAssumedRole_canViewOnlyItsOwnContact() {
             // given:
-            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("tst-drew_selfregistered");
 
             // when:
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var result = contactRepo.findContactByOptionalCaptionLike(givenContact.getCaption());
 
             // then:
@@ -196,7 +196,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canFindContactsByEmailAddress() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
 
             // when
             final var result = contactRepo.findContactByEmailAddress("%@secondcontact.example.com");
@@ -212,19 +212,19 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyContact() {
             // given
-            context("superuser-alex@hostsharing.net", null);
-            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
+            context("hsh-alex_superuser", null);
+            final var givenContact = givenSomeTemporaryContact("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 contactRepo.deleteByUuid(givenContact.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 return contactRepo.findContactByOptionalCaptionLike(givenContact.getCaption());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -232,18 +232,18 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_withoutAssumedRole_canDeleteAContactCreatedByItself() {
             // given
-            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("selfregistered-user-drew@hostsharing.org", null);
+                context("tst-drew_selfregistered", null);
                 contactRepo.deleteByUuid(givenContact.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 return contactRepo.findContactByOptionalCaptionLike(givenContact.getCaption());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -251,14 +251,14 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void deletingAContactAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("selfregistered-user-drew@hostsharing.org", null);
+            context("tst-drew_selfregistered", null);
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
-            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("selfregistered-user-drew@hostsharing.org", null);
+                context("tst-drew_selfregistered", null);
                 return contactRepo.deleteByUuid(givenContact.getUuid());
             });
 

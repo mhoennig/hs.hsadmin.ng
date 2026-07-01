@@ -54,7 +54,7 @@ class RbacGrantTestHelper {
          * Grants the selected role to the given subject.
          */
         void to(final String subjectName) {
-            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            context.define("hsh-alex_superuser", "rbac.global#global:ADMIN");
             em.createNativeQuery("""
                     call rbac.grantRoleToSubjectUnchecked(
                         rbac.findRoleId(:grantedByRoleName),

@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-bankaccount-TEST-DATA-GENERATOR endDelimiter:--//
+--changeset michael.hoennig:hs-office-bankaccount-TEST-DATA-GENERATOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -11,11 +12,11 @@
 create or replace procedure hs_office.bankaccount_create_test_data(givenHolder varchar, givenIBAN varchar, givenBIC varchar)
     language plpgsql as $$
 declare
-    emailAddr varchar;
+    subjectName varchar;
 begin
-    emailAddr = 'bankaccount-admin@' || TRIM(SUBSTRING(base.cleanIdentifier(givenHolder) FOR 32)) || '.example.com';
-    perform rbac.create_subject(emailAddr);
-    call base.defineContext('creating bankaccount test-data', null, emailAddr);
+    subjectName = 'tst-bankaccount_' || lower(replace(TRIM(SUBSTRING(base.cleanIdentifier(givenHolder) FOR 47)), '-', '_'));
+    perform rbac.create_subject(subjectName);
+    call base.defineContext('creating bankaccount test-data', null, subjectName);
 
     raise notice 'creating test bankaccount: %', givenHolder;
     insert

@@ -81,11 +81,12 @@ end; $$;
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-relation-TEST-DATA-GENERATION context:!without-test-data endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call base.defineContext('creating relation test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+        call base.defineContext('creating relation test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
         call hs_office.relation_create_test_data('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
         call hs_office.relation_create_test_data('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');

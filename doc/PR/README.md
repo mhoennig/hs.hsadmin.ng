@@ -2,6 +2,8 @@
 
 This directory contains documentation for each pull request (PR).
 
+IMPORTANT: The PR-documentation documents the change in that PR, it might be outdated right after the next PR was merged. Historic PR-documentation is not maintained.
+
 ## Naming Convention
 
 1. Date of the PR in the format `YYYY-MM-DD`

@@ -43,7 +43,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_withoutAssumedRole_canViewAllPackagesDueToBypassoOfRecursiveCteRbacQuery() {
             // given
             // alex is not just rbac.global-admin but also the creating user, thus we use fran
-            context.define("superuser-fran@hostsharing.net");
+            context.define("hsh-fran_superuser");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -57,7 +57,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerAdminRole__canNotViewOnlyThatCustomersPackages() {
             // given
-            context.define("superuser-alex@hostsharing.net", "rbactest.customer#yyy:ADMIN");
+            context.define("hsh-alex_superuser", "rbactest.customer#yyy:ADMIN");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -70,7 +70,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_withTwoAssumedPackageAdminRoles_canViewPackagesOfBothRoles() {
             // given
             context.define(
-                    "superuser-alex@hostsharing.net",
+                    "hsh-alex_superuser",
                     "rbactest.package#xxx00:ADMIN;rbactest.package#yyy00:ADMIN"
             );
 
@@ -84,7 +84,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnPackages() {
             // given:
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
 
             // when:
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -95,7 +95,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
-            context.define("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+            context.define("tst-customer_admin_xxx", "rbactest.package#xxx00:ADMIN");
 
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
@@ -142,7 +142,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     private void globalAdminWithAssumedRole(final String assumedRoles) {
-        context.define("superuser-alex@hostsharing.net", assumedRoles);
+        context.define("hsh-alex_superuser", assumedRoles);
     }
 
     void noPackagesAreReturned(final List<TestPackageEntity> actualResult) {

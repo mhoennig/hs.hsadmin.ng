@@ -61,7 +61,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void globalAdmin_canCreateNewCoopShareTransaction() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = coopSharesTransactionRepo.count();
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow().load();
 
@@ -88,7 +88,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("hs_office.", ""))
@@ -131,7 +131,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void globalAdmin_canViewAllCoopSharesTransactions() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
@@ -161,7 +161,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void globalAdmin_canViewCoopSharesTransactions_filteredByMembershipUuid() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             // when
@@ -182,7 +182,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void globalAdmin_canViewCoopSharesTransactions_filteredByMembershipUuidAndValueDateRange() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             // when
@@ -200,7 +200,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void normalUser_canViewOnlyRelatedCoopSharesTransactions() {
             // given:
-            context("superuser-alex@hostsharing.net", "hs_office.membership#M-1000101:ADMIN");
+            context("hsh-alex_superuser", "hs_office.membership#M-1000101:ADMIN");
 
             // when:
             final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
@@ -250,7 +250,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             em.createQuery("DELETE FROM HsOfficeCoopSharesTransactionEntity WHERE reference like 'temp ref%'");
         });
     }

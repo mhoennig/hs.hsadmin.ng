@@ -61,7 +61,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts")
@@ -123,11 +123,11 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_withoutAssumedRole_canPostNewBankAccount() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                             {
@@ -161,12 +161,12 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryBankAccount() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
@@ -182,12 +182,12 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void normalUser_canNotGetUnrelatedBankAccount() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
@@ -198,12 +198,12 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         @Disabled("TODO: not implemented yet - also add Accepts annotation when done")
         void bankaccountAdminUser_canGetRelatedBankAccount() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("bankaccount-admin@firstbankaccount.example.com"))
+                    .header("Authorization", bearer("tst-bankaccount_firstgmbh"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
@@ -226,12 +226,12 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void patchIsNotImplemented() {
 
-            context.define("superuser-alex@hostsharing.net");
-            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+            context.define("hsh-alex_superuser");
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("tst-rene_selfregistered");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                        {
@@ -248,7 +248,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                 // @formatter:on
 
             // and the bankaccount is unchanged
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isPresent().get()
                     .matches(person -> {
                         assertThat(person.getHolder()).isEqualTo(givenBankAccount.getHolder());
@@ -264,12 +264,12 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void globalAdmin_withoutAssumedRole_canDeleteArbitraryBankAccount() {
-            context.define("superuser-alex@hostsharing.net");
-            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+            context.define("hsh-alex_superuser");
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
@@ -282,11 +282,11 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void bankaccountOwner_canDeleteRelatedBankAaccount() {
-            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-test-user@hostsharing.org"))
+                    .header("Authorization", bearer("tst-rene_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
@@ -295,19 +295,19 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             // then the given bankaccount is still there
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isEmpty();
             }).assertSuccessful();
         }
 
         @Test
         void normalUser_canNotDeleteUnrelatedBankAccount() {
-            context.define("superuser-alex@hostsharing.net");
-            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+            context.define("hsh-alex_superuser");
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
@@ -337,7 +337,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             em.createQuery("DELETE FROM HsOfficeBankAccountEntity b WHERE b.holder LIKE 'temp %'").executeUpdate();
         });
     }

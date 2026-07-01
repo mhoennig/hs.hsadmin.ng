@@ -111,7 +111,8 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-generators-IDENTITY-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-generators-IDENTITY-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 create or replace procedure rbac.generateRbacIdentityViewFromQuery(targetTable text, sqlQuery text)
@@ -171,7 +172,8 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-generators-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-generators-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 create or replace procedure rbac.generateRbacRestrictedView(targetTable text, orderBy text, columnUpdates text = null, columnNames text = '*')

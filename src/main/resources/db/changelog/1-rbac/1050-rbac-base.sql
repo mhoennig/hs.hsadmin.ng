@@ -31,7 +31,8 @@ end; $$;
 --//
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-SUBJECT runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-base-SUBJECT runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 DO $$
     BEGIN
@@ -241,7 +242,8 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-IDNAME-FUNCTIONS runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-base-IDNAME-FUNCTIONS runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 create or replace function rbac.findObjectUuidByIdName(objectTable varchar, objectIdName varchar)
     returns uuid
@@ -855,7 +857,8 @@ alter table rbac.subject
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-SUBJECT-TYPE-FUNCTIONS runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-base-SUBJECT-TYPE-FUNCTIONS runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 create or replace function rbac.create_subject(subjectName varchar, subjectType rbac.SubjectType)
@@ -908,7 +911,38 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-PGSQL-ROLES runOnChange:true validCheckSum:ANY context:!external-db endDelimiter:--//
+--changeset michael.hoennig:rbac-base-SUBJECT-USER-NAME-VALIDATION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+
+create or replace function rbac.is_valid_user_subject_name(subjectName varchar)
+    returns boolean
+    language sql
+as $$
+    -- keep regex in sync with RbacUserSubjectInsert.name pattern in the OpenAPI spec
+    select subjectName is not null and subjectName ~ '^[a-z]{3,5}-[^/]+$';
+$$;
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-GROUP-NAME-VALIDATION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+
+create or replace function rbac.is_valid_group_subject_name(subjectName varchar)
+    returns boolean
+    language sql
+as $$
+    -- keep regex in sync with RbacGroupSubjectInsert.name pattern in the OpenAPI spec
+    select subjectName is not null and subjectName ~ '^/[a-z]{3,5}-[^/]+$';
+$$;
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-PGSQL-ROLES runOnChange:true context:!external-db endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 do $$

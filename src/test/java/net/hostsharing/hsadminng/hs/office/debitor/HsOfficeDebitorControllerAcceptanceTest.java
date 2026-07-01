@@ -86,13 +86,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void globalAdmin_withoutAssumedRoles_canGetDebitorByDebitorUuid() {
 
             final var givenDebitor = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return debitorRepo.findDebitorByDebitorNumber(1000212).orElseThrow();
             }).assertSuccessful().returnedValue();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
@@ -119,7 +119,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors/D-1000212")
@@ -150,7 +150,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors")
@@ -305,7 +305,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors?partnerNumber=P-10002")
@@ -332,14 +332,14 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canAddDebitorWithBankAccount() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
             final var givenBillingPerson = personRealRepo.findPersonByOptionalNameLike("Fourth").get(0);
 
             final var givenDebitorRelUUid = jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net");
+                context.define("hsh-alex_superuser");
                 return relationRealRepo.save(HsOfficeRelationRealEntity.builder()
                         .type(DEBITOR)
                         .anchor(givenPartner.getPartnerRel().getHolder())
@@ -350,7 +350,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -389,13 +389,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_canAddDebitorWithoutJustRequiredData() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -440,13 +440,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_canNotAddDebitor_ifContactDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenContactUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -476,12 +476,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_canNotAddDebitor_ifDebitorRelDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitorRelUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -507,12 +507,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryDebitor() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitorUuid = debitorRepo.findDebitorsByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors/" + givenDebitorUuid)
@@ -572,12 +572,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void normalUser_canNotGetUnrelatedDebitor() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitorUuid = debitorRepo.findDebitorsByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors/" + givenDebitorUuid)
@@ -587,12 +587,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void contactAdminUser_canGetRelatedDebitorExceptRefundBankAccount() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitorUuid = debitorRepo.findDebitorsByOptionalNameLike("first contact").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("contact-admin@firstcontact.example.com"))
+                    .header("Authorization", bearer("tst-contact_admin_firstcontact"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors/" + givenDebitorUuid)
@@ -616,13 +616,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canPatchArbitraryDebitor() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor();
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("tenth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -681,7 +681,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             // finally, the debitor is actually updated
             jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net");
+                context.define("hsh-alex_superuser");
                 assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent().get()
                         .matches(debitor -> {
                             assertThat(debitor.getDebitorRel().getHolder().getTradeName())
@@ -698,13 +698,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void theContactAdmin_canNotPatchARelatedDebitor() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor();
 
             // @formatter:on
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", givenDebitor.getDebitorRel().getContact().roleId(ADMIN) )
                     .contentType(ContentType.JSON)
                     .body("""
@@ -728,12 +728,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void globalAdmin_withoutAssumedRole_canDeleteArbitraryDebitor() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
@@ -746,13 +746,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void contactAdminUser_canNotDeleteRelatedDebitor() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor();
             assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("tenth contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("contact-admin@tenthcontact.example.com"))
+                    .header("Authorization", bearer("tst-contact_admin_tenthcontact"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
@@ -765,13 +765,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void normalUser_canNotDeleteUnrelatedDebitor() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = givenSomeTemporaryDebitor();
             assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("tenth contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
@@ -785,7 +785,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
     private HsOfficeDebitorEntity givenSomeTemporaryDebitor() {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0).load();
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("tenth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
@@ -811,7 +811,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var count = em.createQuery(
                             "DELETE FROM HsBookingDebitorEntity d WHERE d.debitorNumberSuffix >= " + LOWEST_TEMP_DEBITOR_SUFFIX)
                     .executeUpdate();

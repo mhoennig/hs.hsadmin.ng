@@ -71,7 +71,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners")
@@ -98,7 +98,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canPostNewPartner() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG")
                     .stream()
                     .findFirst()
@@ -111,7 +111,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                             {
@@ -164,13 +164,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_canNotPostNewPartner_ifContactDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
             final var givenPerson = personRealRepo.findPersonByOptionalNameLike("Third").get(0);
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -200,13 +200,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_canNotPostNewPartner_ifPersonDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var mandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -243,13 +243,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryPartner() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var partners = partnerRepo.findAll();
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
@@ -276,12 +276,12 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void normalUser_canNotGetUnrelatedPartner() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
@@ -291,12 +291,12 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void contactAdminUser_canGetRelatedPartner() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("first contact").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("contact-admin@firstcontact.example.com"))
+                    .header("Authorization", bearer("tst-contact_admin_firstcontact"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
@@ -321,13 +321,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canPatchAllPropertiesOfArbitraryPartner() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20011);
             final var newPartnerPerson = personRealRepo.findPersonByOptionalNameLike("Winkler").getFirst();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -371,7 +371,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                 // @formatter:on
 
             // finally, the partner is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(partner -> {
                         assertThat(partner.getPartnerNumber()).isEqualTo(givenPartner.getPartnerNumber());
@@ -389,13 +389,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void patchingThePartnerPersonCreatesExPartnerRel() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20011);
             final var newPartnerPerson = personRealRepo.findPersonByOptionalNameLike("Winkler").getFirst();
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
@@ -412,7 +412,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             // @formatter:on
 
             // then the partner got actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(partner -> {
                         assertThat(partner.getPartnerRel().getHolder().getFamilyName()).isEqualTo("Winkler"); // updated
@@ -433,12 +433,12 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canPatchPartialPropertiesOfArbitraryPartner() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20012);
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -483,12 +483,12 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void globalAdmin_withoutAssumedRole_canDeleteArbitraryPartner() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20013);
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
@@ -502,13 +502,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void contactAdminUser_canNotDeleteRelatedPartner() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20014);
             assertThat(givenPartner.getPartnerRel().getContact().getCaption()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("contact-admin@fourthcontact.example.com"))
+                    .header("Authorization", bearer("tst-contact_admin_fourthcontact"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
@@ -521,13 +521,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         void normalUser_canNotDeleteUnrelatedPartner() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20015);
             assertThat(givenPartner.getPartnerRel().getContact().getCaption()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
@@ -543,7 +543,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final String partnerHolderName,
             final String contactName) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMandantPerson = personRealRepo.findPersonByOptionalNameLike("Hostsharing eG")
                     .stream()
                     .findFirst()
@@ -569,7 +569,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
     private HsOfficePartnerRbacEntity givenSomeTemporaryPartnerBessler(final Integer partnerNumber) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var partnerRel = em.merge(givenSomeTemporaryPartnerRel("Erben Bessler", "fourth contact"));
 
             final var newPartner = HsOfficePartnerRbacEntity.builder()

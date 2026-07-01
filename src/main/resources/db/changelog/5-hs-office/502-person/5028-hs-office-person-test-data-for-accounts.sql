@@ -4,7 +4,8 @@
 -- I presume it's a bug in Liquibase that other changeset checksums are changed by new changesets in the same file
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATION-FOR-PROFILES context:!without-test-data runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATION-FOR-PROFILES context:!without-test-data runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$

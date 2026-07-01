@@ -62,7 +62,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/persons")
@@ -77,7 +77,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/office/persons")
@@ -97,7 +97,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -130,12 +130,12 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
         @Test
         void globalAdmin_canGetArbitraryPerson() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPersonUuid = personRepo.findPersonByOptionalNameLike("Erben").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/persons/" + givenPersonUuid)
@@ -152,13 +152,13 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void normalUser_canNotGetUnrelatedPerson() {
             final var givenPersonUuid = jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net");
+                context.define("hsh-alex_superuser");
                 return personRepo.findPersonByOptionalNameLike("Erben").get(0).getUuid();
             }).returnedValue();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/persons/" + givenPersonUuid)
@@ -169,13 +169,13 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void personOwnerUser_canGetRelatedPerson() {
             final var givenPersonUuid = jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net");
+                context.define("hsh-alex_superuser");
                 return personRepo.findPersonByOptionalNameLike("Erben").get(0).getUuid();
             }).returnedValue();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("person-ErbenBesslerMelBessler@example.com"))
+                    .header("Authorization", bearer("tst-person_erbenbesslermelbessler"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/persons/" + givenPersonUuid)
@@ -200,11 +200,11 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canPatchAllPropertiesOfArbitraryPerson() {
 
-            final var givenPerson = givenSomeTemporaryPersonCreatedBy("selfregistered-test-user@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPersonCreatedBy("tst-rene_selfregistered");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                        {
@@ -228,7 +228,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
                 // @formatter:on
 
             // finally, the person is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(personRepo.findByUuid(givenPerson.getUuid())).isPresent().get()
                     .matches(person -> {
                         assertThat(person.getPersonType()).isEqualTo(HsOfficePersonType.UNINCORPORATED_FIRM);
@@ -242,11 +242,11 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canPatchPartialPropertiesOfArbitraryPerson() {
 
-            final var givenPerson = givenSomeTemporaryPersonCreatedBy("selfregistered-test-user@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPersonCreatedBy("tst-rene_selfregistered");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                         {
@@ -268,7 +268,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
             // @formatter:on
 
             // finally, the person is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(personRepo.findByUuid(givenPerson.getUuid())).isPresent().get()
                     .matches(person -> {
                         assertThat(person.getPersonType()).isEqualTo(givenPerson.getPersonType());
@@ -286,11 +286,11 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
         @Test
         void globalAdmin_canDeleteArbitraryPerson() {
-            final var givenPerson = givenSomeTemporaryPersonCreatedBy("selfregistered-test-user@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPersonCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/persons/" + givenPerson.getUuid())
@@ -299,17 +299,17 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             // then the given person is gone
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(personRepo.findByUuid(givenPerson.getUuid())).isEmpty();
         }
 
         @Test
         void personOwner_canDeleteRelatedPerson() {
-            final var givenPerson = givenSomeTemporaryPersonCreatedBy("selfregistered-test-user@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPersonCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-test-user@hostsharing.org"))
+                    .header("Authorization", bearer("tst-rene_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/persons/" + givenPerson.getUuid())
@@ -318,18 +318,18 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             // then the given person is still there
             jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net");
+                context.define("hsh-alex_superuser");
                 assertThat(personRepo.findByUuid(givenPerson.getUuid())).isEmpty();
             }).assertSuccessful();
         }
 
         @Test
         void normalUser_canNotDeleteUnrelatedPerson() {
-            final var givenPerson = givenSomeTemporaryPersonCreatedBy("selfregistered-test-user@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPersonCreatedBy("tst-rene_selfregistered");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/persons/" + givenPerson.getUuid())
@@ -338,7 +338,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
             // @formatter:on
 
             // then the given person is still there
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(personRepo.findByUuid(givenPerson.getUuid())).isNotEmpty();
         }
     }
@@ -360,7 +360,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             em.createQuery("""
                     DELETE FROM HsOfficePersonRealEntity p
                         WHERE p.tradeName LIKE 'Temp %' OR p.givenName LIKE 'Temp %'

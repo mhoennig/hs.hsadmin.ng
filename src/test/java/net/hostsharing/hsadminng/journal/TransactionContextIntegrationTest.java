@@ -45,7 +45,7 @@ class TransactionContextIntegrationTest extends ContextBasedTestWithCleanup {
 
         // determine initial row count
         final var rowCount = jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             return em.createQuery("SELECT e FROM TestCustomerEntity e", TestCustomerEntity.class).getResultList();
         }).assertSuccessful().returnedValue().size();
 
@@ -63,7 +63,7 @@ class TransactionContextIntegrationTest extends ContextBasedTestWithCleanup {
 
         // then all 3 threads did insert one row each
         jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             var all = em.createQuery("SELECT e FROM TestCustomerEntity e", TestCustomerEntity.class).getResultList();
             assertThat(all).hasSize(rowCount + 3);
         }).assertSuccessful();
@@ -88,7 +88,7 @@ class TransactionContextIntegrationTest extends ContextBasedTestWithCleanup {
                 entity1.setPrefix(t01);
                 entity1.setReference(reference);
 
-                context.define(entity1.toString(), null, "superuser-alex@hostsharing.net", null);
+                context.define(entity1.toString(), null, "hsh-alex_superuser", null);
                 entity1.setReference(80000 + toInt(em.createNativeQuery("SELECT txid_current()").getSingleResult()));
                 repository.save(entity1);
                 sleep(millis); // simulate a delay

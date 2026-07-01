@@ -56,7 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:17.7-trixie:///scenariosTC}",
                 "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
                 "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
-                "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
+                "hsadminng.superuser=${HSADMINNG_SUPERUSER:hsh-alex_superuser}"
         }
 )
 @ActiveProfiles({ "fake-jwt" })

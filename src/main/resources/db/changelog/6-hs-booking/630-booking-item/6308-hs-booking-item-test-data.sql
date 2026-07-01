@@ -47,7 +47,7 @@ do language plpgsql $$
     declare
         currentTask text;
     begin
-        call base.defineContext('creating booking-item test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+        call base.defineContext('creating booking-item test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
         call hs_booking.item_create_test_data(10001, '11');
         call hs_booking.item_create_test_data(10002, '12');

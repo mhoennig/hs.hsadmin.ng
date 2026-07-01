@@ -58,7 +58,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
             final var result = realRelationRepo.findRelationRelatedToPersonUuid(personUuid);
 
             // then
-            context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
+            context("hsh-alex_superuser"); // just to be able to access RBAc-entities persons+contact
             exactlyTheseRelationsAreReturned(
                     result,
                     "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type=REPRESENTATIVE, holder='NP Smith, Peter', contact='second contact')",
@@ -80,7 +80,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
                     .build());
 
             // then:
-            context("superuser-alex@hostsharing.net"); // just to be able to access RBAc-entities persons+contact
+            context("hsh-alex_superuser"); // just to be able to access RBAc-entities persons+contact
             exactlyTheseRelationsAreReturned(
                     result,
                     "rel(anchor='LP Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.', type=REPRESENTATIVE, holder='NP Smith, Peter', contact='second contact')"
@@ -90,7 +90,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
         @Test
         public void canFindRelationsByContactUuid() {
             // given:
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var contact = realContactRepo.findContactByOptionalCaptionLike("third contact")
                     .stream()
                     .findFirst()
@@ -118,7 +118,7 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
         @Test
         public void canNotAddDebitorRelationWithAnchorThatIsNotAPartner() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             final var givenPartnerPerson = hsOfficePersonRealEntity("Non-Partner Person");
             final var givenContact = one(realContactRepo.findContactByOptionalCaptionLike("eleventh contact"));

@@ -28,11 +28,12 @@ DROP SCHEMA IF EXISTS rbactest CASCADE;
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-global-rbac-test-dml-cleanup context:hosting-asset-import endDelimiter:--//
+--changeset michael.hoennig:hs-global-rbac-test-dml-cleanup runOnChange:true context:hosting-asset-import endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 call base.defineContext('9800-cleanup', null, '${HSADMINNG_SUPERUSER}', null);
 
-DELETE FROM rbac.subject WHERE name='superuser-alex@hostsharing.net';
-DELETE FROM rbac.subject WHERE name='superuser-fran@hostsharing.net';
+DELETE FROM rbac.subject WHERE name='hsh-alex_superuser';
+DELETE FROM rbac.subject WHERE name='hsh-fran_superuser';
 --//

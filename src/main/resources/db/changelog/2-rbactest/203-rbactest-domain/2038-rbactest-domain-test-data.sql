@@ -1,7 +1,8 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset michael.hoennig:hs-domain-TEST-DATA-GENERATOR endDelimiter:--//
+--changeset michael.hoennig:hs-domain-TEST-DATA-GENERATOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Creates the given count of test unix users for a single package.
@@ -12,7 +13,7 @@ declare
     pac         record;
     pacAdmin    varchar;
 begin
-    select p.uuid, p.name, c.prefix as custPrefix
+    select p.uuid, p.name
         from rbactest.package p
         join rbactest.customer c on p.customeruuid = c.uuid
         where p.name = packageName
@@ -20,7 +21,7 @@ begin
 
     for t in 0..(domainCount-1)
         loop
-            pacAdmin = 'pac-admin-' || pac.name || '@' || pac.custPrefix || '.example.com';
+            pacAdmin = 'tst-pac_admin_' || pac.name;
             call base.defineContext('creating RBAC test domain', null, pacAdmin, null);
 
             insert

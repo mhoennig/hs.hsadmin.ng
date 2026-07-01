@@ -33,7 +33,8 @@ alter table hs_office.coopsharetx
 --//
 
 -- ============================================================================
---changeset marc.sandlus:hs-office-coopshares-SHARE-COUNT-CONSTRAINT-BY-TRIGGER runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset marc.sandlus:hs-office-coopshares-SHARE-COUNT-CONSTRAINT-BY-TRIGGER runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 alter table hs_office.coopsharetx drop constraint if exists check_positive_total_shares_count;

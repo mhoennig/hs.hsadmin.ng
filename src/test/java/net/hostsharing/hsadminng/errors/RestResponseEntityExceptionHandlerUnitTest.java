@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.errors;
 
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.config.RetroactiveTranslator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,6 +60,36 @@ class RestResponseEntityExceptionHandlerUnitTest {
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(errorResponse.getBody()).isNotNull().extracting(CustomErrorResponse::getMessage).isEqualTo(
                     "ERROR: [409] ... violates foreign key constraint ...");
+    }
+
+    @Test
+    void handleTranslatedDataIntegrityViolationWithKnownErrorCode() {
+        // given
+        final var exceptionHandler = new RestResponseEntityExceptionHandler(mock(MessageTranslator.class), List.of(
+                new RetroactiveTranslator() {
+
+                    @Override
+                    public boolean canTranslate(final String message) {
+                        return message.contains("violates check constraint");
+                    }
+
+                    @Override
+                    public String translate(final String message) {
+                        return "ERROR: [400] translated message";
+                    }
+                }));
+        final var givenException = new DataIntegrityViolationException("outer", new RuntimeException("""
+                ERROR: new row for relation "subject" violates check constraint "check_valid_user_subject_name"
+                  Detail: Failing row contains (9786027a-d862-4387-8d94-ed45c3d05117, invalid-user@example.com, USER).
+                """));
+        final var givenWebRequest = mock(WebRequest.class);
+
+        // when
+        final var errorResponse = exceptionHandler.handleConflict(givenException, givenWebRequest);
+
+        // then
+        assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] translated message");
     }
 
     @Test

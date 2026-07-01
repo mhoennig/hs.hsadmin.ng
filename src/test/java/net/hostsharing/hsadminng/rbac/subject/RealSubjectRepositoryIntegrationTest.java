@@ -70,7 +70,7 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
             context.define(
                     "RealSubjectRepositoryIntegrationTest",
                     null,
-                    "person-FirbySusan@example.com",
+                    "tst-person_firbysusan",
                     null,
                     currentSubjectGroups);
         }

@@ -16,13 +16,13 @@ declare
     personDrewUuid uuid;
 
 begin
-    call base.defineContext('creating booking-project test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+    call base.defineContext('creating booking-project test-data', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
-    superuserAlexSubjectUuid = (SELECT uuid FROM rbac.subject WHERE name='superuser-alex@hostsharing.net');
+    superuserAlexSubjectUuid = (SELECT uuid FROM rbac.subject WHERE name='hsh-alex_superuser');
     personAlexUuid = (SELECT uuid FROM hs_office.person WHERE givenName='Alex');
-    superuserFranSubjectUuid = (SELECT uuid FROM rbac.subject WHERE name='superuser-fran@hostsharing.net');
+    superuserFranSubjectUuid = (SELECT uuid FROM rbac.subject WHERE name='hsh-fran_superuser');
     personFranUuid = (SELECT uuid FROM hs_office.person WHERE givenName='Fran');
-    userDrewSubjectUuid = (SELECT uuid FROM rbac.subject WHERE name='selfregistered-user-drew@hostsharing.org');
+    userDrewSubjectUuid = (SELECT uuid FROM rbac.subject WHERE name='tst-drew_selfregistered');
     personDrewUuid = (SELECT uuid FROM hs_office.person WHERE givenName='Drew');
 
     -- Add test account (linking to assumed rbac.subject UUIDs)

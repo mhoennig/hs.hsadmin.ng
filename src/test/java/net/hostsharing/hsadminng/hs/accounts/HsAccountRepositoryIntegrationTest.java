@@ -38,10 +38,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import({ Context.class, JpaAttempt.class })
 class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
-    private static final String SUPERUSER_ALEX_SUBJECT_NAME = "superuser-alex@hostsharing.net";
-    private static final String SUPERUSER_FRAN_SUBJECT_NAME = "superuser-fran@hostsharing.net";
-    private static final String USER_DREW_SUBJECT_NAME = "selfregistered-user-drew@hostsharing.org";
-    private static final String TEST_USER_SUBJECT_NAME = "selfregistered-test-user@hostsharing.org";
+    private static final String SUPERUSER_ALEX_SUBJECT_NAME = "hsh-alex_superuser";
+    private static final String SUPERUSER_FRAN_SUBJECT_NAME = "hsh-fran_superuser";
+    private static final String USER_DREW_SUBJECT_NAME = "tst-drew_selfregistered";
+    private static final String TEST_USER_SUBJECT_NAME = "tst-rene_selfregistered";
     public static final String FIRST_GMBH = "first-gmbh";
 
     // HOWTO fix UnsatisfiedDependencyException with cause "No qualifying bean of type 'jakarta.servlet.http.HttpServletRequest'"
@@ -193,7 +193,7 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         final var result = jpaAttempt.transacted(() -> {
             context(null);
             final var groupSubject = rbacSubjectRepo.create(RbacSubjectEntity.builder()
-                    .name("test-group-" + System.currentTimeMillis())
+                    .name("/test-user-" + System.currentTimeMillis())
                     .type(GROUP)
                     .build());
             final var realGroupSubject = em.find(RealSubjectEntity.class, groupSubject.getUuid());

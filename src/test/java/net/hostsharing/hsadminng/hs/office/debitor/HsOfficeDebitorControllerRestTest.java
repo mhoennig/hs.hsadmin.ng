@@ -108,7 +108,7 @@ class HsOfficeDebitorControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/debitors?partnerNumber=P-12345")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -128,7 +128,7 @@ class HsOfficeDebitorControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/debitors?partnerUuid=" + partnerUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -149,7 +149,7 @@ class HsOfficeDebitorControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/debitors/" + debitorUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -166,7 +166,7 @@ class HsOfficeDebitorControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/debitors/D-1234500")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -183,7 +183,7 @@ class HsOfficeDebitorControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/debitors/" + debitorUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -195,7 +195,7 @@ class HsOfficeDebitorControllerRestTest {
     void rejectsPostWithoutDebitorRel() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/debitors")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -228,7 +228,7 @@ class HsOfficeDebitorControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/debitors")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -255,7 +255,7 @@ class HsOfficeDebitorControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/hs/office/debitors/" + debitorUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -273,7 +273,7 @@ class HsOfficeDebitorControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/office/debitors/" + debitorUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

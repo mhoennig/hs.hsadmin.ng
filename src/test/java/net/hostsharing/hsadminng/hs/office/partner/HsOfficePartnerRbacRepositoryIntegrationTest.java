@@ -78,7 +78,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewPartner() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = partnerRepo.count();
             final var partnerRel = givenSomeTemporaryHostsharingPartnerRel("Winkler", "first contact");
 
@@ -104,7 +104,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("ErbenBesslerMelBessler", "EBess"))
@@ -166,7 +166,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
                             // relation owner
                             "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER to role:rbac.global#global:ADMIN by system and assume }",
-                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER to user:superuser-alex@hostsharing.net by relation#HostsharingeG-with-PARTNER-EBess:OWNER and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER to user:hsh-alex_superuser by relation#HostsharingeG-with-PARTNER-EBess:OWNER and assume }",
 
                             // relation admin
                             "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN to role:relation#HostsharingeG-with-PARTNER-EBess:OWNER by system and assume }",
@@ -197,7 +197,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPartners() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
@@ -216,7 +216,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         public void partnerAgent_canViewOnlyRelatedPartnersWithDetails() {
             // given:
             context(
-                    "person-FirstGmbH@example.com",
+                    "tst-person_firstgmbh",
                     "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT");
 
             // when:
@@ -231,7 +231,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         public void partnerTenant_canViewRelatedPartnersButWithoutDetails() {
             // given:
             context(
-                    "person-FirstGmbH@example.com",
+                    "tst-person_firstgmbh",
                     "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:TENANT");
 
             // when:
@@ -248,7 +248,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPartnersWithDetails() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = partnerRepo.findPartnerByOptionalNameLike("third contact");
@@ -265,7 +265,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPartners() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = partnerRepo.findPartnerByPartnerNumber(10001).orElseThrow();
@@ -284,7 +284,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canUpdateArbitraryPartner() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20036, "Erben Bessler", "fifth contact");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
@@ -293,7 +293,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenPartner.setPartnerRel(givenSomeTemporaryHostsharingPartnerRel("Winkler", "sixth contact"));
                 return partnerRepo.save(givenPartner);
             });
@@ -315,7 +315,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void partnerRelationAgent_canUpdateRelatedPartnerDetails() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20037, "Erben Bessler", "ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
@@ -325,7 +325,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context(
-                        "superuser-alex@hostsharing.net",
+                        "hsh-alex_superuser",
                         givenPartner.getPartnerRel().roleId(AGENT));
                 givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
@@ -348,7 +348,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
                 final HsOfficePartnerRbacEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 assertThatPartnerActuallyInDatabase(entity);
             }).assertSuccessful();
         }
@@ -357,7 +357,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
                 final HsOfficePartnerRbacEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 final var found = partnerRepo.findByUuid(entity.getUuid());
                 assertThat(found).isEmpty();
             }).assertSuccessful();
@@ -370,19 +370,19 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyPartner() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20032, "Erben Bessler", "tenth");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 partnerRepo.deleteByUuid(givenPartner.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-fran@hostsharing.net", null);
+                context("hsh-fran_superuser", null);
                 return partnerRepo.findByUuid(givenPartner.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
@@ -390,12 +390,12 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void nonGlobalAdmin_canNotDeleteTheirRelatedPartner() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20033, "Erben Bessler", "eleventh");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-ErbenBesslerMelBessler@example.com");
+                context("tst-person_erbenbesslermelbessler");
                 assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent();
 
                 partnerRepo.deleteByUuid(givenPartner.getUuid());
@@ -406,7 +406,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
                     JpaSystemException.class,
                     "[403] Subject ", " not allowed to delete hs_office.partner");
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return partnerRepo.findByUuid(givenPartner.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
@@ -414,7 +414,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void deletingAPartnerAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialObjects = from(objectDisplaysOf(rawObjectRepo.findAll()));
             final var initialRoleNames = from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
@@ -422,7 +422,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return partnerRepo.deleteByUuid(givenPartner.getUuid());
             });
 
@@ -459,7 +459,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
     private HsOfficePartnerRbacEntity givenSomeTemporaryHostsharingPartner(
             final Integer partnerNumber, final String person, final String contact) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var partnerRel = givenSomeTemporaryHostsharingPartnerRel(person, contact);
 
             final var newPartner = HsOfficePartnerRbacEntity.builder()

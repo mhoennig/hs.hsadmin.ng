@@ -587,7 +587,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/hosting/assets?type="+testCase.name())
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -617,7 +617,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/hosting/assets/" + assetUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -636,7 +636,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/hosting/assets/" + assetUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -653,7 +653,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/hosting/assets")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -682,7 +682,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/hosting/assets")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -709,7 +709,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/hs/hosting/assets/" + assetUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -725,7 +725,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/hs/hosting/assets/" + assetUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -786,7 +786,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/hosting/assets/" + givenDomainHttpSetupUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {

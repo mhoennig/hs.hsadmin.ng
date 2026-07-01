@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-context-DETERMINE runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-context-DETERMINE runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 create or replace function rbac.determineCurrentSubjectUuid(currentSubject varchar)
@@ -128,7 +129,8 @@ begin
 end; $$;
 
 -- ============================================================================
---changeset michael.hoennig:rbac-context-CONTEXT-DEFINED runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:rbac-context-CONTEXT-DEFINED runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     This callback gets called after the context has been (re-) defined.

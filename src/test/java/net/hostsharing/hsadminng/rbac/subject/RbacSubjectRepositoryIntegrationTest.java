@@ -53,7 +53,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
             // given:
             final var givenUuid = UUID.randomUUID();
-            final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+            final var newUserName = "tst-user_" + System.currentTimeMillis();
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
@@ -72,7 +72,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
             // given:
             final var givenUuid = UUID.randomUUID();
-            final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+            final var newUserName = "tst-user_" + System.currentTimeMillis();
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
@@ -91,7 +91,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
             // given:
             final var givenUuid = UUID.randomUUID();
-            final var newGroupName = "test-group-" + System.currentTimeMillis();
+            final var newGroupName = "/test-group-" + System.currentTimeMillis();
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
@@ -102,6 +102,56 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             assertThat(result.wasSuccessful()).isTrue();
             assertThat(rbacSubjectRepository.findByName(newGroupName).getType()).isEqualTo(GROUP);
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        void userSubjectNameValidationFunctionMatchesConstraint() {
+
+            // given:
+            final var givenUuid = UUID.randomUUID();
+
+            // when:
+            final var result = jpaAttempt.transacted(() -> {
+                context(null);
+                return rbacSubjectRepository.create(RbacSubjectEntity.builder()
+                        .uuid(givenUuid)
+                        .name("invalid-user@example.com")
+                        .type(USER)
+                        .build());
+            });
+
+            // then:
+            result.assertExceptionWithRootCauseMessage(
+                    org.postgresql.util.PSQLException.class,
+                    """
+                    violates check constraint "check_valid_user_subject_name"
+                    """.stripTrailing());
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        void groupSubjectNameValidationFunctionMatchesConstraint() {
+
+            // given:
+            final var givenUuid = UUID.randomUUID();
+
+            // when:
+            final var result = jpaAttempt.transacted(() -> {
+                context(null);
+                return rbacSubjectRepository.create(RbacSubjectEntity.builder()
+                        .uuid(givenUuid)
+                        .name("invalid-group")
+                        .type(GROUP)
+                        .build());
+            });
+
+            // then:
+            result.assertExceptionWithRootCauseMessage(
+                    org.postgresql.util.PSQLException.class,
+                    """
+                    violates check constraint "check_valid_group_subject_name"
+                    """.stripTrailing());
         }
     }
 
@@ -122,7 +172,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void testDataUserSubjects_haveTypeUser() {
             // when:
-            final var alex = rbacSubjectRepository.findByName("superuser-alex@hostsharing.net");
+            final var alex = rbacSubjectRepository.findByName("hsh-alex_superuser");
 
             // then:
             assertThat(alex.getType()).isEqualTo(USER);
@@ -131,7 +181,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_canFilterSubjectsByType() {
             // given:
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when:
             final var result = rbacSubjectRepository.findByOptionalNameLikeAndOptionalType(null, GROUP);
@@ -172,20 +222,20 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
         private static final String[] ALL_TEST_DATA_USERS = Array.of(
                 // @formatter:off
-            "superuser-alex@hostsharing.net", "superuser-fran@hostsharing.net",
-            "customer-admin@xxx.example.com",
-            "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com",
-            "customer-admin@yyy.example.com",
-            "pac-admin-yyy00@yyy.example.com", "pac-admin-yyy01@yyy.example.com", "pac-admin-yyy02@yyy.example.com",
-            "customer-admin@zzz.example.com",
-            "pac-admin-zzz00@zzz.example.com", "pac-admin-zzz01@zzz.example.com", "pac-admin-zzz02@zzz.example.com"
+            "hsh-alex_superuser", "hsh-fran_superuser",
+            "tst-customer_admin_xxx",
+            "tst-pac_admin_xxx00", "tst-pac_admin_xxx01", "tst-pac_admin_xxx02",
+            "tst-customer_admin_yyy",
+            "tst-pac_admin_yyy00", "tst-pac_admin_yyy01", "tst-pac_admin_yyy02",
+            "tst-customer_admin_zzz",
+            "tst-pac_admin_zzz00", "tst-pac_admin_zzz01", "tst-pac_admin_zzz02"
             // @formatter:on
         );
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllRbacSubjects() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
@@ -197,7 +247,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedglobalAdminRole_canViewAllRbacSubjects() {
             given:
-            context("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            context("hsh-alex_superuser", "rbac.global#global:ADMIN");
 
             // when
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
@@ -209,7 +259,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerAdminRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             given:
-            context("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
+            context("hsh-alex_superuser", "rbactest.customer#xxx:ADMIN");
 
             // when
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
@@ -217,15 +267,15 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             then:
             exactlyTheseRbacSubjectsAreReturned(
                     result,
-                    "customer-admin@xxx.example.com",
-                    "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
+                    "tst-customer_admin_xxx",
+                    "tst-pac_admin_xxx00", "tst-pac_admin_xxx01", "tst-pac_admin_xxx02"
             );
         }
 
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             // given:
-            context("customer-admin@xxx.example.com");
+            context("tst-customer_admin_xxx");
 
             // when:
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
@@ -233,27 +283,27 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             exactlyTheseRbacSubjectsAreReturned(
                     result,
-                    "customer-admin@xxx.example.com",
-                    "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
+                    "tst-customer_admin_xxx",
+                    "tst-pac_admin_xxx00", "tst-pac_admin_xxx01", "tst-pac_admin_xxx02"
             );
         }
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            context("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+            context("tst-customer_admin_xxx", "rbactest.package#xxx00:ADMIN");
 
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
 
-            exactlyTheseRbacSubjectsAreReturned(result, "pac-admin-xxx00@xxx.example.com");
+            exactlyTheseRbacSubjectsAreReturned(result, "tst-pac_admin_xxx00");
         }
 
         @Test
         public void packageAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            context("pac-admin-xxx00@xxx.example.com");
+            context("tst-pac_admin_xxx00");
 
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
 
-            exactlyTheseRbacSubjectsAreReturned(result, "pac-admin-xxx00@xxx.example.com");
+            exactlyTheseRbacSubjectsAreReturned(result, "tst-pac_admin_xxx00");
         }
 
     }
@@ -310,10 +360,10 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewTheirOwnPermissions() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
-            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("superuser-fran@hostsharing.net"))
+            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("hsh-fran_superuser"))
                     .stream().filter(p -> p.getObjectTable().contains("rbactest."))
                     .sorted(comparing(RbacSubjectPermission::toString)).toList();
 
@@ -324,10 +374,10 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewTheirOwnPermissions() {
             // given
-            context("customer-admin@xxx.example.com");
+            context("tst-customer_admin_xxx");
 
             // when
-            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("customer-admin@xxx.example.com"));
+            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("tst-customer_admin_xxx"));
 
             // then
             allTheseRbacPermissionsAreReturned(
@@ -366,8 +416,8 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_isNotAllowedToViewGlobalAdminsPermissions() {
             // given
-            context("customer-admin@xxx.example.com");
-            final UUID subjectUuid = subjectUuid("superuser-alex@hostsharing.net");
+            context("tst-customer_admin_xxx");
+            final UUID subjectUuid = subjectUuid("hsh-alex_superuser");
 
             // when
             final var result = attempt(em, () ->
@@ -378,16 +428,16 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
                     "[403] permissions of user \"" + subjectUuid
-                            + "\" are not accessible to user \"customer-admin@xxx.example.com\"");
+                            + "\" are not accessible to user \"tst-customer_admin_xxx\"");
         }
 
         @Test
         public void customerAdmin_withoutAssumedRole_canViewAllPermissionsWithinThePacketsRealm() {
             // given
-            context("customer-admin@xxx.example.com");
+            context("tst-customer_admin_xxx");
 
             // when
-            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("pac-admin-xxx00@xxx.example.com"));
+            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("tst-pac_admin_xxx00"));
 
             // then
             allTheseRbacPermissionsAreReturned(
@@ -420,10 +470,10 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canNotViewPermissionsOfUnrelatedUsers() {
             // given
-            context("customer-admin@xxx.example.com");
+            context("tst-customer_admin_xxx");
 
             // when
-            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("pac-admin-yyy00@yyy.example.com"));
+            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("tst-pac_admin_yyy00"));
 
             // then
             noRbacPermissionsAreReturned(result);
@@ -432,10 +482,10 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void packetAdmin_withoutAssumedRole_canViewAllPermissionsWithinThePacketsRealm() {
             // given
-            context("pac-admin-xxx00@xxx.example.com");
+            context("tst-pac_admin_xxx00");
 
             // when
-            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("pac-admin-xxx00@xxx.example.com"));
+            final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("tst-pac_admin_xxx00"));
 
             // then
             allTheseRbacPermissionsAreReturned(
@@ -471,7 +521,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     RbacSubjectEntity givenANewSubject() {
-        final var givenUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+        final var givenUserName = "tst-user_" + System.currentTimeMillis();
         final var givenUser = jpaAttempt.transacted(() -> {
             context(null);
             return rbacSubjectRepository.create(
@@ -484,14 +534,14 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
     void exactlyTheseRbacSubjectsAreReturned(final List<RbacSubjectEntity> actualResult, final String... expectedUserNames) {
         assertThat(actualResult)
                 .extracting(RbacSubjectEntity::getName)
-                .filteredOn(n -> !n.startsWith("test-user"))
+                .filteredOn(n -> !n.startsWith("tst-user"))
                 .containsExactlyInAnyOrder(expectedUserNames);
     }
 
     void allTheseRbacSubjectsAreReturned(final List<RbacSubjectEntity> actualResult, final String... expectedUserNames) {
         assertThat(actualResult)
                 .extracting(RbacSubjectEntity::getName)
-                .filteredOn(n -> !n.startsWith("test-user"))
+                .filteredOn(n -> !n.startsWith("tst-user"))
                 .contains(expectedUserNames);
     }
 

@@ -113,7 +113,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
                     final UUID uuid = UUID.fromString(o.split(":")[1]);
 
                     final var exception = jpaAttempt.transacted(() -> {
-                        context.define("superuser-alex@hostsharing.net", null);
+                        context.define("hsh-alex_superuser", null);
                         em.remove(em.getReference(entityClass, uuid));
                         out.println("DELETING new " + entityClass.getSimpleName() + "#" + uuid + " SUCCEEDED");
                     }).caughtException();
@@ -141,7 +141,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         initialTestDataValidated = false;
 
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             if (initialRbacObjects == null) {
 
                 initialRbacObjects = allRbacObjects();
@@ -192,7 +192,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     private void cleanupTemporaryTestData() {
         // For better performance in a single transaction ...
         final var exception = jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             entitiesToCleanup.reversed().forEach((uuid, entityClass) -> {
                 final var rvTableName = entityClass.getAnnotation(Table.class).name();
                 final var scope = entityClass.getAnnotation(Table.class).schema();
@@ -213,7 +213,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
     private void assertNoNewRbacObjectsRolesAndGrantsLeaked(final String event) {
         long rbacObjectCount = jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertEqual(initialRbacObjects, allRbacObjects());
             if (DETAILED_BUT_SLOW_CHECK) {
                 assertEqual(initialRbacRoles, allRbacRoles());
@@ -246,7 +246,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
             .sorted(comparing(o -> o.serialId))
             .forEach(o -> {
                 final var exception = jpaAttempt.transacted(() -> {
-                    context.define("superuser-alex@hostsharing.net", null);
+                    context.define("hsh-alex_superuser", null);
 
                     em.createNativeQuery("DELETE FROM " + o.objectTable + " WHERE uuid=:uuid")
                             .setParameter("uuid", o.uuid)
@@ -277,7 +277,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @NotNull
     private Set<String> allRbacGrants() {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             return rbacGrantRepo.findAll().stream()
                     .map(RbacGrantEntity::toDisplay)
                     .collect(toSet());
@@ -287,7 +287,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @NotNull
     private Set<String> allRbacRoles() {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             return rbacRoleRepo.findAll().stream()
                     .map(RbacRoleEntity::getRoleName)
                     .collect(toSet());
@@ -297,7 +297,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @NotNull
     private Set<String> allRbacObjects() {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             return rbacObjectRepo.findAll().stream()
                     .map(RbacObjectEntity::toString)
                     .collect(toSet());

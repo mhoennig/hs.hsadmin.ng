@@ -57,7 +57,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_canCreateNewBankAccount() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = bankAccountRepo.count();
 
             // when
@@ -74,7 +74,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_canCreateNewBankAccount() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var count = bankAccountRepo.count();
 
             // when
@@ -91,7 +91,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
@@ -112,7 +112,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
                     initialGrantNames,
                     "{ grant perm:hs_office.bankaccount#DE25500105176934832579:DELETE   to role:hs_office.bankaccount#DE25500105176934832579:OWNER     by system and assume }",
                     "{ grant role:hs_office.bankaccount#DE25500105176934832579:OWNER    to role:rbac.global#global:ADMIN                                    by system and assume }",
-                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:OWNER    to user:selfregistered-user-drew@hostsharing.org               by hs_office.bankaccount#DE25500105176934832579:OWNER and assume }",
+                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:OWNER    to user:tst-drew_selfregistered               by hs_office.bankaccount#DE25500105176934832579:OWNER and assume }",
 
                     "{ grant role:hs_office.bankaccount#DE25500105176934832579:ADMIN    to role:hs_office.bankaccount#DE25500105176934832579:OWNER     by system and assume }",
                     "{ grant perm:hs_office.bankaccount#DE25500105176934832579:UPDATE   to role:hs_office.bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
@@ -135,7 +135,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_canViewAllBankAccounts() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = bankAccountRepo.findByOptionalHolderLike(null);
@@ -156,10 +156,10 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_canViewOnlyItsOwnBankAccount() {
             // given:
-            final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
+            final var givenBankAccount = givenSomeTemporaryBankAccount("tst-drew_selfregistered");
 
             // when:
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var result = bankAccountRepo.findByOptionalHolderLike(null);
 
             // then:
@@ -169,7 +169,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_canViewBankAccountsByIban() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
 
             // when
             final var result = bankAccountRepo.findByIbanOrderByIbanAsc("DE02120300000000202051");
@@ -181,10 +181,10 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_canViewItsOwnBankAccount() {
             // given:
-            final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
+            final var givenBankAccount = givenSomeTemporaryBankAccount("tst-drew_selfregistered");
 
             // when:
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var result = bankAccountRepo.findByIbanOrderByIbanAsc(givenBankAccount.getIban());
 
             // then:
@@ -198,19 +198,19 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_canDeleteAnyBankAccount() {
             // given
-            context("superuser-alex@hostsharing.net", null);
-            final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
+            context("hsh-alex_superuser", null);
+            final var givenBankAccount = givenSomeTemporaryBankAccount("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 bankAccountRepo.deleteByUuid(givenBankAccount.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 return bankAccountRepo.findByOptionalHolderLike(givenBankAccount.getHolder());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -218,18 +218,18 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void arbitraryUser_canDeleteABankAccountCreatedByItself() {
             // given
-            final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
+            final var givenBankAccount = givenSomeTemporaryBankAccount("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("selfregistered-user-drew@hostsharing.org", null);
+                context("tst-drew_selfregistered", null);
                 bankAccountRepo.deleteByUuid(givenBankAccount.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
+                context("hsh-alex_superuser", null);
                 return bankAccountRepo.findByOptionalHolderLike(givenBankAccount.getHolder());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -237,14 +237,14 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void deletingABankAccountAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("selfregistered-user-drew@hostsharing.org", null);
+            context("tst-drew_selfregistered", null);
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
-            final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
+            final var givenBankAccount = givenSomeTemporaryBankAccount("tst-drew_selfregistered");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("selfregistered-user-drew@hostsharing.org", null);
+                context("tst-drew_selfregistered", null);
                 return bankAccountRepo.deleteByUuid(givenBankAccount.getUuid());
             });
 

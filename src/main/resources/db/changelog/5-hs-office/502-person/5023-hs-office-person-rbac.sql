@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('hs_office.person');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-person-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-person-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -88,7 +89,8 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.person',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-person-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-person-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.person',
     $orderBy$
@@ -107,7 +109,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-person-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-person-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.person after changing its RBAC specification.

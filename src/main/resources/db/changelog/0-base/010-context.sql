@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:context-DEFINE runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:context-DEFINE runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*

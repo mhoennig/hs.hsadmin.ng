@@ -156,6 +156,7 @@ This prevents Spring Boot auto-configuration from trying to use an empty `jwk-se
 
 Properly set the environment variables required by `jwt-curl`:
 
+<!-- disable:fixmes -->
 ```
 export HSADMINNG_JWT_CLIENT_ID=FIXME
 export HSADMINNG_JWT_CLIENT_SECRET=FIXME
@@ -163,5 +164,6 @@ export HSADMINNG_JWT_USERNAME=superuser-alex@hostsharing.net
 export HSADMINNG_JWT_PASSWORD=password
 export HSADMINNG_JWT_TOKEN_URL=FIXME
 ```
+<!-- enable:fixmes -->
 
-FIXME: Find out the proper values.
+TODO.doc: Find out the proper values. This is subject for PR#235.

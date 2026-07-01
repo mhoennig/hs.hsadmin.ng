@@ -73,7 +73,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships")
@@ -114,12 +114,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Test
         void globalAdmin_canViewMembershipsByPartnerUuid() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var partner = partnerRepo.findPartnerByPartnerNumber(10001).orElseThrow();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .queryParam("partnerUuid", partner.getUuid() )
@@ -147,7 +147,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .queryParam("partnerNumber", "P-10002" )
@@ -177,14 +177,14 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Test
         void globalAdmin_canAddMembership() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").getFirst();
             final var givenMemberSuffix = TEMP_MEMBER_NUMBER_SUFFIX;
             final var expectedMemberNumber = Integer.parseInt(givenPartner.getPartnerNumber() + TEMP_MEMBER_NUMBER_SUFFIX);
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -222,12 +222,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
         @Test
         void globalAdmin_canGetArbitraryMembership() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -248,12 +248,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
         @Test
         void normalUser_canNotGetUnrelatedMembership() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -263,12 +263,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
         @Test
         void partnerRelAgent_canGetRelatedMembership() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000303).orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "hs_office.relation#HostsharingeG-with-PARTNER-ThirdOHG:AGENT")
                     .port(port)
                 .when()
@@ -295,12 +295,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Test
         void globalAdmin_canPatchValidToOfArbitraryMembership() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -338,13 +338,13 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             // given
             final var givenPartnerAdmin = "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN";
-            context.define("superuser-alex@hostsharing.net", givenPartnerAdmin);
+            context.define("hsh-alex_superuser", givenPartnerAdmin);
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             // when
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", givenPartnerAdmin)
                     .contentType(ContentType.JSON)
                     .body("""
@@ -374,12 +374,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
         @Test
         void globalAdmin_canDeleteArbitraryMembership() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())
@@ -392,12 +392,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
         @Test
         void partnerAgentUser_canNotDeleteRelatedMembership() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT")
                     .port(port)
                 .when()
@@ -411,12 +411,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
         @Test
         void normalUser_canNotDeleteUnrelatedMembership() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())
@@ -430,7 +430,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
     private HsOfficeMembershipEntity givenSomeTemporaryMembershipBessler(final String partnerName) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike(partnerName).get(0);
             final var newMembership = HsOfficeMembershipEntity.builder()
                     .partner(givenPartner)
@@ -447,7 +447,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             final var query = em.createQuery(
                     "DELETE FROM HsOfficeMembershipEntity m WHERE m.memberNumberSuffix >= '%s'"
                             .formatted(TEMP_MEMBER_NUMBER_SUFFIX)

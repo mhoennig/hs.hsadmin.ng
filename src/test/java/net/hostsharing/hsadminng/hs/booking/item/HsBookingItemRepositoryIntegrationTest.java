@@ -117,7 +117,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewBookingItem() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = rbacBookingItemRepo.count();
             final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
             final var givenProject = realProjectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
@@ -144,7 +144,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
@@ -207,7 +207,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllBookingItemsOfArbitraryDebitor() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var projectUuid = debitorRepo.findDebitorByDebitorNumber(1000212).stream()
                     .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                     .flatMap(List::stream)
@@ -227,9 +227,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void normalUser_canViewOnlyRelatedBookingItems() {
             // given:
-            context("person-FirbySusan@example.com");
+            context("tst-person_firbysusan");
             final var debitor = debitorRepo.findDebitorByDebitorNumber(1000111);
-            context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-D-1000111defaultproject:OWNER");
+            context("tst-person_firbysusan", "hs_booking.project#D-1000111-D-1000111defaultproject:OWNER");
             final var projectUuid = debitor.stream()
                     .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                     .flatMap(List::stream)
@@ -257,7 +257,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+                context("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
                 final var foundBookingItem = em.find(HsBookingItemRbacEntity.class, givenBookingItemUuid);
                 foundBookingItem.getResources().put("CPU", 2);
                 foundBookingItem.getResources().remove("SSD-storage");
@@ -270,7 +270,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then
             result.assertSuccessful();
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 assertThatBookingItemActuallyInDatabase(result.returnedValue());
             }).assertSuccessful();
         }
@@ -290,19 +290,19 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyBookingItem() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 rbacBookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-fran@hostsharing.net", null);
+                context("hsh-fran_superuser", null);
                 return rbacBookingItemRepo.findByUuid(givenBookingItem.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
@@ -310,12 +310,12 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void nonGlobalAdmin_canNotDeleteTheirRelatedBookingItem() {
             // given
-            context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+                context("tst-person_firbysusan", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
                 assertThat(rbacBookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent();
 
                 rbacBookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
@@ -326,7 +326,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     JpaSystemException.class,
                     "[403] Subject ", " is not allowed to delete hs_booking.item");
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return rbacBookingItemRepo.findByUuid(givenBookingItem.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
@@ -334,14 +334,14 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void deletingABookingItemAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return rbacBookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
             });
 
@@ -355,7 +355,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
 
     private HsBookingItem givenSomeTemporaryBookingItem(final String projectCaption) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenProject = realProjectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
             final var newBookingItem = HsBookingItemRbacEntity.builder()

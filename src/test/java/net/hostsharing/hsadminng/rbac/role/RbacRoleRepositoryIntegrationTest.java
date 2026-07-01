@@ -60,7 +60,7 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllRbacRoles() {
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
 
             // when
             final var result = rbacRoleRepository.findAll();
@@ -72,7 +72,7 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         public void globalAdmin_withAssumedGlobalAdminRole_canViewAllRbacRoles() {
             given:
-            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            context.define("hsh-alex_superuser", "rbac.global#global:ADMIN");
 
             // when
             final var result = rbacRoleRepository.findAll();
@@ -84,7 +84,7 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnRbacRole() {
             // given:
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
 
             // when:
             final var result = rbacRoleRepository.findAll();
@@ -123,7 +123,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnRbacRole() {
-            context.define("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
+            context.define("tst-customer_admin_xxx", "rbactest.package#xxx00:ADMIN");
 
             final var result = rbacRoleRepository.findAll();
 
@@ -157,7 +157,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void customerAdmin_withoutAssumedRole_canFindItsOwnRolesByName() {
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
             final var givenRoleName = rbacRoleRepository.findByRoleIdName("rbactest.customer#xxx:ADMIN")
                     .getFirst()
                     .getRoleName();
@@ -174,11 +174,11 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void customerAdmin_withoutAssumedRole_canNotFindAlienRolesByName() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAlienRoleName = rbacRoleRepository.findByRoleIdName("rbactest.customer#yyy:ADMIN")
                     .getFirst()
                     .getRoleName();
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
 
             final var result = rbacRoleRepository.findByRoleName(givenAlienRoleName);
 
@@ -187,7 +187,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void customerAdmin_withoutAssumedRole_canNotFindRoleIdNameByRoleName() {
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
 
             final var result = rbacRoleRepository.findByRoleName("rbactest.customer#xxx:ADMIN");
 
@@ -200,7 +200,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void customerAdmin_withoutAssumedRole_canFindItsOwnRolesByRoleIdName() {
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
 
             final var result = rbacRoleRepository.findByRoleIdName("rbactest.customer#xxx:ADMIN");
 
@@ -214,7 +214,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void customerAdmin_withoutAssumedRole_canNotFindAlienRolesByRoleIdName() {
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
 
             final var result = rbacRoleRepository.findByRoleIdName("rbactest.customer#yyy:ADMIN");
 
@@ -227,7 +227,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void someSubject_withoutAssumedRole_fetchesNoAssumedRoles() {
-            context.define("customer-admin@xxx.example.com");
+            context.define("tst-customer_admin_xxx");
 
             final var result = rbacRoleRepository.fetchAssumedRoles();
 
@@ -236,7 +236,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void someSubject_withAssumedRoles_fetchesAssumedRoles() {
-            context.define("customer-admin@xxx.example.com",
+            context.define("tst-customer_admin_xxx",
                     "rbactest.package#xxx00:OWNER;rbactest.package#xxx01:OWNER;rbactest.package#xxx02:OWNER");
 
             final var result = rbacRoleRepository.fetchAssumedRoles();

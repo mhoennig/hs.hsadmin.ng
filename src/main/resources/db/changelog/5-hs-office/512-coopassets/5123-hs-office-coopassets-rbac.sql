@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('hs_office.coopassettx');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-office-coopassettx-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-coopassettx-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -113,7 +114,8 @@ execute procedure hs_office.coopassettx_grants_insert_to_membership_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-office-coopassettx-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-coopassettx-rbac-CHECKING-INSERT-PERMISSION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /**
@@ -153,7 +155,8 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.coopassettx',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-office-coopassettx-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-coopassettx-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_office.coopassettx',
     $orderBy$
@@ -167,7 +170,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-office-coopassettx-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-office-coopassettx-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_office.coopassettx after changing its RBAC specification.

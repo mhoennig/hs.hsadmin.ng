@@ -138,7 +138,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewAsset() {
             // given
-            context("superuser-alex@hostsharing.net"); // TODO.test: remove context(...) once all entities have real entities
+            context("hsh-alex_superuser"); // TODO.test: remove context(...) once all entities have real entities
             final var count = realAssetRepo.count();
             final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
             final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
@@ -166,7 +166,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void identifiersForTheSameTypeAreUnique() {
             // given
-            context("superuser-alex@hostsharing.net"); // TODO.test: remove context(...) once all entities have real entities
+            context("hsh-alex_superuser"); // TODO.test: remove context(...) once all entities have real entities
             final var count = realAssetRepo.count();
             final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
             final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
@@ -192,7 +192,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         public void createsAndGrantsRoles() {
             // given
             // TODO.test: remove context(...) once all entities have real entities
-            context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
             final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
             em.flush();
@@ -200,7 +200,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetRbacEntity.builder()
                         .bookingItem(newWebspaceBookingItem)
@@ -229,7 +229,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             "{ grant role:hs_hosting.asset#fir00:OWNER to role:rbac.global#global:ADMIN by system }", // workaround
 
                             // owner
-                            "{ grant role:hs_hosting.asset#fir00:OWNER to user:superuser-alex@hostsharing.net by hs_hosting.asset#fir00:OWNER and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:OWNER to user:hsh-alex_superuser by hs_hosting.asset#fir00:OWNER and assume }",
                             "{ grant role:hs_hosting.asset#fir00:OWNER to role:hs_booking.item#fir01:ADMIN by system and assume }",
                             "{ grant role:hs_hosting.asset#fir00:OWNER to role:hs_hosting.asset#vm1011:ADMIN by system and assume }",
                             "{ grant perm:hs_hosting.asset#fir00:DELETE to role:hs_hosting.asset#fir00:OWNER by system and assume }",
@@ -255,7 +255,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void anyUser_canCreateNewDomainSetupAsset() {
             // when
-            context("person-SmithPeter@example.com");
+            context("tst-person_smithpeter");
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetRbacEntity.builder()
                         .type(DOMAIN_SETUP)
@@ -272,11 +272,11 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             assertThat(result.returnedValue().isLoaded()).isFalse();
 
             // ... the creating user can read the new domain setup
-            context("person-SmithPeter@example.com");
+            context("tst-person_smithpeter");
             assertThatAssetIsPersisted(result.returnedValue());
 
             // ... a rbac.global admin can see the new domain setup as well if the domain OWNER role is assumed
-            context("superuser-alex@hostsharing.net", "hs_hosting.asset#example.net:OWNER"); // only works with the assumed role
+            context("hsh-alex_superuser", "hs_hosting.asset#example.net:OWNER"); // only works with the assumed role
             assertThatAssetIsPersisted(result.returnedValue());
         }
 
@@ -296,7 +296,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @EnumSource(TestCase.class)
         public void globalAdmin_withoutAssumedRole_canViewArbitraryAssetsOfAllDebitors(final TestCase testCase) {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = repoUnderTest(testCase).findAllByCriteria(null, null, MANAGED_WEBSPACE);
@@ -312,7 +312,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void normalUser_canViewOnlyRelatedAssets() {
             // given:
-            context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context("tst-person_firbysusan", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var projectUuid = projectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow().getUuid();
 
@@ -334,7 +334,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     .findAny().orElseThrow().getUuid();
 
             // when
-            context("superuser-alex@hostsharing.net", "hs_hosting.asset#vm1012:AGENT");
+            context("hsh-alex_superuser", "hs_hosting.asset#vm1012:AGENT");
             final var result = rbacAssetRepo.findAllByCriteria(null, parentAssetUuid, null);
 
             // then
@@ -348,10 +348,10 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void managedServerAgent_canFindRelatedEmailAddresses() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
-            context("superuser-alex@hostsharing.net", "hs_hosting.asset#sec01:AGENT");
+            context("hsh-alex_superuser", "hs_hosting.asset#sec01:AGENT");
             final var result = rbacAssetRepo.findAllByCriteria(null, null, EMAIL_ADDRESS);
 
             // then
@@ -371,7 +371,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 final var foundAsset = em.find(HsHostingAssetRbacEntity.class, givenAssetUuid);
                 foundAsset.getConfig().put("CPU", 2);
                 foundAsset.getConfig().remove("SSD-storage");
@@ -399,12 +399,12 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyAsset() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenAsset = givenSomeTemporaryAsset("D-1000111 default project", "vm1000");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 rbacAssetRepo.deleteByUuid(givenAsset.getUuid());
             });
 
@@ -422,7 +422,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+                context("tst-person_firbysusan", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
                 assertThat(rbacAssetRepo.findByUuid(givenAsset.getUuid())).isPresent();
 
                 rbacAssetRepo.deleteByUuid(givenAsset.getUuid());
@@ -442,7 +442,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com", "hs_hosting.asset#vm1000:ADMIN");
+                context("tst-person_firbysusan", "hs_hosting.asset#vm1000:ADMIN");
                 assertThat(rbacAssetRepo.findByUuid(givenAsset.getUuid())).isPresent();
 
                 rbacAssetRepo.deleteByUuid(givenAsset.getUuid());
@@ -466,7 +466,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return rbacAssetRepo.deleteByUuid(givenAsset.getUuid());
             });
 
@@ -480,7 +480,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
     private HsHostingAssetRealEntity givenSomeTemporaryAsset(final String projectCaption, final String identifier) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net"); // needed to determine creator
+            context("hsh-alex_superuser"); // needed to determine creator
             final var givenBookingItem = givenBookingItem("D-1000111 default project", "test CloudServer");
             final var newAsset = HsHostingAssetRealEntity.builder()
                     .bookingItem(givenBookingItem)

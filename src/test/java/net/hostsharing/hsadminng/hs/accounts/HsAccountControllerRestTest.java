@@ -255,7 +255,7 @@ class HsAccountControllerRestTest {
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -312,7 +312,7 @@ class HsAccountControllerRestTest {
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -353,7 +353,7 @@ class HsAccountControllerRestTest {
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -436,7 +436,7 @@ class HsAccountControllerRestTest {
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -477,7 +477,7 @@ class HsAccountControllerRestTest {
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -517,7 +517,7 @@ class HsAccountControllerRestTest {
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

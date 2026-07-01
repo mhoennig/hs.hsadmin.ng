@@ -65,7 +65,7 @@ class TestPackageControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/test/packages?name=pac")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Hostsharing-Assumed-Roles", "rbac.global#global:ADMIN")
                         .accept(MediaType.APPLICATION_JSON))
 
@@ -96,7 +96,7 @@ class TestPackageControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/test/packages/{packageUuid}", packageUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

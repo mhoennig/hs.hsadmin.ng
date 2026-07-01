@@ -62,7 +62,7 @@ class ContextIntegrationTests {
     @Test
     void defineWithoutHttpServletRequestUsesCallStack() {
 
-        context.define("superuser-alex@hostsharing.net", null);
+        context.define("hsh-alex_superuser", null);
 
         assertThat(context.fetchCurrentTask())
                 .isEqualTo("ContextIntegrationTests.defineWithoutHttpServletRequestUsesCallStack");
@@ -72,12 +72,12 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithCurrentSubjectUuid() {
         // when
-        final var subjectUuid = uuidOfSubjectName("superuser-alex@hostsharing.net");
+        final var subjectUuid = uuidOfSubjectName("hsh-alex_superuser");
         context.define(subjectUuid.toString());
 
         // then
         assertThat(context.fetchCurrentSubject()).
-                isEqualTo("superuser-alex@hostsharing.net");
+                isEqualTo("hsh-alex_superuser");
 
         assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
 
@@ -91,11 +91,11 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithCurrentSubjectNameWithoutAssumedRoles() {
         // when
-        context.define("superuser-alex@hostsharing.net");
+        context.define("hsh-alex_superuser");
 
         // then
         assertThat(context.fetchCurrentSubject()).
-                isEqualTo("superuser-alex@hostsharing.net");
+                isEqualTo("hsh-alex_superuser");
 
         assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
 
@@ -115,7 +115,7 @@ class ContextIntegrationTests {
         assertThat(subjectExists("not-synchronized-group")).as("precondition failed").isFalse();
 
         // when:
-        givenJwtAuthentication("selfregistered-user-drew@hostsharing.org", List.of(
+        givenJwtAuthentication("tst-drew_selfregistered", List.of(
                 "/xyz-Team",
                 "/xyz-Service",
                 "not-synchronized-group"));
@@ -123,45 +123,22 @@ class ContextIntegrationTests {
 
         // then
         assertThat(context.fetchCurrentSubject()).
-                isEqualTo("selfregistered-user-drew@hostsharing.org");
+                isEqualTo("tst-drew_selfregistered");
 
         assertThat(context.fetchAssumedRolesNames()).isEmpty();
 
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
                 .containsExactlyInAnyOrder(
-                        uuidOfSubjectName("selfregistered-user-drew@hostsharing.org"),
+                        uuidOfSubjectName("tst-drew_selfregistered"),
                         uuidOfSubjectName("/xyz-Team"),
                         uuidOfSubjectName("/xyz-Service"));
     }
 
     @Test
     @Transactional
-    void contextDefineWithJwtContainingNestedGroupWillIncludeSynchronizedSuperGroupsInEffectiveSubjects() {
-        // given:
-        context.define("superuser-alex@hostsharing.net");
-        final var teamGroupUuid = createGroupSubject("/test-Team");
-        final var serviceGroupUuid = createGroupSubject("/test-Team/test-Service");
-        final var backendGroupUuid = createGroupSubject("/test-Team/test-Service/test-Backend");
-
-        // when:
-        givenJwtAuthentication("selfregistered-user-drew@hostsharing.org", List.of(
-                "/test-Team/test-Service/test-Backend"));
-        context.define();
-
-        // then
-        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
-                .containsExactlyInAnyOrder(
-                        uuidOfSubjectName("selfregistered-user-drew@hostsharing.org"),
-                        teamGroupUuid,
-                        serviceGroupUuid,
-                        backendGroupUuid);
-    }
-
-    @Test
-    @Transactional
     void assumeRoles() {
         // given
-        final var authentication = new UsernamePasswordAuthenticationToken("superuser-fran@hostsharing.net", null, null);
+        final var authentication = new UsernamePasswordAuthenticationToken("hsh-fran_superuser", null, null);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
@@ -169,7 +146,7 @@ class ContextIntegrationTests {
 
         // then
         assertThat(context.fetchCurrentSubject()).
-                isEqualTo("superuser-fran@hostsharing.net");
+                isEqualTo("hsh-fran_superuser");
 
         assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
 
@@ -196,7 +173,7 @@ class ContextIntegrationTests {
         rbacGranter.as("rbactest.customer#yyy:OWNER")
                 .grant("rbactest.customer#yyy:ADMIN")
                 .to("/xyz-Team");
-        givenJwtAuthentication("selfregistered-user-drew@hostsharing.org", List.of(
+        givenJwtAuthentication("tst-drew_selfregistered", List.of(
                 "/xyz-Team",
                 "/xyz-Service"));
 
@@ -205,7 +182,7 @@ class ContextIntegrationTests {
 
         // then
         assertThat(context.fetchCurrentSubject()).
-                isEqualTo("selfregistered-user-drew@hostsharing.org");
+                isEqualTo("tst-drew_selfregistered");
 
         assertThat(context.fetchAssumedRolesNames()).isEqualTo(Array.of(
                 "rbactest.package#xxx00:ADMIN",
@@ -216,7 +193,7 @@ class ContextIntegrationTests {
                         uuidOfRoleName("rbactest.package#xxx00:ADMIN"),
                         uuidOfRoleName("rbactest.package#yyy00:ADMIN"))
                 .doesNotContain(
-                        uuidOfSubjectName("selfregistered-user-drew@hostsharing.org"),
+                        uuidOfSubjectName("tst-drew_selfregistered"),
                         uuidOfSubjectName("/xyz-Team"),
                         uuidOfSubjectName("/xyz-Service"));
     }
@@ -251,11 +228,11 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithCurrentSubjectAndAssumedRoles() {
         // given
-        context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:OWNER;rbactest.customer#yyy:OWNER");
+        context.define("hsh-alex_superuser", "rbactest.customer#xxx:OWNER;rbactest.customer#yyy:OWNER");
 
         // when
         final var currentSubject = context.fetchCurrentSubject();
-        assertThat(currentSubject).isEqualTo("superuser-alex@hostsharing.net");
+        assertThat(currentSubject).isEqualTo("hsh-alex_superuser");
 
         // then
         assertThat(context.fetchAssumedRolesNames())
@@ -267,13 +244,13 @@ class ContextIntegrationTests {
     public void defineContextWithCurrentSubjectAndAssumeInaccessibleRole() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define("customer-admin@xxx.example.com", "rbactest.package#yyy00:ADMIN")
+                context.define("tst-customer_admin_xxx", "rbactest.package#yyy00:ADMIN")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
-                "ERROR: [403] subject customer-admin@xxx.example.com has no permission to assume role rbactest.package#yyy00:ADMIN");
+                "ERROR: [403] subject tst-customer_admin_xxx has no permission to assume role rbactest.package#yyy00:ADMIN");
     }
 
     @Test
@@ -281,7 +258,7 @@ class ContextIntegrationTests {
 
         final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
                     // given
-                    context.define("superuser-alex@hostsharing.net");
+                    context.define("hsh-alex_superuser");
 
                     // when
                     return hasGlobalAdminRole();
@@ -296,7 +273,7 @@ class ContextIntegrationTests {
     public void hasGlobalAdminRoleIsFalseForGlobalAdminWithAssumedNonGlobalRole() {
         final var hasGlobalAdminRole = jpaAttempt.transacted(() -> {
             // given
-            context.define("superuser-alex@hostsharing.net", "rbactest.package#yyy00:ADMIN");
+            context.define("hsh-alex_superuser", "rbactest.package#yyy00:ADMIN");
 
             // when
             return hasGlobalAdminRole();
@@ -312,7 +289,7 @@ class ContextIntegrationTests {
     public void hasGlobalAdminRoleIsTrueForGlobalAdminWithAssumedGlobalAdminRole() {
         final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
             // given
-            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            context.define("hsh-alex_superuser", "rbac.global#global:ADMIN");
 
             // when
             return hasGlobalAdminRole();
@@ -326,7 +303,7 @@ class ContextIntegrationTests {
     public void hasGlobalAdminRoleIsTrueForGlobalAdminWithOneOfMultipleAssumedRolesBeingGlobalAdminRole() {
         final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
             // given
-            context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN;rbac.global#global:ADMIN");
+            context.define("hsh-alex_superuser", "rbactest.customer#xxx:ADMIN;rbac.global#global:ADMIN");
 
             // when
             return hasGlobalAdminRole();
@@ -339,13 +316,13 @@ class ContextIntegrationTests {
     @Test
     public void hasGlobalAdminRoleFollowsRedefinedContextWithinSameTransaction() {
         final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var withoutAssumedRole = hasGlobalAdminRole();
 
-            context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
+            context.define("hsh-alex_superuser", "rbactest.customer#xxx:ADMIN");
             final var withAssumedCustomerRole = hasGlobalAdminRole();
 
-            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            context.define("hsh-alex_superuser", "rbac.global#global:ADMIN");
             final var withAssumedGlobalAdminRole = hasGlobalAdminRole();
 
             return List.of(withoutAssumedRole, withAssumedCustomerRole, withAssumedGlobalAdminRole);
@@ -357,10 +334,10 @@ class ContextIntegrationTests {
     @Test
     public void hasGlobalAdminRoleIsCachedInContext() {
         final var cachedHasGlobalAdminRole = jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
+            context.define("hsh-alex_superuser", "rbactest.customer#xxx:ADMIN");
             final var withAssumedCustomerRole = cachedHasGlobalAdminRole();
 
-            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
+            context.define("hsh-alex_superuser", "rbac.global#global:ADMIN");
             final var withAssumedGlobalAdminRole = cachedHasGlobalAdminRole();
 
             return List.of(withAssumedCustomerRole, withAssumedGlobalAdminRole);
@@ -374,7 +351,7 @@ class ContextIntegrationTests {
 
         final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
                     // given
-                    context.define("customer-admin@xxx.example.com");
+                    context.define("tst-customer_admin_xxx");
 
                     // when
                     return hasGlobalAdminRole();

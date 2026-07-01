@@ -67,7 +67,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates")
@@ -108,7 +108,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/office/sepamandates?iban=DE02120300000000202051")
@@ -140,13 +140,13 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_canPostNewSepaMandate() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("Third").get(0);
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -182,12 +182,12 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_canNotPostNewSepaMandateWhenDebitorUuidIsMissing() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -206,13 +206,13 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_canNotPostNewSepaMandate_ifBankAccountDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("Third").get(0);
             final var givenBankAccountUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -236,13 +236,13 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_canNotPostNewSepaMandate_ifDebitorDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitorUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -269,14 +269,14 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void globalAdmin_canGetArbitrarySepaMandate() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
                     .get(0)
                     .getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates/" + givenSepaMandateUuid)
@@ -299,14 +299,14 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void normalUser_canNotGetUnrelatedSepaMandate() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
                     .get(0)
                     .getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates/" + givenSepaMandateUuid)
@@ -316,14 +316,14 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void bankAccountAdminUser_canGetRelatedSepaMandate() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
                     .get(0)
                     .getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("bankaccount-admin@FirstGmbH.example.com"))
+                    .header("Authorization", bearer("tst-bankaccount_firstgmbh"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates/" + givenSepaMandateUuid)
@@ -355,7 +355,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -381,7 +381,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
             // @formatter:on
 
             // finally, the sepaMandate is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getDebitor().toString()).isEqualTo(
@@ -397,12 +397,12 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_canPatchJustValidToOfArbitrarySepaMandate() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandate = givenSomeTemporarySepaMandateForDebitorNumber(1000111);
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -439,12 +439,12 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_canNotPatchReferenceOfArbitrarySepaMandate() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandate = givenSomeTemporarySepaMandateForDebitorNumber(1000111);
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -473,12 +473,12 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void globalAdmin_canDeleteArbitrarySepaMandate() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandate = givenSomeTemporarySepaMandateForDebitorNumber(1000111);
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/sepamandates/" + givenSepaMandate.getUuid())
@@ -491,12 +491,12 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void bankAccountAdminUser_canNotDeleteRelatedSepaMandate() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandate = givenSomeTemporarySepaMandateForDebitorNumber(1000111);
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("bankaccount-admin@FirstGmbH.example.com"))
+                    .header("Authorization", bearer("tst-bankaccount_firstgmbh"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/sepamandates/" + givenSepaMandate.getUuid())
@@ -509,12 +509,12 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
         @Test
         void normalUser_canNotDeleteUnrelatedSepaMandate() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenSepaMandate = givenSomeTemporarySepaMandateForDebitorNumber(1000111);
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/sepamandates/" + givenSepaMandate.getUuid())
@@ -528,7 +528,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandateForDebitorNumber(final int debitorNumber) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).orElseThrow();
             final var bankAccountHolder = ofNullable(givenDebitor.getPartner().getPartnerRel().getHolder().getTradeName())
                     .orElse(givenDebitor.getPartner().getPartnerRel().getHolder().getFamilyName());
@@ -550,7 +550,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             final var count = em.createQuery("DELETE FROM HsOfficeSepaMandateEntity s WHERE s.reference like 'temp %'")
                     .executeUpdate();
             if (count == 0) {

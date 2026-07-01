@@ -17,8 +17,69 @@ components:
                     format: uuid
                 name:
                     type: string
+                    description: |
+                        Subject name. USER subjects use the realm-prefix and local-part format.
+                        GROUP subjects start with `/` right before the realm-prefix.
+                    example: hsh-alex_superuser
                 type:
                     $ref: '#/components/schemas/SubjectType'
+            required:
+                - uuid
+                - name
+                - type
+
+        RbacUserSubjectInsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^[a-z]{3,5}-[^/]+$'
+                    description: |
+                        USER subject name using the realm-prefix and local-part format.
+                        The local-part does not reject anything which might come from Keycloak,
+                        to avoid rejecting valid Keycloak user-names.
+                    example: hsh-alex_superuser
+                type:
+                    type: string
+                    enum:
+                        - USER
+                    default: USER
+            required:
+                - name
+            additionalProperties: false
+
+        RbacGroupSubjectInsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^/[a-z]{3,5}-[^/]+$'
+                    description: |
+                        GROUP subject name. GROUP subject names start with `/`, a realm-prefix and a '-'
+                        followed by a local-part.                      
+                        The local-part does not reject anything which might come from Keycloak,
+                        to avoid rejecting valid Keycloak group-names.
+                    example: /xyz-Team
+                type:
+                    type: string
+                    enum:
+                        - GROUP
+            required:
+                - name
+                - type
+            additionalProperties: false
+
+        RbacSubjectInsert:
+            anyOf:
+                - $ref: '#/components/schemas/RbacUserSubjectInsert'
+                - $ref: '#/components/schemas/RbacGroupSubjectInsert'
+
         RbacSubjectPermission:
             type: object
             properties:

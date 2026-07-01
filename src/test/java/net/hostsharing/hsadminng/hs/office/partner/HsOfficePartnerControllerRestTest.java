@@ -139,7 +139,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/partners")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                      {
@@ -171,7 +171,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/partners")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .header("Accept-Language", "de")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
@@ -206,7 +206,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/partners")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                      {
@@ -247,7 +247,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/partners?name=host")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -264,7 +264,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/partners/" + partnerUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -282,7 +282,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/partners/" + partnerUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -299,7 +299,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/partners/P-12345")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON))
 
@@ -316,7 +316,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/partners/P-12345")
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON))
 
@@ -344,7 +344,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/office/partners/" + givenPartnerUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON))
 
@@ -361,7 +361,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/office/partners/" + givenPartnerUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -378,7 +378,7 @@ class HsOfficePartnerControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .delete("/api/hs/office/partners/" + givenPartnerUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -397,7 +397,7 @@ class HsOfficePartnerControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/office/partners/" + partnerUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                   {

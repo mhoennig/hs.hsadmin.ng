@@ -58,7 +58,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewAllCustomers_ifNoCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -76,7 +76,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers?prefix=y")
@@ -92,7 +92,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
@@ -109,7 +109,7 @@ class TestCustomerControllerAcceptanceTest {
         void customerAdmin_withoutAssumedRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("customer-admin@yyy.example.com"))
+                    .header("Authorization", bearer("tst-customer_admin_yyy"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -130,13 +130,13 @@ class TestCustomerControllerAcceptanceTest {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                               {
                                 "reference": 90020,
                                 "prefix": "uuu",
-                                "adminUserName": "customer-admin@uuu.example.com"
+                                "adminUserName": "tst-customer_admin_uuu"
                               }
                               """)
                         .port(port)
@@ -152,7 +152,7 @@ class TestCustomerControllerAcceptanceTest {
             // finally, the new customer can be viewed by its own admin
             final var newSubjectUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            context.define("superuser-fran@hostsharing.net", "rbactest.customer#uuu:ADMIN");
+            context.define("hsh-fran_superuser", "rbactest.customer#uuu:ADMIN");
             assertThat(testCustomerRepository.findByUuid(newSubjectUuid))
                     .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("uuu"));
         }
@@ -162,14 +162,14 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                               {
                                 "reference": 90010,
                                 "prefix": "uuu",
-                                "adminUserName": "customer-admin@uuu.example.com"
+                                "adminUserName": "tst-customer_admin_uuu"
                               }
                               """)
                     .port(port)
@@ -184,7 +184,7 @@ class TestCustomerControllerAcceptanceTest {
             // @formatter:on
 
             // finally, the new customer was not created
-            context.define("superuser-fran@hostsharing.net");
+            context.define("hsh-fran_superuser");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
 
@@ -193,13 +193,13 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("customer-admin@yyy.example.com"))
+                    .header("Authorization", bearer("tst-customer_admin_yyy"))
                     .contentType(ContentType.JSON)
                     .body("""
                               {
                                 "reference": 90010,
                                 "prefix": "uuu",
-                                "adminUserName": "customer-admin@uuu.example.com"
+                                "adminUserName": "tst-customer_admin_uuu"
                               }
                               """)
                     .port(port)
@@ -214,7 +214,7 @@ class TestCustomerControllerAcceptanceTest {
                 // @formatter:on
 
             // finally, the new customer was not created
-            context.define("superuser-fran@hostsharing.net");
+            context.define("hsh-fran_superuser");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
 
@@ -223,7 +223,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("{]") // deliberately invalid JSON
                     .port(port)
@@ -242,7 +242,7 @@ class TestCustomerControllerAcceptanceTest {
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net", null);
+            context.define("hsh-alex_superuser", null);
             em.createQuery("DELETE FROM TestCustomerEntity c WHERE c.reference < 99900").executeUpdate();
         }).assertSuccessful();
     }

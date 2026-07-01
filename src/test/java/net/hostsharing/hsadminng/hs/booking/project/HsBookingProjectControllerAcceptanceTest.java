@@ -56,14 +56,14 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canViewAllBookingProjectsOfArbitraryDebitor() {
 
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).stream()
                             .findFirst()
                             .orElseThrow();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/projects?debitorUuid=" + givenDebitor.getUuid())
@@ -87,14 +87,14 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_canPostNewBookingProject() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).stream()
                     .findFirst()
                     .orElseThrow();
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                             {
@@ -128,13 +128,13 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void globalAdmin_canGetArbitraryBookingProject() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingProjectUuid = realProjectRepo.findByCaption("D-1000111 default project").stream()
                             .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/projects/" + givenBookingProjectUuid)
@@ -150,14 +150,14 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void normalUser_canNotGetUnrelatedBookingProject() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingProjectUuid = realProjectRepo.findByCaption("D-1000212 default project").stream()
                     .map(HsBookingProject::getUuid)
                     .findAny().orElseThrow();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/projects/" + givenBookingProjectUuid)
@@ -167,13 +167,13 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void projectAgentUser_canGetRelatedBookingProject() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingProjectUuid = realProjectRepo.findByCaption("D-1000313 default project").stream()
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("person-TuckerJack@example.com"))
+                    .header("Authorization", bearer("tst-person_tuckerjack"))
                     .header("Hostsharing-Assumed-Roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                 .when()
@@ -195,13 +195,13 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
                 "" // without any Hostsharing-Assumed-Roles
         })
         void debitorAdminUser_canGetRelatedBookingProjectEvenWithoutAssumingTheProjectRole(final String assumedRoles) {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var debitorUuid = debitorRepo.findByDebitorNumber(1000111).stream()
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("person-FirstGmbH@example.com"))
+                    .header("Authorization", bearer("tst-person_firstgmbh"))
                     .header("Hostsharing-Assumed-Roles", assumedRoles)
                     .port(port)
                 .when()
@@ -229,7 +229,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                         {
@@ -249,7 +249,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
                     """)); // @formatter:on
 
             // finally, the bookingProject is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(realProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getDebitor().toString()).isEqualTo("booking-debitor(D-1000111: fir)");
@@ -263,12 +263,12 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void globalAdmin_canDeleteArbitraryBookingProject() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingProject = givenSomeBookingProject(1000111, "some project");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/projects/" + givenBookingProject.getUuid())
@@ -281,12 +281,12 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void normalUser_canNotDeleteUnrelatedBookingProject() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingProject = givenSomeBookingProject(1000111, "some project");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/projects/" + givenBookingProject.getUuid())
@@ -300,7 +300,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
     private HsBookingProjectRealEntity givenSomeBookingProject(final int debitorNumber, final String caption) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findByDebitorNumber(debitorNumber).stream().findAny().orElseThrow();
             final var newBookingProject = HsBookingProjectRealEntity.builder()
                     .debitor(givenDebitor)

@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('hs_hosting.asset');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -113,7 +114,8 @@ execute procedure hs_hosting.asset_build_rbac_system_after_insert_tf();
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-update-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-update-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -166,7 +168,8 @@ call rbac.generateRbacIdentityViewFromProjection('hs_hosting.asset',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-hosting-asset-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-hosting-asset-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_hosting.asset',
     $orderBy$
@@ -184,7 +187,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-hosting-asset-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-hosting-asset-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_hosting.asset after changing its RBAC specification.

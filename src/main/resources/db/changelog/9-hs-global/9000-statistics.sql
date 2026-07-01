@@ -1,7 +1,8 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset michael.hoennig:hs-global-object-statistics runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:hs-global-object-statistics runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 DROP VIEW IF EXISTS hs_statistics_v;
 CREATE VIEW hs_statistics_v AS

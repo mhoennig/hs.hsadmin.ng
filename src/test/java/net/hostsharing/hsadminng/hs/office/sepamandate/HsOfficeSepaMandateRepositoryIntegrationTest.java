@@ -66,7 +66,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewSepaMandate() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var count = sepaMandateRepo.count();
             final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Paul Winkler").get(0);
@@ -95,7 +95,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("hs_office.", ""))
@@ -132,7 +132,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
                             // owner
                             "{ grant perm:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):DELETE to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER by system and assume }",
                             "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER to role:rbac.global#global:ADMIN by system and assume }",
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER to user:superuser-alex@hostsharing.net by sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER and assume }",
+                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER to user:hsh-alex_superuser by sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER and assume }",
 
                             // admin
                             "{ grant perm:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):UPDATE to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN by system and assume }",
@@ -165,7 +165,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllSepaMandates() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
@@ -181,7 +181,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void normalUser_canViewOnlyRelatedSepaMandates() {
             // given:
-            context("bankaccount-admin@FirstGmbH.example.com");
+            context("tst-bankaccount_firstgmbh");
 
             // when:
             final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
@@ -199,7 +199,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_canViewAllSepaMandates() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             // when
             final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
@@ -215,7 +215,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void bankAccountAdmin_canViewRelatedSepaMandates() {
             // given
-            context("bankaccount-admin@ThirdOHG.example.com");
+            context("tst-bankaccount_thirdohg");
 
             // when
             final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
@@ -240,7 +240,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenSepaMandate.setReference("temp ref X - updated");
                 givenSepaMandate.setAgreement(LocalDate.parse("2019-05-13"));
                 givenSepaMandate.setValidity(Range.closedOpen(
@@ -251,7 +251,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             result.assertSuccessful();
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isNotEmpty().get()
                         .extracting(Object::toString).isEqualTo(givenSepaMandate.toString());
             }).assertSuccessful();
@@ -260,7 +260,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void bankAccountAdmin_canViewButNotUpdateRelatedSepaMandate() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02300606010002474689");
             assertThatSepaMandateIsVisibleForUserWithRole(
@@ -271,7 +271,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office.bankaccount#DE02300606010002474689:ADMIN");
+                context("hsh-alex_superuser", "hs_office.bankaccount#DE02300606010002474689:ADMIN");
 
                 givenSepaMandate.setValidity(Range.closedOpen(
                         givenSepaMandate.getValidity().lower(), newValidityEnd));
@@ -293,7 +293,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
                 final HsOfficeSepaMandateEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 assertThatSepaMandateActuallyInDatabase(entity);
             }).assertSuccessful();
         }
@@ -302,7 +302,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
                 final HsOfficeSepaMandateEntity entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 final var found = sepaMandateRepo.findByUuid(entity.getUuid());
                 assertThat(found).isEmpty();
             }).assertSuccessful();
@@ -315,19 +315,19 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnySepaMandate() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02200505501015871393");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 sepaMandateRepo.deleteByUuid(givenSepaMandate.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-fran@hostsharing.net", null);
+                context("hsh-fran_superuser", null);
                 return sepaMandateRepo.findByUuid(givenSepaMandate.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
@@ -335,12 +335,12 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void nonGlobalAdmin_canNotDeleteTheirRelatedSepaMandate() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02300209000106531065");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("bankaccount-admin@ThirdOHG.example.com");
+                context("tst-bankaccount_thirdohg");
                 assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent();
 
                 sepaMandateRepo.deleteByUuid(givenSepaMandate.getUuid());
@@ -351,7 +351,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
                     JpaSystemException.class,
                     "[403] Subject ", " not allowed to delete hs_office.sepamandate");
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return sepaMandateRepo.findByUuid(givenSepaMandate.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
@@ -359,14 +359,14 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void deletingASepaMandateAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02600501010002034304");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return sepaMandateRepo.deleteByUuid(givenSepaMandate.getUuid());
             });
 
@@ -399,7 +399,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandate(final String iban) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("First").get(0);
             final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc(iban).get(0);
             final var newSepaMandate = HsOfficeSepaMandateEntity.builder()

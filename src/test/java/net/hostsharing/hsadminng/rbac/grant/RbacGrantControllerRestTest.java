@@ -83,7 +83,7 @@ class RbacGrantControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/grants")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Hostsharing-Assumed-Roles", "rbac.global#global:ADMIN")
                         .accept(MediaType.APPLICATION_JSON))
 
@@ -108,7 +108,7 @@ class RbacGrantControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/grants/{grantedRoleUuid}/{granteeSubjectUuid}", grantedRoleUuid, granteeSubjectUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -126,7 +126,7 @@ class RbacGrantControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/rbac/grants/{grantedRoleUuid}/{granteeSubjectUuid}", grantedRoleUuid, granteeSubjectUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -146,7 +146,7 @@ class RbacGrantControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/rbac/grants")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -180,7 +180,7 @@ class RbacGrantControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/rbac/grants/{grantedRoleUuid}/{granteeSubjectUuid}", grantedRoleUuid, granteeSubjectUuid)
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then

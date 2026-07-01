@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:test-customer-TEST-DATA-GENERATOR endDelimiter:--//
+--changeset michael.hoennig:test-customer-TEST-DATA-GENERATOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Generates a customer reference number for a given test data counter.
@@ -31,7 +32,7 @@ declare
     newCust       rbactest.customer;
 begin
     custRowId = uuid_generate_v4();
-    custAdminName = 'customer-admin@' || custPrefix || '.example.com';
+    custAdminName = 'tst-customer_admin_' || custPrefix;
     custAdminUuid = rbac.create_subject(custAdminName);
 
     insert
@@ -68,11 +69,12 @@ end; $$;
 
 -- ============================================================================
 --changeset michael.hoennig:test-customer-TEST-DATA-GENERATION context:!without-test-data endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call base.defineContext('creating RBAC test customer', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
+        call base.defineContext('creating RBAC test customer', null, 'hsh-alex_superuser', 'rbac.global#global:ADMIN');
 
         call rbactest.customer_create_test_data(99901, 'xxx');
         call rbactest.customer_create_test_data(99902, 'yyy');

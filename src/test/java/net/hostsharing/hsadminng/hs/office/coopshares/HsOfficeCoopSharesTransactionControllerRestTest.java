@@ -93,7 +93,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/coopsharestransactions?membershipUuid=%s&fromValueDate=2024-01-01&toValueDate=2024-12-31"
                                     .formatted(membershipUuid))
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -119,7 +119,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/coopsharestransactions/" + transactionUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -137,7 +137,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/hs/office/coopsharestransactions/" + transactionUuid)
-                            .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                            .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -161,7 +161,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopsharestransactions")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -246,7 +246,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopsharestransactions")
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .header("Accept-Language", "de")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(testCase.givenRequestBody())

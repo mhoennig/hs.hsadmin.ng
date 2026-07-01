@@ -4,7 +4,8 @@
 
 -- ============================================================================
 -- NUMERIC-HASH-FUNCTIONS
---changeset michael.hoennig:hash runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset michael.hoennig:hash runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 do $$

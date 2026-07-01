@@ -63,12 +63,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_withoutAssumedRoles_canViewAllRelationsOfGivenPersonAndType() {
 
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("Hostsharing eG").getFirst();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations?personUuid=%s&relationType=%s"
@@ -121,12 +121,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void personAdmin_canViewAllRelationsOfGivenRelatedPersonAndAnyType() {
 
             // given
-            context.define("contact-admin@firstcontact.example.com");
+            context.define("tst-contact_admin_firstcontact");
             final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
 
             RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/office/relations?personUuid=%s"
@@ -179,11 +179,11 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canViewAllRelationsWithGivenContactData() {
 
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/office/relations?personData=firby&contactData=Contact-Admin@FirstContact.Example.COM")
@@ -225,12 +225,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canViewAllRelationsWithGivenContactUuid() {
 
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenContact = realContactRepo.findContactByOptionalCaptionLike("first contact").getFirst();
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/office/relations?contactUuid=" + givenContact.getUuid())
@@ -291,12 +291,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canViewAllRelationsWithGivenAnchorPersonUuid() {
 
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/office/relations?anchorPersonUuid=" + givenPerson.getUuid())
@@ -324,12 +324,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canViewAllRelationsWithGivenHolderPersonUuid() {
 
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/office/relations?holderPersonUuid=" + givenPerson.getUuid())
@@ -357,12 +357,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canViewAllRelationsWithGivenGenericPersonUuid() {
 
             // given
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenPerson = realPersonRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
 
             RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
                         .get("http://localhost/api/hs/office/relations?personUuid=" + givenPerson.getUuid())
@@ -398,14 +398,14 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_withoutAssumedRole_canAddRelationWithHolderUuidAndContactUuid() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
             final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Paul").getFirst();
             final var givenContact = realContactRepo.findContactByOptionalCaptionLike("second").getFirst();
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -445,12 +445,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_withoutAssumedRole_canAddRelationWithHolderAndContactData() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -511,14 +511,14 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_canNotAddRelation_ifAnchorPersonDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAnchorPersonUuid = GIVEN_NON_EXISTING_HOLDER_PERSON_UUID;
             final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Smith").getFirst();
             final var givenContact = realContactRepo.findContactByOptionalCaptionLike("fourth").getFirst();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -544,13 +544,13 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_canNotAddRelation_ifHolderPersonDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
             final var givenContact = realContactRepo.findContactByOptionalCaptionLike("fourth").getFirst();
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -576,14 +576,14 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_canNotAddRelation_ifContactDoesNotExist() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Third").getFirst();
             final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Paul").getFirst();
             final var givenContactUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -612,12 +612,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryRelation() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final UUID givenRelationUuid = findRelation("First", "Firby").getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelationUuid)
@@ -635,12 +635,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void normalUser_canNotGetUnrelatedRelation() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final UUID givenRelationUuid = findRelation("First", "Firby").getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelationUuid)
@@ -650,13 +650,13 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void contactAdminUser_canGetRelatedRelation() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenRelation = findRelation("First", "Firby");
             assertThat(givenRelation.getContact().getCaption()).isEqualTo("first contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("contact-admin@firstcontact.example.com"))
+                    .header("Authorization", bearer("tst-contact_admin_firstcontact"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -692,14 +692,14 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_withoutAssumedRole_canPatchContactOfArbitraryRelation() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler();
             assertThat(givenRelation.getContact().getCaption()).isEqualTo("seventh contact");
             final var givenContact = realContactRepo.findContactByOptionalCaptionLike("fourth").getFirst();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -720,7 +720,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                 // @formatter:on
 
             // finally, the relation is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(realRelationRepo.findByUuid(givenRelation.getUuid())).isPresent().get()
                     .matches(rel -> {
                         assertThat(rel.getAnchor().getTradeName()).contains("Bessler");
@@ -737,12 +737,12 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void globalAdmin_withoutAssumedRole_canDeleteArbitraryRelation() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -755,13 +755,13 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void contactAdminUser_canNotDeleteRelatedRelation() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler();
             assertThat(givenRelation.getContact().getCaption()).isEqualTo("seventh contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("contact-admin@seventhcontact.example.com"))
+                    .header("Authorization", bearer("tst-contact_admin_seventhcontact"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -774,13 +774,13 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
         @Test
         void normalUser_canNotDeleteUnrelatedRelation() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler();
             assertThat(givenRelation.getContact().getCaption()).isEqualTo("seventh contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -794,7 +794,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
     private HsOfficeRelation givenSomeTemporaryRelationBessler() {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenAnchorPerson = realPersonRepo.findPersonByOptionalNameLike("Erben Bessler").getFirst();
             final var givenHolderPerson = realPersonRepo.findPersonByOptionalNameLike("Winkler").getFirst();
             final var givenContact = realContactRepo.findContactByOptionalCaptionLike("seventh contact").getFirst();

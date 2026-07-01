@@ -57,7 +57,7 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void arbitraryUser_canCreateNewPerson() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var count = personRealRepo.count();
 
             // when
@@ -74,7 +74,7 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
@@ -96,7 +96,7 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
                             initialGrantNames,
                             "{ grant perm:hs_office.person#anothernewperson:INSERT>hs_office.relation to role:hs_office.person#anothernewperson:ADMIN by system and assume }",
 
-                            "{ grant role:hs_office.person#anothernewperson:OWNER       to user:selfregistered-user-drew@hostsharing.org by hs_office.person#anothernewperson:OWNER and assume }",
+                            "{ grant role:hs_office.person#anothernewperson:OWNER       to user:tst-drew_selfregistered by hs_office.person#anothernewperson:OWNER and assume }",
                             "{ grant role:hs_office.person#anothernewperson:OWNER       to role:rbac.global#global:ADMIN by system and assume }",
                             "{ grant perm:hs_office.person#anothernewperson:UPDATE      to role:hs_office.person#anothernewperson:ADMIN by system and assume }",
                             "{ grant perm:hs_office.person#anothernewperson:DELETE      to role:hs_office.person#anothernewperson:OWNER by system and assume }",
@@ -119,7 +119,7 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void arbitraryUser_canViewAllPersons() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
 
             // when
             final var result = personRealRepo.findPersonByOptionalNameLike(null);
@@ -140,7 +140,7 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
         @Test
         public void arbitraryUser_canViewAllPersons() {
             // given
-            context("selfregistered-user-drew@hostsharing.org");
+            context("tst-drew_selfregistered");
 
             // when
             final var result = personRealRepo.findPersonByOptionalNameLike("Peter Smith - The Second Hand%");
@@ -154,7 +154,7 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
     public void findPersonsRepresentedByPersonWithUuid() {
 
         // given
-        context("superuser-alex@hostsharing.net");
+        context("hsh-alex_superuser");
         final var personUuid = personRealRepo.findPersonByOptionalNameLike("Fouler").getFirst().getUuid();
 
         // when
@@ -171,7 +171,7 @@ class HsOfficePersonRealRepositoryIntegrationTest extends ContextBasedTestWithCl
     public void findPersonsRepresentedByPersonWithUuidDrew() {
 
         // given
-        context("superuser-alex@hostsharing.net");
+        context("hsh-alex_superuser");
         final var personUuid = personRealRepo.findPersonByOptionalNameLike("Drew").getFirst().getUuid();
 
         // when

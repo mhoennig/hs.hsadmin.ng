@@ -41,8 +41,8 @@ class PingControllerAcceptanceTest {
     Context contextMock;
 
     enum PongTranslationTestCase {
-        EN(Locale.ENGLISH, "ponged superuser-alex@hostsharing.net - in English"),
-        DE(Locale.GERMAN, "ponged superuser-alex@hostsharing.net - auf Deutsch");
+        EN(Locale.ENGLISH, "ponged hsh-alex_superuser - in English"),
+        DE(Locale.GERMAN, "ponged hsh-alex_superuser - auf Deutsch");
 
         Locale givenLocale;
         CharSequence expectedPongTranslation;
@@ -58,7 +58,7 @@ class PingControllerAcceptanceTest {
     void pongRepliesWithTranslatedPongResponse(final PongTranslationTestCase testCase) {
         final var responseBody = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Accept-Language", testCase.givenLocale)
                     .port(port)
                 .when()
@@ -76,7 +76,7 @@ class PingControllerAcceptanceTest {
     void pongPostRepliesWithTranslatedPongResponse() {
         final var responseBody = RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Accept-Language", Locale.GERMAN)
                     .port(port)
                 .when()
@@ -87,7 +87,7 @@ class PingControllerAcceptanceTest {
                     .extract().body().asString();
         // @formatter:on
 
-        assertThat(responseBody).isEqualTo("ponged superuser-alex@hostsharing.net - auf Deutsch\n");
+        assertThat(responseBody).isEqualTo("ponged hsh-alex_superuser - auf Deutsch\n");
     }
 
     @Test

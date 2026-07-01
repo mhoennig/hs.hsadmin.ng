@@ -57,9 +57,16 @@ public class RestResponseEntityExceptionHandler
     protected ResponseEntity<CustomErrorResponse> handleConflict(
             final RuntimeException exc, final WebRequest request) {
 
-        final var fullMaybeLocalizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
-        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(fullMaybeLocalizedMessage);
-        return errorResponse(request, HttpStatus.CONFLICT, sprippedMaybeLocalizedMessage);
+        final var causingException = NestedExceptionUtils.getMostSpecificCause(exc);
+        final var fullMaybeLocalizedMessage = localizedMessage(causingException);
+        final var maybeTranslatedMessage = tryTranslation(fullMaybeLocalizedMessage);
+        final var strippedMaybeLocalizedMessage = stripTechnicalDetails(maybeTranslatedMessage);
+        return errorResponse(
+                request,
+                // Some DB constraints raise client errors such as ERROR: [400],
+                // those do not count as conflicts at the HTTP level.
+                httpStatus(causingException, strippedMaybeLocalizedMessage).orElse(HttpStatus.CONFLICT),
+                strippedMaybeLocalizedMessage);
     }
 
     @ExceptionHandler(JpaSystemException.class)

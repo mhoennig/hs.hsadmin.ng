@@ -13,7 +13,7 @@ import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.D
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
 
 public class FakeLoginUser {
-    final static String GLOBAL_AGENT = "superuser-alex@hostsharing.net"; // TODO.test: use global:AGENT when implemented
+    final static String GLOBAL_AGENT = "hsh-alex_superuser"; // TODO.test: use global:AGENT when implemented
 
     private static final ObjectMapper REPORT_OBJECT_MAPPER = new ObjectMapper();
 

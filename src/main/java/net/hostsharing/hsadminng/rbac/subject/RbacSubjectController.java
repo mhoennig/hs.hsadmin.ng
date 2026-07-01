@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.rbac.context.Context;
@@ -9,16 +10,18 @@ import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectPermissi
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.SubjectTypeResource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.generated.api.v1.model.SubjectTypeResource.USER;
+import static net.hostsharing.hsadminng.rbac.subject.SubjectType.USER;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
@@ -32,6 +35,9 @@ public class RbacSubjectController implements RbacSubjectsApi {
     private StrictMapper mapper;
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private RbacSubjectRepository rbacSubjectRepository;
 
     @Autowired
@@ -42,23 +48,33 @@ public class RbacSubjectController implements RbacSubjectsApi {
     @PreAuthorize("permitAll()")
     @Timed("app.rbac.subjects.api.postNewSubject")
     public ResponseEntity<RbacSubjectResource> postNewSubject(
-            final RbacSubjectResource body
+            final Object body // anyOf in OpenAPI is generated as a Map in an Object, ugly, but it is as it is
     ) {
         context.define(null);
 
-        if (body.getUuid() == null) {
-            body.setUuid(UUID.randomUUID());
+        final var entity = toSubjectEntity(body);
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUID.randomUUID());
         }
-        if (body.getType() == null) {
-            body.setType(USER);
+        if (entity.getType() == null) {
+            entity.setType(USER);
         }
-        final var saved = rbacSubjectRepository.create(mapper.map(body, RbacSubjectEntity.class));
+
+        final var saved = rbacSubjectRepository.create(entity);
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/rbac/subjects/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(mapper.map(saved, RbacSubjectResource.class));
+    }
+
+    private RbacSubjectEntity toSubjectEntity(final Object body) {
+        try {
+            return objectMapper.convertValue(body, RbacSubjectEntity.class);
+        } catch (final IllegalArgumentException exc) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exc.getMessage(), exc);
+        }
     }
 
     @Override

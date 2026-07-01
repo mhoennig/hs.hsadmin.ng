@@ -81,12 +81,12 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         void globalAdmin_canViewAllBookingItemsOfArbitraryDebitor() {
 
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items?projectUuid=" + givenProject.getUuid())
@@ -145,12 +145,12 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void globalAdmin_canPostNewBookingItem() {
 
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                             {
@@ -192,7 +192,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void projectAgent_canAddManagedWebspaceBookingItemWithHostingAsset() {
 
-            context.define("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context.define("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);
             final var givenManagedServer = realHostingAssetRepo.findByTypeAndIdentifier(MANAGED_SERVER, "vm1011").stream()
                     .map(HsHostingAsset::getBookingItem)
@@ -200,7 +200,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .contentType(ContentType.JSON)
                     .body("""
                                 {
@@ -259,7 +259,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void projectAgent_canAddDomainSetupBookingItemWithHostingAsset() {
 
-            context.define("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context.define("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);
             // TODO.impl: "sec01-web" should not work, but does
             final var givenUnixUser = realHostingAssetRepo.findByTypeAndIdentifier(UNIX_USER, "fir01-web").stream()
@@ -270,7 +270,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
@@ -352,7 +352,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void projectAgent_canPostNewBookingItemEvenIfHostingAssetCreationFails() {
 
-            context.define("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            context.define("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);
             final var givenUnixUser = realHostingAssetRepo.findByIdentifier("fir01-web").stream().findFirst().orElseThrow();
 
@@ -360,7 +360,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
@@ -445,7 +445,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         @Order(1)
         void globalAdmin_canGetArbitraryBookingItem() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingItemUuid = realBookingItemRepo.findByCaption("separate ManagedWebspace").stream()
                             .filter(bi -> belongsToProject(bi, "D-1000111 default project"))
                             .map(HsBookingItem::getUuid)
@@ -453,7 +453,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -479,7 +479,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         @Order(2)
         void normalUser_canNotGetUnrelatedBookingItem() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingItemUuid = realBookingItemRepo.findByCaption("separate ManagedServer").stream()
                     .filter(bi -> belongsToProject(bi, "D-1000212 default project"))
                     .map(HsBookingItem::getUuid)
@@ -487,7 +487,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -498,14 +498,14 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         @Order(3)
         void projectAdmin_canGetRelatedBookingItem() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingItem = realBookingItemRepo.findByCaption("separate ManagedServer").stream()
                     .filter(bi -> belongsToProject(bi, "D-1000313 default project"))
                     .findAny().orElseThrow();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "hs_booking.project#D-1000313-D-1000313defaultproject:ADMIN")
                     .port(port)
                 .when()
@@ -549,7 +549,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .header("Hostsharing-Assumed-Roles", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -581,7 +581,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     """)); // @formatter:on
 
             // finally, the bookingItem is actually updated
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             assertThat(realBookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getProject().getDebitor().toString()).isEqualTo("booking-debitor(D-1000111: fir)");
@@ -598,13 +598,13 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
         @Test
         void globalAdmin_canDeleteArbitraryBookingItem() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingItem = givenSomeNewBookingItem("D-1000111 default project", MANAGED_WEBSPACE,
                     resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("superuser-alex@hostsharing.net"))
+                    .header("Authorization", bearer("hsh-alex_superuser"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())
@@ -617,13 +617,13 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
         @Test
         void normalUser_canNotDeleteUnrelatedBookingItem() {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenBookingItem = givenSomeNewBookingItem("D-1000111 default project", MANAGED_WEBSPACE,
                     resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
                 .given()
-                    .header("Authorization", bearer("selfregistered-user-drew@hostsharing.org"))
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())
@@ -639,7 +639,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     private HsBookingItem givenSomeNewBookingItem(final String projectCaption,
             final HsBookingItemType hsBookingItemType, final Map.Entry<String, Object>... resources) {
         return jpaAttempt.transacted(() -> {
-            context.define("superuser-alex@hostsharing.net");
+            context.define("hsh-alex_superuser");
             final var givenProject = realProjectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
             final var newBookingItem = HsBookingItemRealEntity.builder()

@@ -73,7 +73,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void testHostsharingAdminCanAssumeRelationRoleWithLongIdName() {
             context(
-                    "superuser-alex@hostsharing.net",
+                    "hsh-alex_superuser",
                     "hs_office.relation#HostsharingeG-with-PARTNER-PeterSmith-TheSecondHandandThriftStores-n-Shippinge.K.SmithPeter:AGENT");
         }
 
@@ -85,7 +85,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                             .build())
                     .stream().reduce(Reducer::toSingleElement).orElseThrow().getUuid();
 
-            context("superuser-alex@hostsharing.net", "hs_office.relation#" + relationUuid + ":AGENT");
+            context("hsh-alex_superuser", "hs_office.relation#" + relationUuid + ":AGENT");
         }
     }
 
@@ -95,7 +95,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewRelation() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
 
             final var count = relationRbacRepo.count();
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
@@ -134,7 +134,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
@@ -170,7 +170,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
                     "{ grant perm:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:DELETE to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
                     "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to role:rbac.global#global:ADMIN by system and assume }",
-                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to user:superuser-alex@hostsharing.net by hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to user:hsh-alex_superuser by hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER and assume }",
 
                     "{ grant perm:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:UPDATE to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
                     "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
@@ -204,7 +204,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllRelationsOfArbitraryPerson() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var person = personRepo.findPersonByOptionalNameLike("Smith").stream()
                     .filter(p -> p.getPersonType() == NATURAL_PERSON)
                     .findFirst().orElseThrow();
@@ -223,7 +223,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void normalUser_canViewRelationsOfOwnedPersons() {
             // given:
-            context("person-SmithPeter@example.com");
+            context("tst-person_smithpeter");
             final var person = personRepo.findPersonByOptionalNameLike("Smith").stream()
                     .filter(p -> p.getPersonType() == NATURAL_PERSON)
                     .findFirst().orElseThrow();
@@ -245,7 +245,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void normalUser_canViewRelationsByContactUuid() {
             // given:
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var contact = contactRealRepo.findContactByOptionalCaptionLike("third contact")
                     .stream()
                     .findFirst()
@@ -269,7 +269,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void normalUser_canViewRelationsByAnchorPersonUuid() {
             // given:
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var person = personRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
 
             // when:
@@ -287,7 +287,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void normalUser_canViewRelationsByHolderPersonUuid() {
             // given:
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var person = personRepo.findPersonByOptionalNameLike("First GmbH").getFirst();
 
             // when:
@@ -309,14 +309,14 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canUpdateContactOfArbitraryRelation() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Bert", "fifth contact");
             assertThatRelationActuallyInDatabase(givenRelation);
             assertThatRelationIsVisibleForUserWithRole(
                     givenRelation,
                     "hs_office.person#ErbenBesslerMelBessler:ADMIN");
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("sixth contact")
                     .stream()
                     .findFirst()
@@ -324,7 +324,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenRelation.setContact(givenContact);
                 return toCleanup(relationRbacRepo.save(givenRelation).load());
             });
@@ -347,7 +347,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canUpdateHolderOfArbitraryRelation() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Bert", "fifth contact");
             final var oldHolderPerson = givenRelation.getHolder();
@@ -359,7 +359,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 givenRelation.setHolder(newHolderPerson);
                 return toCleanup(relationRbacRepo.save(givenRelation).load());
             });
@@ -381,7 +381,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void relationAgent_canSelectButNotUpdateRelatedRelation() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Anita", "eighth");
             assertThatRelationIsVisibleForUserWithRole(
@@ -396,7 +396,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context(
-                        "superuser-alex@hostsharing.net",
+                        "hsh-alex_superuser",
                         "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
                 givenRelation.setContact(givenContact);
                 return relationRbacRepo.save(givenRelation);
@@ -411,7 +411,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void contactAdmin_canNotUpdateRelatedRelation() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Anita", "ninth");
             assertThatRelationIsVisibleForUserWithRole(
@@ -421,7 +421,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office.contact#ninthcontact:ADMIN");
+                context("hsh-alex_superuser", "hs_office.contact#ninthcontact:ADMIN");
                 givenRelation.setContact(null); // TODO
                 return relationRbacRepo.save(givenRelation);
             });
@@ -444,7 +444,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                 final HsOfficeRelation entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 assertThatRelationActuallyInDatabase(entity);
             }).assertSuccessful();
         }
@@ -453,7 +453,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                 final HsOfficeRelation entity,
                 final String assumedRoles) {
             jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", assumedRoles);
+                context("hsh-alex_superuser", assumedRoles);
                 final var found = relationRbacRepo.findByUuid(entity.getUuid());
                 assertThat(found).isEmpty();
             }).assertSuccessful();
@@ -466,20 +466,20 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyRelation() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Anita", "tenth");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 relationRbacRepo.deleteByUuid(givenRelation.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-fran@hostsharing.net", null);
+                context("hsh-fran_superuser", null);
                 return relationRbacRepo.findByUuid(givenRelation.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
@@ -487,13 +487,13 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void contactUser_canViewButNotDeleteTheirRelatedRelation() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("hsh-alex_superuser", null);
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Anita", "eleventh");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("contact-admin@eleventhcontact.example.com");
+                context("tst-contact_admin_eleventhcontact");
                 assertThat(relationRbacRepo.findByUuid(givenRelation.getUuid())).isPresent();
                 relationRbacRepo.deleteByUuid(givenRelation.getUuid());
             });
@@ -503,7 +503,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     JpaSystemException.class,
                     "[403] Subject ", " not allowed to delete hs_office.relation");
             assertThat(jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return relationRbacRepo.findByUuid(givenRelation.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
@@ -511,7 +511,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void deletingARelationAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenRelation = givenSomeTemporaryRelationBessler(
@@ -519,7 +519,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("hsh-alex_superuser");
                 return relationRbacRepo.deleteByUuid(givenRelation.getUuid());
             });
 
@@ -550,7 +550,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
     private HsOfficeRelationRbacEntity givenSomeTemporaryRelationBessler(final String holderPerson, final String contact) {
         return jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net");
+            context("hsh-alex_superuser");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").getFirst();
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderPerson).getFirst();
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike(contact).getFirst();

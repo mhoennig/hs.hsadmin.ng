@@ -3,6 +3,7 @@ openapi-processor-mapping: v2
 options:
     package-name: net.hostsharing.hsadminng.rbac.generated.api.v1
     model-name-suffix: Resource
+    bean-validation: true
 
 map:
     result: org.springframework.http.ResponseEntity

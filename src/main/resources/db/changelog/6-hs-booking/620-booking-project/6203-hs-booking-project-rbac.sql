@@ -17,7 +17,8 @@ call rbac.generateRbacRoleDescriptors('hs_booking.project');
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:hs-booking-project-rbac-insert-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-booking-project-rbac-insert-trigger runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -151,7 +152,8 @@ execute procedure hs_booking.project_grants_insert_to_relation_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs-booking-project-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-booking-project-rbac-CHECKING-INSERT-PERMISSION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /**
@@ -199,7 +201,8 @@ call rbac.generateRbacIdentityViewFromQuery('hs_booking.project',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:hs-booking-project-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-booking-project-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_booking.project',
     $orderBy$
@@ -214,7 +217,8 @@ $updates$
 
 
 -- ============================================================================
---changeset RbacRbacSystemRebuildGenerator:hs-booking-project-rbac-rebuild runOnChange:true validCheckSum:ANY endDelimiter:--//
+--changeset RbacRbacSystemRebuildGenerator:hs-booking-project-rbac-rebuild runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 -- HOWTO: Rebuild RBAC-system for table hs_booking.project after changing its RBAC specification.

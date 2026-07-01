@@ -24,7 +24,7 @@ begin
             call base.defineContext(
                     'query debitor',
                     null,
-                    'superuser-alex@hostsharing.net');
+                    'hsh-alex_superuser');
 
             t0 := clock_timestamp();
             select count(*) into rows_read
@@ -48,7 +48,7 @@ begin
     for i in 1..iterations loop
             call base.defineContext('query debitor',
                                     null,
-                                    'superuser-alex@hostsharing.net');
+                                    'hsh-alex_superuser');
 
             t0 := clock_timestamp();
             select count(*) into rows_read
