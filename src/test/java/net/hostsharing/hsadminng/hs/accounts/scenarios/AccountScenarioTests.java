@@ -110,20 +110,6 @@ class AccountScenarioTests extends ScenarioTest {
                     .expected("expectedRelationsJson", """
                             [
                               {
-                                "type": "PARTNER",
-                                "mark": null,
-                                "anchor": { "tradeName": "Hostsharing eG" },
-                                "holder": { "tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K." },
-                                "contact": { "emailAddresses": { "main": "contact-admin@secondcontact.example.com" } }
-                              },
-                              {
-                                "type": "DEBITOR",
-                                "mark": null,
-                                "anchor": { "tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K." },
-                                "holder": { "tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K." },
-                                "contact": { "emailAddresses": { "main": "contact-admin@secondcontact.example.com" } }
-                              },
-                              {
                                 "type": "REPRESENTATIVE",
                                 "mark": null,
                                 "anchor": { "tradeName": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K." },

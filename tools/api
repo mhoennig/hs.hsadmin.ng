@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""Locate REST API endpoints by HTTP verb and path fragment.
+(Vibe-coded with Claude Code agentic AI)
+
+Usage:
+    api [VERB] <path-fragment> ...
+
+    VERB           optional, case-insensitive HTTP method (default: GET)
+                   one of GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS
+    path-fragment  one or more substrings; every fragment must occur in the
+                   endpoint path (case-insensitive)
+
+Examples:
+    api POST /api/hs/office/contacts
+    api contacts                     # -> GET endpoints whose path contains "contacts"
+    api post office contacts         # every fragment must match the path
+
+For each matching endpoint it prints the HTTP verb, the full path and the
+operationId, followed by clickable links to:
+    - the OpenAPI YAML definition
+    - the Spring controller implementation (falling back to the generated
+      interface when no implementation is found)
+"""
+import os
+import re
+import sys
+from urllib.parse import quote, urljoin
+
+HTTP_VERBS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+GENERATED_DIR = os.path.join(REPO_ROOT, "build", "generated", "sources", "openapi")
+API_DEF_DIR = os.path.join(REPO_ROOT, "src", "main", "resources", "api-definition")
+JAVA_SRC_DIR = os.path.join(REPO_ROOT, "src", "main", "java")
+
+MAPPING_RE = re.compile(
+    r"@(?P<verb>Get|Post|Put|Patch|Delete|Head|Options)Mapping\s*\("
+    r"(?P<annotation>[^)]*)\)"
+    r"(?P<after>.*?\b(?P<method>\w+)\s*\()",
+    re.DOTALL,
+)
+PATH_RE = re.compile(r"""path\s*=\s*["']([^"']+)["']""")
+
+
+def file_uri(path, line_number=None):
+    abs_path = os.path.abspath(path)
+    uri = urljoin("file://", quote(abs_path))
+    return f"{uri}:{line_number}" if line_number else uri
+
+
+def read_text(path):
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            return handle.read()
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def line_of_offset(text, offset):
+    return text.count("\n", 0, offset) + 1
+
+
+def iter_files(root, suffix):
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d != ".git"]
+        for filename in sorted(filenames):
+            if filename.endswith(suffix):
+                yield os.path.join(dirpath, filename)
+
+
+def collect_mappings():
+    """All (verb, path, operationId, interface_file, interface_line) from generated *Api.java."""
+    mappings = []
+    for java_file in iter_files(GENERATED_DIR, "Api.java"):
+        text = read_text(java_file)
+        if not text:
+            continue
+        for match in MAPPING_RE.finditer(text):
+            path_match = PATH_RE.search(match.group("annotation"))
+            if not path_match:
+                continue
+            mappings.append(
+                {
+                    "verb": match.group("verb").upper(),
+                    "path": path_match.group(1),
+                    "operation": match.group("method"),
+                    "interface_file": java_file,
+                    "interface_line": line_of_offset(text, match.start()),
+                }
+            )
+    return mappings
+
+
+def find_yaml(operation):
+    """(file, line) of the endpoint definition, pointing at the enclosing verb key."""
+    verb_key_re = re.compile(r"^\s*(get|post|put|patch|delete|head|options)\s*:\s*$", re.I)
+    op_re = re.compile(rf"^\s*operationId\s*:\s*['\"]?{re.escape(operation)}['\"]?\s*$")
+    for yaml_file in iter_files(API_DEF_DIR, ".yaml"):
+        text = read_text(yaml_file)
+        if not text or operation not in text:
+            continue
+        lines = text.splitlines()
+        for index, line in enumerate(lines):
+            if not op_re.match(line):
+                continue
+            for back in range(index, -1, -1):
+                if verb_key_re.match(lines[back]):
+                    return yaml_file, back + 1
+            return yaml_file, index + 1
+    return None, None
+
+
+def find_controller(operation):
+    """(file, line) of the implementing method under src/main/java, if any."""
+    decl_re = re.compile(rf"\b{re.escape(operation)}\s*\(")
+    fallback = None
+    for java_file in iter_files(JAVA_SRC_DIR, ".java"):
+        text = read_text(java_file)
+        if not text or operation not in text:
+            continue
+        for number, line in enumerate(text.splitlines(), start=1):
+            if not decl_re.search(line):
+                continue
+            if "public" in line:
+                return java_file, number
+            if fallback is None:
+                fallback = (java_file, number)
+    return fallback if fallback else (None, None)
+
+
+def parse_args(argv):
+    verb = "GET"
+    fragments = list(argv)
+    if fragments and fragments[0].upper() in HTTP_VERBS:
+        verb = fragments.pop(0).upper()
+    return verb, [fragment.lower() for fragment in fragments]
+
+
+def path_matches(path, fragments):
+    lowered = path.lower()
+    return all(fragment in lowered for fragment in fragments)
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__.strip())
+        return 2
+
+    verb, fragments = parse_args(sys.argv[1:])
+
+    mappings = collect_mappings()
+    if not mappings:
+        print(f"No generated API interfaces found under {GENERATED_DIR}.")
+        print("Run './gradlew openApiGenerate' first.")
+        return 1
+
+    path_hits = [m for m in mappings if path_matches(m["path"], fragments)]
+    matches = [m for m in path_hits if m["verb"] == verb]
+
+    if not matches:
+        query = " ".join(fragments) or "<any>"
+        print(f"No {verb} endpoint matching '{query}'.")
+        other_verbs = sorted({m["verb"] for m in path_hits} - {verb})
+        if other_verbs:
+            print(f"But the path matches these verbs: {', '.join(other_verbs)}")
+        return 1
+
+    matches.sort(key=lambda m: (m["path"], m["verb"]))
+    for mapping in matches:
+        print(f"{mapping['verb']} {mapping['path']}  ({mapping['operation']})")
+
+        yaml_file, yaml_line = find_yaml(mapping["operation"])
+        if yaml_file:
+            print(f"    OpenAPI spec:           {file_uri(yaml_file, yaml_line)}")
+
+        controller_file, controller_line = find_controller(mapping["operation"])
+        if controller_file:
+            print(f"    Java-Spring controller: {file_uri(controller_file, controller_line)}")
+        else:
+            print(f"    Java-Spring interface:  {file_uri(mapping['interface_file'], mapping['interface_line'])}")
+        print()
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -24,7 +24,7 @@ public class AmendContactData extends UseCase<AmendContactData> {
                 "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
-        return withTitle("Patch the New Phone Number Into the Contact", () ->
+        return withTitle("Patch Data Into the Contact", () ->
             httpPatch(asGlobalAgent(), "/api/hs/office/contacts/%{partnerContactUuid}", usingJsonBody("""
             {
                 "caption": ${newContactCaption???},

@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
+import net.hostsharing.hsadminng.errors.RequestBodyTranslations;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.context.Context;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
           JsonObjectMapperConfiguration.class,
           MessagesResourceConfig.class,
           MessageTranslator.class,
+          RequestBodyTranslations.class,
           WebSecurityConfigForWebMvcTests.class })
 @ActiveProfiles({"fake-jwt", "test"})
 class HsOfficeContactControllerRestTest {
@@ -134,30 +137,95 @@ class HsOfficeContactControllerRestTest {
         }
     }
 
-    @Test
-    void postsNewContact() throws Exception {
-        // given
-        val contactUuid = UUID.randomUUID();
-        when(contactRepo.save(any(HsOfficeContactRbacEntity.class)))
-                .thenReturn(givenContact(contactUuid, "new contact"));
+    @Nested
+    class PostNewContact {
 
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/office/contacts")
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "caption": "new contact",
-                                    "emailAddresses": { "main": "new@example.org" }
-                                }
-                                """)
-                        .accept(MediaType.APPLICATION_JSON))
+        @Test
+        void acceptsPostingNewContactWithValidData() throws Exception {
+            // given
+            val contactUuid = UUID.randomUUID();
+            when(contactRepo.save(any(HsOfficeContactRbacEntity.class)))
+                    .thenReturn(givenContact(contactUuid, "new contact"));
 
-                // then
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("uuid", is(contactUuid.toString())))
-                .andExpect(jsonPath("caption", is("new contact")));
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/contacts")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "caption": "new contact",
+                                        "emailAddresses": { "main": "new@example.org" }
+                                    }
+                                    """)
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("uuid", is(contactUuid.toString())))
+                    .andExpect(jsonPath("caption", is("new contact")));
+        }
+
+        @Test
+        void rejectsPostingNewContactWithNestedJsonInsteadOfStringValue() throws Exception {
+            // given
+            val contactUuid = UUID.randomUUID();
+            when(contactRepo.save(any(HsOfficeContactRbacEntity.class)))
+                    .thenReturn(givenContact(contactUuid, "new contact"));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/contacts")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "caption": "new contact",
+                                        "emailAddresses": {
+                                          "main": { "not-a-string-but-a-nested-object": "new@example.org" }
+                                        }
+                                    }
+                                    """)
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(jsonPath(
+                            "message", containsString(
+                                    "property \"emailAddresses.main\": a plain text value was expected, but a JSON object was provided"
+                            )));
+        }
+
+        @Test
+        void rejectsPostingNewContactWithArrayInsteadOfKeyStringValueMap() throws Exception {
+            // given
+            val contactUuid = UUID.randomUUID();
+            when(contactRepo.save(any(HsOfficeContactRbacEntity.class)))
+                    .thenReturn(givenContact(contactUuid, "new contact"));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/contacts")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "caption": "new contact",
+                                        "emailAddresses": [
+                                          "some@example.org",
+                                          "another@example.org"
+                                        ]
+                                    }
+                                    """)
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(jsonPath(
+                            "message", containsString(
+                                    "property \"emailAddresses\": a JSON object with key/value pairs was expected, but a JSON array was provided"
+                            )));
+        }
     }
 
     @Test

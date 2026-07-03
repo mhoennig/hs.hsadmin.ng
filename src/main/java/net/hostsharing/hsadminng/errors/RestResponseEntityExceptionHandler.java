@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.errors;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.RequiredArgsConstructor;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.RetroactiveTranslator;
@@ -136,8 +137,38 @@ public class RestResponseEntityExceptionHandler
     protected ResponseEntity handleHttpMessageNotReadable(
             HttpMessageNotReadableException exc, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         final var localizedMessage = localizedMessage(exc);
-        final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(localizedMessage);
-        return errorResponse(request, HttpStatus.BAD_REQUEST, sprippedMaybeLocalizedMessage);
+        final var strippedMaybeLocalizedMessage = stripTechnicalDetails(localizedMessage);
+        final var translatedMessage = tryTranslation(strippedMaybeLocalizedMessage);
+        final var messageWithProperty = prependRejectedProperty(
+                NestedExceptionUtils.getMostSpecificCause(exc), translatedMessage);
+        return customErrorResponse(request, HttpStatus.BAD_REQUEST, messageWithProperty);
+    }
+
+    private String prependRejectedProperty(final Throwable causingException, final String message) {
+        final var propertyPath = jsonPropertyPath(causingException);
+        if (propertyPath == null) {
+            return message;
+        }
+        return messageTranslator.translate("general.property-{0}", propertyPath) + ": " + message;
+    }
+
+    private static String jsonPropertyPath(final Throwable causingException) {
+        if (!(causingException instanceof JsonMappingException jsonMappingException)
+                || jsonMappingException.getPath().isEmpty()) {
+            return null;
+        }
+        final var propertyPath = new StringBuilder();
+        for (final var reference : jsonMappingException.getPath()) {
+            if (reference.getFieldName() != null) {
+                if (propertyPath.length() > 0) {
+                    propertyPath.append('.');
+                }
+                propertyPath.append(reference.getFieldName());
+            } else {
+                propertyPath.append('[').append(reference.getIndex()).append(']');
+            }
+        }
+        return propertyPath.toString();
     }
 
     @Override

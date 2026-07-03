@@ -5,7 +5,9 @@ import lombok.val;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
+import net.hostsharing.hsadminng.errors.RequestBodyTranslations;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemResource;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
@@ -52,6 +54,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({StrictMapper.class,
          JsonObjectMapperConfiguration.class,
          MessageTranslator.class,
+         MessagesResourceConfig.class,
+         RequestBodyTranslations.class,
          EntityManagerWrapperFakeConfiguration.class,
          WebSecurityConfigForWebMvcTests.class })
 @ActiveProfiles({"fake-jwt", "test"})
@@ -240,7 +244,7 @@ class HsBookingItemControllerRestTest {
                     .andExpect(jsonPath(
                             "$", lenientlyEquals("""
                                     {
-                                        "message": "ERROR: [400] JSON parse error: Unrecognized field \\"validFrom\\" (class ${resourceClass}), not marked as ignorable"
+                                        "message": "ERROR: [400] property \\"validFrom\\": JSON parse error: Unrecognized field \\"validFrom\\" (class ${resourceClass}), not marked as ignorable"
                                     }
                                     """.replace("${resourceClass}", HsBookingItemInsertResource.class.getName()))));
         }

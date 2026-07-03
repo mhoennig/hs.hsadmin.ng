@@ -992,6 +992,20 @@ It can also be executed directly:
 gw openApiGenerate
 ```
 
+### How to Jump to API-endpoint OpenAPI spec and Spring-REST-controller implementation
+
+If you're looking for the spec and implementation if an API REST-endpoint,
+you can use the alias `api` which utilizes the script `tools/api` as follows:
+
+```sh
+api GET /api/hs/office/contacts # long form
+api /api/hs/office/contacts # defaults to GET
+api contacts # short form
+```
+
+This prints a list of matching endpoints and for each endpoint a link to the related OpenAPI spec
+and the controller implementation.
+
 ### How to Generate Database Table Diagrams?
 
 Some overview documentation about the database can be generated via [postgresql_autodoc](https://github.com/cbbrowne/autodoc").

@@ -180,6 +180,7 @@ alias gw-test=_gwTest
 
 alias howto=tools/howto
 alias fixmes=tools/fixmes
+alias api=tools/api
 alias jwt-curl=tools/jwt-curl
 
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries

@@ -27,7 +27,7 @@ public class AccountCanViewTheirOwnRelations extends BaseAccountUseCase<AccountC
         );
 
         return withTitle("View their relations", () ->
-                httpGet(asSubject("%{subjectName}"), "/api/hs/office/relations?personUuid%{personUuid}")
+                httpGet(asSubject("%{subjectName}"), "/api/hs/office/relations?personUuid=%{personUuid}")
                         .expecting(OK).expecting(JSON)
         );
     }

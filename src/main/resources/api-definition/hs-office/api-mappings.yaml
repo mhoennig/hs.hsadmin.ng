@@ -10,6 +10,7 @@ map:
 
     types:
         - type: array => java.util.List
+        - type: StringMap => java.util.Map<java.lang.String, java.lang.String>
         - type: string:uuid => java.util.UUID
         - type: string:format => java.lang.String
         - type: number:currency => java.math.BigDecimal

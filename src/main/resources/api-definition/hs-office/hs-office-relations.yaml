@@ -56,7 +56,7 @@ get:
           schema:
             type: string
             format: uuid
-          description: UUID of the contact to filter the results.
+          description: 'UUID of the contact to filter the results.'
         - name: contactData
           in: query
           required: false
