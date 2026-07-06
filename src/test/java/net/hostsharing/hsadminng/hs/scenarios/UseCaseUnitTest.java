@@ -62,6 +62,34 @@ class UseCaseUnitTest {
     }
 
     @Test
+    void limitsReportedJsonArrayElementsWithEllipsisIndicatorOnItsOwnLine() {
+        assertThat(UseCase.HttpResponse.limitJsonArrayElements(
+                """
+                [ { "name": "one" }, { "name": "two" }, { "name": "three" } ]
+                """, 2))
+                .contains("""
+                        [
+                          {
+                            "name" : "one"
+                          },
+                          {
+                            "name" : "two"
+                          },
+                          "..."
+                        ]""");
+    }
+
+    @Test
+    void keepsJsonArraysWithinTheLimitUnlimited() {
+        assertThat(UseCase.HttpResponse.limitJsonArrayElements("[ 1, 2 ]", 2)).isEmpty();
+    }
+
+    @Test
+    void keepsNonArrayJsonUnlimited() {
+        assertThat(UseCase.HttpResponse.limitJsonArrayElements("{ \"name\": \"one\" }", 1)).isEmpty();
+    }
+
+    @Test
     void reportsOnlyActualResponseBodies() {
         assertThat(UseCase.HttpResponse.hasReportableResponseBody(null)).isFalse();
         assertThat(UseCase.HttpResponse.hasReportableResponseBody("")).isFalse();

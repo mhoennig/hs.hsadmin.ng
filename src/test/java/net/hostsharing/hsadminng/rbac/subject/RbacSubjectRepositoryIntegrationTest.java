@@ -178,22 +178,6 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(alex.getType()).isEqualTo(USER);
         }
 
-        @Test
-        public void globalAdmin_canFilterSubjectsByType() {
-            // given:
-            context("hsh-alex_superuser");
-
-            // when:
-            final var result = rbacSubjectRepository.findByOptionalNameLikeAndOptionalType(null, GROUP);
-
-            // then:
-            assertThat(result)
-                    .extracting(RbacSubjectEntity::getType)
-                    .containsOnly(GROUP);
-            assertThat(result)
-                    .extracting(RbacSubjectEntity::getName)
-                    .contains("/hsh-Hostmasters", "/xyz-Team");
-        }
     }
 
     @Nested
@@ -215,97 +199,6 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             result.assertSuccessful();
             assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNull();
         }
-    }
-
-    @Nested
-    class FindByOptionalNameLike {
-
-        private static final String[] ALL_TEST_DATA_USERS = Array.of(
-                // @formatter:off
-            "hsh-alex_superuser", "hsh-fran_superuser",
-            "tst-customer_admin_xxx",
-            "tst-pac_admin_xxx00", "tst-pac_admin_xxx01", "tst-pac_admin_xxx02",
-            "tst-customer_admin_yyy",
-            "tst-pac_admin_yyy00", "tst-pac_admin_yyy01", "tst-pac_admin_yyy02",
-            "tst-customer_admin_zzz",
-            "tst-pac_admin_zzz00", "tst-pac_admin_zzz01", "tst-pac_admin_zzz02"
-            // @formatter:on
-        );
-
-        @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllRbacSubjects() {
-            // given
-            context("hsh-alex_superuser");
-
-            // when
-            final var result = rbacSubjectRepository.findByOptionalNameLike(null);
-
-            // then
-            allTheseRbacSubjectsAreReturned(result, ALL_TEST_DATA_USERS);
-        }
-
-        @Test
-        public void globalAdmin_withAssumedglobalAdminRole_canViewAllRbacSubjects() {
-            given:
-            context("hsh-alex_superuser", "rbac.global#global:ADMIN");
-
-            // when
-            final var result = rbacSubjectRepository.findByOptionalNameLike(null);
-
-            then:
-            allTheseRbacSubjectsAreReturned(result, ALL_TEST_DATA_USERS);
-        }
-
-        @Test
-        public void globalAdmin_withAssumedCustomerAdminRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
-            given:
-            context("hsh-alex_superuser", "rbactest.customer#xxx:ADMIN");
-
-            // when
-            final var result = rbacSubjectRepository.findByOptionalNameLike(null);
-
-            then:
-            exactlyTheseRbacSubjectsAreReturned(
-                    result,
-                    "tst-customer_admin_xxx",
-                    "tst-pac_admin_xxx00", "tst-pac_admin_xxx01", "tst-pac_admin_xxx02"
-            );
-        }
-
-        @Test
-        public void customerAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
-            // given:
-            context("tst-customer_admin_xxx");
-
-            // when:
-            final var result = rbacSubjectRepository.findByOptionalNameLike(null);
-
-            // then:
-            exactlyTheseRbacSubjectsAreReturned(
-                    result,
-                    "tst-customer_admin_xxx",
-                    "tst-pac_admin_xxx00", "tst-pac_admin_xxx01", "tst-pac_admin_xxx02"
-            );
-        }
-
-        @Test
-        public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            context("tst-customer_admin_xxx", "rbactest.package#xxx00:ADMIN");
-
-            final var result = rbacSubjectRepository.findByOptionalNameLike(null);
-
-            exactlyTheseRbacSubjectsAreReturned(result, "tst-pac_admin_xxx00");
-        }
-
-        @Test
-        public void packageAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            context("tst-pac_admin_xxx00");
-
-            final var result = rbacSubjectRepository.findByOptionalNameLike(null);
-
-            exactlyTheseRbacSubjectsAreReturned(result, "tst-pac_admin_xxx00");
-        }
-
     }
 
     @Nested
@@ -529,20 +422,6 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         }).assumeSuccessful().returnedValue();
         assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
         return givenUser;
-    }
-
-    void exactlyTheseRbacSubjectsAreReturned(final List<RbacSubjectEntity> actualResult, final String... expectedUserNames) {
-        assertThat(actualResult)
-                .extracting(RbacSubjectEntity::getName)
-                .filteredOn(n -> !n.startsWith("tst-user"))
-                .containsExactlyInAnyOrder(expectedUserNames);
-    }
-
-    void allTheseRbacSubjectsAreReturned(final List<RbacSubjectEntity> actualResult, final String... expectedUserNames) {
-        assertThat(actualResult)
-                .extracting(RbacSubjectEntity::getName)
-                .filteredOn(n -> !n.startsWith("tst-user"))
-                .contains(expectedUserNames);
     }
 
     void noRbacPermissionsAreReturned(

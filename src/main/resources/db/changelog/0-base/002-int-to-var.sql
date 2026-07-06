@@ -2,7 +2,8 @@
 
 -- ============================================================================
 -- INT-TO-VAR
---changeset michael.hoennig:int-to-var endDelimiter:--//
+--changeset michael.hoennig:int-to-var runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Returns a textual representation of an integer number to be used as generated test data.
@@ -13,6 +14,7 @@
  */
 create or replace function base.intToVarChar(i integer, len integer)
     returns varchar
+    immutable
     language plpgsql as $$
 declare
     partial varchar;

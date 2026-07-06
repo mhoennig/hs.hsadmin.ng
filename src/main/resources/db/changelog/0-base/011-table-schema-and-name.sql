@@ -2,11 +2,13 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:base-COMBINE-TABLE-SCHEMA-AND-NAME endDelimiter:--//
+--changeset michael.hoennig:base-COMBINE-TABLE-SCHEMA-AND-NAME runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 create or replace function base.combine_table_schema_and_name(tableSchema name, tableName name)
     returns text
+    immutable
     language plpgsql as $$
 begin
     assert  LEFT(tableSchema, 1) <> '"', 'tableSchema must not start with "';

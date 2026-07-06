@@ -249,8 +249,9 @@ $$;
 do language plpgsql $$
     begin
         call base.defineContext('creating fake Assembly group subjects', null, null, null);
-        -- Assembly group names are globally unique by customer prefix; the prefix is not a hierarchy level.
         perform rbac.create_subject('/hsh-Hostmasters', 'GROUP'::rbac.SubjectType);
+        perform rbac.create_subject_if_not_exist('/hsh-Team', 'GROUP'::rbac.SubjectType);
+        perform rbac.create_subject_if_not_exist('/hsh-Service', 'GROUP'::rbac.SubjectType);
         perform rbac.create_subject('/xyz-Team', 'GROUP'::rbac.SubjectType);
         perform rbac.create_subject('/xyz-Service', 'GROUP'::rbac.SubjectType);
     end;

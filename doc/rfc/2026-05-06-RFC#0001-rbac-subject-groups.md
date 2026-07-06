@@ -1,5 +1,6 @@
-# RFC: Gruppen als Subject-Typ im ReBAC-System
+# RFC#0001: Gruppen als Subject-Typ im ReBAC-System
 
+- Status: akzeptiert / in Umsetzung
 - Stand: 2026-06-23 18:19
 - Author: Michael Hönnig
 
@@ -35,7 +36,7 @@ Repräsentiert ein solcher Principal einen User, dann ergeben sich dessen Gruppe
 
 Repräsentiert ein solcher Principal eine Gruppe, dann können diesem Rollen zugewiesen (gegranted) werden.
 
-Ist ein User Mitglied einer Gruppe, dann hat er zusätzlich auch die Rollen dieser Gruppe inne.
+Ist ein User Mitglied einer Gruppe, dann hat er zusätzlich die Rollen dieser Gruppe inne.
 
 ### Subject-Typen
 
@@ -457,7 +458,7 @@ und mit dem Prefix der sichtbaren Subjects verglichen werden.
 User müssen im eigenen Realm Rollen an Gruppen *granten* können, auch wenn sie selbst nicht Mitglied dieser Gruppe sind.
 Nur die entsprechende Rolle benötigen sie dafür.
 
-Dies ist z.B. der Fall, wenn bestimmte Admin-Rechte an eigenen Objekten an eine Admin-Gruppe übertragen werden sollen,
+Dies ist z. B. der Fall, wenn bestimmte Admin-Rechte an eigenen Objekten an eine Admin-Gruppe übertragen werden sollen,
 derjenige User selbst aber nicht in dieser Admin-Gruppe ist.
 
 Fachlich entspricht ein Grant an eine Gruppe einem Grant an einen User: `rbac.grant.ascendantUuid` zeigt auf ein `rbac.subject`, dessen `type` entweder `USER` oder `GROUP` ist.

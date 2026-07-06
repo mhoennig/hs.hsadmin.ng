@@ -183,6 +183,7 @@ public class InsertTriggerGenerator {
     }
 
     private void generateInsertPermissionsCheckHeader(final StringWriter plPgSql) {
+        // TODO.impl[Taiga#471]: validCheckSum:ANY needs to get generated in a separate line, as in the direct changesets
         plPgSql.writeLn("""
             -- ============================================================================
             --changeset InsertTriggerGenerator:${liquibaseTagPrefix}-rbac-CHECKING-INSERT-PERMISSION runOnChange:true validCheckSum:ANY endDelimiter:--//

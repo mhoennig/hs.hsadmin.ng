@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -64,6 +65,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     private final Map<String, Function<String, UseCase<?>>> requirements = new LinkedMap<>();
     private final String resultAlias;
     private final Map<String, Object> givenProperties = new LinkedHashMap<>();
+    private final Map<String, Object> usingProperties = new LinkedHashMap<>();
     private final Map<String, Object> expectedProperties = new LinkedHashMap<>();
 
     private String nextTitle; // just temporary to override resultAlias for sub-use-cases
@@ -135,7 +137,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     protected HttpResponse run(final HttpStatus expectedStatus) {
         assertThat(expectedStatus).as("legacy signature only defined for HttpStatus.OK").isEqualTo(HttpStatus.OK);
         return run();
-    };
+    }
 
     // legacy signature for backwards compatibility, only called by above method
     protected HttpResponse run() {return null;}
@@ -149,18 +151,27 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final UseCase<T> given(final String propName, final Object propValue) {
-        givenProperties.put(propName, ScenarioTest.resolve(propValue == null ? null : propValue.toString(), TemplateResolver.Resolver.KEEP_COMMENTS));
-        ScenarioTest.putProperty(propName, propValue);
-        return this;
+        return keepProperty(givenProperties, propName, propValue);
     }
 
-    // To keep things simple, both given and expected properties are available everywhere in all templates.
+    // To keep things simple, given, using and expected properties are available everywhere in all templates.
     // The distinction is mostly for readability.
-    // It would be a bit tricky to make the expected values available just for validations.
+
+    /** Similar to given, but just required to create for intermediate entities.
+     *  Other than given properties, these do are NOT listed in the Given/Expected section at the top of the report.
+     *  If it's necessary, it's often a sign that the UseCase could be split into two separate UseCases
+     *  connected via @Produces+@Requires.
+     */
+    public final UseCase<T> using(final String propName, final Object propValue) {
+        return keepProperty(usingProperties, propName, propValue);
+    }
+
+    /** Similar to given, but used for assertions in the verification step after the actual use-case.
+     *  But all properties are available everywhere in templates.
+     *  It would be a bit tricky to make the expected values available just for validations.
+     */
     public final UseCase<T> expected(final String propName, final Object propValue) {
-        expectedProperties.put(propName, ScenarioTest.resolve(propValue == null ? null : propValue.toString(), TemplateResolver.Resolver.KEEP_COMMENTS));
-        ScenarioTest.putProperty(propName, propValue);
-        return this;
+        return keepProperty(expectedProperties, propName, propValue);
     }
 
     public final JsonTemplate usingJsonBody(final String jsonTemplate) {
@@ -336,6 +347,14 @@ public abstract class UseCase<T extends UseCase<?>> {
         }
     }
 
+    private UseCase<T> keepProperty(final Map<String, Object> usingProperties, final String propName, final Object propValue) {
+        usingProperties.put(
+                propName,
+                ScenarioTest.resolve(propValue == null ? null : propValue.toString(), TemplateResolver.Resolver.KEEP_COMMENTS));
+        ScenarioTest.putProperty(propName, propValue);
+        return this;
+    }
+
     private static Duration seconds(final int secondsIfNoDebuggerAttached) {
         return isDebuggerAttached() ? Duration.ofHours(1) : Duration.ofSeconds(secondsIfNoDebuggerAttached);
     }
@@ -412,7 +431,9 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     private void resetProperties() {
-        givenProperties.forEach((propName, val) -> ScenarioTest.removeProperty(propName));
+        Stream.of(givenProperties, usingProperties, expectedProperties)
+                .flatMap(properties -> properties.keySet().stream())
+                .forEach(ScenarioTest::removeProperty);
     }
 
     public final class HttpResponse {
@@ -432,6 +453,7 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         private boolean reportGenerated = false;
         private boolean reportGeneratedWithResponse = false;
+        private Integer reportedResultLimit;
 
         @SneakyThrows
         public HttpResponse(
@@ -450,6 +472,18 @@ public abstract class UseCase<T extends UseCase<?>> {
                 assertThat(location).startsWith("http://localhost:");
                 locationUuid = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
             }
+        }
+
+        /** Limits a JSON-array response body in the report to the given number of elements,
+         *  appending a "..." indicator if further elements got truncated.
+         *  Does not affect verification, which always sees the full response. */
+        public HttpResponse limitReportedResultTo(final int maxArrayElements) {
+            if (reportGenerated) {
+                throw new IllegalStateException(
+                        "report already generated, call limitReportedResultTo(...) before expecting(...)/keep(...)");
+            }
+            this.reportedResultLimit = maxArrayElements;
+            return this;
         }
 
         public HttpResponse expecting(final HttpStatus httpStatus) {
@@ -572,7 +606,7 @@ public abstract class UseCase<T extends UseCase<?>> {
             testReport.printLine("=> status: " + status + " " + (locationUuid != null ? locationUuid : ""));
             if (unconditionallyWithResponse || httpMethod == HttpMethod.GET || status.isError()) {
                 if (hasReportableResponseBody(response.body())) {
-                    testReport.printJson(response.body());
+                    printReportableResponseBody();
                     this.reportGeneratedWithResponse = true;
                 }
             }
@@ -620,6 +654,35 @@ public abstract class UseCase<T extends UseCase<?>> {
             return isNotBlank(responseBody) && !"null".equals(responseBody.trim());
         }
 
+        private void printReportableResponseBody() {
+            final var truncatedBody = reportedResultLimit == null
+                    ? Optional.<String>empty()
+                    : limitJsonArrayElements(response.body(), reportedResultLimit);
+            if (truncatedBody.isPresent()) {
+                testReport.printLine(truncatedBody.get());
+            } else {
+                testReport.printJson(response.body());
+            }
+        }
+
+        /** @return the pretty-printed JSON array truncated to maxArrayElements with a "..." indicator on its own line,
+         *          or empty if the JSON is no array or already within the limit */
+        @SneakyThrows
+        static Optional<String> limitJsonArrayElements(final String json, final int maxArrayElements) {
+            final var rootNode = REPORT_OBJECT_MAPPER.readTree(json);
+            if (!rootNode.isArray() || rootNode.size() <= maxArrayElements) {
+                return Optional.empty();
+            }
+            final var limitedArray = REPORT_OBJECT_MAPPER.createArrayNode();
+            for (int i = 0; i < maxArrayElements; ++i) {
+                limitedArray.add(rootNode.get(i));
+            }
+            limitedArray.add("...");
+            final var prettyPrinter = new DefaultPrettyPrinter();
+            prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+            return Optional.of(REPORT_OBJECT_MAPPER.writer(prettyPrinter).writeValueAsString(limitedArray));
+        }
+
         private String headerValue(final Map.Entry<String, List<String>> entry) {
             return reportableRequestHeaderValue(entry.getKey(), String.join(", ", entry.getValue()));
         }
@@ -641,7 +704,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         }
 
         private String nonNullAlias(final String alias) {
-            // This marker tag should not appear in the source-code, as here is nothing to fix.
+            // This marker tag should not appear in the source-code, as there is nothing to fix.
             // But if it appears in generated Markdown files, it should show up when that marker tag is searched.
             final var onlyVisibleInGeneratedMarkdownNotInSource = new String(new char[]{'F', 'I', 'X', 'M', 'E'});
             return alias == null ? "unknown alias -- " + onlyVisibleInGeneratedMarkdownNotInSource : alias;

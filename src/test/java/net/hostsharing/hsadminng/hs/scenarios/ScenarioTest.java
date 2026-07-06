@@ -259,6 +259,10 @@ public abstract class ScenarioTest extends ContextBasedTest {
         properties.remove(propName);
     }
 
+    public static boolean hasProperty(final String name) {
+        return properties.containsKey(name);
+    }
+
     public static Map<String, Object> knowVariables() {
         final var map = new LinkedHashMap<String, Object>();
         map.putAll(ScenarioTest.aliases);
@@ -301,5 +305,12 @@ public abstract class ScenarioTest extends ContextBasedTest {
         }
         //noinspection unchecked
         return (T) resolvedValue;
+    }
+
+    public static List<String> subjectNamesFrom(final String propertyName) {
+        return resolveJsonArray(propertyName)
+                .stream()
+                .map(subject -> (String) subject.get("name"))
+                .toList();
     }
 }

@@ -27,7 +27,8 @@ public class CreateAccountForExistingPerson extends BaseAccountUseCase<CreateAcc
                 "In real situations we have more precise measures to find the related person."
         );
 
-        return obtain("newAccount", () ->
+        return obtain("theOtherAccounts", () ->
+            // TODO.impl[Taiga#471]: use subjectUuid
             httpPost(asLoginUser, "/api/hs/accounts/accounts", usingJsonBody("""
                 {
                      "person.uuid": ${Person: %{personGivenName} %{personFamilyName}},
@@ -44,9 +45,9 @@ public class CreateAccountForExistingPerson extends BaseAccountUseCase<CreateAcc
     protected void verify(final UseCase<CreateAccountForExistingPerson>.HttpResponse response) {
         verify(
                 "Verify the new Account",
-                () -> httpGet(asLoginUser, "/api/hs/accounts/accounts/%{newAccount}")
+                () -> httpGet(asLoginUser, "/api/hs/accounts/accounts/%{theOtherAccounts}")
                         .expecting(OK).expecting(JSON),
-                path("uuid").contains("%{newAccount}"),
+                path("uuid").contains("%{theOtherAccounts}"),
                 path("subjectName").contains("%{subjectName}"),
                 path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}")
         );

@@ -177,6 +177,7 @@ class ContextUnitTest {
             assertThat(result).isTrue();
         }
 
+
         @Test
         void registerWithJwtAuthenticationUsesCurrentSubjectGroupsFromGroupsClaim() {
             givenJwtAuthentication("given-subject@example.org", List.of(
@@ -198,6 +199,15 @@ class ContextUnitTest {
             context.define();
 
             verify(nativeQuery).setParameter("currentSubjectGroups", "/single-group");
+        }
+
+        @Test
+        void fetchClaimedSubjectGroupNamesSplitsSemicolonSeparatedGroupsClaimString() {
+            givenJwtAuthentication("given-subject@example.org", " /customer-admins ;;/support ");
+
+            val result = context.fetchClaimedSubjectGroupNames();
+
+            assertThat(result).containsExactly("/customer-admins", "/support");
         }
 
         @Test

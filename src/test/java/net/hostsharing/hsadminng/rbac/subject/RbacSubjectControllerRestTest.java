@@ -13,6 +13,7 @@ import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectInse
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -28,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -65,7 +67,7 @@ class RbacSubjectControllerRestTest {
     RbacSubjectRepository rbacSubjectRepository;
 
     @MockitoBean
-    RbacSubjectListService rbacSubjectListService;
+    RealSubjectRepository realSubjectRepository;
 
     @MockitoBean
     EntityManagerWrapper em;
@@ -128,7 +130,12 @@ class RbacSubjectControllerRestTest {
     void getListOfSubjectsReturnsSubjectsFromRepository() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
-        when(rbacSubjectListService.findByOptionalNameLikeAndOptionalType("some-user", null)).thenReturn(List.of(
+        when(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+                        "some-user",
+                        null)
+                .stream()
+                .<Subject<?>>map(subject -> subject)
+                .toList()).thenReturn(List.of(
                 RbacSubjectEntity.builder()
                         .uuid(givenSubjectUuid)
                         .name("some-user@example.org")
@@ -153,6 +160,8 @@ class RbacSubjectControllerRestTest {
     void getSingleSubjectByUuidReturnsNotFoundIfMissing() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
+        when(realSubjectRepository.findVisibleSubjectByUuid(givenSubjectUuid)
+                .<Subject<?>>map(subject -> subject)).thenReturn(Optional.empty());
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -168,11 +177,12 @@ class RbacSubjectControllerRestTest {
     void getSingleSubjectByUuidReturnsSubjectIfFound() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
-        when(rbacSubjectRepository.findByUuid(givenSubjectUuid)).thenReturn(
-                RbacSubjectEntity.builder()
+        when(realSubjectRepository.findVisibleSubjectByUuid(givenSubjectUuid)
+                .<Subject<?>>map(subject -> subject)).thenReturn(
+                Optional.of(RealSubjectEntity.builder()
                         .uuid(givenSubjectUuid)
                         .name("some-user@example.org")
-                        .build());
+                        .build()));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -282,7 +292,12 @@ class RbacSubjectControllerRestTest {
     void getListOfSubjectsFiltersByType() throws Exception {
         // given
         final var givenUuid = UUID.randomUUID();
-        given(rbacSubjectListService.findByOptionalNameLikeAndOptionalType(null, SubjectType.GROUP))
+        given(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+                        null,
+                        SubjectType.GROUP)
+                .stream()
+                .<Subject<?>>map(subject1 -> subject1)
+                .toList())
                 .willReturn(List.of(RbacSubjectEntity.builder()
                         .uuid(givenUuid)
                         .name("/xyz-Team")
@@ -302,16 +317,21 @@ class RbacSubjectControllerRestTest {
                 .andExpect(jsonPath("[0].type", is("GROUP")));
 
         // then
-        verify(rbacSubjectListService).findByOptionalNameLikeAndOptionalType(null, SubjectType.GROUP);
+        Mockito.verify(realSubjectRepository).findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+                        (String) null,
+                        SubjectType.GROUP);
     }
 
     @Test
     void getListOfSubjectsDelegatesGroupVisibilityToService() throws Exception {
         // given
         final var givenUuid = UUID.randomUUID();
-        given(rbacSubjectListService.findByOptionalNameLikeAndOptionalType(
-                "/xyz-Team",
-                SubjectType.GROUP))
+        given(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+                        "/xyz-Team",
+                        SubjectType.GROUP)
+                .stream()
+                .<Subject<?>>map(subject1 -> subject1)
+                .toList())
                 .willReturn(List.of(RealSubjectEntity.builder()
                         .uuid(givenUuid)
                         .name("/xyz-Team")
@@ -333,9 +353,9 @@ class RbacSubjectControllerRestTest {
                 .andExpect(jsonPath("[0].type", is("GROUP")));
 
         // then
-        verify(rbacSubjectListService).findByOptionalNameLikeAndOptionalType(
-                "/xyz-Team",
-                SubjectType.GROUP);
+        Mockito.verify(realSubjectRepository).findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+                        "/xyz-Team",
+                        SubjectType.GROUP);
     }
 
     @Test

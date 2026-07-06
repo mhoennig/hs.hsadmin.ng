@@ -10,24 +10,6 @@ import java.util.UUID;
 
 public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUID> {
 
-    @Query(value = """
-             select *
-               from rbac.subject_rv u
-              where (:userName is null or u.name like concat(cast(:userName as text), '%'))
-                and (:type is null or u.type = cast(:type as rbac.SubjectType))
-              order by u.name
-            """, nativeQuery = true)
-    @Timed("app.rbac.subjects.repo.findByOptionalNameLike.rbac")
-    List<RbacSubjectEntity> findByOptionalNameLikeAndOptionalTypeName(String userName, String type);
-
-    default List<RbacSubjectEntity> findByOptionalNameLikeAndOptionalType(String userName, SubjectType type) {
-        return findByOptionalNameLikeAndOptionalTypeName(userName, type != null ? type.name() : null);
-    }
-
-    default List<RbacSubjectEntity> findByOptionalNameLike(String userName) {
-        return findByOptionalNameLikeAndOptionalType(userName, null);
-    }
-
     // bypasses the restricted view, to be able to grant rights to arbitrary user
     @Query(value = "select * from rbac.subject where name=:userName", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.findByName.rbac")

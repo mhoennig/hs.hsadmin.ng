@@ -12,5 +12,27 @@ components:
           type: array
           items:
             $ref: 'rbac-role-schemas.yaml#/components/schemas/RbacRole'
+        claimedGroups:
+          type: array
+          description: GROUP names claimed in the JWT, even if not yet synchronized as subjects.
+          items:
+            type: string
+        effectiveGroups:
+          type: array
+          description: Effective synchronized GROUP subjects after applying assumed roles.
+          items:
+            $ref: '#/components/schemas/RbacSubjectGroup'
         globalAdmin:
           type: boolean
+
+    RbacSubjectGroup:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+        - uuid
+        - name

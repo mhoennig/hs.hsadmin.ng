@@ -6,10 +6,13 @@ import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacContextApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacContextResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectGroupResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.SubjectTypeResource;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,9 @@ public class RbacContextController implements RbacContextApi {
     private RbacSubjectRepository rbacSubjectRepo;
 
     @Autowired
+    private RealSubjectRepository realSubjectRepo;
+
+    @Autowired
     private RbacRoleRepository roleRepo;
 
     @Override
@@ -51,19 +57,25 @@ public class RbacContextController implements RbacContextApi {
             return ResponseEntity.notFound().build();
         }
         final boolean isGlobalAdmin = context.isGlobalAdmin();
+        // claimed groups come straight from the JWT and are independent of any assumed role
+        final var claimedGroups = context.fetchClaimedSubjectGroupNames();
 
         // now we can assume the roles
         context.assumeRoles(roleNamesToAssume);
         final var assumedRoles = roleRepo.fetchAssumedRoles();
+        final var effectiveGroups = realSubjectRepo.findEffectiveSubjectGroups();
 
         // finally, return the result
-        final var result = rbacContextResponse(currentSubjectUuid, currentSubject, assumedRoles, isGlobalAdmin);
+        final var result = rbacContextResponse(
+                currentSubjectUuid, currentSubject, claimedGroups, effectiveGroups, assumedRoles, isGlobalAdmin);
         return ResponseEntity.ok(result);
     }
 
     private RbacContextResource rbacContextResponse(
             final UUID currentSubjectUuid,
             final RbacSubjectEntity currentSubject,
+            final List<String> claimedGroups,
+            final List<RealSubjectEntity> effectiveGroups,
             final List<RbacRoleEntity> assumedRoles,
             final boolean isGlobalAdmin) {
         final var result = new RbacContextResource();
@@ -72,6 +84,8 @@ public class RbacContextController implements RbacContextApi {
         currentSubjectResource.setName(currentSubject.getName());
         currentSubjectResource.setType(SubjectTypeResource.valueOf(currentSubject.getType().name()));
         result.setSubject(currentSubjectResource);
+        result.setClaimedGroups(claimedGroups);
+        result.setEffectiveGroups(mapper.mapList(effectiveGroups, RbacSubjectGroupResource.class));
         result.setGlobalAdmin(isGlobalAdmin);
         final var assumedRolesResource = mapper.mapList(assumedRoles, RbacRoleResource.class);
         result.setAssumedRoles(assumedRolesResource);

@@ -32,14 +32,42 @@ class AccountScenarioTests extends ScenarioTest {
         @Test
         @Order(9010)
         @Produces("RBAC Context")
-        void shouldFetchRbacContext() {
-            new FetchRbacContext(scenarioTest)
+        void shouldFetchRbacContextWithEffectiveGroups() {
+            new FetchRbacContext(scenarioTest,
+                        asSubject("hsh-fran_superuser")
+                                .withGroups("/hsh-Hostmasters", "/hsh-Team", "/not-synchronized"))
+                    .given("subjectName", "hsh-fran_superuser")
+                    .given("assumedRoles", "")
+                    .given("expectedSubjectType", "USER")
+                    .given("expectedToBeGlobalAdmin", true)
+                    .expected("expectedClaimedGroups", """
+                            [ "/hsh-Hostmasters", "/hsh-Team", "/not-synchronized" ]
+                            """)
+                    .expected("expectedEffectiveGroups", """
+                            [
+                              { "name": "/hsh-Hostmasters" },
+                              { "name": "/hsh-Team" }
+                            ]
+                            """)
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
+        }
+
+        @Test
+        @Order(9020)
+        void shouldFetchRbacContextWithClaimedButNoEffectiveGroupsAfterAssumingRoles() {
+            new FetchRbacContext(scenarioTest, asSubject("hsh-fran_superuser").withGroups("/hsh-Hostmasters", "/not-synchronized"))
                     .given("subjectName", "hsh-fran_superuser")
                     .given("assumedRoles", "rbactest.package#xxx00:ADMIN;rbactest.package#yyy00:ADMIN")
                     .given("expectedSubjectType", "USER")
                     .given("expectedToBeGlobalAdmin", true)
-                    .thenExpect(HttpStatus.OK)
-                    .keep();
+                    .expected("expectedClaimedGroups", """
+                            [ "/hsh-Hostmasters", "/not-synchronized" ]
+                            """)
+                    .expected("expectedEffectiveGroups", """
+                            []
+                            """)
+                    .thenExpect(HttpStatus.OK);
         }
     }
 
@@ -69,7 +97,7 @@ class AccountScenarioTests extends ScenarioTest {
         @Test
         @Order(9210)
         @Produces(
-                explicitly = "Account: peter-smith",
+                explicitly = "Account: xyz-peter.smith",
                 implicitly = { "Person: Peter Smith" })
         void shouldCreateInitialAccountForExistingNaturalPerson() {
             new CreateAccountForExistingPerson(scenarioTest, asGlobalAgent())
@@ -88,7 +116,7 @@ class AccountScenarioTests extends ScenarioTest {
 
         @Test
         @Order(9211)
-        @Requires("Account: peter-smith")
+        @Requires("Account: xyz-peter.smith")
         void newlyCreatedAccountForExistingNaturalPersonShouldBeAbleToViewThatPerson() {
             new AccountCanViewTheirOwnPerson(scenarioTest, asSubject("xyz-peter.smith"))
                     // to find a specific existing person
@@ -101,7 +129,7 @@ class AccountScenarioTests extends ScenarioTest {
 
         @Test
         @Order(9212)
-        @Requires("Account: peter-smith")
+        @Requires("Account: xyz-peter.smith")
         void newlyCreatedAccountForExistingNaturalPersonShouldBeAbleToViewExistingRelations() {
             new AccountCanViewTheirOwnRelations(scenarioTest, asSubject("xyz-peter.smith"))
                     // to find a specific existing person
@@ -144,7 +172,7 @@ class AccountScenarioTests extends ScenarioTest {
 
         @Test
         @Order(9213)
-        @Requires("Account: peter-smith")
+        @Requires("Account: xyz-peter.smith")
         void newlyCreatedAccountForExistingNaturalPersonShouldBeAbleToViewExistingMemberships() {
             new AccountCanViewTheirOwnMemberships(scenarioTest, asSubject("xyz-peter.smith"))
                     // to find a specific existing person
@@ -213,6 +241,187 @@ class AccountScenarioTests extends ScenarioTest {
                     // some expected person data
                     .expected("personFamilyName", "Newman")
                     .expected("personGivenName", "Peter")
+                    .thenExpect(HttpStatus.OK);
+        }
+    }
+
+    @Nested
+    @Order(94)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class RbacSubjectVisibilityScenarios {
+
+        /**
+         * Verifies Scenario#236.01: A user can see all subjects of the same organization,
+         *      Scenario#236.02: Users can see all groups assigned to them,
+         *      and Scenario#236.04: Users can NOT see arbitrary subjects.
+         */
+        @Test
+        @Order(9410)
+        @Requires("Account: xyz-peter.smith")
+        void userCanViewSubjectsFromTheirOwnRealm() {
+            new ViewRbacSubjects(scenarioTest, asSubject("xyz-peter.smith").withGroups("/xyz-Team"))
+                    .introduction("""
+                            This scenario verifies that subject visibility is based on the realm prefix
+                            of the current login subject. Groups assigned to the user always belong to
+                            the user's own realm and are thus visible via the realm prefix as well.
+                            """)
+                    .expected("expectedSubjectNames", """
+                            [
+                              { "name": "xyz-peter.smith" },
+                              { "name": "/xyz-Service" },
+                              { "name": "/xyz-Team" }
+                            ]
+                            """)
+                    .expected("unexpectedSubjectNames", """
+                            [
+                              { "name": "hsh-alex_superuser" },
+                              { "name": "/hsh-Hostmasters" },
+                              { "name": "tst-drew_selfregistered" }
+                            ]
+                            """)
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        /**
+         * Verifies Scenario#236.03: Users can see groups associated with the same person.
+         */
+        @Test
+        @Order(9430)
+        @Requires("Account: xyz-peter.smith")
+        void userCanViewSubjectsAssociatedWithAnotherAccountOfTheSamePerson() {
+            new ViewRbacSubjectsAssociatedWithSamePerson(scenarioTest,
+                    asSubject("xyz-peter.smith"))
+                    // to find the person by its name, we could also do this via account and uuid
+                    .given("thePersonsFamilyName", "Smith")
+                    .given("thePersonsGivenName", "Peter")
+                    .given("nameOfAssociatedGroupSubjectFromAnotherOrg", "/abc-Team")
+                    .given("theOtherAccountsSubjectName", "abc-peter.smith")
+                    .using("theOtherAccountsGlobalUid", 21013)
+                    .using("theOtherAccountsGlobalGid", 21013)
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        /**
+         * Verifies Scenario#236.05: Assuming a non-global role drops subject visibility stemming from the user and its groups.
+         */
+        @Test
+        @Order(9440)
+        void assumingANonGlobalRoleDropsAllSubjectVisibility() {
+            new ViewRbacSubjects(
+                    scenarioTest,
+                    asSubject("tst-person_firbysusan")
+                            .whichIs("a regular user who is member of a group and can assume a non-global role")
+                            .withGroups("/xyz-Service"))
+                    .introduction("""
+                            This scenario verifies that once a non-global ReBAC role is assumed,
+                            the subject visibility otherwise stemming from the login subject and its groups
+                            is dropped, keeping this endpoint consistent with purely ReBAC-based APIs in which
+                            the concrete subject contributes no rights anymore once a role got assumed.
+                            """)
+                    .given("assumedRoleIdName", "hs_office.relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT")
+                    .using("assumedRoleDescription", "a non-global role")
+                    .expected("expectedExactSubjectNames", """
+                            []
+                            """)
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        /**
+         * Verifies Scenario#236.06: Assuming the global admin role keeps global subject visibility.
+         */
+        @Test
+        @Order(9450)
+        void assumingTheGlobalAdminRoleKeepsGlobalSubjectVisibility() {
+            new ViewRbacSubjects(
+                    scenarioTest,
+                    asSubject("hsh-alex_superuser")
+                            .whichIs("a global admin"))
+                    .introduction("""
+                            This scenario verifies that a global admin who assumed just the global admin role
+                            still sees all subjects across all realms, keeping this endpoint consistent with
+                            purely ReBAC-based APIs in which the global-admin role can see everything.
+                            """)
+                    .given("assumedRoleIdName", "rbac.global#global:ADMIN")
+                    .using("assumedRoleDescription", "the global admin role")
+                    .expected("expectedSubjectNames", """
+                            [
+                              { "name": "hsh-alex_superuser" },
+                              { "name": "hsh-fran_superuser" },
+                              { "name": "tst-customer_admin_xxx" },
+                              { "name": "/hsh-Hostmasters" },
+                              { "name": "/xyz-Service" }
+                            ]
+                            """)
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        /**
+         * Verifies Scenario#236.07: Name and type filters narrow the visible subjects.
+         */
+        @Test
+        @Order(9460)
+        @Requires("Account: xyz-peter.smith")
+        void nameAndTypeFiltersNarrowButNeverWidenVisibleSubjects() {
+            new ViewRbacSubjectsNarrowedByFilters(
+                    scenarioTest,
+                    asSubject("xyz-peter.smith")
+                            .whichIs("a user with same-realm subjects and a same-person account in another org"))
+                    .given("thePersonsFamilyName", "Smith")
+                    .given("thePersonsGivenName", "Peter")
+                    .given("nameOfSamePersonGroupFromAnotherOrg", "/def-Team")
+                    .given("theOtherAccountsSubjectName", "def-peter.smith")
+                    .given("nameFilterPrefix", "/xyz")
+                    .using("theOtherAccountsGlobalUid", 21014)
+                    .using("theOtherAccountsGlobalGid", 21014)
+                    .expected("expectedSubjectNamesWithTypeFilter", """
+                            [
+                              { "name": "/xyz-Service" },
+                              { "name": "/xyz-Team" },
+                              { "name": "/def-Team" }
+                            ]
+                            """)
+                    .expected("unexpectedSubjectNamesWithTypeFilter", """
+                            [
+                              { "name": "xyz-peter.smith" }
+                            ]
+                            """)
+                    .expected("expectedSubjectNamesWithNameFilter", """
+                            [
+                              { "name": "/xyz-Service" },
+                              { "name": "/xyz-Team" }
+                            ]
+                            """)
+                    .expected("unexpectedSubjectNamesWithNameFilter", """
+                            [
+                              { "name": "xyz-peter.smith" },
+                              { "name": "/def-Team" }
+                            ]
+                            """)
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        /**
+         * Verifies Scenario#236.08: A global admin without an assumed role sees all subjects.
+         */
+        @Test
+        @Order(9470)
+        void globalAdminWithoutAssumedRoleSeesAllSubjects() {
+            new ViewRbacSubjects(
+                    scenarioTest,
+                    asSubject("hsh-alex_superuser").whichIs("a global admin without an assumed role"))
+                    .introduction("""
+                            This scenario verifies that a global admin who has not assumed any role
+                            sees all subjects across all realms.
+                            """)
+                    .expected("expectedSubjectNames", """
+                            [
+                              { "name": "hsh-alex_superuser" },
+                              { "name": "hsh-fran_superuser" },
+                              { "name": "tst-customer_admin_xxx" },
+                              { "name": "/hsh-Hostmasters" },
+                              { "name": "/xyz-Service" }
+                            ]
+                            """)
                     .thenExpect(HttpStatus.OK);
         }
     }

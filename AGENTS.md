@@ -94,6 +94,7 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 ## Scenario Test Conventions
 
 - Scenario use cases extend `UseCase<T>` from `net.hostsharing.hsadminng.hs.scenarios`.
+- Prefer ScenarioTests over new AcceptanceTests when a behavior can be presented as a business-level scenario report; add AcceptanceTests only for integrated scenarios that need special technical setups unsuitable for scenario reports.
 - Each scenario test method should instantiate and execute exactly one top-level `UseCase` directly; only the given/expected parameters should vary.
 - Scenario test methods declare cross-scenario dependencies with `@Produces` and `@Requires`.
 - A `UseCase` may call other use cases internally when that is part of the workflow.

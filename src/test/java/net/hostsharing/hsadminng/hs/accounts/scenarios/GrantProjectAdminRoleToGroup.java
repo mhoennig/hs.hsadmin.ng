@@ -54,13 +54,19 @@ public class GrantProjectAdminRoleToGroup extends UseCase<GrantProjectAdminRoleT
                 "Prerequisite: Resolve group subject UUID for '%{nameOfGroupSubject}'",
                 """
                     To use the grant API, we need the UUID of the group-subject.
+                    The granting user finds the groups they are assigned to, including their UUIDs,
+                    in their own RBAC context.
                     """,
-                () -> httpGet(
-                        grantingUser,
-                        "/api/rbac/subjects?name=" + uriEncoded("%{nameOfGroupSubject}") + "&type=GROUP")
-                        .expecting(OK).expecting(JSON)
-                        .expectArrayElements(1)
-                        .extractUuidAlias("[0].uuid", "groupSubjectUuidToGrantTo")
+                () -> {
+                    val response = httpGet(
+                            grantingUser,
+                            "/api/rbac/context")
+                            .expecting(OK).expecting(JSON)
+                            .expectObject();
+                    assertThat(response.<String>getFromBody("effectiveGroups[0].name"))
+                            .isEqualTo(resolve("%{nameOfGroupSubject}", DROP_COMMENTS));
+                    return response.extractUuidAlias("effectiveGroups[0].uuid", "groupSubjectUuidToGrantTo");
+                }
         );
         withTitleAndRequestInfo(
                 "Prerequisite: Resolve project " + "ADMIN" + " role UUID",

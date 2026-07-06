@@ -41,7 +41,7 @@ public class RbacSubjectController implements RbacSubjectsApi {
     private RbacSubjectRepository rbacSubjectRepository;
 
     @Autowired
-    private RbacSubjectListService rbacSubjectListService;
+    private RealSubjectRepository realSubjectRepository; // visibility bypasses RBAC, suvjects are no objects anyway
 
     @Override
     @Transactional
@@ -100,11 +100,12 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
         context.assumeRoles(assumedRoles);
 
-        final var result = rbacSubjectRepository.findByUuid(subjectUuid);
-        if (result == null) {
+        final var result = realSubjectRepository.findVisibleSubjectByUuid(subjectUuid)
+                .<Subject<?>>map(subject -> subject);
+        if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result, RbacSubjectResource.class));
+        return ResponseEntity.ok(mapper.map(result.get(), RbacSubjectResource.class));
     }
 
     @Override
@@ -119,7 +120,9 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
         final var subjectType = type != null ? SubjectType.valueOf(type.name()) : null;
         return ResponseEntity.ok(mapper.mapList(
-                rbacSubjectListService.findByOptionalNameLikeAndOptionalType(userName, subjectType),
+                realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+                                userName,
+                                subjectType),
                 RbacSubjectResource.class));
     }
 

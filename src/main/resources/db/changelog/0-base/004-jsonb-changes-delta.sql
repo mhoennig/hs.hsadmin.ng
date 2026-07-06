@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:JSONB-CHANGES-DELTA endDelimiter:--//
+--changeset michael.hoennig:JSONB-CHANGES-DELTA runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Recursively compares two jsonb values and returns what has changed.
@@ -12,6 +13,7 @@
 create or replace function base.jsonb_changes_delta(oldJson jsonb, newJson jsonb)
     returns jsonb
     called on null input
+    immutable
     language plpgsql as $$
 declare
     diffJson       jsonb;

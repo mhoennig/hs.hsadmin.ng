@@ -18,6 +18,7 @@ public class RbacRestrictedViewGenerator {
     }
 
     void generateTo(final StringWriter plPgSql) {
+        // TODO.impl[Taiga#471]: validCheckSum:ANY needs to get generated in a separate line, as in the direct changesets
         plPgSql.writeLn("""
                 -- ============================================================================
                 --changeset RbacRestrictedViewGenerator:${liquibaseTagPrefix}-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//

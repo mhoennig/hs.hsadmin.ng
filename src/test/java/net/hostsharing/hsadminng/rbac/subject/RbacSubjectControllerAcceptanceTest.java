@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.subject;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -174,7 +175,8 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
-        void globalAdmin_withAssumedCustomerAdminRole_canGetUserWithinInItsRealm() {
+        void globalAdmin_withAssumedNonGlobalRole_canNotGetAnySubject() {
+            // assuming a non-global role drops all subject-derived visibility, consistent with the list endpoint
             final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
 
             // @formatter:off
@@ -186,9 +188,7 @@ class RbacSubjectControllerAcceptanceTest {
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
                 .then().log().body().assertThat()
-                    .statusCode(200)
-                    .contentType("application/json")
-                    .body("name", is("tst-pac_admin_yyy00"));
+                    .statusCode(404);
             // @formatter:on
         }
 
@@ -211,8 +211,8 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
-        void customerAdmin_withoutAssumedRole_canNotGetUserOutsideOfItsRealm() {
-            final var givenUser = findRbacSubjectByName("tst-pac_admin_yyy00");
+        void customerAdmin_evenWithoutAssumedRole_canNotGetUserOutsideOfItsRealm() {
+            final var givenUser = givenSubject("xyz-user_without_any_role", SubjectType.USER);
 
             // @formatter:off
             RestAssured
@@ -277,6 +277,29 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
+        void globalAdmin_withAssumedGlobalAdminRole_canViewAllUsers() {
+
+            // @formatter:off
+            RestAssured
+                .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .header("Hostsharing-Assumed-Roles", "rbac.global#global:ADMIN")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac/subjects")
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_xxx")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_yyy")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_zzz")))
+                    .body("", hasItem(hasEntry("name", "hsh-alex_superuser")))
+                    .body("", hasItem(hasEntry("name", "hsh-fran_superuser")))
+                    .body("size()", greaterThanOrEqualTo(14));
+            // @formatter:on
+        }
+
+        @Test
         void globalAdmin_withoutAssumedRole_canViewSubjectsByType() {
 
             // @formatter:off
@@ -297,7 +320,98 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
-        void user_withJwtGroupMembership_canViewThatGroupSubject() {
+        void user_withoutAssumedRole_canViewSameRealmUserSubjectsByPrefix() { // neu
+            val uniquePart = "visibility_" + System.currentTimeMillis();
+            val currentSubject = "xyz-" + uniquePart + "_actor";
+            val sameRealmSubject = "xyz-" + uniquePart + "_peer";
+            val otherRealmSubject = "abc-" + uniquePart + "_peer";
+            givenSubject(currentSubject, SubjectType.USER);
+            givenSubject(sameRealmSubject, SubjectType.USER);
+            givenSubject(otherRealmSubject, SubjectType.USER);
+
+            // @formatter:off
+            RestAssured
+                .given()
+                    .header("Authorization", bearer(currentSubject))
+                    .queryParam("type", "USER")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac/subjects")
+                .then().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(hasEntry("name", currentSubject)))
+                    .body("", hasItem(hasEntry("name", sameRealmSubject)))
+                    .body("findAll { it.name == '" + otherRealmSubject + "' }.size()", is(0));
+            // @formatter:on
+        }
+
+        @Test
+        void user_withoutAssumedRole_canViewSameRealmGroupSubjectsByPrefix() {
+            val uniquePart = "visibility_" + System.currentTimeMillis();
+            val currentSubject = "xyz-" + uniquePart + "_actor";
+            val sameRealmGroup = "/xyz-" + uniquePart + "-admins";
+            val otherRealmGroup = "/abc-" + uniquePart + "-admins";
+            givenSubject(currentSubject, SubjectType.USER);
+            givenSubject(sameRealmGroup, SubjectType.GROUP);
+            givenSubject(otherRealmGroup, SubjectType.GROUP);
+
+            // @formatter:off
+            RestAssured
+                .given()
+                    .header("Authorization", bearer(currentSubject))
+                    .queryParam("type", "GROUP")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac/subjects")
+                .then().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(hasEntry("name", "/xyz-Service")))
+                    .body("", hasItem(hasEntry("name", "/xyz-Team")))
+                    .body("", hasItem(hasEntry("name", sameRealmGroup)))
+                    .body("findAll { it.name == '" + otherRealmGroup + "' }.size()", is(0))
+                    .body("findAll { it.name == '/hsh-Hostmasters' }.size()", is(0))
+                    .body("findAll { it.type != 'GROUP' }.size()", is(0));
+            // @formatter:on
+        }
+
+        @Test
+        void user_withoutTypeFilter_canViewOnlySameRealmSubjectsByPrefix() {
+            val uniquePart = "visibility_" + System.currentTimeMillis();
+            val currentSubject = "xyz-" + uniquePart + "_actor";
+            val sameRealmSubject = "xyz-" + uniquePart + "_peer";
+            val otherRealmSubject = "abc-" + uniquePart + "_peer";
+            val sameRealmGroup = "/xyz-" + uniquePart + "-admins";
+            val otherRealmGroup = "/abc-" + uniquePart + "-admins";
+            givenSubject(currentSubject, SubjectType.USER);
+            givenSubject(sameRealmSubject, SubjectType.USER);
+            givenSubject(otherRealmSubject, SubjectType.USER);
+            givenSubject(sameRealmGroup, SubjectType.GROUP);
+            givenSubject(otherRealmGroup, SubjectType.GROUP);
+
+            // @formatter:off
+            RestAssured
+                .given()
+                    .header("Authorization", bearer(currentSubject))
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac/subjects")
+                .then().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(hasEntry("name", currentSubject)))
+                    .body("", hasItem(hasEntry("name", sameRealmSubject)))
+                    .body("", hasItem(hasEntry("name", sameRealmGroup)))
+                    .body("findAll { it.name == '" + otherRealmSubject + "' }.size()", is(0))
+                    .body("findAll { it.name == '" + otherRealmGroup + "' }.size()", is(0));
+            // @formatter:on
+        }
+
+        @Test
+        void user_withCrossRealmJwtGroupMembership_canNotViewThatGroupSubject() {
+            // JWT groups always belong to the user's own realm and are visible via the realm prefix anyway;
+            // a (hypothetical) cross-realm group claim must not widen visibility
 
             // @formatter:off
             RestAssured
@@ -313,14 +427,12 @@ class RbacSubjectControllerAcceptanceTest {
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("/xyz-Service"))
-                    .body("[0].type", is("GROUP"))
-                    .body("size()", is(1));
+                    .body("size()", is(0));
             // @formatter:on
         }
 
         @Test
-        void globalAdmin_withAssumedCustomerAdminRole_canViewUsersInItsRealm() {
+        void globalAdmin_withAssumedNonGlobalAdminRole_canNotViewAnySubjectsAnymore() {
 
             // @formatter:off
             RestAssured
@@ -333,16 +445,12 @@ class RbacSubjectControllerAcceptanceTest {
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("tst-customer_admin_yyy"))
-                    .body("[1].name", is("tst-pac_admin_yyy00"))
-                    .body("[2].name", is("tst-pac_admin_yyy01"))
-                    .body("[3].name", is("tst-pac_admin_yyy02"))
-                    .body("size()", is(4));
+                    .body("size()", is(0));
             // @formatter:on
         }
 
         @Test
-        void customerAdmin_withoutAssumedRole_canViewUsersInItsRealm() {
+        void customerAdmin_withoutAssumedRole_canViewUsersInItsRealmByPrefix() {
 
             // @formatter:off
             RestAssured
@@ -353,17 +461,20 @@ class RbacSubjectControllerAcceptanceTest {
                     .get("http://localhost/api/rbac/subjects")
                 .then().assertThat()
                     .statusCode(200)
+                    .log().body()
                     .contentType("application/json")
-                    .body("[0].name", is("tst-customer_admin_yyy"))
-                    .body("[1].name", is("tst-pac_admin_yyy00"))
-                    .body("[2].name", is("tst-pac_admin_yyy01"))
-                    .body("[3].name", is("tst-pac_admin_yyy02"))
-                    .body("size()", is(4));
+                    // can see all subjects beginning with tst- (just some examples from test-data here)
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_xxx")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_yyy")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_zzz")))
+                    .body("", hasItem(hasEntry("name", "tst-pac_admin_yyy00")))
+                    // and (with current test-data) there is no subject with another prefix than tst-
+                    .body("findAll { !it.name.startsWith('tst-') }.size()", is(0));
             // @formatter:on
         }
 
         @Test
-        void packetAdmin_withoutAssumedRole_canViewAllUsersOfItsPackage() {
+        void packetAdmin_withoutAssumedRole_canViewUsersInItsRealmByPrefix() {
 
             // @formatter:off
             RestAssured
@@ -375,8 +486,13 @@ class RbacSubjectControllerAcceptanceTest {
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("tst-pac_admin_xxx01"))
-                    .body("size()", is(1));
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_xxx")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_yyy")))
+                    .body("", hasItem(hasEntry("name", "tst-customer_admin_zzz")))
+                    .body("", hasItem(hasEntry("name", "tst-pac_admin_xxx01")))
+                    .body("findAll { it.name.startsWith('hsh-') }.size()", is(0))
+                    .body("findAll { it.name.startsWith('/hsh-') }.size()", is(0))
+                    .body("findAll { it.name.startsWith('/xyz-') }.size()", is(0));
             // @formatter:on
         }
     }
@@ -575,6 +691,18 @@ class RbacSubjectControllerAcceptanceTest {
         }).assumeSuccessful().returnedValue();
         assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
         return givenUser;
+    }
+
+    RbacSubjectEntity givenSubject(final String subjectName, final SubjectType type) {
+        return jpaAttempt.transacted(() -> {
+            context.define("hsh-alex_superuser");
+            val existingSubject = rbacSubjectRepository.findByName(subjectName);
+            if (existingSubject != null) {
+                return existingSubject;
+            }
+            return rbacSubjectRepository.create(
+                    RbacSubjectEntity.builder().uuid(randomUUID()).name(subjectName).type(type).build());
+        }).assumeSuccessful().returnedValue();
     }
 
 }

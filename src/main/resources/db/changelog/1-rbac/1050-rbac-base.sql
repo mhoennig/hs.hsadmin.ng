@@ -186,27 +186,35 @@ call base.create_journal('rbac.role');
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-ROLE-DESCRIPTOR endDelimiter:--//
+--changeset michael.hoennig:rbac-base-ROLE-DESCRIPTOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
-create type rbac.RoleDescriptor as
-(
-    objectTable varchar(63), -- for human readability and easier debugging
-    objectUuid  uuid,
-    roleType    rbac.RoleType,
-    assumed     boolean
-);
+-- PostgreSQL has no `create type if not exists`, thus guarded creation
+do $$
+begin
+    create type rbac.RoleDescriptor as
+    (
+        objectTable varchar(63), -- for human readability and easier debugging
+        objectUuid  uuid,
+        roleType    rbac.RoleType,
+        assumed     boolean
+    );
+exception
+    when duplicate_object then
+        null; -- ignore if it already exists from a previous execution of this changeset
+end; $$;
 
 create or replace function rbac.assumed()
     returns boolean
-    stable -- leakproof
+    immutable -- leakproof
     language sql as $$
         select true;
 $$;
 
 create or replace function rbac.unassumed()
     returns boolean
-    stable -- leakproof
+    immutable -- leakproof
     language sql as $$
 select false;
 $$;
@@ -216,7 +224,7 @@ create or replace function rbac.roleDescriptorOf(
         assumed boolean = true) -- just for DSL readability, belongs actually to the grant
     returns rbac.RoleDescriptor
     returns null on null input
-    stable -- leakproof
+    immutable -- leakproof
     language sql as $$
         select objectTable, objectUuid, roleType::rbac.RoleType, assumed;
 $$;
@@ -876,6 +884,21 @@ begin
     return subjectUuid;
 end;
 $$;
+
+create or replace function rbac.create_subject_if_not_exist(subjectName varchar, subjectType rbac.SubjectType)
+    returns uuid
+    returns null on null input
+    language plpgsql as $$
+declare
+    subjectUuid uuid;
+begin
+    select uuid into subjectUuid from rbac.subject where name = subjectName;
+    if subjectUuid is null then
+        subjectUuid := rbac.create_subject(subjectName, subjectType);
+    end if;
+    return subjectUuid;
+end;
+$$;
 --//
 
 
@@ -917,6 +940,7 @@ $$;
 
 create or replace function rbac.is_valid_user_subject_name(subjectName varchar)
     returns boolean
+    immutable
     language sql
 as $$
     -- keep regex in sync with RbacUserSubjectInsert.name pattern in the OpenAPI spec
@@ -932,10 +956,26 @@ $$;
 
 create or replace function rbac.is_valid_group_subject_name(subjectName varchar)
     returns boolean
+    immutable
     language sql
 as $$
     -- keep regex in sync with RbacGroupSubjectInsert.name pattern in the OpenAPI spec
     select subjectName is not null and subjectName ~ '^/[a-z]{3,5}-[^/]+$';
+$$;
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-REALM-PREFIX runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+
+create or replace function rbac.subject_realm_prefix(subjectName varchar)
+    returns varchar
+    immutable
+    language sql
+as $$
+select split_part(ltrim(subjectName, '/'), '-', 1);
 $$;
 --//
 

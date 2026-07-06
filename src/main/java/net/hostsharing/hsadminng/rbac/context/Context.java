@@ -17,6 +17,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -168,27 +169,33 @@ public class Context {
                 .getSingleResult()).map(Object::toString);
     }
 
-    private String currentSubjectGroupNamesFromJWT() {
+    public List<String> fetchClaimedSubjectGroupNames() {
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
                 .filter(JwtAuthenticationToken.class::isInstance)
                 .map(JwtAuthenticationToken.class::cast)
                 .map(JwtAuthenticationToken::getToken)
                 .map(token -> token.getClaim("groups"))
                 .map(Context::groupNamesFromClaim)
-                .orElse("");
+                .orElse(List.of());
     }
 
-    private static String groupNamesFromClaim(final Object semicolonSeparatedGroupsClaim) {
+    private String currentSubjectGroupNamesFromJWT() {
+        return String.join(";", fetchClaimedSubjectGroupNames());
+    }
+
+    private static List<String> groupNamesFromClaim(final Object semicolonSeparatedGroupsClaim) {
         final Stream<?> groupNames = semicolonSeparatedGroupsClaim instanceof Collection<?> groups
                 ? groups.stream()
                 : Stream.of(semicolonSeparatedGroupsClaim);
 
         return groupNames
                 .map(String::valueOf)
+                // split like the DB layer splits currentSubjectGroups, see rbac.determineCurrentSubjectGroupUuids
+                .flatMap(name -> Stream.of(name.split(";")))
                 .map(String::trim)
                 .filter(not(String::isBlank))
                 .distinct()
-                .collect(Collectors.joining(";"));
+                .toList();
     }
 
     private String toTask(final HttpServletRequest request) {

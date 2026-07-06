@@ -130,6 +130,9 @@ public class HsAccountController implements AccountApi {
         val originalLoginContext = new LoginContext(context);
 
         // TODO.spec: for now, only global admins can create new accounts, auto-creation has to be specified. which person?
+        // To make bootstrapping easier, we could also allow the global-guest to create an initial global-admin account,
+        // e.g. if no subject exists at all or just test-data-subjects.
+        // But to make it useful with Keycloak, we need to add the subject-uuid to the request body.
         if (!originalLoginContext.isGlobalAdmin) {
             throw new ForbiddenException(
                     messageTranslator.translate(

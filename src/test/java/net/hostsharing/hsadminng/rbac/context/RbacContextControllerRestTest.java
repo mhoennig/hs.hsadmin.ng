@@ -8,6 +8,8 @@ import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleType;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.SubjectType;
@@ -27,6 +29,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.SynchronizationType;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -67,6 +70,9 @@ class RbacContextControllerRestTest {
     RbacSubjectRepository rbacSubjectRepository;
 
     @MockitoBean
+    RealSubjectRepository realSubjectRepository;
+
+    @MockitoBean
     EntityManagerWrapper em;
 
     @MockitoBean
@@ -89,6 +95,13 @@ class RbacContextControllerRestTest {
         fakeSubject.setName(GIVEN_SUBJECT_NAME);
         fakeSubject.setType(GIVEN_SUBJECT_TYPE);
         when(rbacSubjectRepository.findByUuid(mockUuid)).thenReturn(fakeSubject);
+
+        // claimed groups stem from the JWT and may include groups not (yet) synchronized as effective subjects
+        when(contextMock.fetchClaimedSubjectGroupNames()).thenReturn(List.of("/xyz-Team", "/abc-External"));
+
+        when(realSubjectRepository.findEffectiveSubjectGroups()).thenReturn(List.of(
+                givenGroupSubject("/xyz-Team"),
+                givenGroupSubject("/xyz-Service")));
     }
 
     @ParameterizedTest
@@ -133,6 +146,14 @@ class RbacContextControllerRestTest {
                 .andExpect(jsonPath("$.subject.name", is(GIVEN_SUBJECT_NAME)))
                 .andExpect(jsonPath("$.subject.type", is(GIVEN_SUBJECT_TYPE.name())))
                 .andExpect(jsonPath("$.globalAdmin", is(GIVEN_GLOBAL_ADMIN)))
+                .andExpect(jsonPath("$.claimedGroups", hasSize(2)))
+                .andExpect(jsonPath("$.claimedGroups[0]", is("/xyz-Team")))
+                .andExpect(jsonPath("$.claimedGroups[1]", is("/abc-External")))
+                .andExpect(jsonPath("$.effectiveGroups", hasSize(2)))
+                .andExpect(jsonPath("$.effectiveGroups[0].name", is("/xyz-Team")))
+                .andExpect(jsonPath("$.effectiveGroups[0].type").doesNotExist())
+                .andExpect(jsonPath("$.effectiveGroups[1].name", is("/xyz-Service")))
+                .andExpect(jsonPath("$.effectiveGroups[1].type").doesNotExist())
                 .andExpect(jsonPath("$.assumedRoles", hasSize(2)))
                 .andExpect(jsonPath("$.assumedRoles[0].roleName", is(givenAssumedRoles.get(0).getRoleName())))
                 .andExpect(jsonPath("$.assumedRoles[0].roleIdName", is("rbactest.package#xxx00:OWNER")))
@@ -140,6 +161,14 @@ class RbacContextControllerRestTest {
                 .andExpect(jsonPath("$.assumedRoles[1].roleIdName", is("rbactest.package#yyy00:OWNER")));
 
         verify(contextMock).assumeRoles(expectedAssumedRoles);
+    }
+
+    private static RealSubjectEntity givenGroupSubject(final String name) {
+        final var subject = new RealSubjectEntity();
+        subject.setUuid(UUID.randomUUID());
+        subject.setName(name);
+        subject.setType(SubjectType.GROUP);
+        return subject;
     }
 
     static Stream<Arguments> validAssumedRolesHeaderCombinations() {

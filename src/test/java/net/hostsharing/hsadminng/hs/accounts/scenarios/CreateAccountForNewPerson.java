@@ -21,6 +21,7 @@ public class CreateAccountForNewPerson extends BaseAccountUseCase<CreateAccountF
     protected HttpResponse run() {
 
         return obtain("newAccount", () ->
+            // TODO.impl[Taiga#471]: use subjectUuid
             httpPost(asLoginUser, "/api/hs/accounts/accounts", usingJsonBody("""
                 {
                      "person": {

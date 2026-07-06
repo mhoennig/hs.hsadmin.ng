@@ -146,7 +146,8 @@ end; $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:context-base.ASSUMED-ROLES endDelimiter:--//
+--changeset michael.hoennig:context-base.ASSUMED-ROLES runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Returns assumed role names as set in `hsadminng.assumedRoles`
@@ -163,6 +164,7 @@ end; $$;
 create or replace function base.cleanIdentifier(rawIdentifier varchar)
     returns varchar
     returns null on null input
+    immutable
     language plpgsql as $$
 declare
     cleanIdentifier varchar;
@@ -174,6 +176,7 @@ end; $$;
 create or replace function base.pureIdentifier(rawIdentifier varchar)
     returns varchar
     returns null on null input
+    immutable
     language plpgsql as $$
 declare
     cleanIdentifier varchar;
