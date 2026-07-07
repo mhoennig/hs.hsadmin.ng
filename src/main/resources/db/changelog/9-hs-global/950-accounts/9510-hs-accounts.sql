@@ -19,6 +19,22 @@ create table hs_accounts.account
 
 
 -- ============================================================================
+--changeset michael.hoennig:hs-accounts-ACCOUNT-SUBJECT-FK-ON-DELETE-CASCADE endDelimiter:--//
+-- ----------------------------------------------------------------------------
+-- When a subject gets physically purged (DELETE /api/rbac/subjects/{uuid}?purge=true), its account
+-- is deleted along with it; without the cascade the purge would fail with an FK violation for any
+-- subject which has an account.
+alter table hs_accounts.account
+    drop constraint if exists account_uuid_fkey;
+alter table hs_accounts.account
+    add constraint account_uuid_fkey
+        foreign key (uuid) references rbac.subject (uuid)
+            on delete cascade
+            deferrable initially deferred;
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:hs-accounts-ACCOUNT-SUBJECT-MUST-BE-USER runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------

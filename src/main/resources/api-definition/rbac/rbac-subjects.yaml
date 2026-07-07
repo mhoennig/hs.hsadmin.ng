@@ -32,7 +32,7 @@ get:
 post:
     tags:
         - rbac-subjects
-    description: Create a new RBAC subject (e.g. user).
+    description: Create a new RBAC subject (e.g. user). Restricted to global-admins.
     operationId: postNewSubject
     requestBody:
         required: true
@@ -49,5 +49,9 @@ post:
                         $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
         '400':
             $ref: 'error-responses.yaml#/components/responses/BadRequest'
+        '401':
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        '403':
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
         '409':
             $ref: 'error-responses.yaml#/components/responses/Conflict'

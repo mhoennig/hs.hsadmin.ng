@@ -865,6 +865,82 @@ alter table rbac.subject
 
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-DEACTIVATION endDelimiter:--//
+-- ----------------------------------------------------------------------------
+-- Soft-delete marker: a deactivated subject (removed from Keycloak) is retained but no longer
+-- visible or assignable. Added after the type column so it stays the last column of rbac.subject
+-- (the subject-name-validation error translation in RbacTranslations relies on the failing-row
+-- column order). Physically purging long-deactivated subjects is a follow-up PR.
+alter table rbac.subject add column if not exists deactivated_at timestamptz;
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-NAME-UNIQUE-ONLY-FOR-ACTIVE endDelimiter:--//
+-- ----------------------------------------------------------------------------
+-- Replaces the plain unique constraint on the subject name with a partial unique index which only
+-- covers active subjects, so that after a subject got deactivated its name can be reused by a new
+-- subject, e.g. when a user with the same name got re-created in Keycloak under a fresh UUID.
+alter table rbac.subject drop constraint if exists subject_name_key;
+create unique index if not exists subject_name_active_key on rbac.subject (name) where deactivated_at is null;
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-BEFORE-DELETE-SUBJECT-TRIGGER runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+
+/*
+    Physically purging a subject, modelled on the rbac.role delete trigger (delete_grants_of_role_tf).
+
+    A BEFORE DELETE on rbac.subject first re-checks authorization at the DB level, mirroring the
+    rbac.subject_rv instead-of-delete trigger (self or global-admin): physical deletion - directly
+    or through the rbac.reference -> rbac.subject `on delete cascade` (?purge=true) - bypasses that
+    view trigger, so without this check the authorization would only exist in the Java controller.
+    It then removes all grants referencing the subject, so that the deletion is no longer rejected
+    by the rbac.grant foreign keys.
+
+    An AFTER DELETE additionally removes the then-orphaned rbac.reference row, but only when the subject
+    was deleted directly (pg_trigger_depth() = 1). When the delete already started at the reference, the
+    subject is removed by the cascade at a deeper trigger level and the reference is deleted by the
+    original statement; the depth guard prevents deleting the same reference row twice (re-entrancy).
+ */
+create or replace function rbac.delete_grants_of_subject_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    if not (rbac.currentSubjectUuid() = old.uuid or rbac.hasGlobalRoleGranted(rbac.currentSubjectUuid())) then
+        raise exception '[403] Subject % not allowed to delete subject uuid %', base.currentSubject(), old.uuid;
+    end if;
+
+    delete from rbac.grant g where old.uuid in (g.ascendantUuid, g.descendantUuid);
+    return old;
+end; $$;
+
+create or replace function rbac.delete_reference_of_subject_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    if pg_trigger_depth() = 1 then
+        delete from rbac.reference where uuid = old.uuid;
+    end if;
+    return old;
+end; $$;
+
+drop trigger if exists delete_grants_of_subject_tg on rbac.subject;
+create trigger delete_grants_of_subject_tg
+    before delete on rbac.subject
+    for each row execute procedure rbac.delete_grants_of_subject_tf();
+
+drop trigger if exists delete_reference_of_subject_tg on rbac.subject;
+create trigger delete_reference_of_subject_tg
+    after delete on rbac.subject
+    for each row execute procedure rbac.delete_reference_of_subject_tf();
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-base-SUBJECT-TYPE-FUNCTIONS runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------

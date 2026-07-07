@@ -91,6 +91,17 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
   - `./gradlew spotlessJavaCheck -x test`
 - Never run a full `./gradlew test`, it's extremely slow.
 
+### Test Task Scopes
+
+Tag-scoped Gradle test tasks are registered in `buildSrc/src/main/kotlin/HsadminTestTasksPlugin.kt`; each runs only tests carrying the matching JUnit `@Tag` and is far faster than a full `test` run. Prefer the narrowest scope that covers your change, and combine it with `--tests fully.qualified.TestClass`.
+
+- `unitTest` — unit and REST tests; feeds the JaCoCo coverage report/verification.
+- `officeIntegrationTest`, `bookingIntegrationTest`, `hostingIntegrationTest` — per-module integration tests.
+- `generalIntegrationTest` — integration tests not tied to a single business module.
+- `migrationTest` — Liquibase migration compatibility (`LiquibaseCompatibilityIntegrationTest`, `ImportHostingAssets`).
+- `scenarioTest` — business-level scenario reports.
+- `importHostingAssets` — legacy hosting-assets import.
+
 ## Scenario Test Conventions
 
 - Scenario use cases extend `UseCase<T>` from `net.hostsharing.hsadminng.hs.scenarios`.

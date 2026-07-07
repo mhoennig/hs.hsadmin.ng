@@ -246,6 +246,7 @@ create or replace view rbac.subject_rv as
 
         ) as unordered
         -- @formatter:on
+        where unordered.deactivated_at is null
         order by unordered.name;
 grant all privileges on rbac.subject_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
@@ -315,6 +316,52 @@ create trigger delete_subject_tg
     for each row
 execute function rbac.delete_subject_tf();
 --/
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-views-SUBJECT-UPSERT-FUNCTION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+
+/**
+    UUID-keyed idempotent upsert of a subject, used by the global-admin-driven Keycloak sync.
+
+    Inserts the subject if the UUID is unknown (returns 'created'), otherwise renames it (returns
+    'updated'). A subject cannot exist without its rbac.reference row, so the reference is upserted
+    first. The type is immutable: re-synchronizing with a different type is rejected. Re-synchronizing
+    a previously deactivated subject reactivates it (clears deactivated_at). Authorization mirrors the
+    delete trigger (self or global admin). The name-uniqueness constraint still yields a conflict on
+    collision.
+ */
+create or replace function rbac.upsert_subject(
+        newUuid uuid,
+        newName varchar,
+        newType rbac.SubjectType)
+    returns varchar
+    language plpgsql as $$
+declare
+    existingType rbac.SubjectType;
+    wasInserted  boolean;
+begin
+    if not (rbac.currentSubjectUuid() = newUuid or rbac.hasGlobalRoleGranted(rbac.currentSubjectUuid())) then
+        raise exception '[403] Subject % not allowed to upsert subject uuid %', base.currentSubject(), newUuid;
+    end if;
+
+    select type into existingType from rbac.subject where uuid = newUuid;
+    if found and existingType is distinct from newType then
+        raise exception '[409] cannot change type of subject % from % to %', newUuid, existingType, newType;
+    end if;
+
+    insert into rbac.reference (uuid, type)
+        values (newUuid, 'rbac.subject')
+        on conflict (uuid) do nothing;
+    insert into rbac.subject (uuid, name, type)
+        values (newUuid, newName, newType)
+        on conflict (uuid) do update set name = excluded.name, deactivated_at = null
+        returning (xmax = 0) into wasInserted;
+
+    return case when wasInserted then 'created' else 'updated' end;
+end; $$;
+--//
 
 -- ============================================================================
 --changeset michael.hoennig:rbac-views-OWN-GRANTED-PERMISSIONS-VIEW runOnChange:true endDelimiter:--//

@@ -17,9 +17,9 @@ begin
         return null;
     end if;
 
-    select uuid from rbac.subject where name = currentSubject into currentSubjectUuid;
+    select uuid from rbac.subject where name = currentSubject and deactivated_at is null into currentSubjectUuid;
     if currentSubjectUuid is null then
-        raise exception '[401] subject % given in `base.defineContext(...)` does not exist', currentSubject;
+        raise exception '[401] subject % given in `base.defineContext(...)` does not exist or is deactivated', currentSubject;
     end if;
     return currentSubjectUuid;
 end; $$;
@@ -62,6 +62,7 @@ begin
         join rbac.subject s
             on s.type = 'GROUP'::rbac.SubjectType
            and s.name = groupNames.name
+           and s.deactivated_at is null
         into groupSubjectUuids;
 
     return groupSubjectUuids;

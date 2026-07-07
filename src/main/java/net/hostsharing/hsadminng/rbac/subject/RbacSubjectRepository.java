@@ -47,6 +47,23 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
         return rbacSubjectEntity; // Not yet attached to EM!
     }
 
+    // idempotent upsert keyed by uuid; returns 'created' or 'updated'. The type is immutable.
+    @Query(value = "select rbac.upsert_subject(:uuid, :name, cast(:type as rbac.SubjectType))", nativeQuery = true)
+    @Timed("app.rbac.subjects.repo.upsert.rbac")
+    String upsert(UUID uuid, String name, String type);
+
+    // physical delete: removing the rbac.reference row cascades to the subject and, via the
+    // rbac.subject delete triggers, to all of its grants and its account; a no-op if the uuid is
+    // unknown. The subject's BEFORE DELETE trigger re-checks authorization at the DB level.
+    @Modifying
+    @Query(value = "delete from rbac.reference where uuid = :subjectUuid", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.deleteByUuid.rbac")
     void deleteByUuid(UUID subjectUuid);
+
+    // soft-delete: mark the subject deactivated so it is retained but excluded from all read paths;
+    // idempotent - a no-op if the uuid is unknown or the subject is already deactivated
+    @Modifying
+    @Query(value = "update rbac.subject set deactivated_at = now() where uuid = :subjectUuid and deactivated_at is null", nativeQuery = true)
+    @Timed("app.rbac.subjects.repo.deactivateByUuid.rbac")
+    void deactivateByUuid(UUID subjectUuid);
 }

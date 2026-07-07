@@ -21,6 +21,8 @@ import static org.springframework.http.HttpStatus.OK;
 public class ViewRbacSubjectsNarrowedByFilters extends UseCase<ViewRbacSubjectsNarrowedByFilters> {
 
     private final FakeLoginUser loginUser;
+    private String unfilteredBody;
+    private String nameFilteredBody;
 
     public ViewRbacSubjectsNarrowedByFilters(
             final ScenarioTest testSuite,
@@ -79,6 +81,22 @@ public class ViewRbacSubjectsNarrowedByFilters extends UseCase<ViewRbacSubjectsN
                                 }
                                 """))
                         .expecting(CREATED).expecting(JSON));
+
+        unfilteredBody = withTitle(
+                "Fetch all visible RBAC subjects without a filter",
+                () -> httpGet(
+                        loginUser,
+                        "/api/rbac/subjects")
+                        .expecting(OK).expecting(JSON))
+                .getBody();
+
+        nameFilteredBody = withTitle(
+                "Fetch visible RBAC subjects narrowed by the name filter",
+                () -> httpGet(
+                        loginUser,
+                        "/api/rbac/subjects?name=%{nameFilterPrefix}")
+                        .expecting(OK).expecting(JSON))
+                .getBody();
 
         return withTitle(
                 "Fetch visible RBAC subjects narrowed by the type filter",

@@ -269,6 +269,25 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
+    public final HttpResponse httpPut(
+            final FakeLoginUser loginUser, final String uriPathWithPlaceholders,
+            final JsonTemplate bodyJsonTemplate
+    ) {
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
+        final var requestBody = bodyJsonTemplate.resolvePlaceholders();
+        final var request = HttpRequest.newBuilder()
+                .PUT(BodyPublishers.ofString(requestBody))
+                .uri(new URI("http://localhost:" + testSuite.port + uriPath))
+                .header("Content-Type", "application/json")
+                .header("Authorization", loginUser.bearer())
+                .header("X-Fake-Authorization", loginUser.reportableBearer())
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
+                .build();
+        final var response = client.send(request, BodyHandlers.ofString());
+        return new HttpResponse(HttpMethod.PUT, uriPath, requestBody, response);
+    }
+
+    @SneakyThrows
     public final HttpResponse httpPatch(
             final FakeLoginUser loginUser, final String uriPathWithPlaceholders,
             final JsonTemplate bodyJsonTemplate

@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.subject;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.persistence.EntityManager;
 import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.rbac.context.Context;
@@ -44,6 +45,9 @@ class RbacSubjectControllerAcceptanceTest {
     JpaAttempt jpaAttempt;
 
     @Autowired
+    EntityManager em;
+
+    @Autowired
     Context context;
 
     @Autowired
@@ -53,11 +57,12 @@ class RbacSubjectControllerAcceptanceTest {
     class CreateRbacSubject {
 
         @Test
-        void anybody_canCreateANewUser() {
+        void globalAdmin_canCreateANewUser() {
 
             // @formatter:off
             final var location = RestAssured
                     .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -84,11 +89,12 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
-        void anybody_cannotCreateAUserWithInvalidName() {
+        void globalAdmin_cannotCreateAUserWithInvalidName() {
 
             // @formatter:off
             RestAssured
                     .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -107,12 +113,13 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
-        void anybody_canCreateANewGroup() {
+        void globalAdmin_canCreateANewGroup() {
             final var newGroupName = "/xyz-Team-" + System.currentTimeMillis();
 
             // @formatter:off
             RestAssured
                     .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -132,11 +139,12 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
-        void anybody_cannotCreateAGroupWithUserName() {
+        void globalAdmin_cannotCreateAGroupWithUserName() {
 
             // @formatter:off
             RestAssured
                     .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -150,6 +158,101 @@ class RbacSubjectControllerAcceptanceTest {
                     .then().assertThat()
                         .statusCode(400);
             // @formatter:on
+        }
+
+        @Test
+        void anonymous_cannotCreateSubject() {
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "tst-anonymous_user"
+                              }
+                              """)
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(401);
+            // @formatter:on
+
+            assertThat(findRbacSubjectByName("tst-anonymous_user")).isNull();
+        }
+
+        @Test
+        void nonGlobalAdmin_cannotCreateSubject() {
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("tst-customer_admin_xxx"))
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "tst-forbidden_user"
+                              }
+                              """)
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(403);
+            // @formatter:on
+
+            assertThat(findRbacSubjectByName("tst-forbidden_user")).isNull();
+        }
+    }
+
+    @Nested
+    class AuditLogOfMutatingRequests {
+
+        @Test
+        void createSubjectRequestIsAuditLoggedIncludingRequestBody() {
+
+            // given a subject created via a POST request with a JSON body
+            final var givenName = "tst-audit_" + System.currentTimeMillis();
+
+            // @formatter:off
+            final var location = RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "%s"
+                              }
+                              """.formatted(givenName))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(201)
+                        .extract().header("Location");
+            // @formatter:on
+            final var newSubjectUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
+
+            // when fetching the request which got audit-logged for that insert
+            final var currentRequest = (String) jpaAttempt.transacted(() ->
+                    em.createNativeQuery("""
+                            select txc.currentRequest
+                                from base.tx_journal txj
+                                join base.tx_context txc using (txId)
+                                where txj.targetTable = 'rbac.subject' and txj.targetUuid = :subjectUuid
+                            """)
+                            .setParameter("subjectUuid", newSubjectUuid)
+                            .getSingleResult()
+            ).assumeSuccessful().returnedValue();
+
+            // then it contains the reconstructed curl command including the request body,
+            // which `Context.toCurl` re-reads via the `HttpServletRequestBodyCachingFilter`
+            // even though Spring's request-body handling already consumed the stream
+            assertThat(currentRequest).contains("curl -0 -v -X POST /api/rbac/subjects");
+            assertThat(currentRequest).contains("--data-binary @- << EOF");
+            assertThat(currentRequest).contains(givenName);
         }
     }
 
@@ -611,7 +714,7 @@ class RbacSubjectControllerAcceptanceTest {
     class DeleteRbacSubject {
 
         @Test
-        void anybody_canDeleteTheirOwnUser() {
+        void nonGlobalAdmin_canNotDeleteTheirOwnUser() {
 
             // given
             final var givenUser = givenANewUser();
@@ -624,11 +727,13 @@ class RbacSubjectControllerAcceptanceTest {
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
                     .then().log().all().assertThat()
-                        .statusCode(204);
+                        // the delete operation is restricted to global-admins
+                        .statusCode(403);
             // @formatter:on
 
-            // finally, the user is actually deleted
-            assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNull();
+            // finally, the user is untouched: still present and still visible, i.e. not deactivated
+            assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
+            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNotNull();
         }
 
         @Test
@@ -645,12 +750,13 @@ class RbacSubjectControllerAcceptanceTest {
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
                     .then().log().all().assertThat()
-                        // that user cannot even see other users, thus the system won't even try to delete
-                        .statusCode(204);
+                        // the delete operation is restricted to global-admins
+                        .statusCode(403);
             // @formatter:on
 
-            // finally, the user is still there
+            // finally, the user is untouched: still present and still visible, i.e. not deactivated
             assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
+            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNotNull();
         }
 
         @Test
@@ -670,9 +776,253 @@ class RbacSubjectControllerAcceptanceTest {
                         .statusCode(204);
             // @formatter:on
 
-            // finally, the user is actually deleted
-            assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNull();
+            // finally, the user is deactivated (soft-deleted): the row is retained but no longer visible
+            assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
+            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNull();
         }
+
+        @Test
+        void deactivatedUser_canNoLongerUseTheApi() {
+
+            // given a new user who can initially use the API
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer(givenUser.getName()))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/rbac/context")
+                    .then().assertThat()
+                        .statusCode(200)
+                        .body("subject.name", is(givenUser.getName()));
+            // @formatter:on
+
+            // when the user gets deactivated (soft-deleted)
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // then the deactivated user can no longer use the API, even with a still valid JWT
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer(givenUser.getName()))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/rbac/context")
+                    .then().assertThat()
+                        .statusCode(401);
+            // @formatter:on
+        }
+
+        @Test
+        void deactivatedGroup_noLongerTakesEffectViaJwtGroupsClaim() {
+
+            // given a user and a group which is initially effective via the JWT groups claim
+            val uniquePart = "deactivation_" + System.currentTimeMillis();
+            val givenUser = givenSubject("xyz-" + uniquePart + "_user", SubjectType.USER);
+            val givenGroup = givenSubject("/xyz-" + uniquePart + "-team", SubjectType.GROUP);
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer(givenUser.getName(), List.of(givenGroup.getName())))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/rbac/context")
+                    .then().assertThat()
+                        .statusCode(200)
+                        .body("effectiveGroups", hasItem(hasEntry("name", givenGroup.getName())));
+            // @formatter:on
+
+            // when the group gets deactivated (soft-deleted)
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenGroup.getUuid())
+                    .then().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // then the JWT groups claim no longer resolves to the deactivated group
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer(givenUser.getName(), List.of(givenGroup.getName())))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/rbac/context")
+                    .then().assertThat()
+                        .statusCode(200)
+                        .body("effectiveGroups.findAll { it.name == '" + givenGroup.getName() + "' }.size()", is(0));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canPurgeArbitraryUser() {
+
+            // given
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .queryParam("purge", true)
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // finally, the user is physically purged: the row is gone, not just deactivated
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
+        }
+
+        @Test
+        void globalAdmin_canPurgeAUserWithAnAccount() {
+
+            // given a user subject with an associated account
+            final var givenUser = givenANewUser();
+            givenAnAccountFor(givenUser);
+
+            // when the subject gets physically purged
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .queryParam("purge", true)
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // then the subject and its account are physically deleted
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
+            assertThat(countAccountsOf(givenUser.getUuid())).isZero();
+        }
+
+        @Test
+        void globalAdmin_canPurgeAnAlreadyDeactivatedUser() {
+
+            // given a deactivated (soft-deleted) user
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // when the deactivated user gets physically purged
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .queryParam("purge", true)
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // then the row is gone, not just deactivated
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
+        }
+
+        @Test
+        void subjectNameCanBeReusedByANewUuidAfterDeactivation() {
+
+            // given a user whose Keycloak account got deleted, and which is therefore deactivated
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // when the same name reappears in Keycloak under a fresh UUID and gets synced
+            final var freshUuid = randomUUID();
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "%s"
+                              }
+                              """.formatted(givenUser.getName()))
+                        .port(port)
+                    .when()
+                        .put("http://localhost/api/rbac/subjects/" + freshUuid)
+                    .then().assertThat()
+                        .statusCode(201)
+                        .body("name", is(givenUser.getName()));
+            // @formatter:on
+
+            // then the new subject is active under the reused name, the old one stays deactivated
+            assertThat(findVisibleRbacSubjectByUuid(freshUuid))
+                    .extracting(RbacSubjectEntity::getName).isEqualTo(givenUser.getName());
+            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNull();
+        }
+
+        @Test
+        void customerAdmin_canNotPurgeUser() {
+
+            // given
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("tst-customer_admin_xxx"))
+                        .queryParam("purge", true)
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(403);
+            // @formatter:on
+
+            // finally, the user is untouched: still present and still visible, i.e. neither purged nor deactivated
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNotNull();
+            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNotNull();
+        }
+    }
+
+    RbacSubjectEntity findVisibleRbacSubjectByUuid(final UUID subjectUuid) {
+        return jpaAttempt.transacted(() -> {
+            context.define("hsh-alex_superuser");
+            return rbacSubjectRepository.findByUuid(subjectUuid);
+        }).returnedValue();
     }
 
     RbacSubjectEntity findRbacSubjectByName(final String userName) {
@@ -691,6 +1041,31 @@ class RbacSubjectControllerAcceptanceTest {
         }).assumeSuccessful().returnedValue();
         assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
         return givenUser;
+    }
+
+    void givenAnAccountFor(final RbacSubjectEntity subject) {
+        jpaAttempt.transacted(() -> {
+            context.define("hsh-alex_superuser");
+            final var uniqueUidGid = (int) (System.currentTimeMillis() % 1_000_000_000L);
+            em.createNativeQuery("""
+                    insert into hs_accounts.account (uuid, version, person_uuid, global_uid, global_gid)
+                        values (:subjectUuid, 0,
+                                (select uuid from hs_office.person where givenname = 'Drew' limit 1),
+                                :uidGid, :uidGid)
+                    """)
+                    .setParameter("subjectUuid", subject.getUuid())
+                    .setParameter("uidGid", uniqueUidGid)
+                    .executeUpdate();
+        }).assumeSuccessful();
+    }
+
+    long countAccountsOf(final UUID subjectUuid) {
+        return jpaAttempt.transacted(() ->
+                ((Number) em.createNativeQuery(
+                                "select count(*) from hs_accounts.account where uuid = :subjectUuid")
+                        .setParameter("subjectUuid", subjectUuid)
+                        .getSingleResult()).longValue()
+        ).assumeSuccessful().returnedValue();
     }
 
     RbacSubjectEntity givenSubject(final String subjectName, final SubjectType type) {

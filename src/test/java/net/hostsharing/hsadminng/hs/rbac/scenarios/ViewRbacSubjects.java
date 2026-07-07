@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.accounts.scenarios;
+package net.hostsharing.hsadminng.hs.rbac.scenarios;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.SneakyThrows;

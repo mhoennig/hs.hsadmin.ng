@@ -181,23 +181,175 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Nested
+    class DeactivateSubject {
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void deactivateByUuidSoftDeletesSubjectRetainingTheRow() {
+            // given
+            final RbacSubjectEntity givenSubject = givenANewSubject();
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.deactivateByUuid(givenSubject.getUuid());
+            });
+
+            // then the subject is deactivated (soft-deleted): the row is retained but no longer visible
+            result.assertSuccessful();
+            assertThat(rbacSubjectRepository.findByName(givenSubject.getName())).isNotNull();
+            final var stillVisible = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return rbacSubjectRepository.findByUuid(givenSubject.getUuid());
+            }).returnedValue();
+            assertThat(stillVisible).isNull();
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void deactivateByUuidIsIdempotent() {
+            // given an already deactivated subject
+            final RbacSubjectEntity givenSubject = givenANewSubject();
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.deactivateByUuid(givenSubject.getUuid());
+            }).assertSuccessful();
+
+            // when it is deactivated again
+            final var result = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.deactivateByUuid(givenSubject.getUuid());
+            });
+
+            // then this is a no-op and the row is still retained
+            result.assertSuccessful();
+            assertThat(rbacSubjectRepository.findByName(givenSubject.getName())).isNotNull();
+        }
+    }
+
+    @Nested
     class DeleteSubject {
 
         @Test
         @Transactional(propagation = Propagation.NEVER)
-        public void anyoneCanDeleteTheirOwnUser() {
-            // given
-            final RbacSubjectEntity givenUser = givenANewSubject();
+        public void deleteByUuidPhysicallyRemovesSubjectReferenceAndGrants() {
+            // given a freshly created subject which has been granted a role, so it holds a grant
+            final var givenSubject = givenANewSubject();
+            grantAnArbitraryRoleTo(givenSubject.getUuid());
+            assertThat(countGrantsReferencing(givenSubject.getUuid()))
+                    .as("precondition: the subject must hold at least one grant")
+                    .isGreaterThan(0);
 
-            // when
-            final var result = jpaAttempt.transacted(() -> {
-                context(givenUser.getName());
-                rbacSubjectRepository.deleteByUuid(givenUser.getUuid());
+            // when the subject is physically deleted through the repository (deleting its rbac.reference
+            // row cascades to the subject and, via the BEFORE DELETE trigger, to all of its grants)
+            final var deleteAttempt = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.deleteByUuid(givenSubject.getUuid());
             });
 
-            // then the user is deleted
-            result.assertSuccessful();
-            assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNull();
+            // then the subject row, its rbac.reference row and all its grants are gone
+            deleteAttempt.assertSuccessful();
+            assertThat(rbacSubjectRepository.findByName(givenSubject.getName()))
+                    .as("the subject row itself is gone")
+                    .isNull();
+            assertThat(referenceExists(givenSubject.getUuid()))
+                    .as("the rbac.reference row is removed together with the subject")
+                    .isFalse();
+            assertThat(countGrantsReferencing(givenSubject.getUuid()))
+                    .as("all grants referencing the deleted subject are removed")
+                    .isZero();
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void deleteByUuidByNonGlobalAdminIsRejectedByTheDatabase() {
+            // given
+            final var givenSubject = givenANewSubject();
+
+            // when a non-global-admin calls the repository purge directly, bypassing the controller's gate
+            final var deleteAttempt = jpaAttempt.transacted(() -> {
+                context("tst-customer_admin_xxx");
+                rbacSubjectRepository.deleteByUuid(givenSubject.getUuid());
+            });
+
+            // then the database itself rejects the purge ...
+            deleteAttempt.assertExceptionWithRootCauseMessage(
+                    org.postgresql.util.PSQLException.class,
+                    "[403]");
+            // ... and the subject still exists
+            assertThat(rbacSubjectRepository.findByName(givenSubject.getName())).isNotNull();
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void directlyDeletingTheSubjectRowAlsoDeletesItsReferenceAndGrants() {
+            // given a freshly created subject which has been granted a role, so it holds a grant
+            final var givenSubject = givenANewSubject();
+            grantAnArbitraryRoleTo(givenSubject.getUuid());
+            final var grantsBefore = countGrantsReferencing(givenSubject.getUuid());
+            assertThat(grantsBefore)
+                    .as("precondition: the subject must hold at least one grant")
+                    .isGreaterThan(0);
+
+            // when the subject row itself is deleted (the naive physical delete)
+            final var deleteAttempt = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                em.createNativeQuery("delete from rbac.subject where uuid = :uuid")
+                        .setParameter("uuid", givenSubject.getUuid())
+                        .executeUpdate();
+            });
+
+            // then the delete succeeds; the BEFORE DELETE trigger removes its grants and the AFTER
+            // DELETE trigger removes the then-orphaned rbac.reference row (pg_trigger_depth() = 1)
+            deleteAttempt.assertSuccessful();
+            assertThat(rbacSubjectRepository.findByName(givenSubject.getName()))
+                    .as("the subject row itself is gone")
+                    .isNull();
+            assertThat(referenceExists(givenSubject.getUuid()))
+                    .as("the rbac.reference row is removed together with the subject")
+                    .isFalse();
+            assertThat(countGrantsReferencing(givenSubject.getUuid()))
+                    .as("all grants referencing the deleted subject are removed")
+                    .isZero();
+        }
+
+        private void grantAnArbitraryRoleTo(final UUID subjectUuid) {
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                final var roleUuid = (UUID) em.createNativeQuery("""
+                                select r.uuid
+                                  from rbac.role r
+                                  join rbac.object o on o.uuid = r.objectuuid
+                                 where o.objecttable = 'rbactest.package' and r.roletype = 'TENANT'
+                                 limit 1
+                                """, UUID.class)
+                        .getSingleResult();
+                em.createNativeQuery("call rbac.grantRoleToSubjectUnchecked(:grantedByRole, :grantedRole, :subject)")
+                        .setParameter("grantedByRole", roleUuid)
+                        .setParameter("grantedRole", roleUuid)
+                        .setParameter("subject", subjectUuid)
+                        .executeUpdate();
+            }).assertSuccessful();
+        }
+
+        private long countGrantsReferencing(final UUID subjectUuid) {
+            return jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return ((Number) em.createNativeQuery(
+                                "select count(*) from rbac.grant where ascendantuuid = :uuid or descendantuuid = :uuid")
+                        .setParameter("uuid", subjectUuid)
+                        .getSingleResult()).longValue();
+            }).assumeSuccessful().returnedValue();
+        }
+
+        private boolean referenceExists(final UUID subjectUuid) {
+            return jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return ((Number) em.createNativeQuery(
+                                "select count(*) from rbac.reference where uuid = :uuid")
+                        .setParameter("uuid", subjectUuid)
+                        .getSingleResult()).longValue() > 0;
+            }).assumeSuccessful().returnedValue();
         }
     }
 

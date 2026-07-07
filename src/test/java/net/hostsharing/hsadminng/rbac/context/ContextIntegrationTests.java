@@ -1,7 +1,9 @@
 package net.hostsharing.hsadminng.rbac.context;
 
+import net.hostsharing.hsadminng.errors.ForbiddenException;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -22,11 +24,15 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Tag("generalIntegrationTest")
 @DataJpaTest
@@ -115,10 +121,11 @@ class ContextIntegrationTests {
         assertThat(subjectExists("not-synchronized-group")).as("precondition failed").isFalse();
 
         // when:
-        givenJwtAuthentication("tst-drew_selfregistered", List.of(
+        givenJwtAuthentication("tst-drew_selfregistered", withGroups(
                 "/xyz-Team",
                 "/xyz-Service",
-                "not-synchronized-group"));
+                "not-synchronized-group")
+        );
         context.define();
 
         // then
@@ -173,7 +180,7 @@ class ContextIntegrationTests {
         rbacGranter.as("rbactest.customer#yyy:OWNER")
                 .grant("rbactest.customer#yyy:ADMIN")
                 .to("/xyz-Team");
-        givenJwtAuthentication("tst-drew_selfregistered", List.of(
+        givenJwtAuthentication("tst-drew_selfregistered", withGroups(
                 "/xyz-Team",
                 "/xyz-Service"));
 
@@ -360,6 +367,37 @@ class ContextIntegrationTests {
 
         // then
         assertThat(hsGlobalAdminRole.returnedValue()).isFalse();
+    }
+
+    @Test
+    @Transactional
+    void requireGlobalAdminPassesForGlobalAdmin() {
+        // given
+        givenJwtAuthentication("hsh-alex_superuser", withoutGroups());
+
+        // when / then
+        assertThatCode(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @Transactional
+    void requireGlobalAdminThrowsForbiddenForNonGlobalAdmin() {
+        // given
+        givenJwtAuthentication("tst-customer_admin_xxx", withoutGroups());
+
+        // when / then
+        assertThatThrownBy(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("only a global-admin may upsert subjects");
+    }
+
+    private static @NonNull List<String> withoutGroups() {
+        return Collections.emptyList();
+    }
+
+    private static @NonNull List<String> withGroups(String... groups) {
+        return Arrays.asList(groups);
     }
 
     private UUID uuidOfSubjectName(final String name) {

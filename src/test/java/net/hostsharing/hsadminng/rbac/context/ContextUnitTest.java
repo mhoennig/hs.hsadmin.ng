@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.context;
 
 import lombok.val;
+import net.hostsharing.hsadminng.errors.ForbiddenException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -29,6 +30,8 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
@@ -179,6 +182,57 @@ class ContextUnitTest {
 
 
         @Test
+        void hasAssumedRoleReturnsCurrentFlag() {
+            given(em.createNativeQuery("select base.assumedRoles() as roles", String[].class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(new String[] { "rbac.global#global:ADMIN" });
+
+            val result = context.hasAssumedRole();
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void hasAssumedRoleIgnoresBlankCurrentFlag() {
+            given(em.createNativeQuery("select base.assumedRoles() as roles", String[].class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(new String[] { "" });
+
+            val result = context.hasAssumedRole();
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void hasGlobalAdminRoleReturnsCurrentFlag() {
+            given(em.createNativeQuery("select rbac.hasGlobalAdminRole()", boolean.class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(true);
+
+            val result = context.hasGlobalAdminRole();
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void requireGlobalAdminPassesForGlobalAdmin() {
+            givenJwtAuthentication("hsh-alex_superuser", List.of());
+            given(em.createNativeQuery("select rbac.isGlobalAdmin()", boolean.class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(true);
+
+            assertThatCode(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void requireGlobalAdminThrowsForbiddenForNonGlobalAdmin() {
+            givenJwtAuthentication("tst-customer_admin_xxx", List.of());
+            given(em.createNativeQuery("select rbac.isGlobalAdmin()", boolean.class)).willReturn(nativeQuery);
+            given(nativeQuery.getSingleResult()).willReturn(false);
+
+            assertThatThrownBy(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+                    .isInstanceOf(ForbiddenException.class)
+                    .hasMessage("only a global-admin may upsert subjects");
+        }
+
+        @Test
         void registerWithJwtAuthenticationUsesCurrentSubjectGroupsFromGroupsClaim() {
             givenJwtAuthentication("given-subject@example.org", List.of(
                     " /customer-admins ",
@@ -304,6 +358,56 @@ class ContextUnitTest {
                     {}
                     EOF
                     """.trim());
+        }
+
+        @Test
+        void registerWithHttpServletRequestMasksSensitiveBodyProperties() throws IOException {
+            givenRequest("POST", "http://localhost:9999/api/hs/hosting/assets", Map.ofEntries(
+                            Map.entry("content-type", "application/json")),
+                    """
+                    {
+                        "type": "UNIX_USER",
+                        "config": {
+                            "password": "given-password",
+                            "adminPassword": "given-admin-password",
+                            "totpKey": "given-totp-key",
+                            "userTotpKey": "given-user-totp-key",
+                            "shell": "/bin/bash"
+                        },
+                        "clientSecret": "given-client-secret",
+                        "secretKey": "given-secret-key"
+                    }""");
+
+            context.define("current-subject");
+
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
+            verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String currentRequest) ->
+                    currentRequest.contains("\"password\":\"<masked>\"")
+                            && currentRequest.contains("\"adminPassword\":\"<masked>\"")
+                            && currentRequest.contains("\"totpKey\":\"<masked>\"")
+                            && currentRequest.contains("\"userTotpKey\":\"<masked>\"")
+                            && currentRequest.contains("\"clientSecret\":\"<masked>\"")
+                            && currentRequest.contains("\"secretKey\":\"<masked>\"")
+                            && currentRequest.contains("\"shell\":\"/bin/bash\"")
+                            && !currentRequest.contains("given-password")
+                            && !currentRequest.contains("given-admin-password")
+                            && !currentRequest.contains("given-totp-key")
+                            && !currentRequest.contains("given-user-totp-key")
+                            && !currentRequest.contains("given-client-secret")
+                            && !currentRequest.contains("given-secret-key")));
+        }
+
+        @Test
+        void registerWithHttpServletRequestKeepsNonJsonBodyUnchanged() throws IOException {
+            givenRequest("POST", "http://localhost:9999/api/endpoint", Map.ofEntries(
+                            Map.entry("content-type", "text/plain")),
+                    "this is not JSON");
+
+            context.define("current-subject");
+
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
+            verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String currentRequest) ->
+                    currentRequest.contains("this is not JSON")));
         }
 
         @Test

@@ -59,4 +59,35 @@ class ValidateUnitTest {
             Validate.validate("var1, var2").exactlyOne(null, "val2");
         }
     }
+
+    @Nested
+    class AreEqual {
+        @Test
+        void shouldFailValidationIfParametersAreNotEqual() {
+            final var throwable = catchThrowable(() ->
+                    Validate.validate("var1, var2").areEqual("val1", "val2")
+            );
+            assertThat(throwable).isInstanceOf(ValidationException.class)
+                    .hasMessage("Both (var1, var2) must be equal, but are (val1, val2)");
+        }
+
+        @Test
+        void shouldFailValidationIfExactlyOneParameterIsNull() {
+            final var throwable = catchThrowable(() ->
+                    Validate.validate("var1, var2").areEqual("val1", null)
+            );
+            assertThat(throwable).isInstanceOf(ValidationException.class)
+                    .hasMessage("Both (var1, var2) must be equal, but are (val1, null)");
+        }
+
+        @Test
+        void shouldNotFailValidationIfParametersAreEqual() {
+            Validate.validate("var1, var2").areEqual("val", "val");
+        }
+
+        @Test
+        void shouldNotFailValidationIfBothParametersAreNull() {
+            Validate.validate("var1, var2").areEqual(null, null);
+        }
+    }
 }

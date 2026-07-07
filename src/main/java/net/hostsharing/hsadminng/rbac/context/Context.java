@@ -1,8 +1,13 @@
 package net.hostsharing.hsadminng.rbac.context;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
+import net.hostsharing.hsadminng.errors.ForbiddenException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,12 +20,14 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,6 +44,15 @@ public class Context {
             "content-length",
             "host",
             "user-agent");
+
+    // patterns of property names whose values are masked in the audit-logged request body,
+    // e.g. the write-only password/totpKey properties of hosting-asset configs:
+    // any name ending with "password", starting or ending with "secret", or ending with "totpKey"
+    private static final Pattern BODY_PROPERTIES_TO_MASK = Pattern.compile(
+            "password$|^secret|secret$|totpKey$",
+            Pattern.CASE_INSENSITIVE);
+    private static final String MASKED_PROPERTY_VALUE = "<masked>";
+    private static final ObjectMapper BODY_MASKING_JSON_MAPPER = new ObjectMapper();
 
     @PersistenceContext
     private EntityManager em;
@@ -108,6 +124,14 @@ public class Context {
         query.executeUpdate();
     }
 
+    @Transactional(propagation = MANDATORY)
+    public void requireGlobalAdmin(final String message) {
+        define();
+        if (!isGlobalAdmin()) {
+            throw new ForbiddenException(message);
+        }
+    }
+
     public String fetchCurrentTask() {
         return (String) em.createNativeQuery("select current_setting('hsadminng.currentTask');").getSingleResult();
     }
@@ -130,6 +154,15 @@ public class Context {
 
     public boolean isGlobalAdmin() {
         return (boolean) em.createNativeQuery("select rbac.isGlobalAdmin()", boolean.class).getSingleResult();
+    }
+
+    public boolean hasAssumedRole() {
+        val assumedRoles = fetchAssumedRolesNames();
+        return assumedRoles != null && Stream.of(assumedRoles).anyMatch(StringUtils::isNotBlank);
+    }
+
+    public boolean hasGlobalAdminRole() {
+        return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()", boolean.class).getSingleResult();
     }
 
     public static String getCallerMethodNameFromStackFrame(final int skipFrames) {
@@ -234,10 +267,44 @@ public class Context {
         if (!StringUtils.isEmpty(body)) {
             curlCommand += " \\" + System.lineSeparator() + "--data-binary @- ";
             curlCommand +=
-                    "<< EOF" + System.lineSeparator() + System.lineSeparator() + body + System.lineSeparator() + "EOF";
+                    "<< EOF" + System.lineSeparator() + System.lineSeparator() + withMaskedProperties(body)
+                            + System.lineSeparator() + "EOF";
         }
 
         return curlCommand;
+    }
+
+    // masks the values of sensitive JSON body properties, e.g. hosting-asset passwords,
+    // so they don't leak into the audit-log (base.tx_context.currentRequest)
+    private static String withMaskedProperties(final String body) {
+        try {
+            final var root = BODY_MASKING_JSON_MAPPER.readTree(body);
+            return maskProperties(root) ? root.toString() : body;
+        } catch (final JsonProcessingException exc) {
+            return body; // not JSON, nothing to mask
+        }
+    }
+
+    private static boolean maskProperties(final JsonNode node) {
+        var masked = false;
+        if (node.isObject()) {
+            final var objectNode = (ObjectNode) node;
+            final var fieldNames = new ArrayList<String>();
+            objectNode.fieldNames().forEachRemaining(fieldNames::add);
+            for (final var fieldName : fieldNames) {
+                if (BODY_PROPERTIES_TO_MASK.matcher(fieldName).find()) {
+                    objectNode.put(fieldName, MASKED_PROPERTY_VALUE);
+                    masked = true;
+                } else {
+                    masked |= maskProperties(objectNode.get(fieldName));
+                }
+            }
+        } else if (node.isArray()) {
+            for (final var element : node) {
+                masked |= maskProperties(element);
+            }
+        }
+        return masked;
     }
 
     private boolean isRequestScopeAvailable() {

@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.accounts.scenarios;
 
 import lombok.SneakyThrows;
+import net.hostsharing.hsadminng.hs.rbac.scenarios.ViewRbacSubjects;
 import net.hostsharing.hsadminng.hs.scenarios.Produces;
 import net.hostsharing.hsadminng.hs.scenarios.Requires;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;

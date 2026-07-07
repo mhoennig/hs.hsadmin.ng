@@ -95,7 +95,7 @@ so that users can assign their own roles to users and groups of their own organi
 ##### Verified by
 
 - [AccountScenarioTests.userCanViewSubjectsFromTheirOwnRealm](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/AccountScenarioTests.java)
-  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/ViewRbacSubjects.java)
+  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/rbac/scenarios/ViewRbacSubjects.java)
 
 #### Scenario#236.02: Users can see all groups assigned to them
 <a id="scenario-236.02"></a>
@@ -112,7 +112,7 @@ thus within the same organization, this is the same as *Scenario#236.01*.
 ##### Verified by
 
 - [AccountScenarioTests.userCanViewSubjectsFromTheirOwnRealm](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/AccountScenarioTests.java)
-  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/ViewRbacSubjects.java)
+  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/rbac/scenarios/ViewRbacSubjects.java)
 
 #### Scenario#236.03: Users can see subjects from other organizations through other accounts associated with the same person
 <a id="scenario-236.03"></a>
@@ -143,7 +143,7 @@ so that internals of unrelated subjects do not get exposed to users.
 ##### Verified by
 
 - [AccountScenarioTests.userCanViewSubjectsFromTheirOwnRealm](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/AccountScenarioTests.java)
-  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/ViewRbacSubjects.java)
+  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/rbac/scenarios/ViewRbacSubjects.java)
 
 #### Scenario#236.05: Assuming a non-global role drops subject visibility stemming from the user and its groups
 <a id="scenario-236.05"></a>
@@ -158,7 +158,7 @@ in which the concrete subject also does not contribute any rights anymore once a
 ##### Verified by
 
 - [AccountScenarioTests.assumingANonGlobalRoleDropsAllSubjectVisibility](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/AccountScenarioTests.java)
-  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/ViewRbacSubjects.java)
+  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/rbac/scenarios/ViewRbacSubjects.java)
 
 #### Scenario#236.06: Assuming the global admin role keeps global subject visibility
 <a id="scenario-236.06"></a>
@@ -173,7 +173,7 @@ in which the global-admin role can see everything.
 ##### Verified by
 
 - [AccountScenarioTests.assumingTheGlobalAdminRoleKeepsGlobalSubjectVisibility](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/AccountScenarioTests.java)
-  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/ViewRbacSubjects.java)
+  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/rbac/scenarios/ViewRbacSubjects.java)
 
 #### Scenario#236.07: Name and type filters narrow the visible subjects
 <a id="scenario-236.07"></a>
@@ -204,7 +204,7 @@ in which the global-admin role can see everything.
 ##### Verified by
 
 - [AccountScenarioTests.globalAdminWithoutAssumedRoleSeesAllSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/AccountScenarioTests.java)
-  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/scenarios/ViewRbacSubjects.java)
+  using [ViewRbacSubjects](../../src/test/java/net/hostsharing/hsadminng/hs/rbac/scenarios/ViewRbacSubjects.java)
 
 
 ## The Solution

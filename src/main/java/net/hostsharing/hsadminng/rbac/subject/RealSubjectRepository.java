@@ -21,7 +21,8 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
     /**
      * The complete realm-based subject-visibility policy, shared by the queries below:
      * <ul>
-     *     <li>a global admin (directly or via an assumed global admin role) sees all subjects,</li>
+     *     <li>deactivated (soft-deleted) subjects are visible to nobody, not even global admins,</li>
+     *     <li>a global admin (directly or via an assumed global admin role) sees all other subjects,</li>
      *     <li>assuming any other role drops all subject-derived visibility,</li>
      *     <li>otherwise all subjects of the current subject's own realm (by name prefix) are visible,
      *         plus the groups of realms in which the same natural person holds another user account.</li>
@@ -33,23 +34,26 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
     // because base.hasAssumedRole() yields null instead of false for an empty array
     String VISIBLE_SUBJECT_CONDITION = """
             (
-                rbac.hasGlobalAdminRole()
-                or (cardinality(base.assumedRoles()) = 0
-                    and (
-                        s.name like concat(rbac.subject_realm_prefix(base.currentSubject()), '-%')
-                        or s.name like concat('/', rbac.subject_realm_prefix(base.currentSubject()), '-%')
-                        or (s.type = 'GROUP'
-                            and exists (
-                                select 1
-                                  from hs_accounts.account ownAccount
-                                  join hs_accounts.account samePersonAccount
-                                    on samePersonAccount.person_uuid = ownAccount.person_uuid
-                                  join rbac.subject samePersonSubject
-                                    on samePersonSubject.uuid = samePersonAccount.uuid
-                                 where ownAccount.uuid = rbac.currentSubjectUuid()
-                                   and s.name like concat('/', rbac.subject_realm_prefix(samePersonSubject.name), '-%')
-                            ))
-                    ))
+                s.deactivated_at is null
+                and (
+                    rbac.hasGlobalAdminRole()
+                    or (cardinality(base.assumedRoles()) = 0
+                        and (
+                            s.name like concat(rbac.subject_realm_prefix(base.currentSubject()), '-%')
+                            or s.name like concat('/', rbac.subject_realm_prefix(base.currentSubject()), '-%')
+                            or (s.type = 'GROUP'
+                                and exists (
+                                    select 1
+                                      from hs_accounts.account ownAccount
+                                      join hs_accounts.account samePersonAccount
+                                        on samePersonAccount.person_uuid = ownAccount.person_uuid
+                                      join rbac.subject samePersonSubject
+                                        on samePersonSubject.uuid = samePersonAccount.uuid
+                                     where ownAccount.uuid = rbac.currentSubjectUuid()
+                                       and s.name like concat('/', rbac.subject_realm_prefix(samePersonSubject.name), '-%')
+                                ))
+                        ))
+                )
             )
             """;
 

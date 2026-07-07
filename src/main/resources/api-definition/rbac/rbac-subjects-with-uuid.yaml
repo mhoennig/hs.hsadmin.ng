@@ -23,14 +23,71 @@ get:
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: 'error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: 'error-responses.yaml#/components/responses/NotFound'
+
+
+put:
+    tags:
+        - rbac-subjects
+    description: |
+        Global-admin-only idempotent upsert of a USER or GROUP subject, keyed by the UUID in the path
+        (the same UUID as in Keycloak). Creates the subject if the UUID is unknown (201 Created) or
+        updates its name if it is already known (200 OK); an identical upsert is a no-op (200 OK).
+        The subject type is immutable. Used by the external Keycloak sync program.
+    operationId: putSubjectByUuid
+    parameters:
+        - name: subjectUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the subject to upsert; identical to the UUID in Keycloak.
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubjectInsert'
+    responses:
+        "200":
+            description: OK - the subject already existed and its name was updated (or was unchanged).
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+        "201":
+            description: Created - a new subject was created for the given UUID.
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+        "400":
+            $ref: 'error-responses.yaml#/components/responses/BadRequest'
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+        "409":
+            $ref: 'error-responses.yaml#/components/responses/Conflict'
 
 
 delete:
     tags:
         - rbac-subjects
+    description: |
+        Removes a subject. This operation is restricted to global-admins (403 otherwise).
+        Deletion of subjects is usually triggerd by deleting users or groups in Keycloak
+        which is then synched by an external program using this API.
+        With `purge=false` (the default) the subject is deactivated (soft-deleted):
+        its row, its rbac.reference and all its grants are retained but it no longer appears in queries.
+        A deactivated subject can be reactivated by a later upsert (HTTP PUT on the same path).
+        With `purge=true` the subject is physically deleted together with its rbac.reference and all its grants;
+        this is a destructive, irreversible operation.
+        Both modes are idempotent and answer 204 for an unknown or already-deactivated subject.
     operationId: deleteSubjectByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: subjectUuid
           in: path
           required: true
@@ -38,12 +95,19 @@ delete:
               type: string
               format: uuid
           description: UUID of the subject to delete.
+        - name: purge
+          in: query
+          required: false
+          schema:
+              type: boolean
+              default: false
+          description: |
+              If false (default), the subject is deactivated (soft-deleted) but retained.
+              If true, the subject is physically purged together with its grants (global-admin only).
     responses:
         "204":
-            description: No Content
+            description: No Content - both modes are idempotent and also answer 204 for an unknown or already-deactivated subject.
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: 'error-responses.yaml#/components/responses/Forbidden'
-        "404":
-            $ref: 'error-responses.yaml#/components/responses/NotFound'

@@ -89,6 +89,7 @@ public class ArchitectureTest {
                     "..hs.hosting.asset.validators",
                     "..hs.hosting.asset.factories",
                     "..hs.scenarios",
+                    "..hs.rbac.scenarios",
                     "..errors",
                     "..mapper",
                     "..ping",

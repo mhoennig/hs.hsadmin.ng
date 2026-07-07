@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.errors.RestResponseEntityExceptionHandler;
 import net.hostsharing.hsadminng.rbac.context.RbacTranslations;
+import net.hostsharing.hsadminng.mapper.StrictBodyConverter;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.context.Context;
@@ -17,7 +18,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -39,8 +39,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -49,6 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(RbacSubjectController.class)
 @Import({ StrictMapper.class,
+          StrictBodyConverter.class,
           MessagesResourceConfig.class,
           MessageTranslator.class,
           RestResponseEntityExceptionHandler.class,
@@ -77,12 +81,14 @@ class RbacSubjectControllerRestTest {
         given(rbacSubjectRepository.create(any())).willAnswer(invocation ->
             invocation.<RbacSubjectEntity>getArgument(0)
         );
+        lenient().doCallRealMethod().when(contextMock).requireGlobalAdmin(anyString());
     }
 
     @Test
     void postNewSubjectUsesGivenUuid() throws Exception {
         // given
         val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -107,7 +113,32 @@ class RbacSubjectControllerRestTest {
     }
 
     @Test
+    void postNewSubjectByNonGlobalAdminReturnsForbidden() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(false);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "tst-somebody_new"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isForbidden());
+        verify(rbacSubjectRepository, never()).create(any());
+    }
+
+    @Test
     void postNewSubjectGeneratesRandomUuidIfNotGiven() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/rbac/subjects")
@@ -224,9 +255,10 @@ class RbacSubjectControllerRestTest {
     }
 
     @Test
-    void deleteSubjectByUuidDeletesSubject() throws Exception {
+    void deleteSubjectByUuidDeactivatesSubjectByDefault() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -237,8 +269,200 @@ class RbacSubjectControllerRestTest {
                 // then
                 .andExpect(status().isNoContent());
 
-        // then
+        // then the default (purge omitted) goes through the soft-delete/deactivation path
+        verify(rbacSubjectRepository).deactivateByUuid(givenSubjectUuid);
+        verify(rbacSubjectRepository, never()).deleteByUuid(any());
+    }
+
+    @Test
+    void deleteSubjectByUuidByNonGlobalAdminReturnsForbidden() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(false);
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then the whole delete operation is restricted to global-admins
+                .andExpect(status().isForbidden());
+
+        // then neither delete path is taken
+        verify(rbacSubjectRepository, never()).deactivateByUuid(any());
+        verify(rbacSubjectRepository, never()).deleteByUuid(any());
+    }
+
+    @Test
+    void deleteSubjectByUuidWithPurgeTrueAsGlobalAdminPhysicallyDeletesSubject() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .param("purge", "true")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isNoContent());
+
+        // then the physical-delete path is used and the soft-delete/deactivation path is not
         verify(rbacSubjectRepository).deleteByUuid(givenSubjectUuid);
+        verify(rbacSubjectRepository, never()).deactivateByUuid(any());
+    }
+
+    @Test
+    void deleteSubjectByUuidWithPurgeTrueAsNonGlobalAdminReturnsForbidden() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(false);
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .param("purge", "true")
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isForbidden());
+
+        // then neither delete path is taken
+        verify(rbacSubjectRepository, never()).deleteByUuid(any());
+        verify(rbacSubjectRepository, never()).deactivateByUuid(any());
+    }
+
+    @Test
+    void putCreatesNewUserSubjectReturnsCreated() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alice", "USER")).thenReturn("created");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "xyz-alice"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "http://localhost/api/rbac/subjects/" + givenUuid))
+                .andExpect(jsonPath("uuid", is(givenUuid.toString())))
+                .andExpect(jsonPath("name", is("xyz-alice")))
+                .andExpect(jsonPath("type", is("USER")));
+        verify(rbacSubjectRepository).upsert(givenUuid, "xyz-alice", "USER");
+    }
+
+    @Test
+    void putCreatesNewGroupSubjectReturnsCreated() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, "/xyz-Team", "GROUP")).thenReturn("created");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "/xyz-Team",
+                                    "type": "GROUP"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("type", is("GROUP")));
+    }
+
+    @Test
+    void putUpdatesExistingSubjectReturnsOk() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alicia", "USER")).thenReturn("updated");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "xyz-alicia"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("uuid", is(givenUuid.toString())))
+                .andExpect(jsonPath("name", is("xyz-alicia")));
+    }
+
+    @Test
+    void putByNonGlobalAdminReturnsForbidden() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(false);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "xyz-alice"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isForbidden());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
+    }
+
+    @Test
+    void putWithMismatchedBodyUuidReturnsBadRequest() throws Exception {
+        // given
+        val pathUuid = UUID.randomUUID();
+        val otherUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", pathUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "uuid": "%s",
+                                    "name": "xyz-alice"
+                                }
+                                """.formatted(otherUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isBadRequest());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
     }
 
     private RbacSubjectPermission givenPermission(
@@ -360,6 +584,9 @@ class RbacSubjectControllerRestTest {
 
     @Test
     void postNewUserSubjectWithValidNameSucceeds() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/rbac/subjects")
@@ -379,8 +606,7 @@ class RbacSubjectControllerRestTest {
     @Test
     void postNewUserSubjectWithInvalidNameReturnsBadRequest() throws Exception {
         // given
-        given(rbacSubjectRepository.create(any()))
-                .willThrow(subjectNameCheckViolation("check_valid_user_subject_name", "invalid-user@example.com", SubjectType.USER));
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -400,13 +626,13 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "USER-Subjekt 'invalid-user@example.com' entspricht nicht dem erforderlichen Muster")));
+        verify(rbacSubjectRepository, never()).create(any());
     }
 
     @Test
     void postNewUserSubjectWithGroupNameReturnsBadRequest() throws Exception {
         // given
-        given(rbacSubjectRepository.create(any()))
-                .willThrow(subjectNameCheckViolation("check_valid_user_subject_name", "/xyz-Team", SubjectType.USER));
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -423,10 +649,14 @@ class RbacSubjectControllerRestTest {
 
         // then
         result.andExpect(status().isBadRequest());
+        verify(rbacSubjectRepository, never()).create(any());
     }
 
     @Test
     void postNewGroupSubjectWithNonUserPatternNameSucceeds() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/rbac/subjects")
@@ -447,8 +677,7 @@ class RbacSubjectControllerRestTest {
     @Test
     void postNewGroupSubjectWithUserdNameReturnsBadRequest() throws Exception {
         // given
-        given(rbacSubjectRepository.create(any()))
-                .willThrow(subjectNameCheckViolation("check_valid_group_subject_name", "xyz-Team", SubjectType.GROUP));
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -468,16 +697,131 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "GROUP subject name 'xyz-Team' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).create(any());
     }
 
-    private static DataIntegrityViolationException subjectNameCheckViolation(
-            final String constraintName,
-            final String subjectName,
-            final SubjectType subjectType) {
-        return new DataIntegrityViolationException("constraint violation", new RuntimeException("""
-                ERROR: new row for relation "subject" violates check constraint "%s"
-                  Detail: Failing row contains (%s, %s, %s).
-                """.formatted(constraintName, UUID.randomUUID(), subjectName, subjectType)));
+    @Test
+    void postNewSubjectWithoutNameReturnsBadRequest() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "type": "USER"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("name")));
+        verify(rbacSubjectRepository, never()).create(any());
+    }
+
+    @Test
+    void postNewSubjectWithUnknownPropertyReturnsBadRequest() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "tst-somebody_new",
+                                    "admin": true
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("admin")));
+        verify(rbacSubjectRepository, never()).create(any());
+    }
+
+    @Test
+    void postNewSubjectWithInvalidTypeReturnsBadRequest() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "tst-somebody_new",
+                                    "type": "ROBOT"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isBadRequest());
+        verify(rbacSubjectRepository, never()).create(any());
+    }
+
+    @Test
+    void putSubjectWithInvalidUserNameReturnsBadRequest() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "invalid-user@example.com"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "USER subject name 'invalid-user@example.com' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
+    }
+
+    @Test
+    void putGroupNameWithoutTypeReturnsBadRequest() throws Exception {
+        // given a group-style name but no type, which defaults to USER and thus fails the USER name pattern
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "/xyz-Team"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "USER subject name '/xyz-Team' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
     }
 
     @Test

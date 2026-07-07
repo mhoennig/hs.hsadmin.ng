@@ -17,11 +17,11 @@ public class RbacTranslations implements RetroactiveTranslatorWithPlaceholderSup
     private static final List<TranslatableMessage> TRANSLATABLE_MESSAGES = List.of(
             new TranslatableMessage(
                     ERROR_400_PREFIX,
-                    "(?s)^ERROR: new row for relation \"subject\" violates check constraint \"check_valid_user_subject_name\".*Detail: Failing row contains \\([^,]+, (.*), USER\\)\\..*$",
+                    "(?s)^ERROR: new row for relation \"subject\" violates check constraint \"check_valid_user_subject_name\".*Detail: Failing row contains \\([^,]+, (.*), USER[^)]*\\)\\..*$",
                     "rbac.user-subject-name-{0}-does-not-match-required-pattern"),
             new TranslatableMessage(
                     ERROR_400_PREFIX,
-                    "(?s)^ERROR: new row for relation \"subject\" violates check constraint \"check_valid_group_subject_name\".*Detail: Failing row contains \\([^,]+, (.*), GROUP\\)\\..*$",
+                    "(?s)^ERROR: new row for relation \"subject\" violates check constraint \"check_valid_group_subject_name\".*Detail: Failing row contains \\([^,]+, (.*), GROUP[^)]*\\)\\..*$",
                     "rbac.group-subject-name-{0}-does-not-match-required-pattern"),
             new TranslatableMessage(
                     ERROR_403_PREFIX,
