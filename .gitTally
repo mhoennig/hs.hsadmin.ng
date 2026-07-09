@@ -18,7 +18,7 @@ export GITTALLY_INSTALL_DIR=$HOME/gitTally
 
 # Shell command executed for each build. The branch name is available as $branch.
 # default GITTALLY_BUILD_COMMAND='./gradlew --console=plain --no-daemon --no-build-cache --rerun-tasks test'
-export GITTALLY_BUILD_COMMAND='./gradlew --console=plain --no-daemon --no-build-cache --rerun-tasks jacocoTestReport check generateDocumentation -x pitest -x dependencyCheckAnalyze'
+export GITTALLY_BUILD_COMMAND='./gradlew --console=plain --no-daemon --no-build-cache jacocoTestReport check generateDocumentation -x pitest -x dependencyCheckAnalyze'
 
 # Shell command executed before a non-Docker build and before preparing a Docker workspace.
 # default GITTALLY_BUILD_CLEAN_COMMAND='rm -rf build'

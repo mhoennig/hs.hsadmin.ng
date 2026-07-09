@@ -24,6 +24,8 @@ class HsadminTestTasksPlugin : Plugin<Project> {
                 )
             }
             jvmArgs("-Duser.language=en", "-Duser.country=US")
+            // each fork gets its own Testcontainers PostgreSQL database
+            maxParallelForks = System.getenv("HSADMINNG_TEST_MAX_PARALLEL_FORKS")?.toIntOrNull() ?: 3
             filter {
                 excludeTestsMatching("net.hostsharing.hsadminng.**.generated.**")
             }
