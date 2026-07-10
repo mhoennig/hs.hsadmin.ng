@@ -65,25 +65,27 @@ public class ViewRbacSubjectsAssociatedWithSamePerson extends UseCase<ViewRbacSu
                         .expecting(CREATED).expecting(JSON));
 
         withTitle(
-                "Create same-person account %{theOtherAccountsSubjectName}",
+                "Create same-person account %{theAccountSubjectName}",
                 () -> httpPost(
                         asGlobalAgent(),
                         "/api/hs/accounts/accounts",
-                        // TODO.impl[Taiga#471]: use subjectUuid
                         usingJsonBody("""
                                 {
                                   "person.uuid": ${Person: %{thePersonsGivenName} %{thePersonsFamilyName}},
-                                  "subjectName": ${theOtherAccountsSubjectName},
-                                  "globalUid": %{theOtherAccountsGlobalUid},
-                                  "globalGid": %{theOtherAccountsGlobalGid}
+                                  "subject": {
+                                    "uuid": ${theAccountSubjectUuid},
+                                    "name": ${theAccountSubjectName}
+                                  },
+                                  "globalUid": %{theAccountGlobalUid},
+                                  "globalGid": %{theAccountGlobalGid}
                                 }
                                 """))
                         .expecting(CREATED).expecting(JSON));
 
         withTitle(
-                "Precondition: %{theOtherAccountsSubjectName} is associated with %{nameOfAssociatedGroupSubjectFromAnotherOrg}",
+                "Precondition: %{theAccountSubjectName} is associated with %{nameOfAssociatedGroupSubjectFromAnotherOrg}",
                 () -> httpGet(
-                        FakeLoginUser.asSubject("%{theOtherAccountsSubjectName}")
+                        FakeLoginUser.asSubject("%{theAccountSubjectName}")
                                 .withGroups("%{nameOfAssociatedGroupSubjectFromAnotherOrg}"),
                         "/api/rbac/context")
                         .expecting(OK).expecting(JSON)

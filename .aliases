@@ -183,6 +183,28 @@ alias fixmes=tools/fixmes
 alias api=tools/api
 alias jwt-curl=tools/jwt-curl
 
+# HOWTO: execute HTTP requests copy+pasted from the scenario-reports (build/doc/scenarios):
+#   HSADMINNG_API_BASE_URL=...
+#   HSADMINNG_JWT_BEARER=...
+#   HTTP POST "HSADMINNG_API_BASE_URL/api/hs/accounts/accounts" -H "Authorization: Bearer HSADMINNG_JWT_BEARER" ...`
+#
+# Option names differ between curl versions still in use (e.g. RHEL 8: 7.61, Ubuntu 20.04: 7.68),
+# thus probe the locally installed curl once (--version prevents any actual transfer):
+declare -a _httpCurlOptions=(--show-error)
+if curl --no-progress-meter --version >/dev/null 2>&1; then
+    _httpCurlOptions+=(--no-progress-meter) # since curl 7.67
+else
+    _httpCurlOptions+=(--silent) # older equivalent, errors still shown due to --show-error
+fi
+if curl --fail-with-body --version >/dev/null 2>&1; then
+    _httpCurlOptions+=(--fail-with-body) # since curl 7.76
+else
+    _httpCurlOptions+=(--fail) # older variant, unfortunately suppressing the response body on HTTP errors
+fi
+function HTTP() {
+    curl "${_httpCurlOptions[@]}" -X "$@"
+}
+
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
 alias gw-importHostingAssets-in-docker-compose='
         docker-compose -f etc/docker-compose.yml down &&

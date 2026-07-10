@@ -67,17 +67,19 @@ public class ViewRbacSubjectsNarrowedByFilters extends UseCase<ViewRbacSubjectsN
         );
 
         withTitle(
-                "Create same-person account %{theOtherAccountsSubjectName}",
+                "Create same-person account %{theAccountSubjectName}",
                 () -> httpPost(
                         asGlobalAgent(),
                         "/api/hs/accounts/accounts",
-                        // TODO.impl[Taiga#471]: use subjectUuid
                         usingJsonBody("""
                                 {
                                   "person.uuid": ${Person: %{thePersonsGivenName} %{thePersonsFamilyName}},
-                                  "subjectName": ${theOtherAccountsSubjectName},
-                                  "globalUid": %{theOtherAccountsGlobalUid},
-                                  "globalGid": %{theOtherAccountsGlobalGid}
+                                  "subject": {
+                                    "uuid": ${theAccountSubjectUuid},
+                                    "name": ${theAccountSubjectName}
+                                  },
+                                  "globalUid": %{theAccountGlobalUid},
+                                  "globalGid": %{theAccountGlobalGid}
                                 }
                                 """))
                         .expecting(CREATED).expecting(JSON));

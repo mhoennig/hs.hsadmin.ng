@@ -431,22 +431,62 @@ public abstract class UseCase<T extends UseCase<?>> {
         return 2;
     }
 
+    // an unquoted here-document delimiter, thus values can be replaced by shell variables after copy+paste
+    private static final String HERE_DOCUMENT_DELIMITER = "EOF";
+
+    // not defined anywhere in this repo,
+    // just a placehoder to make reported requests copy+paste-able into a shell
+    // where the user has an HTTP alias and HSADMINNG_API_BASE_URL defined
+    private static final String HSADMINNG_API_BASE_URL_ENV_VAR = "$HSADMINNG_API_BASE_URL";
+
+    // also not defined in this repo; the fake JWT claims are rendered as ignorable `# ...` pseudo-arguments,
+    // thus the user can paste the command with a real HSADMINNG_JWT_BEARER defined in their environment
+    private static final String HSADMINNG_JWT_BEARER_ENV_VAR = "$HSADMINNG_JWT_BEARER";
+
+    private static final String BEARER_JWT_PREFIX = "Bearer JWT ";
+
     @SneakyThrows
     static String requestBodyArgument(final String requestBody) {
         final var json = REPORT_OBJECT_MAPPER.readTree(requestBody);
-        return "-d '" + REPORT_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(json) + "'";
+        final var prettyJson = REPORT_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+        // --data-binary (not -d) keeps the newlines, thus trailing `// alias` comments cannot swallow the rest of the body
+        return "--data-binary @- <<" + HERE_DOCUMENT_DELIMITER + "\n"
+                + escapedForHereDocument(prettyJson) + "\n"
+                + HERE_DOCUMENT_DELIMITER;
     }
 
-    @SneakyThrows
+    static String escapedForHereDocument(final String text) {
+        return text.replace("\\", "\\\\").replace("$", "\\$").replace("`", "\\`");
+    }
+
     static String reportableRequestHeaderValue(final String headerName, final String headerValue) {
-        final var bearerJwtPrefix = "Bearer JWT ";
-        if (AUTH_HEADER_KEY.equalsIgnoreCase(headerName) && headerValue.startsWith(bearerJwtPrefix)) {
-            final var jwtClaims = REPORT_OBJECT_MAPPER.readTree(headerValue.substring(bearerJwtPrefix.length()));
-            final var prettyPrinter = new DefaultPrettyPrinter();
-            prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
-            return bearerJwtPrefix + REPORT_OBJECT_MAPPER.writer(prettyPrinter).writeValueAsString(jwtClaims);
+        if (AUTH_HEADER_KEY.equalsIgnoreCase(headerName) && headerValue.startsWith(BEARER_JWT_PREFIX)) {
+            // the fake JWT claims are rendered as `# ...` pseudo-arguments right after this header
+            return "Bearer " + HSADMINNG_JWT_BEARER_ENV_VAR;
         }
         return headerValue;
+    }
+
+    /** @return the fake JWT claims as one {@code `# ...`} pseudo-argument per line, or empty for real JWTs;
+     *          each is a command substitution just containing a shell comment and thus expands to nothing,
+     *          therefore the shell drops these arguments when the pasted command gets executed */
+    @SneakyThrows
+    static List<String> jwtClaimsCommentArguments(final String authHeaderValue) {
+        if (!authHeaderValue.startsWith(BEARER_JWT_PREFIX)) {
+            return List.of();
+        }
+        final var jwtClaims = REPORT_OBJECT_MAPPER.readTree(authHeaderValue.substring(BEARER_JWT_PREFIX.length()));
+        final var prettyPrinter = new DefaultPrettyPrinter();
+        prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+        final var prettyJson = REPORT_OBJECT_MAPPER.writer(prettyPrinter).writeValueAsString(jwtClaims);
+        return escapedForBackticks(prettyJson).lines()
+                .map(line -> "`# " + line + "`")
+                .toList();
+    }
+
+    // within backticks, `\` and closing backticks need to be escaped to not terminate the substitution early
+    static String escapedForBackticks(final String text) {
+        return text.replace("\\", "\\\\").replace("`", "\\`");
     }
 
     private void resetProperties() {
@@ -637,7 +677,10 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         private void printRequest() {
             final var requestArguments = requestArguments();
-            testReport.printLine("HTTP " + httpMethod.name() + " '" + uri + "'" + (requestArguments.isEmpty() ? "" : " \\"));
+            // double quotes, thus $HSADMINNG_API_BASE_URL gets expanded by the shell after copy+paste
+            testReport.printLine(
+                    "HTTP " + httpMethod.name() + " \"" + HSADMINNG_API_BASE_URL_ENV_VAR + uri + "\""
+                            + (requestArguments.isEmpty() ? "" : " \\"));
             for (int i = 0; i < requestArguments.size(); ++i) {
                 printRequestArgument(requestArguments.get(i), i < requestArguments.size() - 1);
             }
@@ -650,7 +693,9 @@ public abstract class UseCase<T extends UseCase<?>> {
                 return List.of();
             }
             final var arguments = reportableRequestHeaders(request.headers().map(), hasRequestBody()).stream()
-                    .map(entry -> "-H '" + entry.getKey() + ": " + headerValue(entry) + "'")
+                    .flatMap(entry -> Stream.concat(
+                            Stream.of(headerArgument(entry.getKey(), headerValue(entry))),
+                            jwtClaimsCommentArguments(entry).stream()))
                     .toList();
             if (!hasRequestBody()) {
                 return arguments;
@@ -660,8 +705,11 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         private void printRequestArgument(final String requestArgument, final boolean continued) {
             final var lines = requestArgument.split("\\R", -1);
+            // the content and delimiter of a here-document must not be indented
+            final var isHereDocument = lines[0].endsWith("<<" + HERE_DOCUMENT_DELIMITER);
             for (int i = 0; i < lines.length; ++i) {
-                testReport.printLine("  " + lines[i] + (continued && i == lines.length - 1 ? " \\" : ""));
+                final var indent = (i == 0 || !isHereDocument) ? "  " : "";
+                testReport.printLine(indent + lines[i] + (continued && i == lines.length - 1 ? " \\" : ""));
             }
         }
 
@@ -704,6 +752,19 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         private String headerValue(final Map.Entry<String, List<String>> entry) {
             return reportableRequestHeaderValue(entry.getKey(), String.join(", ", entry.getValue()));
+        }
+
+        private String headerArgument(final String headerName, final String headerValue) {
+            // double quotes if the value contains a shell variable like $HSADMINNG_JWT_BEARER, thus it gets expanded after copy+paste
+            final var quote = headerValue.contains("$") ? "\"" : "'";
+            return "-H " + quote + headerName + ": " + headerValue + quote;
+        }
+
+        private List<String> jwtClaimsCommentArguments(final Map.Entry<String, List<String>> entry) {
+            if (!AUTH_HEADER_KEY.equalsIgnoreCase(entry.getKey())) {
+                return List.of();
+            }
+            return UseCase.jwtClaimsCommentArguments(String.join(", ", entry.getValue()));
         }
 
         @SneakyThrows

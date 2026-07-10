@@ -93,20 +93,93 @@ class AccountScenarioTests extends ScenarioTest {
     @Nested
     @Order(92)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-    class ScenariosForExistingPersons {
+    class AccountBootstrapScenarios {
+
+        // stable, Keycloak-assigned UUIDs shared with this backend (the subject's identity never changes)
+        private static final String KEYCLOAK_SYNC_SUBJECT_UUID = "242a0007-0000-0000-0000-000000000007";
+        private static final String PETER_NEWMAN_SUBJECT_UUID = "242a0003-0000-0000-0000-000000000003";
 
         @Test
         @Order(9210)
+        @Produces("Global-Admin Subject: hsh-keycloak_sync")
+        void shouldCreateGlobalAdminSubjectWithoutAnOwnAccount() {
+            new CreateGlobalAdminSubjectWithoutAccount(scenarioTest, asGlobalAgent())
+                    // the preexisting USER subject, e.g. synchronized from Keycloak
+                    .given("subjectUuid", KEYCLOAK_SYNC_SUBJECT_UUID)
+                    .given("subjectName", "hsh-keycloak_sync")
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
+        }
+
+        @Test
+        @Order(9220)
+        @Requires("Global-Admin Subject: hsh-keycloak_sync")
+        @Produces(
+                explicitly = "Account: xyz-peter.newman",
+                implicitly = { "Person: Peter Newman" })
+        void shouldCreatePersonAndSubjectAndAccountWithASingleRequest() {
+            new CreateAccountForNewPerson(scenarioTest, asSubject("hsh-keycloak_sync"))
+                    .introduction("""
+                            An account combines an RBAC subject with a natural person and thus grant's access to data in hsadmin-NG.
+                            Here, the natural person, the USER subject (with a UUID e.g. known from Keycloak),
+                            and the account are all created with a single HTTP POST request —
+                            executed by a global-admin subject which has no own account itself.
+                            """)
+                    // the person to be created along with the account
+                    .given("personFamilyName", "Newman")
+                    .given("personGivenName", "Peter")
+                    // the subject UUID (e.g. known from Keycloak) and login name for the new USER subject
+                    .given("subjectUuid", PETER_NEWMAN_SUBJECT_UUID)
+                    .given("subjectName", "xyz-peter.newman")
+                    // initial account
+                    .given("globalUid", 21012)
+                    .given("globalGid", 21012)
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
+        }
+
+        @Test
+        @Order(9221)
+        @Requires("Account: xyz-peter.newman")
+        void newlyCreatedAccountForNewNaturalPersonShouldBeAbleToViewThatPerson() {
+            new AccountCanViewTheirOwnPerson(scenarioTest, asSubject("xyz-peter.newman"))
+                    // to find a specific existing person
+                    .given("subjectName", "xyz-peter.newman")
+                    // some expected person data
+                    .expected("personFamilyName", "Newman")
+                    .expected("personGivenName", "Peter")
+                    .thenExpect(HttpStatus.OK);
+        }
+    }
+
+    @Nested
+    @Order(93)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class OtherAccountCreatingScenarios {
+
+        // stable, Keycloak-assigned UUIDs shared with this backend (the subject's identity never changes)
+        private static final String JACK_TUCKER_SUBJECT_UUID = "242a0001-0000-0000-0000-000000000001";
+        private static final String PETER_SMITH_SUBJECT_UUID = "242a0002-0000-0000-0000-000000000002";
+        private static final String TOM_SAWYER_SUBJECT_UUID = "242a0004-0000-0000-0000-000000000004";
+
+        @Test
+        @Order(9310)
         @Produces(
                 explicitly = "Account: xyz-peter.smith",
                 implicitly = { "Person: Peter Smith" })
-        void shouldCreateInitialAccountForExistingNaturalPerson() {
+        void shouldCreateAccountAndUserSubjectFromGivenSubjectUuidAndName() {
             new CreateAccountForExistingPerson(scenarioTest, asGlobalAgent())
+                    .introduction("""
+                            An account combines an RBAC subject with a natural person and thus grant's access to data in hsadmin-NG.
+                            Here, both the subject UUID (as assigned by Keycloak) and the subject name are given,
+                            but no such subject exists yet; thus a new USER subject is created along with the account.
+                            """)
                     // to find a specific existing person
                     .given("personFamilyName", "Smith")
                     .given("personGivenName", "Peter")
                     .given("personGivenType", "NATURAL_PERSON")
-                    // a login name, to be stored in the new RBAC subject
+                    // the subject UUID (as assigned by Keycloak) and login name for the new USER subject
+                    .given("subjectUuid", PETER_SMITH_SUBJECT_UUID)
                     .given("subjectName", "xyz-peter.smith")
                     // initial account
                     .given("globalUid", 21011)
@@ -116,7 +189,7 @@ class AccountScenarioTests extends ScenarioTest {
         }
 
         @Test
-        @Order(9211)
+        @Order(9311)
         @Requires("Account: xyz-peter.smith")
         void newlyCreatedAccountForExistingNaturalPersonShouldBeAbleToViewThatPerson() {
             new AccountCanViewTheirOwnPerson(scenarioTest, asSubject("xyz-peter.smith"))
@@ -129,7 +202,7 @@ class AccountScenarioTests extends ScenarioTest {
         }
 
         @Test
-        @Order(9212)
+        @Order(9312)
         @Requires("Account: xyz-peter.smith")
         void newlyCreatedAccountForExistingNaturalPersonShouldBeAbleToViewExistingRelations() {
             new AccountCanViewTheirOwnRelations(scenarioTest, asSubject("xyz-peter.smith"))
@@ -172,7 +245,7 @@ class AccountScenarioTests extends ScenarioTest {
         }
 
         @Test
-        @Order(9213)
+        @Order(9313)
         @Requires("Account: xyz-peter.smith")
         void newlyCreatedAccountForExistingNaturalPersonShouldBeAbleToViewExistingMemberships() {
             new AccountCanViewTheirOwnMemberships(scenarioTest, asSubject("xyz-peter.smith"))
@@ -206,50 +279,82 @@ class AccountScenarioTests extends ScenarioTest {
                             """)
                     .thenExpect(HttpStatus.OK);
         }
-    }
-
-    @Nested
-    @Order(93)
-    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-    class ScenariosForImplicitlyCreatedPersons {
 
         @Test
-        @Order(9310)
+        @Order(9320)
         @Produces(
-                explicitly = "Account: peter-newman",
-                implicitly = { "Person: Peter Newman" })
-        void shouldCreateInitialAccountForNewNaturalPerson() {
-            new CreateAccountForNewPerson(scenarioTest, asGlobalAgent())
-                    // to find a specific existing person
-                    .given("personFamilyName", "Newman")
-                    .given("personGivenName", "Peter")
-                    // a login name, to be stored in the new RBAC subject
-                    .given("subjectName", "xyz-peter.newman")
+                explicitly = "Account: xyz-tom.sawyer",
+                implicitly = { "Person: Tom Sawyer" })
+        void shouldCreateAccountWithNewPersonForPreexistingUserSubject() {
+            new CreateAccountWithNewPersonForPreexistingSubject(scenarioTest, asGlobalAgent())
+                    // the person to be created along with the account
+                    .given("personFamilyName", "Sawyer")
+                    .given("personGivenName", "Tom")
+                    // the preexisting USER subject, e.g. synchronized from Keycloak
+                    .given("subjectUuid", TOM_SAWYER_SUBJECT_UUID)
+                    .given("subjectName", "xyz-tom.sawyer")
                     // initial account
-                    .given("globalUid", 21012)
-                    .given("globalGid", 21012)
+                    .given("globalUid", 21016)
+                    .given("globalGid", 21016)
                     .thenExpect(HttpStatus.OK)
                     .keep();
         }
 
         @Test
-        @Order(9311)
-        @Requires("Account: peter-newman")
-        void newlyCreatedAccountForNewNaturalPersonShouldBeAbleToViewThatPerson() {
-            new AccountCanViewTheirOwnPerson(scenarioTest, asSubject("xyz-peter.newman"))
-                    // to find a specific existing person
-                    .given("subjectName", "xyz-peter.newman")
+        @Order(9321)
+        @Requires("Account: xyz-tom.sawyer")
+        void newlyCreatedAccountForPreexistingSubjectAndNewPersonShouldBeAbleToViewThatPerson() {
+            new AccountCanViewTheirOwnPerson(scenarioTest, asSubject("xyz-tom.sawyer"))
+                    .given("subjectName", "xyz-tom.sawyer")
                     // some expected person data
-                    .expected("personFamilyName", "Newman")
-                    .expected("personGivenName", "Peter")
+                    .expected("personFamilyName", "Sawyer")
+                    .expected("personGivenName", "Tom")
                     .thenExpect(HttpStatus.OK);
         }
+
+        @Test
+        @Order(9330)
+        @Produces(
+                explicitly = "Account: xyz-jack.tucker",
+                implicitly = { "Person: Jack Tucker" })
+        void shouldCreateAccountForPreexistingUserSubjectViaSubjectUuid() {
+            new CreateAccountForPreexistingSubject(scenarioTest, asGlobalAgent())
+                    // to find a specific existing person
+                    .given("personFamilyName", "Tucker")
+                    .given("personGivenName", "Jack")
+                    .given("personGivenType", "NATURAL_PERSON")
+                    // the preexisting USER subject, e.g. synchronized from Keycloak
+                    .given("subjectUuid", JACK_TUCKER_SUBJECT_UUID)
+                    .given("subjectName", "xyz-jack.tucker")
+                    // initial account
+                    .given("globalUid", 21015)
+                    .given("globalGid", 21015)
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
+        }
+
+        @Test
+        @Order(9331)
+        @Requires("Account: xyz-jack.tucker")
+        void newlyCreatedAccountForPreexistingSubjectShouldBeAbleToViewThatPerson() {
+            new AccountCanViewTheirOwnPerson(scenarioTest, asSubject("xyz-jack.tucker"))
+                    .given("subjectName", "xyz-jack.tucker")
+                    // some expected person data
+                    .expected("personFamilyName", "Tucker")
+                    .expected("personGivenName", "Jack")
+                    .thenExpect(HttpStatus.OK);
+        }
+
     }
 
     @Nested
     @Order(94)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class RbacSubjectVisibilityScenarios {
+
+        // stable, Keycloak-assigned UUIDs shared with this backend (the subject's identity never changes)
+        private static final String ABC_PETER_SMITH_SUBJECT_UUID = "242a0005-0000-0000-0000-000000000005";
+        private static final String DEF_PETER_SMITH_SUBJECT_UUID = "242a0006-0000-0000-0000-000000000006";
 
         /**
          * Verifies Scenario#236.01: A user can see all subjects of the same organization,
@@ -296,9 +401,10 @@ class AccountScenarioTests extends ScenarioTest {
                     .given("thePersonsFamilyName", "Smith")
                     .given("thePersonsGivenName", "Peter")
                     .given("nameOfAssociatedGroupSubjectFromAnotherOrg", "/abc-Team")
-                    .given("theOtherAccountsSubjectName", "abc-peter.smith")
-                    .using("theOtherAccountsGlobalUid", 21013)
-                    .using("theOtherAccountsGlobalGid", 21013)
+                    .given("theAccountSubjectName", "abc-peter.smith")
+                    .using("theAccountSubjectUuid", ABC_PETER_SMITH_SUBJECT_UUID)
+                    .using("theAccountGlobalUid", 21013)
+                    .using("theAccountGlobalGid", 21013)
                     .thenExpect(HttpStatus.OK);
         }
 
@@ -370,10 +476,11 @@ class AccountScenarioTests extends ScenarioTest {
                     .given("thePersonsFamilyName", "Smith")
                     .given("thePersonsGivenName", "Peter")
                     .given("nameOfSamePersonGroupFromAnotherOrg", "/def-Team")
-                    .given("theOtherAccountsSubjectName", "def-peter.smith")
+                    .given("theAccountSubjectName", "def-peter.smith")
                     .given("nameFilterPrefix", "/xyz")
-                    .using("theOtherAccountsGlobalUid", 21014)
-                    .using("theOtherAccountsGlobalGid", 21014)
+                    .using("theAccountSubjectUuid", DEF_PETER_SMITH_SUBJECT_UUID)
+                    .using("theAccountGlobalUid", 21014)
+                    .using("theAccountGlobalGid", 21014)
                     .expected("expectedSubjectNamesWithTypeFilter", """
                             [
                               { "name": "/xyz-Service" },

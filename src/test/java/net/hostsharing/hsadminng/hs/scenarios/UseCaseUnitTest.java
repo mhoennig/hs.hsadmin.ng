@@ -34,31 +34,68 @@ class UseCaseUnitTest {
     }
 
     @Test
-    void reportsRequestBodyAsPrettyJsonDataArgument() {
+    void reportsRequestBodyAsPrettyJsonHereDocument() {
         assertThat(UseCase.requestBodyArgument("""
                 {
                   "personType": "LEGAL_PERSON",
                   "tradeName": "Test AG"
                 }
                 """)).isEqualTo("""
-                -d '{
+                --data-binary @- <<EOF
+                {
                   "personType" : "LEGAL_PERSON",
                   "tradeName" : "Test AG"
-                }'""");
+                }
+                EOF""");
     }
 
     @Test
-    void reportsBearerJwtHeaderValueAsPrettyJsonClaims() {
+    void escapesShellSpecialCharactersInHereDocumentBody() {
+        // in an unquoted here-document, the shell interprets $, ` and \,
+        // thus these need to be escaped to render the literal values
+        assertThat(UseCase.requestBodyArgument("""
+                {
+                  "tradeName": "$100 `backticked` back\\\\slash"
+                }
+                """)).isEqualTo("""
+                --data-binary @- <<EOF
+                {
+                  "tradeName" : "\\$100 \\`backticked\\` back\\\\\\\\slash"
+                }
+                EOF""");
+    }
+
+    @Test
+    void reportsFakeJwtBearerHeaderValueAsShellVariableReference() {
         assertThat(UseCase.reportableRequestHeaderValue(
                 "Authorization",
                 "Bearer JWT {\"sub\":\"uuid<some-user@example.org>\",\"groups\":[\"/xyz-GroupOne\"]}"))
-                .isEqualTo("""
-                        Bearer JWT {
-                          "sub" : "uuid<some-user@example.org>",
-                          "groups" : [
-                            "/xyz-GroupOne"
-                          ]
-                        }""");
+                .isEqualTo("Bearer $HSADMINNG_JWT_BEARER");
+    }
+
+    @Test
+    void reportsFakeJwtClaimsAsIgnorableShellCommentArguments() {
+        assertThat(UseCase.jwtClaimsCommentArguments(
+                "Bearer JWT {\"sub\":\"uuid<some-user@example.org>\",\"groups\":[\"/xyz-GroupOne\"]}"))
+                .containsExactly(
+                        "`# {`",
+                        "`#   \"sub\" : \"uuid<some-user@example.org>\",`",
+                        "`#   \"groups\" : [`",
+                        "`#     \"/xyz-GroupOne\"`",
+                        "`#   ]`",
+                        "`# }`");
+    }
+
+    @Test
+    void escapesShellSpecialCharactersInJwtClaimsCommentArguments() {
+        assertThat(UseCase.jwtClaimsCommentArguments(
+                "Bearer JWT {\"comment\":\"a `backticked` back\\\\slash\",\"sub\":\"uuid<some-user@example.org>\"}"))
+                .contains("`#   \"comment\" : \"a \\`backticked\\` back\\\\\\\\slash\",`");
+    }
+
+    @Test
+    void reportsNoJwtClaimsCommentArgumentsForRealJwts() {
+        assertThat(UseCase.jwtClaimsCommentArguments("Bearer real.jwt.token")).isEmpty();
     }
 
     @Test

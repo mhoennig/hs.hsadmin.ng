@@ -46,6 +46,7 @@ public class TestReport {
     private int silent; // do not print anything to test-report if >0
     private List<String> requiredProducerLinks = List.of();
     private boolean previousMarkdownLineWasBlank = true;
+    private boolean withinCodeBlock = false;
 
     static {
         assertThat(BUILD_DOC_SCENARIOS.isDirectory() || BUILD_DOC_SCENARIOS.mkdirs())
@@ -62,6 +63,7 @@ public class TestReport {
         markdownReportFile = new File(BUILD_DOC_SCENARIOS, reportFileName(testInfo.getTestMethod().orElseThrow()));
         markdownReport = new PrintWriter(new FileWriter(markdownReportFile));
         previousMarkdownLineWasBlank = true;
+        withinCodeBlock = false;
         print("## Scenario #" + determineScenarioTitle(testInfo));
     }
 
@@ -156,7 +158,11 @@ public class TestReport {
         final var result = new StringBuilder();
 
         for (String line : lines) {
-            if (line.startsWith("#") && !previousMarkdownLineWasBlank) {
+            if (line.trim().startsWith("```")) {
+                withinCodeBlock = !withinCodeBlock;
+            }
+            // a `#` within a code block is a shell comment, not a markdown heading which needs a blank line before it
+            if (line.startsWith("#") && !previousMarkdownLineWasBlank && !withinCodeBlock) {
                 result.append("\n");
             }
             for (Map.Entry<String, UUID> entry : aliases.entrySet()) {

@@ -19,6 +19,8 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleType;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
+import net.hostsharing.hsadminng.rbac.subject.SubjectType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -38,6 +40,7 @@ import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATU
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -73,6 +76,9 @@ class HsAccountControllerRestTest {
     RbacSubjectRepository rbacSubjectRepo;
 
     @MockitoBean
+    RealSubjectRepository realSubjectRepo;
+
+    @MockitoBean
     RbacRoleRepository rbacRoleRepo;
 
     @MockitoBean
@@ -102,7 +108,10 @@ class HsAccountControllerRestTest {
         verify(contextMock).define();
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("uuid").value(givenAccountUuid.toString()))
-                .andExpect(jsonPath("subjectName").value("abc-existing"))
+                // the subject UUID is always the same as the account UUID
+                .andExpect(jsonPath("subject.uuid").value(givenAccountUuid.toString()))
+                .andExpect(jsonPath("subject.name").value("abc-existing"))
+                .andExpect(jsonPath("subject.type").value("USER"))
                 .andExpect(jsonPath("person.uuid").value(givenPerson.getUuid().toString()))
                 .andExpect(jsonPath("person.personType").value("NATURAL_PERSON"))
                 .andExpect(jsonPath("globalUid").value(30001))
@@ -145,7 +154,7 @@ class HsAccountControllerRestTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].uuid").value(givenAccount.getUuid().toString()))
-                .andExpect(jsonPath("$[0].subjectName").value("abc-current"))
+                .andExpect(jsonPath("$[0].subject.name").value("abc-current"))
                 .andExpect(jsonPath("$[0].person.uuid").value(givenPerson.getUuid().toString()));
     }
 
@@ -170,10 +179,10 @@ class HsAccountControllerRestTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].uuid").value(givenAccountAbc.getUuid().toString()))
-                .andExpect(jsonPath("$[0].subjectName").value("abc-person"))
+                .andExpect(jsonPath("$[0].subject.name").value("abc-person"))
                 .andExpect(jsonPath("$[0].person.uuid").value(givenPerson.getUuid().toString()))
                 .andExpect(jsonPath("$[1].uuid").value(givenAccountXyz.getUuid().toString()))
-                .andExpect(jsonPath("$[1].subjectName").value("xyz-person"))
+                .andExpect(jsonPath("$[1].subject.name").value("xyz-person"))
                 .andExpect(jsonPath("$[1].person.uuid").value(givenPerson.getUuid().toString()));
     }
 
@@ -226,7 +235,513 @@ class HsAccountControllerRestTest {
     }
 
     @Test
-    void postNewAccountWithExistingPersonUuidCreatesAccount() throws Exception {
+    void getCurrentLoginUserWithoutOwnAccountReturnsSubjectWithoutPerson() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(rbacSubjectRepo.findByUuid(givenSubjectUuid)).willReturn(RbacSubjectEntity.builder()
+                .uuid(givenSubjectUuid)
+                .name("hsh-accountless_superuser")
+                .build());
+        // the current subject has no account:
+        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.empty());
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/accounts/current")
+                        .header("Authorization", bearer("hsh-accountless_superuser"))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        verify(contextMock).define();
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("subject.uuid").value(givenSubjectUuid.toString()))
+                .andExpect(jsonPath("subject.name").value("hsh-accountless_superuser"))
+                .andExpect(jsonPath("person").doesNotExist())
+                .andExpect(jsonPath("globalAdmin").value(true));
+    }
+
+    @Test
+    void postNewAccountReferencingAnExistingUserSubjectUsesThatSubject() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+        val givenExistingSubjectUuid = UUID.randomUUID();
+        val givenExistingSubject = RealSubjectEntity.builder()
+                .uuid(givenExistingSubjectUuid)
+                .name("abc-existinguser")
+                .type(SubjectType.USER)
+                .build();
+        val givenPersonRole = new RbacRoleEntity();
+        givenPersonRole.setUuid(UUID.randomUUID());
+        val grantMock = mock(RbacGrantService.RbacRoleGranter.class);
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenExistingSubjectUuid))
+                .willReturn(Optional.of(givenExistingSubject));
+        given(accountRepo.findByUuid(givenExistingSubjectUuid)).willReturn(Optional.empty());
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+        given(rbacRoleService.rbacRole(givenPerson, RbacRoleType.ADMIN)).willReturn(givenPersonRole);
+        given(rbacGrantService.grant(givenPersonRole)).willReturn(grantMock);
+        given(em.merge(givenExistingSubject)).willReturn(givenExistingSubject);
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject.uuid": "%s",
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), givenExistingSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
+        response.andExpect(status().isCreated())
+                .andExpect(jsonPath("uuid").value(givenExistingSubjectUuid.toString()))
+                .andExpect(jsonPath("subject.name").value("abc-existinguser"))
+                .andExpect(jsonPath("person.uuid").value(givenPerson.getUuid().toString()));
+
+        verify(rbacSubjectRepo, never()).create(any());
+        verify(contextMock).define("activate the account subject", null, "abc-existinguser", null);
+        verify(grantMock).to(givenExistingSubject);
+        verify(em).persist(any(HsAccountEntity.class));
+    }
+
+    @Test
+    void postNewAccountWithNewSubjectCreatesThatSubject() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+        val givenNewSubjectUuid = UUID.randomUUID();
+        val givenNewSubject = RealSubjectEntity.builder()
+                .uuid(givenNewSubjectUuid)
+                .name("abc-newuser")
+                .type(SubjectType.USER)
+                .build();
+        val givenPersonRole = new RbacRoleEntity();
+        givenPersonRole.setUuid(UUID.randomUUID());
+        val grantMock = mock(RbacGrantService.RbacRoleGranter.class);
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenNewSubjectUuid)).willReturn(Optional.empty());
+        given(rbacSubjectRepo.create(any())).willAnswer(invocation -> invocation.getArgument(0));
+        given(em.find(RealSubjectEntity.class, givenNewSubjectUuid)).willReturn(givenNewSubject);
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+        given(rbacRoleService.rbacRole(givenPerson, RbacRoleType.ADMIN)).willReturn(givenPersonRole);
+        given(rbacGrantService.grant(givenPersonRole)).willReturn(grantMock);
+        given(em.merge(givenNewSubject)).willReturn(givenNewSubject);
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject": {
+                                        "uuid": "%s",
+                                        "name": "abc-newuser",
+                                        "type": "USER"
+                                    },
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), givenNewSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
+        response.andExpect(status().isCreated())
+                .andExpect(jsonPath("uuid").value(givenNewSubjectUuid.toString()))
+                .andExpect(jsonPath("subject.name").value("abc-newuser"))
+                .andExpect(jsonPath("person.uuid").value(givenPerson.getUuid().toString()))
+                .andExpect(jsonPath("globalUid").value(30001))
+                .andExpect(jsonPath("globalGid").value(40001));
+
+        verify(rbacSubjectRepo).create(argThat(subject ->
+                givenNewSubjectUuid.equals(subject.getUuid()) && "abc-newuser".equals(subject.getName())));
+        verify(contextMock).define("activate the account subject", null, "abc-newuser", null);
+        verify(grantMock).to(givenNewSubject);
+        verify(em).persist(any(HsAccountEntity.class));
+    }
+
+    @Test
+    void postNewAccountReferencingAnUnknownSubjectUuidIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+        val givenUnknownSubjectUuid = UUID.randomUUID();
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenUnknownSubjectUuid)).willReturn(Optional.empty());
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject.uuid": "%s",
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), givenUnknownSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "no subject with UUID %s found".formatted(givenUnknownSubjectUuid))));
+
+        verify(rbacSubjectRepo, never()).create(any());
+    }
+
+    @Test
+    void postNewAccountWithoutAnySubjectReferenceIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid()))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "Exactly one of (subject, subject.uuid) must be non-null, but are (null, null)")));
+
+        verify(rbacSubjectRepo, never()).create(any());
+    }
+
+    @Test
+    void postNewAccountWithBothSubjectAndSubjectUuidIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject.uuid": "%s",
+                                    "subject": {
+                                        "uuid": "%s",
+                                        "name": "abc-newuser"
+                                    },
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), UUID.randomUUID(), UUID.randomUUID()))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "Exactly one of (subject, subject.uuid) must be non-null")));
+
+        verify(rbacSubjectRepo, never()).create(any());
+    }
+
+    @Test
+    void postNewAccountWithNewSubjectWithoutUuidIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject": {
+                                        "name": "abc-newuser"
+                                    },
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid()))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "subject.uuid must not be null")));
+
+        verify(rbacSubjectRepo, never()).create(any());
+    }
+
+    @Test
+    void postNewAccountWithNewSubjectOfTypeGroupIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject": {
+                                        "uuid": "%s",
+                                        "name": "abc-newuser",
+                                        "type": "GROUP"
+                                    },
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), UUID.randomUUID()))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("GROUP")));
+
+        verify(rbacSubjectRepo, never()).create(any());
+    }
+
+    @Test
+    void postNewAccountWithSubjectUuidOfGroupSubjectIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+        val givenGroupSubjectUuid = UUID.randomUUID();
+        val givenGroupSubject = RealSubjectEntity.builder()
+                .uuid(givenGroupSubjectUuid)
+                .name("/abc-Team")
+                .type(SubjectType.GROUP)
+                .build();
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenGroupSubjectUuid))
+                .willReturn(Optional.of(givenGroupSubject));
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject.uuid": "%s",
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), givenGroupSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "the subject %s is not a USER subject, but GROUP".formatted(givenGroupSubjectUuid))));
+
+        verify(rbacGrantService, never()).grant(any());
+    }
+
+    @Test
+    void postNewAccountWithNewSubjectWhichAlreadyExistsIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+        val givenExistingSubjectUuid = UUID.randomUUID();
+        val givenExistingSubject = RealSubjectEntity.builder()
+                .uuid(givenExistingSubjectUuid)
+                .name("abc-existinguser")
+                .type(SubjectType.USER)
+                .build();
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenExistingSubjectUuid))
+                .willReturn(Optional.of(givenExistingSubject));
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject": {
+                                        "uuid": "%s",
+                                        "name": "abc-existinguser"
+                                    },
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), givenExistingSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "a subject with UUID %s already exists".formatted(givenExistingSubjectUuid))));
+
+        verify(rbacSubjectRepo, never()).create(any());
+        verify(rbacGrantService, never()).grant(any());
+    }
+
+    @Test
+    void postNewAccountForSubjectWhichAlreadyHasAnAccountIsRejected() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+        val givenExistingSubjectUuid = UUID.randomUUID();
+        val givenExistingSubject = RealSubjectEntity.builder()
+                .uuid(givenExistingSubjectUuid)
+                .name("abc-existinguser")
+                .type(SubjectType.USER)
+                .build();
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenExistingSubjectUuid))
+                .willReturn(Optional.of(givenExistingSubject));
+        given(accountRepo.findByUuid(givenExistingSubjectUuid))
+                .willReturn(Optional.of(givenAccount(givenExistingSubjectUuid, "abc-existinguser", givenPerson)));
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject.uuid": "%s",
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenPerson.getUuid(), givenExistingSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "the subject %s already has an account".formatted(givenExistingSubjectUuid))));
+
+        verify(rbacGrantService, never()).grant(any());
+    }
+
+    @Test
+    void postNewAccountWithExistingSubjectAndNewPersonCreatesAccountAndPerson() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("New", "Person");
+        val givenExistingSubjectUuid = UUID.randomUUID();
+        val givenExistingSubject = RealSubjectEntity.builder()
+                .uuid(givenExistingSubjectUuid)
+                .name("abc-existinguser")
+                .type(SubjectType.USER)
+                .build();
+        val givenPersonRole = new RbacRoleEntity();
+        givenPersonRole.setUuid(UUID.randomUUID());
+        val grantMock = mock(RbacGrantService.RbacRoleGranter.class);
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenExistingSubjectUuid))
+                .willReturn(Optional.of(givenExistingSubject));
+        given(accountRepo.findByUuid(givenExistingSubjectUuid)).willReturn(Optional.empty());
+        given(realPersonRepo.save(any())).willReturn(givenPerson);
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+        given(rbacRoleService.rbacRole(givenPerson, RbacRoleType.ADMIN)).willReturn(givenPersonRole);
+        given(rbacGrantService.grant(givenPersonRole)).willReturn(grantMock);
+        given(em.merge(givenExistingSubject)).willReturn(givenExistingSubject);
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person": {
+                                        "personType": "NATURAL_PERSON",
+                                        "givenName": "New",
+                                        "familyName": "Person"
+                                    },
+                                    "subject.uuid": "%s",
+                                    "globalUid": 30001,
+                                    "globalGid": 40001
+                                }
+                                """.formatted(givenExistingSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
+        response.andExpect(status().isCreated())
+                .andExpect(jsonPath("uuid").value(givenExistingSubjectUuid.toString()))
+                .andExpect(jsonPath("person.uuid").value(givenPerson.getUuid().toString()))
+                .andExpect(jsonPath("person.givenName").value("New"))
+                .andExpect(jsonPath("person.familyName").value("Person"));
+
+        verify(realPersonRepo).save(any());
+        verify(rbacSubjectRepo, never()).create(any());
+        verify(grantMock).to(givenExistingSubject);
+    }
+
+    // that a non-global-admin cannot create accounts is rejected by context.assumeRoles at database level,
+    // verified by HsAccountControllerAcceptanceTest.shouldRejectCreatingAccountIfNotGlobalAdmin
+
+    @Test
+    void postNewAccountSucceedsEvenIfActingGlobalAdminHasNoOwnAccount() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
         val givenNewSubjectUuid = UUID.randomUUID();
@@ -241,7 +756,9 @@ class HsAccountControllerRestTest {
 
         given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
         given(contextMock.isGlobalAdmin()).willReturn(true);
-        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.of(HsAccountEntity.builder().build()));
+        // the acting global admin itself has no account:
+        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.empty());
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenNewSubjectUuid)).willReturn(Optional.empty());
         given(rbacSubjectRepo.create(any())).willReturn(RbacSubjectEntity.builder()
                 .uuid(givenNewSubjectUuid)
                 .name("abc-newuser")
@@ -255,157 +772,29 @@ class HsAccountControllerRestTest {
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .header("Authorization", bearer("hsh-accountless_superuser"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                     "person.uuid": "%s",
-                                    "subjectName": "abc-newuser",
+                                    "subject": {
+                                        "uuid": "%s",
+                                        "name": "abc-newuser"
+                                    },
                                     "globalUid": 30001,
                                     "globalGid": 40001
                                 }
-                                """.formatted(givenPerson.getUuid()))
+                                """.formatted(givenPerson.getUuid(), givenNewSubjectUuid))
                         .accept(MediaType.APPLICATION_JSON));
 
         // then
         verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
         response.andExpect(status().isCreated())
                 .andExpect(jsonPath("uuid").value(givenNewSubjectUuid.toString()))
-                .andExpect(jsonPath("subjectName").value("abc-newuser"))
-                .andExpect(jsonPath("person.uuid").value(givenPerson.getUuid().toString()))
-                .andExpect(jsonPath("globalUid").value(30001))
-                .andExpect(jsonPath("globalGid").value(40001));
+                .andExpect(jsonPath("subject.name").value("abc-newuser"));
 
-        verify(contextMock).define("activate newly created self-service subject", null, "abc-newuser", null);
         verify(grantMock).to(givenNewSubject);
         verify(em).persist(any(HsAccountEntity.class));
-    }
-
-    @Test
-    void postNewAccountWithNewPersonCreatesAccountAndPerson() throws Exception {
-        // given
-        val givenSubjectUuid = UUID.randomUUID();
-        val givenNewSubjectUuid = UUID.randomUUID();
-        val givenPerson = givenNaturalPerson("New", "Person");
-        val givenNewSubject = RealSubjectEntity.builder()
-                .uuid(givenNewSubjectUuid)
-                .name("abc-newuser")
-                .build();
-        val givenPersonRole = new RbacRoleEntity();
-        givenPersonRole.setUuid(UUID.randomUUID());
-        val grantMock = mock(RbacGrantService.RbacRoleGranter.class);
-
-        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
-        given(contextMock.isGlobalAdmin()).willReturn(true);
-        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.of(HsAccountEntity.builder().build()));
-        given(rbacSubjectRepo.create(any())).willReturn(RbacSubjectEntity.builder()
-                .uuid(givenNewSubjectUuid)
-                .name("abc-newuser")
-                .build());
-        given(em.find(RealSubjectEntity.class, givenNewSubjectUuid)).willReturn(givenNewSubject);
-        given(realPersonRepo.save(any())).willReturn(givenPerson);
-        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
-        given(rbacRoleService.rbacRole(givenPerson, RbacRoleType.ADMIN)).willReturn(givenPersonRole);
-        given(rbacGrantService.grant(givenPersonRole)).willReturn(grantMock);
-        given(em.merge(givenNewSubject)).willReturn(givenNewSubject);
-
-        // when
-        val response = mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "person": {
-                                        "personType": "NATURAL_PERSON",
-                                        "givenName": "New",
-                                        "familyName": "Person"
-                                    },
-                                    "subjectName": "abc-newuser",
-                                    "globalUid": 30001,
-                                    "globalGid": 40001
-                                }
-                                """)
-                        .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
-        response.andExpect(status().isCreated())
-                .andExpect(jsonPath("uuid").value(givenNewSubjectUuid.toString()))
-                .andExpect(jsonPath("person.uuid").value(givenPerson.getUuid().toString()))
-                .andExpect(jsonPath("person.givenName").value("New"))
-                .andExpect(jsonPath("person.familyName").value("Person"));
-
-        verify(realPersonRepo).save(any());
-        verify(grantMock).to(givenNewSubject);
-    }
-
-    @Test
-    void postNewAccountRejectsToCreateIfCurrentSubjectIsNotGlobalAdmin() throws Exception {
-        // given
-        val givenSubjectUuid = UUID.randomUUID();
-        val givenPersonUuid = UUID.randomUUID();
-
-        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
-        given(contextMock.isGlobalAdmin()).willReturn(false);
-        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.of(HsAccountEntity.builder().build()));
-
-        // when
-        val response = mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("tst-drew_selfregistered"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "person.uuid": "%s",
-                                    "subjectName": "abc-newuser",
-                                    "globalUid": 30001,
-                                    "globalGid": 40001
-                                }
-                                """.formatted(givenPersonUuid))
-                        .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
-        response.andExpect(status().isForbidden())
-                .andExpect(jsonPath("message", containsString(
-                        "Access denied: new accounts can only be created by global admins, %s is not"
-                                .formatted(givenSubjectUuid))));
-
-        verify(rbacSubjectRepo, never()).create(any());
-    }
-
-    @Test
-    void postNewAccountFailsIfCurrentSubjectAccountCannotBeResolved() throws Exception {
-        // given
-        val givenSubjectUuid = UUID.randomUUID();
-
-        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
-        given(contextMock.fetchCurrentSubject()).willReturn("unresolvable-subject@hostsharing.net");
-        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.empty());
-
-        // when
-        val response = mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/accounts/accounts")
-                        .header("Authorization", bearer("unresolvable-subject@hostsharing.net"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "person.uuid": "%s",
-                                    "subjectName": "abc-newuser",
-                                    "globalUid": 30001,
-                                    "globalGid": 40001
-                                }
-                                """.formatted(UUID.randomUUID()))
-                        .accept(MediaType.APPLICATION_JSON));
-
-        // then
-        verify(contextMock).assumeRoles("rbac.global#global:ADMIN");
-        response.andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("message", containsString(
-                        "subject unresolvable-subject@hostsharing.net has no account")));
-
-        verify(rbacSubjectRepo, never()).create(any());
     }
 
     @Test
@@ -422,7 +811,6 @@ class HsAccountControllerRestTest {
 
         given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
         given(contextMock.isGlobalAdmin()).willReturn(true);
-        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.of(HsAccountEntity.builder().build()));
         given(rbacSubjectRepo.create(any())).willReturn(RbacSubjectEntity.builder()
                 .uuid(givenNewSubjectUuid)
                 .name("abc-newuser")
@@ -441,11 +829,11 @@ class HsAccountControllerRestTest {
                         .content("""
                                 {
                                     "person.uuid": "%s",
-                                    "subjectName": "abc-newuser",
+                                    "subject.uuid": "%s",
                                     "globalUid": 30001,
                                     "globalGid": 40001
                                 }
-                                """.formatted(givenPersonUuid))
+                                """.formatted(givenPersonUuid, givenNewSubjectUuid))
                         .accept(MediaType.APPLICATION_JSON));
 
         // then
@@ -464,7 +852,6 @@ class HsAccountControllerRestTest {
         val givenNewSubjectUuid = UUID.randomUUID();
         given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
         given(contextMock.isGlobalAdmin()).willReturn(true);
-        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.of(HsAccountEntity.builder().build()));
         given(rbacSubjectRepo.create(any())).willReturn(RbacSubjectEntity.builder()
                 .uuid(givenNewSubjectUuid)
                 .name("abc-newuser")
@@ -481,11 +868,11 @@ class HsAccountControllerRestTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "subjectName": "abc-newuser",
+                                    "subject.uuid": "%s",
                                     "globalUid": 30001,
                                     "globalGid": 40001
                                 }
-                                """)
+                                """.formatted(givenNewSubjectUuid))
                         .accept(MediaType.APPLICATION_JSON));
 
         // then
@@ -503,7 +890,6 @@ class HsAccountControllerRestTest {
         val givenPersonUuid = UUID.randomUUID();
         given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
         given(contextMock.isGlobalAdmin()).willReturn(true);
-        given(accountRepo.findByUuid(givenSubjectUuid)).willReturn(Optional.of(HsAccountEntity.builder().build()));
         given(rbacSubjectRepo.create(any())).willReturn(RbacSubjectEntity.builder()
                 .uuid(givenNewSubjectUuid)
                 .name("abc-newuser")
@@ -522,11 +908,11 @@ class HsAccountControllerRestTest {
                         .content("""
                                 {
                                     "person.uuid": "%s",
-                                    "subjectName": "abc-newuser",
+                                    "subject.uuid": "%s",
                                     "globalUid": 30001,
                                     "globalGid": 40001
                                 }
-                                """.formatted(givenPersonUuid))
+                                """.formatted(givenPersonUuid, givenNewSubjectUuid))
                         .accept(MediaType.APPLICATION_JSON));
 
         // then
@@ -571,6 +957,7 @@ class HsAccountControllerRestTest {
                 .subject(RealSubjectEntity.builder()
                         .uuid(accountUuid)
                         .name(subjectName)
+                        .type(SubjectType.USER)
                         .build())
                 .person(person)
                 .globalUid(30001)

@@ -12,6 +12,9 @@ components:
                     $ref: '../hs-office/hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
                 globalAdmin:
                     type: boolean
+            description:
+                The current login subject with the person of its account;
+                the person is omitted if the subject does not have an account (yet).
 
         Account:
             type: object
@@ -21,7 +24,34 @@ components:
                     format: uuid
                 person:
                     $ref: '../hs-office/hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
-                subjectName:
+                subject:
+                    $ref: '../rbac/rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+                globalUid:
+                    type: number
+                globalGid:
+                    type: number
+            required:
+                - uuid
+                - subject
+                - person
+                - globalUid
+                - globalGid
+            description:
+                An account combines an RBAC USER subject with a person.
+                The account UUID is always the same as the subject UUID.
+            additionalProperties: false
+
+        AccountSubjectInsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                    description: "
+                        The UUID of the new USER subject, the same UUID as in Keycloak.
+                        No subject with this UUID may exist yet.
+                        "
+                name:
                     type: string
                     description: "
                         Two parts separated by a single '-'.
@@ -31,16 +61,18 @@ components:
                         but '.'/'_' must be followed by a letter or digit.
                         "
                     pattern: '^[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,8}-[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,31}$'
-                globalUid:
-                    type: number
-                globalGid:
-                    type: number
+                type:
+                    type: string
+                    enum:
+                        - USER
+                    default: USER
             required:
                 - uuid
-                - subjectName
-                - person
-                - globalUid
-                - globalGid
+                - name
+            description:
+                A new USER subject to be created along with the account.
+                Only USER subjects can be created this way, thus `type` defaults to `USER`
+                and no other type is allowed.
             additionalProperties: false
 
         AccountInsert:
@@ -51,27 +83,28 @@ components:
                     format: uuid
                 person:
                     $ref: '../hs-office/hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonInsert'
-                subjectName:
+                subject.uuid:
                     type: string
+                    format: uuid
                     description: "
-                        Two parts separated by a single '-'.
-                        The first part is the Keycloak realm name of 3-9 chars length.
-                        The second part a account name local to that realm, which is 3-32 chars in length.
-                        Each part starts with a lowercase letter and may contain lowercase letters, digits, '.' or '_',
-                        but '.'/'_' must be followed by a letter or digit.
+                        References an existing USER subject by its UUID, the same UUID as in Keycloak.
+                        That subject must not already have an account.
                         "
-                    pattern: '^[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,8}-[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,31}$'
+                subject:
+                    $ref: '#/components/schemas/AccountSubjectInsert'
                 globalUid:
                     type: number
                 globalGid:
                     type: number
             required:
-                - subjectName
                 - globalUid
                 - globalGid
                 # soon we might need to be able to use this:
                 # https://community.smartbear.com/discussions/swaggerostools/defining-conditional-attributes-in-openapi/222410
                 # For now we just describe the conditionally required properties:
             description:
-                Either `person.uuid` or `person` need to be given.
+                Either `person.uuid` (referencing an existing person) or `person`
+                (creating a new person along with the account) need to be given.
+                Likewise, either `subject.uuid` (referencing an existing USER subject)
+                or `subject` (creating a new USER subject along with the account) need to be given.
             additionalProperties: false

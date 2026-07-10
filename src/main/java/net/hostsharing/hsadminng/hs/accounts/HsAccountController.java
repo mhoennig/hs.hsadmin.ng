@@ -2,16 +2,15 @@ package net.hostsharing.hsadminng.hs.accounts;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import lombok.AllArgsConstructor;
 import lombok.val;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.api.AccountApi;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.CurrentLoginUserResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.HsOfficePersonResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.AccountInsertResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.AccountResource;
+import net.hostsharing.hsadminng.accounts.generated.api.v1.model.AccountSubjectInsertResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.RbacSubjectResource;
 import net.hostsharing.hsadminng.config.MessageTranslator;
-import net.hostsharing.hsadminng.errors.ForbiddenException;
 import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
@@ -28,13 +27,13 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleType;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
+import net.hostsharing.hsadminng.rbac.subject.SubjectType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -71,6 +70,9 @@ public class HsAccountController implements AccountApi {
 
     @Autowired
     private RbacSubjectRepository rbacSubjectRepo;
+
+    @Autowired
+    private RealSubjectRepository realSubjectRepo;
 
     @Autowired
     private RbacRoleRepository rbacRoleRepo;
@@ -127,38 +129,24 @@ public class HsAccountController implements AccountApi {
         // Otherwise, only the granting user could revoke the grant.
         context.assumeRoles("rbac.global#global:ADMIN");
 
-        val originalLoginContext = new LoginContext(context);
-
-        // TODO.spec: for now, only global admins can create new accounts, auto-creation has to be specified. which person?
-        // To make bootstrapping easier, we could also allow the global-guest to create an initial global-admin account,
-        // e.g. if no subject exists at all or just test-data-subjects.
-        // But to make it useful with Keycloak, we need to add the subject-uuid to the request body.
-        if (!originalLoginContext.isGlobalAdmin) {
-            throw new ForbiddenException(
-                    messageTranslator.translate(
-                            //"account.access-denied-to-person-with-uuid-{0}-not-represented-by-currently-logged-in-person",
-                            "account.access-denied-to-create-new-account-subject-{0}-is-not-a-global-admin",
-                            originalLoginContext.subjectUuid));
-        }
-
-        // first create and save the subject to get its UUID
-        val newlySavedSubject = createSubject(body.getSubjectName());
-
         // determine the assigned person while we still have global-admin privileges
         val newAccountEntity = mapper.map(
                 body, HsAccountEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
-        validateOnCreate(originalLoginContext, newAccountEntity);
+        validateOnCreate(newAccountEntity);
 
-        // grant the person's ADMIN role to the new subject
+        // fetch the existing subject or create and save a new one to get its UUID
+        val accountSubject = fetchOrCreateSubject(body);
+
+        // grant the person's ADMIN role to the account subject
         rbacGrantService.grant(rbacRoleService.rbacRole(newAccountEntity.getPerson(), RbacRoleType.ADMIN))
-                .to(newlySavedSubject);
+                .to(accountSubject);
 
-        // switch to the new subject to get access to its own subject RBAC object
-        context.define("activate newly created self-service subject", null, body.getSubjectName(), null);
+        // switch to the account subject to get access to its own subject RBAC object
+        context.define("activate the account subject", null, accountSubject.getName(), null);
 
         // afterward, create and save the account entity with the subject's UUID
-        newAccountEntity.setSubject(em.merge(newlySavedSubject)); // attached to EM by the new subject
-        em.persist(newAccountEntity); // newAccountEntity.uuid == newlySavedSubject.uuid => do not use repository!
+        newAccountEntity.setSubject(em.merge(accountSubject)); // attached to EM by the account subject
+        em.persist(newAccountEntity); // newAccountEntity.uuid == accountSubject.uuid => do not use repository!
 
         // return the new account as a resource
         val uri =
@@ -192,10 +180,10 @@ public class HsAccountController implements AccountApi {
         // define a context without assumed roles, otherwise we cannot access the subject anymore
         context.define();
 
-        // fetch the data
+        // fetch the data, the person is null if the current subject has no account
         val currentSubjectUuid = context.fetchCurrentSubjectUuid();
         val currentSubject = rbacSubjectRepo.findByUuid(currentSubjectUuid);
-        val person = accountRepo.findByUuid(currentSubjectUuid).orElseThrow().getPerson();
+        val person = accountRepo.findByUuid(currentSubjectUuid).map(HsAccountEntity::getPerson).orElse(null);
 
         final boolean isGlobalAdmin = context.isGlobalAdmin();
 
@@ -204,7 +192,7 @@ public class HsAccountController implements AccountApi {
         return ResponseEntity.ok(result);
     }
 
-    private void validateOnCreate(final LoginContext originalLoginContext, final HsAccountEntity newAccountEntity) {
+    private void validateOnCreate(final HsAccountEntity newAccountEntity) {
         validateReferencedPersonToBeANaturalPerson(newAccountEntity);
     }
 
@@ -222,8 +210,43 @@ public class HsAccountController implements AccountApi {
         }
     }
 
-    private RealSubjectEntity createSubject(final String subjectName) {
-        val rbacSubjectEntity = RbacSubjectEntity.builder().name(subjectName).build();
+    private RealSubjectEntity fetchOrCreateSubject(final AccountInsertResource body) {
+        Validate.validate("subject, subject.uuid").exactlyOne(body.getSubject(), body.getSubjectUuid());
+
+        if (body.getSubjectUuid() != null) {
+            return fetchExistingUserSubject(body.getSubjectUuid());
+        }
+        return createSubject(body.getSubject());
+    }
+
+    private RealSubjectEntity fetchExistingUserSubject(final UUID subjectUuid) {
+        val subject = realSubjectRepo.findVisibleSubjectByUuid(subjectUuid).orElseThrow(
+                () -> new ValidationException(
+                        messageTranslator.translate("account.no-subject-with-uuid-{0}-found", subjectUuid)));
+        if (subject.getType() != SubjectType.USER) {
+            throw new ValidationException(
+                    messageTranslator.translate(
+                            "account.subject-{0}-is-not-a-user-subject-but-{1}",
+                            subject.getUuid(), subject.getType().name()));
+        }
+        if (accountRepo.findByUuid(subject.getUuid()).isPresent()) {
+            throw new ValidationException(
+                    messageTranslator.translate(
+                            "account.subject-{0}-already-has-an-account",
+                            subject.getUuid()));
+        }
+        return subject;
+    }
+
+    private RealSubjectEntity createSubject(final AccountSubjectInsertResource newSubject) {
+        // newSubject.uuid+name are @NotNull-validated and type can only be USER, all enforced by the API definition
+        if (realSubjectRepo.findVisibleSubjectByUuid(newSubject.getUuid()).isPresent()) {
+            throw new ValidationException(
+                    messageTranslator.translate(
+                            "account.subject-with-uuid-{0}-already-exists",
+                            newSubject.getUuid()));
+        }
+        val rbacSubjectEntity = RbacSubjectEntity.builder().uuid(newSubject.getUuid()).name(newSubject.getName()).build();
         val newRbacSubject = rbacSubjectRepo.create(rbacSubjectEntity);
         return em.find(RealSubjectEntity.class, newRbacSubject.getUuid());
     }
@@ -245,14 +268,16 @@ public class HsAccountController implements AccountApi {
             final boolean isGlobalAdmin) {
         val result = new CurrentLoginUserResource();
         result.setSubject(mapper.map(currentSubject, RbacSubjectResource.class));
-        result.setPerson(mapper.map(person, HsOfficePersonResource.class));
+        if (person != null) {
+            result.setPerson(mapper.map(person, HsOfficePersonResource.class));
+        }
         result.setGlobalAdmin(isGlobalAdmin);
         return result;
     }
 
     final BiConsumer<HsAccountEntity, AccountResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         of(entity.getSubject()).ifPresent(
-                subject -> resource.setSubjectName(subject.getName())
+                subject -> resource.setSubject(mapper.map(subject, RbacSubjectResource.class))
         );
         of(entity.getPerson()).ifPresent(
                 person -> resource.setPerson(
@@ -282,18 +307,4 @@ public class HsAccountController implements AccountApi {
         entity.setPerson(person);
     };
 
-    @AllArgsConstructor
-    private class LoginContext {
-        final HsAccountEntity account;
-        final boolean isGlobalAdmin;
-        final UUID subjectUuid;
-
-        public LoginContext(final Context context) {
-            subjectUuid = context.fetchCurrentSubjectUuid();
-            account = accountRepo.findByUuid(subjectUuid)
-                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                    "subject " + context.fetchCurrentSubject() + " has no account"));
-            isGlobalAdmin = context.isGlobalAdmin();
-        }
-    }
 }

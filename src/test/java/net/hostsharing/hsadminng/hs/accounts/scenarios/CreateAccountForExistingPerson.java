@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asSubject;
 import static org.springframework.http.HttpStatus.OK;
 
 public class CreateAccountForExistingPerson extends BaseAccountUseCase<CreateAccountForExistingPerson> {
@@ -27,12 +28,18 @@ public class CreateAccountForExistingPerson extends BaseAccountUseCase<CreateAcc
                 "In real situations we have more precise measures to find the related person."
         );
 
-        return obtain("theOtherAccounts", () ->
-            // TODO.impl[Taiga#471]: use subjectUuid
+        return postNewAccount();
+    }
+
+    protected HttpResponse postNewAccount() {
+        return obtain("theAccount", () ->
             httpPost(asLoginUser, "/api/hs/accounts/accounts", usingJsonBody("""
                 {
                      "person.uuid": ${Person: %{personGivenName} %{personFamilyName}},
-                     "subjectName": ${subjectName},
+                     "subject": {
+                         "uuid": ${subjectUuid},
+                         "name": ${subjectName}
+                     },
                      "globalUid": %{globalUid},
                      "globalGid": %{globalGid}
                 }
@@ -44,11 +51,12 @@ public class CreateAccountForExistingPerson extends BaseAccountUseCase<CreateAcc
     @Override
     protected void verify(final UseCase<CreateAccountForExistingPerson>.HttpResponse response) {
         verify(
-                "Verify the new Account",
-                () -> httpGet(asLoginUser, "/api/hs/accounts/accounts/%{theOtherAccounts}")
+                "Verify the new Account as its own Subject",
+                () -> httpGet(asSubject("%{subjectName}"), "/api/hs/accounts/accounts/%{theAccount}")
                         .expecting(OK).expecting(JSON),
-                path("uuid").contains("%{theOtherAccounts}"),
-                path("subjectName").contains("%{subjectName}"),
+                path("uuid").contains("%{theAccount}"),
+                path("subject.uuid").contains("%{theAccount}"),
+                path("subject.name").contains("%{subjectName}"),
                 path("person.uuid").contains("%{Person: %{personGivenName} %{personFamilyName}}")
         );
     }

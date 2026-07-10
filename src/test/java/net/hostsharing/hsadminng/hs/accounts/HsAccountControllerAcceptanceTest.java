@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
@@ -121,11 +122,15 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                                     "givenName": null,
                                     "familyName": null
                                 },
-                                "subjectName": "test-subject1",
+                                "subject": {
+                                    "uuid": "%s",
+                                    "name": "test-subject1",
+                                    "type": "USER"
+                                },
                                 "globalUid": null,
                                 "globalGid": null
                             }
-                            """));
+                            """.formatted(accountEntity.getUuid())));
             // @formatter:on
         }
     }
@@ -149,11 +154,11 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                         .body("""
                             {
                                 "person.uuid": "%s",
-                                "subjectName": "new-user",
+                                "subject.uuid": "%s",
                                 "globalUid": 30001,
                                 "globalGid": 40001
                             }
-                            """.formatted(testPerson.getUuid()))
+                            """.formatted(testPerson.getUuid(), UUID.randomUUID()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/accounts/accounts")
@@ -177,11 +182,11 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                         .body("""
                                 {
                                     "person.uuid": "%s",
-                                    "subjectName": "new-user",
+                                    "subject.uuid": "%s",
                                     "globalUid": 30001,
                                     "globalGid": 40001
                                 }
-                                """.formatted(firstGmbHPerson.getUuid()))
+                                """.formatted(firstGmbHPerson.getUuid(), UUID.randomUUID()))
                         .port(port)
                     .when()
                     .post("http://localhost/api/hs/accounts/accounts")
@@ -205,17 +210,6 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
             return toCleanup(realPersonRepo.save(HsOfficePersonRealEntity.builder()
                     .personType(LEGAL_PERSON)
                     .tradeName("Test Company")
-                    .build()));
-        }).assertSuccessful().returnedValue();
-    }
-
-    private HsOfficePersonRealEntity givenNaturalPerson(final String executingSubjectName) {
-        return jpaAttempt.transacted(() -> {
-            context.define(executingSubjectName);
-            return toCleanup(realPersonRepo.save(HsOfficePersonRealEntity.builder()
-                    .personType(NATURAL_PERSON)
-                    .familyName("Test")
-                    .givenName("User")
                     .build()));
         }).assertSuccessful().returnedValue();
     }
