@@ -64,7 +64,7 @@ class HsadminTestTasksPlugin : Plugin<Project> {
             description = "runs all unit-tests which do not need a database"
 
             mustRunAfter(project.tasks.named("spotlessJava"))
-            finalizedBy(project.tasks.named("jacocoTestReport")) // generate a report after unit tests
+            // no finalizedBy(jacocoTestReport): run `gw jacocoTestReport` explicitly when a report is wanted
         }
 
         // HOWTO: run all integration tests that are not specific to a module, like base, rbac, config etc.

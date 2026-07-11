@@ -147,7 +147,8 @@ openapiProcessor {
         prop("mapping", project.file("src/main/resources/api-definition/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
-        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
+        // each processor needs its own targetDir, otherwise overlapping outputs break up-to-date checks
+        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springRoot").get().asFile.path)
     }
 
     process("springRbac") {
@@ -157,7 +158,7 @@ openapiProcessor {
         prop("mapping", project.file("src/main/resources/api-definition/rbac/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
-        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
+        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springRbac").get().asFile.path)
     }
 
     process("springTest") {
@@ -167,7 +168,7 @@ openapiProcessor {
         prop("mapping", project.file("src/main/resources/api-definition/test/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
-        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
+        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springTest").get().asFile.path)
     }
 
     process("springHsOffice") {
@@ -177,7 +178,7 @@ openapiProcessor {
         prop("mapping", project.file("src/main/resources/api-definition/hs-office/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
-        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
+        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springHsOffice").get().asFile.path)
     }
 
     process("springHsBooking") {
@@ -187,7 +188,7 @@ openapiProcessor {
         prop("mapping", project.file("src/main/resources/api-definition/hs-booking/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
-        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
+        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springHsBooking").get().asFile.path)
     }
 
     process("springHsHosting") {
@@ -197,7 +198,7 @@ openapiProcessor {
         prop("mapping", project.file("src/main/resources/api-definition/hs-hosting/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
-        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
+        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springHsHosting").get().asFile.path)
     }
 
     process("springAccounts") {
@@ -207,7 +208,7 @@ openapiProcessor {
         prop("mapping", project.file("src/main/resources/api-definition/accounts/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
-        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax").get().asFile.path)
+        targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springAccounts").get().asFile.path)
     }
 }
 
@@ -246,7 +247,11 @@ tasks.compileJava {
 // TODO.impl: Upgrade to io.openapiprocessor.openapi-processor >= 2024.2
 //  and use either `bean-validation: true` in api-mapping.yaml or `useSpringBoot3 true`
 val openApiGenerate = tasks.register<Copy>("openApiGenerate") {
-    from(layout.buildDirectory.dir("generated/sources/openapi-javax"))
+    // copy from each processor's own targetDir, so the process names don't end up in the package paths
+    listOf(
+        "springRoot", "springRbac", "springTest", "springHsOffice",
+        "springHsBooking", "springHsHosting", "springAccounts"
+    ).forEach { from(layout.buildDirectory.dir("generated/sources/openapi-javax/$it")) }
     into(layout.buildDirectory.dir("generated/sources/openapi"))
     filter { line: String -> line.replace("javax", "jakarta") }
     dependsOn(processSpring) // Ensure generation happens first
