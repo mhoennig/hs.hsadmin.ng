@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Enriches the CSV produced by tools/get-keycloak-users (read from stdin) with an
+# additional `personUuid` column and writes the result to stdout.
+#
+# For every user row the natural person is looked up via
+#   tools/natural-partner-person-by-name <firstName> <lastName>
+# and its uuid is appended as the personUuid column. Rows without a unique match
+# (none or ambiguous) get an empty personUuid and a note on stderr.
+#
+# Usage:
+#   LOGIN <username>        # global-admin rights required, see natural-partner-person-by-name
+#   tools/get-keycloak-users | tools/enrich-keycloak-users-with-existing-natural-person-uuid
+#
+# Example:
+#   tools/get-keycloak-users | grep hsh- | tools/enrich-keycloak-users-with-existing-natural-person-uuid
+
+set -o pipefail
+
+scriptDir="$(cd "$(dirname "$0")" && pwd)"
+lookup="$scriptDir/natural-partner-person-by-name"
+
+header=yes
+while IFS= read -r line; do
+    [ -z "$line" ] && continue
+
+    if [ "$header" = yes ]; then
+        printf '%s,"personUuid"\n' "$line"
+        header=no
+        continue
+    fi
+
+    # parse the four quoted CSV fields (jq @csv output wraps each field in double quotes)
+    trimmed="${line#\"}"; trimmed="${trimmed%\"}"
+    IFS=$'\x1f' read -r username uuid firstName lastName <<<"${trimmed//\",\"/$'\x1f'}"
+    firstName="${firstName//\"\"/\"}"; lastName="${lastName//\"\"/\"}"
+
+    # look up the single matching natural person; </dev/null so the lookup cannot
+    # consume this loop's stdin (the CSV being read)
+    personUuid=""
+    personJson=$("$lookup" "$firstName" "$lastName" </dev/null 2>/dev/null)
+    case $? in
+        0) personUuid=$(jq -r '.uuid // empty' <<<"$personJson") ;;
+        1) echo "note: no natural person matches '$firstName $lastName' ($username)" >&2 ;;
+        2) echo "note: multiple natural persons match '$firstName $lastName' ($username), personUuid left empty" >&2 ;;
+        *) echo "warning: person lookup failed for '$firstName $lastName' ($username)" >&2 ;;
+    esac
+
+    jq -rn \
+        --arg u "$username" --arg id "$uuid" --arg fn "$firstName" --arg ln "$lastName" --arg p "$personUuid" \
+        '[$u, $id, $fn, $ln, $p] | @csv'
+done

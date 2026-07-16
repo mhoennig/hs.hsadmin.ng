@@ -4,6 +4,7 @@ import io.micrometer.core.annotation.Timed;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.NoSecurityRequirement;
 import net.hostsharing.hsadminng.generated.api.v1.api.TestApi;
+import net.hostsharing.hsadminng.generated.api.v1.model.ApiVersionGetResponse200Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,9 @@ public class PingController implements TestApi {
 
     @Autowired
     private MessageTranslator messageTranslator;
+
+    @Autowired
+    private VersionProvider versionProvider;
 
     @Timed("app.api.ping")
     @Override
@@ -34,6 +38,12 @@ public class PingController implements TestApi {
     @Override
     public ResponseEntity<String> pongPost() {
         return createPongResponse();
+    }
+
+    @Timed("app.api.version")
+    @Override
+    public ResponseEntity<ApiVersionGetResponse200Resource> version() {
+        return versionProvider.getVersion();
     }
 
     private ResponseEntity<String> createPongResponse() {

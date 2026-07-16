@@ -48,6 +48,21 @@ class RestResponseEntityExceptionHandlerUnitTest {
     }
 
     @Test
+    void handleConflictException() {
+        // given
+        final var givenException = new ConflictException("the subject 12345678-0000-0000-0000-000000000000 already has an account");
+        final var givenWebRequest = mock(WebRequest.class);
+
+        // when
+        final var errorResponse = exceptionHandler.handleConflictException(givenException, givenWebRequest);
+
+        // then
+        assertThat(errorResponse.getBody()).extracting(CustomErrorResponse::getStatusCode).isEqualTo(409);
+        assertThat(errorResponse.getBody()).extracting(CustomErrorResponse::getMessage).isEqualTo(
+                    "ERROR: [409] the subject 12345678-0000-0000-0000-000000000000 already has an account");
+    }
+
+    @Test
     void handleForeignKeyViolation() {
         // given
         final var givenException = new DataIntegrityViolationException("... violates foreign key constraint ...");

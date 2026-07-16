@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# Looks up hs-office relations by a person's given and family name and prints the natural holder persons.
+#
+# Usage:
+#   LOGIN <username>                                         # log in once (see .aliases); or have a JWT set up
+#   tools/natural-partner-person-by-name <givenName> <familyName>
+#
+# The <familyName> is passed to GET /api/hs/office/relations as the `personData` query parameter,
+# which matches the tradeName, familyName or givenName of either the anchor or the holder person
+# of a relation (there is no dedicated `name` parameter on that endpoint). The <givenName> is then
+# applied programmatically (case-insensitive substring match) to the holder's givenName, because
+# `personData` can only carry a single search fragment.
+#
+# The `relationType` query parameter is single-valued, so instead of two backend requests
+# (one per type) this script fetches once (unfiltered by type) and keeps only the relations
+# of type PARTNER or REPRESENTATIVE via jq.
+#
+# Exactly one distinct holder person of personType NATURAL_PERSON is expected:
+#   - exactly one match  -> its JSON object (not an array) is printed to stdout, exit code 0
+#   - more than one match -> an error is printed to stderr, exit code 2
+#   - no match            -> an error is printed to stderr, exit code 1
+# The printed person object has the fields uuid, personType, tradeName, salutation, title,
+# givenName and familyName. Authentication and the base-URL prefix are handled by the
+# HTTP function from .aliases.
+
+set -o pipefail
+
+function showHelp() {
+    cat <<EOF
+usage: ${0##*/} <givenName> <familyName>
+
+Finds the single NATURAL_PERSON that holds a PARTNER or REPRESENTATIVE relation
+matching the given name: <familyName> drives the backend query (personData),
+<givenName> is applied as a case-insensitive filter afterwards. On exactly one
+match its JSON object is printed to stdout (exit 0); on multiple matches an error
+goes to stderr (exit 2); on no match an error goes to stderr (exit 1).
+
+Requires an authenticated session with global-admin rights: run LOGIN (JWT)
+beforehand; see .aliases.
+EOF
+}
+
+case "${1-}" in
+    ''|-h|--help|'-?')
+        showHelp
+        exit 0
+        ;;
+esac
+
+givenName="$1"
+familyName="$2"
+if [ -z "$familyName" ]; then
+    echo "usage: ${0##*/} <givenName> <familyName>   (try --help)" >&2
+    exit 1
+fi
+
+# run from the repository root, because the HTTP function calls `tools/http` via a relative path
+cd "$(dirname "$0")/.." || exit 1
+
+# shellcheck source=/dev/null
+source .aliases
+
+# URL-encode the family name for use as a query-parameter value
+encodedFamilyName=$(jq -rn --arg v "$familyName" '$v | @uri')
+
+holders=$(
+    HTTP GET "/api/hs/office/relations?personData=${encodedFamilyName}" \
+        | jq --arg givenName "$givenName" '
+            [ .[]
+              | select(.type == "PARTNER" or .type == "REPRESENTATIVE")
+              | .holder
+              | select(.personType == "NATURAL_PERSON")
+              | select(.givenName != null
+                       and (.givenName | ascii_downcase | contains($givenName | ascii_downcase)))
+            ] | unique_by(.uuid)'
+) || { echo "ERROR: request to /api/hs/office/relations failed" >&2; exit 1; }
+
+count=$(jq 'length' <<<"$holders")
+case "$count" in
+    1)
+        jq '.[0]' <<<"$holders"
+        ;;
+    0)
+        echo "ERROR: no NATURAL_PERSON partner/representative holder found for givenName='$givenName' familyName='$familyName'" >&2
+        exit 1
+        ;;
+    *)
+        echo "ERROR: $count matching holders found for givenName='$givenName' familyName='$familyName', expected exactly one" >&2
+        exit 2
+        ;;
+esac

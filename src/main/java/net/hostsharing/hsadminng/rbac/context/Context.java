@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -44,6 +44,13 @@ public class Context {
             "content-length",
             "host",
             "user-agent");
+
+    // headers containing credentials which must not leak into the audit-log (base.tx_context.currentRequest)
+    private static final Set<String> HEADERS_TO_MASK = Set.of(
+            "authorization",
+            "cookie",
+            "hostsharing-api-key",
+            "x-api-key");
 
     // patterns of property names whose values are masked in the audit-logged request body,
     // e.g. the write-only password/totpKey properties of hosting-asset configs:
@@ -185,21 +192,26 @@ public class Context {
         if (nameOrUuid == null) {
             return null;
         }
-        // TODO.impl: maybe it should be the other way around: UUID as the default and just optionally the name
+        // a subject UUID (e.g. JWT "sub" claim) is the default, a plain subject name the fallback
+        return toUuid(nameOrUuid)
+                .map(authenticatedUuid -> findSubjectNameByUuid(authenticatedUuid)
+                        .orElseThrow(() -> new NoSuchElementException("cannot find Subject by uuid: " + authenticatedUuid)))
+                .orElse(nameOrUuid);
+    }
+
+    private static Optional<UUID> toUuid(final String maybeUuid) {
         try {
-            val authenticatedUuid = UUID.fromString(nameOrUuid);
-            val subjectName = findSubjectNameByUuid(authenticatedUuid)
-                    .orElseThrow(() -> new EntityExistsException("Subject not found"));
-            return subjectName;
+            return Optional.of(UUID.fromString(maybeUuid));
         } catch (final IllegalArgumentException e) {
-            return nameOrUuid;
+            return Optional.empty();
         }
     }
 
     private Optional<String> findSubjectNameByUuid(final UUID authenticatedUuid) {
-        return Optional.ofNullable(em.createNativeQuery("SELECT name FROM rbac.subject s WHERE s.uuid=:uuid")
+        final Stream<?> subjectNames = em.createNativeQuery("SELECT name FROM rbac.subject s WHERE s.uuid=:uuid")
                 .setParameter("uuid", authenticatedUuid)
-                .getSingleResult()).map(Object::toString);
+                .getResultStream();
+        return subjectNames.findFirst().map(Object::toString);
     }
 
     public List<String> fetchClaimedSubjectGroupNames() {
@@ -258,7 +270,9 @@ public class Context {
                 .filter(not(HEADERS_TO_IGNORE::contains))
                 .collect(Collectors.toSet());
         for (String headerName : headers) {
-            final var headerValue = request.getHeader(headerName);
+            final var headerValue = HEADERS_TO_MASK.contains(headerName.toLowerCase())
+                    ? MASKED_PROPERTY_VALUE
+                    : request.getHeader(headerName);
             curlCommand += " \\" + System.lineSeparator() + String.format("-H '%s:%s'", headerName, headerValue);
         }
 

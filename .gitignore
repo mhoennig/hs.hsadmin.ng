@@ -117,8 +117,9 @@ Desktop.ini
 ######################
 # Directories for Generated Files of IDEs and build-tools
 ######################
-/bin/
 /deploy/
+/local/
+/.private/
 
 ######################
 # Logs
@@ -139,8 +140,15 @@ Desktop.ini
 .eslintcache
 
 ######################
+# Python
+######################
+tools/lib/__pycache__/
+
+######################
 # Project Related
 ######################
+/.aiignore
+/.apikeys*
 /.environment*
 /src/test/resources/migration-prod/*
 .aider/

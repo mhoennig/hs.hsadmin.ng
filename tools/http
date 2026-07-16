@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# Executes an HTTP request against the hsadmin-NG REST-API via curl,
+# usually invoked via the `HTTP` function from `.aliases`, e.g.:
+#
+#   HTTP GET /api/hs/accounts/current
+#   HTTP POST /api/hs/accounts/accounts -H 'Content-Type: application/json' --data-binary @- <<EOF
+#   { ... }
+#   EOF
+#
+# It prefixes $HSADMINNG_API_BASE_URL to the given path and implicitly adds
+# the Authorization header from $HSADMINNG_JWT_BEARER.
+# A full http(s)://... URL and an explicit Authorization header (e.g. in a command
+# copy+pasted from a scenario-report under build/doc/scenarios) are used as given
+# instead of the implicit ones.
+# The HTTP command itself is always printed first (to stderr), so that it's clear
+# which request an output or error belongs to. It is printed in its unexpanded form:
+# without the $HSADMINNG_API_BASE_URL prefix and without any Authorization header.
+# A request body given via stdin (e.g. a here-document for --data-binary @-)
+# is printed (to stderr) as well.
+# JSON responses are pretty-printed via jq, if installed; other responses are printed as-is.
+
+if [ $# -lt 2 ]; then
+    echo "usage: ${0##*/} <HTTP-METHOD> </api/... path> [additional curl arguments]" >&2
+    exit 1
+fi
+method="$1" path="$2"
+shift 2
+
+# print the command; to stderr, so that captured output (e.g. for jq) stays clean;
+# without the base-URL prefix and without the Authorization header (it contains the expanded token)
+displayPath="$path"
+if [ -n "$HSADMINNG_API_BASE_URL" ]; then
+    displayPath="${path#"$HSADMINNG_API_BASE_URL"}"
+fi
+args=("$@")
+displayArgs=()
+for ((i = 0; i < ${#args[@]}; i++)); do
+    if { [ "${args[i]}" == "-H" ] || [ "${args[i]}" == "--header" ]; } \
+            && [[ "${args[i+1]}" == [Aa]uthorization:* ]]; then
+        ((i++)) # also skip the Authorization header value
+        continue
+    fi
+    displayArgs+=("${args[i]}")
+done
+# double-quote arguments which contain characters with a special meaning to the shell
+function quoted() {
+    if [[ "$1" =~ ^[A-Za-z0-9@%+=:,./_-]+$ ]]; then
+        printf '%s' "$1"
+    else
+        local arg="$1"
+        arg="${arg//\\/\\\\}"
+        arg="${arg//\"/\\\"}"
+        arg="${arg//\$/\\\$}"
+        arg="${arg//\`/\\\`}"
+        printf '"%s"' "$arg"
+    fi
+}
+
+if [ ${#displayArgs[@]} -eq 0 ]; then
+    echo "HTTP $method $(quoted "$displayPath")" >&2
+else
+    displayLine=""
+    for arg in "${displayArgs[@]}"; do
+        displayLine+=" $(quoted "$arg")"
+    done
+    echo "HTTP $method $(quoted "$displayPath") \\" >&2
+    echo "   $displayLine" >&2
+fi
+
+# a request body given via stdin (e.g. --data-binary @-) is captured
+# to print it (to stderr, like the command) and to pass it on to curl
+bodyFromStdin=no
+for arg in "$@"; do
+    case "$arg" in
+        *@-) bodyFromStdin=yes ;;
+    esac
+done
+if [ "$bodyFromStdin" == yes ]; then
+    requestBody=$(cat)
+    printf '%s\n' "$requestBody" >&2
+fi
+
+case "$path" in
+    http://*|https://*)
+        url="$path" ;;
+    *)
+        if [ -z "$HSADMINNG_API_BASE_URL" ]; then
+            echo "${0##*/}: HSADMINNG_API_BASE_URL is not set, e.g.: export HSADMINNG_API_BASE_URL=http://localhost:8080" >&2
+            exit 1
+        fi
+        url="$HSADMINNG_API_BASE_URL$path" ;;
+esac
+
+# percent-encode characters which are not allowed raw in URLs, e.g. umlauts and spaces
+# in query parameters like ?name=Hönnig; reserved URL characters and '%' are kept as-is,
+# thus already percent-encoded URLs (e.g. ?name=H%C3%B6nnig) pass through unchanged
+function urlEncoded() {
+    local LC_ALL=C # handle the string byte-wise, each byte of a UTF-8 character gets its own %XX
+    local allowed='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'\''()*+,;=%'
+    local encoded='' char hex
+    for ((i = 0; i < ${#1}; i++)); do
+        char="${1:i:1}"
+        if [[ "$allowed" == *"$char"* ]]; then
+            encoded+="$char"
+        else
+            printf -v hex '%%%02X' "'$char"
+            encoded+="$hex"
+        fi
+    done
+    printf '%s' "$encoded"
+}
+url=$(urlEncoded "$url")
+
+# Option names differ between curl versions still in use (e.g. RHEL 8: 7.61, Ubuntu 20.04: 7.68),
+# thus probe the locally installed curl (--version prevents any actual transfer):
+declare -a curlOptions=(--show-error)
+if curl --no-progress-meter --version >/dev/null 2>&1; then
+    curlOptions+=(--no-progress-meter) # since curl 7.67
+else
+    curlOptions+=(--silent) # older equivalent, errors still shown due to --show-error
+fi
+if curl --fail-with-body --version >/dev/null 2>&1; then
+    curlOptions+=(--fail-with-body) # since curl 7.76
+else
+    curlOptions+=(--fail) # older variant, unfortunately suppressing the response body on HTTP errors
+fi
+
+addAuthorizationHeader=yes
+for arg in "$@"; do
+    case "$arg" in
+        [Aa]uthorization:*) addAuthorizationHeader=no ;;
+    esac
+done
+if [ "$addAuthorizationHeader" == yes ]; then
+    if [ -z "$HSADMINNG_JWT_BEARER" ]; then
+        echo "${0##*/}: HSADMINNG_JWT_BEARER is not set, expecting a valid JWT" >&2
+        exit 1
+    fi
+    curlOptions+=(-H "Authorization: Bearer $HSADMINNG_JWT_BEARER")
+fi
+
+httpExitCode=0
+if [ "$bodyFromStdin" == yes ]; then
+    response=$(printf '%s' "$requestBody" | curl "${curlOptions[@]}" -X "$method" "$url" "$@") || httpExitCode=$?
+else
+    response=$(curl "${curlOptions[@]}" -X "$method" "$url" "$@") || httpExitCode=$?
+fi
+
+if [ -n "$response" ]; then
+    if command -v jq >/dev/null 2>&1; then
+        # pretty-print JSON responses, print anything else (e.g. from /api/ping) as-is
+        jq <<<"$response" 2>/dev/null || printf '%s\n' "$response"
+    else
+        printf '%s\n' "$response"
+    fi
+fi
+exit $httpExitCode

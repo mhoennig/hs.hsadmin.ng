@@ -6,15 +6,21 @@ import lombok.SneakyThrows;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -27,10 +33,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import javax.crypto.spec.SecretKeySpec;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.RSA_KEY;
 
-@Configuration
 @EnableWebSecurity
 // securitySchemes should work in OpenAPI yaml, but the Spring templates seem not to support it
 @SecurityScheme(
@@ -71,28 +79,57 @@ public abstract class BaseWebSecurityConfig {
                 .build();
     }
 
-    @Bean
+    @Bean("jwtDecoder")
     @Profile("!fake-jwt")
-    public JwtDecoder jwtDecoder(
-            // TODO.impl [for Story#458]: Maybe move all defaults from the application.yml to here?
+    public JwtDecoder standardJwtDecoder(
             @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") final String issuerUri,
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") final String jwkSetUri,
-            @Value("${spring.security.oauth2.resourceserver.jwt.hmac-secret:${HSADMINNG_JWT_HMAC_SECRET:}}") final String hmacSecret) {
+            @Value("${spring.security.oauth2.resourceserver.jwt.hmac-secret:}") final String hmacSecret,
+            @Value("${spring.security.oauth2.resourceserver.jwt.audiences:}") final String audiences) {
         if (StringUtils.hasText(hmacSecret)) {
-            return NimbusJwtDecoder.withSecretKey(new SecretKeySpec(hmacSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA512"))
+            val decoder = NimbusJwtDecoder.withSecretKey(new SecretKeySpec(hmacSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA512"))
                     .macAlgorithm(MacAlgorithm.HS512)
                     .build();
+            return withTokenValidators(decoder, issuerUri, audiences);
         }
         if (StringUtils.hasText(jwkSetUri)) {
-            return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+            if (jwkSetUri.contains("/fake-jwt")) {
+                throw new IllegalStateException("You are using a fake-jwt JWK set URI (\"" + jwkSetUri + "\") but the 'fake-jwt' profile is not active. " +
+                        "Either activate the 'fake-jwt' profile or set a real JWT JWK set URI in spring.security.oauth2.resourceserver.jwt.jwk-set-uri.");
+            }
+            return withTokenValidators(NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build(), issuerUri, audiences);
         }
         if (StringUtils.hasText(issuerUri)) {
-            return JwtDecoders.fromIssuerLocation(issuerUri);
+            if (issuerUri.contains("/fake-jwt")) {
+                throw new IllegalStateException("You are using a fake-jwt issuer URL (\"" + issuerUri + "\") but the 'fake-jwt' profile is not active. " +
+                        "Either activate the 'fake-jwt' profile or set a real JWT issuer URL in HSADMINNG_JWT_ISSUER.");
+            }
+            final NimbusJwtDecoder decoder = JwtDecoders.fromIssuerLocation(issuerUri);
+            return withTokenValidators(decoder, issuerUri, audiences);
         }
-        throw new IllegalStateException("Either spring.security.oauth2.resourceserver.jwt.hmac-secret (HSADMINNG_JWT_HMAC_SECRET), spring.security.oauth2.resourceserver.jwt.jwk-set-uri (HSADMINNG_JWT_JWKS_URL) or ...issuer-uri (HSADMINNG_JWT_ISSUER) must be configured.");
+        throw new IllegalStateException("Either spring.security.oauth2.resourceserver.jwt.hmac-secret (HSADMINNG_JWT_HMAC_SECRET), spring.security.oauth2.resourceserver.jwt.jwk-set-uri or ...issuer-uri (HSADMINNG_JWT_ISSUER) must be configured.");
     }
 
-    @Bean
+    // The audience ("aud") claim is only validated if audiences (HSADMINNG_JWT_AUDIENCE) is configured,
+    // because it's not known yet which audience values the real HS Keycloak access tokens carry, if any.
+    private static NimbusJwtDecoder withTokenValidators(
+            final NimbusJwtDecoder decoder, final String issuerUri, final String audiences) {
+        final var validators = new ArrayList<OAuth2TokenValidator<Jwt>>();
+        validators.add(new JwtTimestampValidator());
+        if (StringUtils.hasText(issuerUri)) {
+            validators.add(new JwtIssuerValidator(issuerUri));
+        }
+        if (StringUtils.hasText(audiences)) {
+            val expectedAudiences = Arrays.stream(audiences.split(","))
+                    .map(String::trim).filter(StringUtils::hasText).toList();
+            validators.add(new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,
+                    aud -> aud != null && expectedAudiences.stream().anyMatch(aud::contains)));
+        }
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(validators));
+        return decoder;
+    }
+
+    @Bean("jwtDecoder")
     @Profile("fake-jwt")
     @SneakyThrows
     public JwtDecoder fakeJwtDecoder() {

@@ -434,12 +434,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     // an unquoted here-document delimiter, thus values can be replaced by shell variables after copy+paste
     private static final String HERE_DOCUMENT_DELIMITER = "EOF";
 
-    // not defined anywhere in this repo,
-    // just a placehoder to make reported requests copy+paste-able into a shell
-    // where the user has an HTTP alias and HSADMINNG_API_BASE_URL defined
-    private static final String HSADMINNG_API_BASE_URL_ENV_VAR = "$HSADMINNG_API_BASE_URL";
-
-    // also not defined in this repo; the fake JWT claims are rendered as ignorable `# ...` pseudo-arguments,
+    // not defined in this repo; the fake JWT claims are rendered as ignorable `# ...` pseudo-arguments,
     // thus the user can paste the command with a real HSADMINNG_JWT_BEARER defined in their environment
     private static final String HSADMINNG_JWT_BEARER_ENV_VAR = "$HSADMINNG_JWT_BEARER";
 
@@ -677,9 +672,10 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         private void printRequest() {
             final var requestArguments = requestArguments();
-            // double quotes, thus $HSADMINNG_API_BASE_URL gets expanded by the shell after copy+paste
+            // the HTTP shell-function prefixes $HSADMINNG_API_BASE_URL itself, thus just the path;
+            // double quotes, thus query strings (`?`, `&`) survive copy+paste into a shell
             testReport.printLine(
-                    "HTTP " + httpMethod.name() + " \"" + HSADMINNG_API_BASE_URL_ENV_VAR + uri + "\""
+                    "HTTP " + httpMethod.name() + " \"" + uri + "\""
                             + (requestArguments.isEmpty() ? "" : " \\"));
             for (int i = 0; i < requestArguments.size(); ++i) {
                 printRequestArgument(requestArguments.get(i), i < requestArguments.size() - 1);

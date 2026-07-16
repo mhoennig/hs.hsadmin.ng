@@ -36,7 +36,7 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^[a-z]{3,5}-[^/]+$'
+                    pattern: '^[a-z]{3,12}-[^/]+$'
                     description: |
                         USER subject name using the realm-prefix and local-part format.
                         The local-part does not reject anything which might come from Keycloak,
@@ -59,7 +59,7 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^/[a-z]{3,5}-[^/]+$'
+                    pattern: '^/[a-z]{3,12}-[^/]+$'
                     description: |
                         GROUP subject name. GROUP subject names start with `/`, a realm-prefix and a '-'
                         followed by a local-part.                      

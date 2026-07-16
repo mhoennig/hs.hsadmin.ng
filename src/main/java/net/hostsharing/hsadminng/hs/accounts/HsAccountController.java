@@ -11,6 +11,7 @@ import net.hostsharing.hsadminng.accounts.generated.api.v1.model.AccountResource
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.AccountSubjectInsertResource;
 import net.hostsharing.hsadminng.accounts.generated.api.v1.model.RbacSubjectResource;
 import net.hostsharing.hsadminng.config.MessageTranslator;
+import net.hostsharing.hsadminng.errors.ConflictException;
 import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
@@ -104,18 +105,23 @@ public class HsAccountController implements AccountApi {
 
     @Override
     @Transactional(readOnly = true)
-    @Timed("app.accounts.account.getListIfAccountByPersonUuid")
-    public ResponseEntity<List<AccountResource>> getListIfAccount(
+    @Timed("app.accounts.account.getListOfAccountsByPersonUuid")
+    public ResponseEntity<List<AccountResource>> getListOfAccounts(
             final String assumedRoles,
             final UUID personUuid
     ) {
         context.assumeRoles(assumedRoles);
 
-        val account = personUuid == null
-                ? accountRepo.findByCurrentSubject()
-                : findByPersonUuid(personUuid);
+        final List<HsAccountEntity> accounts;
+        if (personUuid != null) {
+            accounts = findByPersonUuid(personUuid);
+        } else if (context.hasGlobalAdminRole()) {
+            accounts = accountRepo.findAll();
+        } else {
+            accounts = accountRepo.findByCurrentSubject();
+        }
         val result = mapper.mapList(
-                account, AccountResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+                accounts, AccountResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(result);
     }
 
@@ -182,7 +188,7 @@ public class HsAccountController implements AccountApi {
 
         // fetch the data, the person is null if the current subject has no account
         val currentSubjectUuid = context.fetchCurrentSubjectUuid();
-        val currentSubject = rbacSubjectRepo.findByUuid(currentSubjectUuid);
+        val currentSubject = realSubjectRepo.findCurrentSubject();
         val person = accountRepo.findByUuid(currentSubjectUuid).map(HsAccountEntity::getPerson).orElse(null);
 
         final boolean isGlobalAdmin = context.isGlobalAdmin();
@@ -230,7 +236,7 @@ public class HsAccountController implements AccountApi {
                             subject.getUuid(), subject.getType().name()));
         }
         if (accountRepo.findByUuid(subject.getUuid()).isPresent()) {
-            throw new ValidationException(
+            throw new ConflictException(
                     messageTranslator.translate(
                             "account.subject-{0}-already-has-an-account",
                             subject.getUuid()));
@@ -241,7 +247,7 @@ public class HsAccountController implements AccountApi {
     private RealSubjectEntity createSubject(final AccountSubjectInsertResource newSubject) {
         // newSubject.uuid+name are @NotNull-validated and type can only be USER, all enforced by the API definition
         if (realSubjectRepo.findVisibleSubjectByUuid(newSubject.getUuid()).isPresent()) {
-            throw new ValidationException(
+            throw new ConflictException(
                     messageTranslator.translate(
                             "account.subject-with-uuid-{0}-already-exists",
                             newSubject.getUuid()));
@@ -263,7 +269,7 @@ public class HsAccountController implements AccountApi {
 
 
     private CurrentLoginUserResource currentLoginUserResponse(
-            final RbacSubjectEntity currentSubject,
+            final RealSubjectEntity currentSubject,
             final HsOfficePerson<?> person,
             final boolean isGlobalAdmin) {
         val result = new CurrentLoginUserResource();

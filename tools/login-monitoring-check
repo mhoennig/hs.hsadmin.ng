@@ -1,0 +1,328 @@
+#!/bin/bash
+
+# Monitoring-check for the Keycloak-OIDC integration of a deployed hsadmin-NG backend.
+#
+# Performs an automated Keycloak login as a dedicated, unprivileged monitoring user
+# and verifies that the backend accepts the resulting JWT via GET /api/rbac/context.
+# The monitoring user only exists as a Keycloak user plus a matching rbac USER subject
+# (same name and UUID); it has neither an account nor any role grants, so its
+# credentials can be stored on an external monitoring host without a security risk.
+#
+# Intended for unattended runs (e.g. via cron on a monitoring host): the last stdout
+# line is either "OK: ..." or "FAILED: ...", details go to stderr, and the exit code
+# is 0 only if the whole check succeeded.
+#
+# This script is deliberately self-contained (it only needs bash, curl, openssl,
+# and optionally jq), so that it can be copied to a monitoring host without the
+# rest of this repository. The Keycloak login-form flow is therefore duplicated
+# from tools/jwt-login; keep the two scripts in sync.
+#
+# Configuration via environment variables:
+#   HSADMINNG_API_BASE_URL            backend to check, default: https://backend.ng.hostsharing.net
+#   HSADMINNG_LOGIN_MONITOR_USERNAME  Keycloak username, default: hsh-login_monitor
+#   HSADMINNG_LOGIN_MONITOR_PASSWORD  the monitoring user's Keycloak password, required
+#   HSADMINNG_KEYCLOAK_ISSUER         default: https://login.ng.hostsharing.net/realms/hs
+#   HSADMINNG_KEYCLOAK_CLIENT_ID      default: hs-admin-web
+#   HSADMINNG_KEYCLOAK_REDIRECT_URI   default: https://testui.ng.hostsharing.net/
+#
+# Optional Matrix alerting:
+#   --matrix-webhook <url>  additionally posts any FAILED result to this webhook,
+#                           e.g. a matrix-hookshot generic webhook URL
+#   --matrix-webhook        same, with the URL taken from HSADMINNG_MATRIX_WEBHOOK_URL;
+#                           prefer this on shared hosts to keep the secret webhook URL
+#                           out of the process list
+#
+#   While a failure persists, repeated alerts are throttled with a backoff:
+#   the first FAILED result is posted immediately, repetitions only after the
+#   intervals (in hours) listed in HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT
+#   (default 1,2,4,8,16,24), with the last interval repeating indefinitely.
+#   Once the check succeeds again, a RESOLVED message is posted.
+#   The active-alarm state is kept in HSADMINNG_LOGIN_MONITOR_STATE_FILE,
+#   default: ~/.local/state/login-monitoring-check.state ($XDG_STATE_HOME is honored).
+
+set -o pipefail
+
+# Option names differ between curl versions still in use (e.g. RHEL 8: 7.61),
+# thus probe the locally installed curl (--version prevents any actual transfer):
+CURL=(curl --show-error)
+if curl --no-progress-meter --version >/dev/null 2>&1; then
+    CURL+=(--no-progress-meter) # since curl 7.67
+else
+    CURL+=(--silent) # older equivalent, errors still shown due to --show-error
+fi
+if curl --fail-with-body --version >/dev/null 2>&1; then
+    CURL+=(--fail-with-body) # since curl 7.76
+else
+    CURL+=(--fail) # older variant, unfortunately suppressing the response body on HTTP errors
+fi
+
+# encodes $1 as a JSON string literal (including the surrounding quotes)
+function jsonString() {
+    if command -v jq >/dev/null 2>&1; then
+        jq -n --arg s "$1" '$s'
+    else
+        local s=${1//\\/\\\\}
+        s=${s//\"/\\\"}
+        s=${s//$'\n'/\\n}
+        s=${s//$'\t'/\\t}
+        printf '"%s"' "$s"
+    fi
+}
+
+# posts $1 to the Matrix webhook; a no-op unless --matrix-webhook was given
+function sendMatrixMessage() {
+    [ -n "$MATRIX_WEBHOOK_URL" ] || return 0
+    # the two trailing spaces are Markdown hard line breaks, so that Matrix renders multiple lines
+    local text="$1"$'  \n'"backend: ${HSADMINNG_API_BASE_URL:-not configured yet}, checked from: ${USER:-$(id -un)}@${HOSTNAME:-$(hostname)}"
+    # The secret webhook URL is passed as a curl config via stdin (--config -)
+    # to keep it out of curl's process-list entry, like the password in keycloakLogin.
+    printf 'url = "%s"\n' "$MATRIX_WEBHOOK_URL" |
+        "${CURL[@]}" --config - -X POST -H 'Content-Type: application/json' \
+            -d "{\"username\": \"login-monitoring-check\", \"text\": $(jsonString "$text")}" \
+            >/dev/null || {
+        echo "ERROR: could not send the message to the Matrix webhook" >&2
+        return 1
+    }
+}
+
+# formats a duration given in seconds as e.g. 26h05m
+function formatDuration() {
+    printf '%dh%02dm' $(( $1 / 3600 )) $(( $1 % 3600 / 60 ))
+}
+
+# Posts the FAILED alert, throttled via the state file: the first failure alerts
+# immediately, repetitions only after the ALARM_REPEAT interval which applies to
+# the current alert count. If sending fails, the state is not updated, so the
+# next run retries.
+function sendMatrixAlert() {
+    [ -n "$MATRIX_WEBHOOK_URL" ] || return 0
+    local now FIRST_FAILURE_TS='' LAST_ALERT_TS=0 ALERT_COUNT=0
+    now=$(date +%s)
+    [ ! -f "$STATE_FILE" ] || source "$STATE_FILE"
+    if [ "$ALERT_COUNT" -gt 0 ]; then
+        local gaps=()
+        IFS=, read -ra gaps <<<"$ALARM_REPEAT"
+        local idx=$(( ALERT_COUNT <= ${#gaps[@]} ? ALERT_COUNT - 1 : ${#gaps[@]} - 1 ))
+        local dueTs=$(( LAST_ALERT_TS + gaps[idx] * 3600 ))
+        if [ "$now" -lt "$dueTs" ]; then
+            echo "Matrix alert #$(( ALERT_COUNT + 1 )) suppressed by HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT until $(date -d "@$dueTs" '+%F %T')" >&2
+            return 0
+        fi
+        sendMatrixMessage "$1"$'  \n'"(alert #$(( ALERT_COUNT + 1 )), failing since $(date -d "@$FIRST_FAILURE_TS" '+%F %T') = $(formatDuration $(( now - FIRST_FAILURE_TS ))))" ||
+            return 0
+    else
+        FIRST_FAILURE_TS=$now
+        sendMatrixMessage "$1" || return 0
+    fi
+    mkdir -p "$(dirname "$STATE_FILE")"
+    printf 'FIRST_FAILURE_TS=%s\nLAST_ALERT_TS=%s\nALERT_COUNT=%s\n' \
+            "$FIRST_FAILURE_TS" "$now" "$(( ALERT_COUNT + 1 ))" >"$STATE_FILE.tmp" &&
+        mv "$STATE_FILE.tmp" "$STATE_FILE"
+}
+
+# posts the all-clear if a FAILED alarm is active in the state file, and clears it;
+# if sending fails, the state is kept, so the next successful run retries
+function sendMatrixResolved() {
+    [ -n "$MATRIX_WEBHOOK_URL" ] && [ -f "$STATE_FILE" ] || return 0
+    local now FIRST_FAILURE_TS='' LAST_ALERT_TS=0 ALERT_COUNT=0
+    now=$(date +%s)
+    source "$STATE_FILE"
+    sendMatrixMessage "RESOLVED: $HSADMINNG_JWT_USERNAME can log in again, after $ALERT_COUNT alert(s) since $(date -d "@$FIRST_FAILURE_TS" '+%F %T') = $(formatDuration $(( now - FIRST_FAILURE_TS )))" &&
+        rm -f "$STATE_FILE"
+}
+
+function failed() {
+    echo "FAILED: $*"
+    sendMatrixAlert "FAILED: $*"
+    exit 1
+}
+
+# backoff configuration for repeated Matrix alerts, see the header comment
+ALARM_REPEAT=${HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT:-1,2,4,8,16,24}
+if ! [[ "$ALARM_REPEAT" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+    echo "WARNING: ignoring invalid HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT '$ALARM_REPEAT', using 1,2,4,8,16,24" >&2
+    ALARM_REPEAT=1,2,4,8,16,24
+fi
+STATE_FILE=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
+
+MATRIX_WEBHOOK_URL=
+while [ $# -gt 0 ]; do
+    case $1 in
+        --matrix-webhook=*)
+            MATRIX_WEBHOOK_URL=${1#*=}
+            ;;
+        --matrix-webhook)
+            if [ $# -gt 1 ] && [[ $2 != --* ]]; then
+                MATRIX_WEBHOOK_URL=$2
+                shift
+            else
+                MATRIX_WEBHOOK_URL=$HSADMINNG_MATRIX_WEBHOOK_URL
+            fi
+            [ -n "$MATRIX_WEBHOOK_URL" ] ||
+                failed "--matrix-webhook needs a URL argument or HSADMINNG_MATRIX_WEBHOOK_URL set"
+            ;;
+        *)
+            failed "unknown argument: $1 (usage: $0 [--matrix-webhook [<url>]])"
+            ;;
+    esac
+    shift
+done
+
+HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-https://backend.ng.hostsharing.net}
+[ -n "$HSADMINNG_LOGIN_MONITOR_PASSWORD" ] || failed "HSADMINNG_LOGIN_MONITOR_PASSWORD is not set"
+# the keycloakLogin function below is kept in sync with tools/jwt-login,
+# which expects the credentials in the generic variables
+HSADMINNG_JWT_USERNAME=${HSADMINNG_LOGIN_MONITOR_USERNAME:-hsh-login_monitor}
+HSADMINNG_JWT_PASSWORD=$HSADMINNG_LOGIN_MONITOR_PASSWORD
+
+KEYCLOAK_ISSUER="${HSADMINNG_KEYCLOAK_ISSUER:-https://login.ng.hostsharing.net/realms/hs}"
+CLIENT_ID="${HSADMINNG_KEYCLOAK_CLIENT_ID:-hs-admin-web}"
+REDIRECT_URI="${HSADMINNG_KEYCLOAK_REDIRECT_URI:-https://testui.ng.hostsharing.net/}"
+
+# Performs the OAuth2 authorization-code flow with PKCE, scripted through the
+# Keycloak login form (incl. username-first and identity-broker redirects) and
+# prints the access token to stdout; duplicated from tools/jwt-login, see above.
+# The subshell body `( ... )` keeps `set`, `trap`, and all variables local.
+function keycloakLogin() (
+  set -o pipefail
+
+  COOKIE_JAR=$(mktemp) || exit 1
+  RESPONSE_BODY=$(mktemp) || exit 1
+  trap 'rm -f "$COOKIE_JAR" "$RESPONSE_BODY"' EXIT
+
+  function formAction() {
+    grep -o 'action="[^"]*"' <<<"$1" | head -1 | sed -e 's/^action="//' -e 's/"$//' -e 's/&amp;/\&/g'
+  }
+
+  function pageError() {
+    local errorText
+    errorText=$(tr -d '\n' <"$RESPONSE_BODY" |
+        grep -o -E '(kc-feedback-text"|id="input-error[^"]*"[^>]*)>[[:space:]]*[^<[:space:]][^<]*' | head -1 |
+        sed -e 's/^[^>]*>[[:space:]]*//' -e 's/[[:space:]]*$//')
+    echo "${errorText:-check your credentials}"
+  }
+
+  CODE_VERIFIER=$(openssl rand -base64 48 | tr '+/' '-_' | tr -d '=')
+  CODE_CHALLENGE=$(printf '%s' "$CODE_VERIFIER" | openssl dgst -sha256 -binary | base64 | tr '+/' '-_' | tr -d '=')
+
+  LOGIN_FORM=$("${CURL[@]}" -c "$COOKIE_JAR" -G "$KEYCLOAK_ISSUER/protocol/openid-connect/auth" \
+      -d "client_id=$CLIENT_ID" \
+      --data-urlencode "redirect_uri=$REDIRECT_URI" \
+      -d response_type=code \
+      -d scope=openid \
+      -d "code_challenge=$CODE_CHALLENGE" \
+      -d code_challenge_method=S256) || exit 1
+
+  FORM_ACTION=$(formAction "$LOGIN_FORM")
+  if [ -z "$FORM_ACTION" ]; then
+    echo "ERROR: could not find the Keycloak login form at $KEYCLOAK_ISSUER" >&2
+    exit 1
+  fi
+
+  if grep -q 'name="password"' <<<"$LOGIN_FORM"; then
+    # single-page flow: username and password are posted to the same form
+    PASSWORD_FORM=$LOGIN_FORM
+  else
+    # username-first flow: POST the username; -L follows possible identity-broker
+    # redirects, the response then contains the (possibly brokered) password form
+    PASSWORD_FORM=$("${CURL[@]}" -L -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+        --data-urlencode "username=$HSADMINNG_JWT_USERNAME" \
+        "$FORM_ACTION") || exit 1
+    printf '%s' "$PASSWORD_FORM" >"$RESPONSE_BODY"
+    FORM_ACTION=$(formAction "$PASSWORD_FORM")
+    if [ -z "$FORM_ACTION" ] || ! grep -q 'name="password"' <<<"$PASSWORD_FORM"; then
+      echo "ERROR: login failed after submitting the username: $(pageError)" >&2
+      exit 1
+    fi
+  fi
+
+  if grep -q 'name="username"' <<<"$PASSWORD_FORM"; then
+    # a brokered password form pre-fills the username (e.g. with the email address); re-post that value
+    PREFILLED_USERNAME=$(grep -o '<input[^>]*name="username"[^>]*' <<<"$PASSWORD_FORM" |
+        grep -o 'value="[^"]*"' | head -1 | sed -e 's/^value="//' -e 's/"$//')
+    USERNAME_ARGUMENTS=(--data-urlencode "username=${PREFILLED_USERNAME:-$HSADMINNG_JWT_USERNAME}")
+  else
+    USERNAME_ARGUMENTS=()
+  fi
+
+  # The password is passed via stdin (--data-urlencode name@-) to keep it out of the process list.
+  # On success, -L follows the redirects back through the broker to $REDIRECT_URI?...&code=...,
+  # and %{url_effective} keeps that query-string with the authorization code.
+  FINAL_URL=$(printf '%s' "$HSADMINNG_JWT_PASSWORD" | \
+      "${CURL[@]}" -L -b "$COOKIE_JAR" -c "$COOKIE_JAR" -o "$RESPONSE_BODY" -w '%{url_effective}' \
+          "${USERNAME_ARGUMENTS[@]}" \
+          --data-urlencode "password@-" \
+          -d "credentialId=" \
+          "$FORM_ACTION") || exit 1
+
+  AUTH_CODE=$(grep -o '[?&]code=[^&]*' <<<"$FINAL_URL" | tail -1 | cut -d= -f2)
+  if [ -z "$AUTH_CODE" ]; then
+    echo "ERROR: login failed: $(pageError)" >&2
+    echo "       (last page was $FINAL_URL," >&2
+    echo "        maybe the account requires OTP/2FA or another action, which this script does not support)" >&2
+    exit 1
+  fi
+
+  ACCESS_TOKEN=$("${CURL[@]}" -X POST "$KEYCLOAK_ISSUER/protocol/openid-connect/token" \
+      -d grant_type=authorization_code \
+      -d "client_id=$CLIENT_ID" \
+      --data-urlencode "redirect_uri=$REDIRECT_URI" \
+      -d "code=$AUTH_CODE" \
+      -d "code_verifier=$CODE_VERIFIER" |
+    grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
+  if [ -z "$ACCESS_TOKEN" ]; then
+    echo "ERROR: could not exchange the authorization code for an access token" >&2
+    exit 1
+  fi
+
+  echo "$ACCESS_TOKEN"
+)
+
+echo "LOGIN $HSADMINNG_JWT_USERNAME at $KEYCLOAK_ISSUER" >&2
+ACCESS_TOKEN=$(keycloakLogin) && [ -n "$ACCESS_TOKEN" ] ||
+    failed "Keycloak login as $HSADMINNG_JWT_USERNAME"
+
+echo "GET $HSADMINNG_API_BASE_URL/api/rbac/context" >&2
+response=$("${CURL[@]}" -H "Authorization: Bearer $ACCESS_TOKEN" \
+        "$HSADMINNG_API_BASE_URL/api/rbac/context") || {
+    # the error response body (captured via --fail-with-body) often explains the cause,
+    # e.g. "cannot find Subject by uuid ..." if the rbac subject does not match the JWT
+    [ -n "$response" ] && printf '%s\n' "$response" >&2
+    failed "GET /api/rbac/context on $HSADMINNG_API_BASE_URL with the obtained JWT"
+}
+printf '%s\n' "$response" >&2
+
+# verify that the backend resolved the JWT to the expected subject
+if command -v jq >/dev/null 2>&1; then
+    subjectName=$(jq -r '.subject.name // empty' <<<"$response")
+else
+    # fallback without jq: the subject is the first object with a "name" property
+    subjectName=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' <<<"$response" |
+        head -1 | sed -e 's/.*"\([^"]*\)"$/\1/')
+fi
+[ "$subjectName" == "$HSADMINNG_JWT_USERNAME" ] ||
+    failed "expected subject '$HSADMINNG_JWT_USERNAME' in /api/rbac/context, but got '$subjectName'"
+
+# true if the given JSON field is present in the response as an empty array
+function isEmptyArray() {
+    local field=$1
+    if command -v jq >/dev/null 2>&1; then
+        jq -e --arg f "$field" '.[$f] == []' <<<"$response" >/dev/null
+    else
+        # fallback without jq: an empty array is "field":[] (optional whitespace);
+        # a non-empty or missing array does not match, so the check fails safely
+        grep -qE "\"$field\"[[:space:]]*:[[:space:]]*\[[[:space:]]*\]" <<<"$response"
+    fi
+}
+
+# the monitoring user must stay unprivileged; alert on any role, group, or admin right
+if grep -qE '"globalAdmin"[[:space:]]*:[[:space:]]*true' <<<"$response"; then
+    failed "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has global-admin rights"
+fi
+isEmptyArray assumedRoles ||
+    failed "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has assumed roles in /api/rbac/context"
+isEmptyArray effectiveGroups ||
+    failed "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has effective groups in /api/rbac/context"
+
+sendMatrixResolved
+echo "OK: $HSADMINNG_JWT_USERNAME logged in via Keycloak and was accepted by $HSADMINNG_API_BASE_URL"

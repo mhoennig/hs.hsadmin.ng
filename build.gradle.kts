@@ -3,6 +3,7 @@ import info.solidsoft.gradle.pitest.PitestPluginExtension
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.GradleBuild
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import java.net.InetAddress
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
@@ -29,6 +30,9 @@ springBoot {
     buildInfo {
         if (!providers.gradleProperty("includeBuildTime").map(String::toBoolean).getOrElse(false)) {
             excludes.set(setOf("time"))
+        }
+        properties {
+            additional.set(mapOf<String, Any>("host" to InetAddress.getLocalHost().hostName))
         }
     }
 }
@@ -212,6 +216,15 @@ openapiProcessor {
     }
 }
 
+// The processor tasks only track their own apiPath/mapping YAML as inputs, but the API definitions
+// cross-reference schemas in other module directories (e.g. `$ref: ../rbac/...`). Declare the whole
+// api-definition directory as input so changes in referenced files invalidate every generation task.
+tasks.matching { it.name.startsWith("processSpring") && it.name != "processSpring" }.configureEach {
+    inputs.dir("src/main/resources/api-definition")
+        .withPropertyName("apiDefinitionDir")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 // Add generated sources to the main source set
 sourceSets.main.get().java.srcDir(layout.buildDirectory.dir("generated/sources/openapi"))
 
@@ -375,7 +388,8 @@ gitProperties {
         "git.commit.id",
         "git.commit.id.abbrev",
         "git.branch",
-        "git.commit.time"
+        "git.commit.time",
+        "git.dirty" // true if built from a working tree with uncommitted changes
     )
     // Allow builds from exported sources without .git
     failOnNoGitDirectory = false

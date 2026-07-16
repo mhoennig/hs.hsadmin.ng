@@ -1,9 +1,12 @@
 get:
-    summary: Returns a list of all  account.
-    description: Returns the list of all account which are visible to the current subject or any of it's assumed roles.
+    summary: Returns a list of accounts.
+    description:
+        Returns the list of accounts visible to the current subject.
+        For a (effective) global-admin, all accounts are returned.
+        For other subjects, all accounts belonging to the same person as the login-account are returned.
     tags:
         - account
-    operationId: getListIfAccount
+    operationId: getListOfAccounts
     parameters:
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUuid
@@ -12,7 +15,7 @@ get:
           schema:
               type: string
               format: uuid
-          description: The UUID of the person, whose account are to be fetched. Or null, if all account of the login-use should be fetched.
+          description: The UUID of the person, whose accounts are to be fetched. Or null, if the accounts of the login-subject (or, for a global-admin, all accounts) should be fetched.
     responses:
         "200":
             description: OK

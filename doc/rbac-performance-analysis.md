@@ -103,7 +103,7 @@ export HSADMINNG_POSTGRES_JDBC_URL=jdbc:postgresql://localhost:5432/postgres
 export HSADMINNG_POSTGRES_ADMIN_USERNAME=postgres
 export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
 export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
-export HSADMINNG_SUPERUSER=superuser-alex@hostsharing.net
+export HSADMINNG_SUPERUSER=hsh-alex_superuser
 ```
 
 We can now run the hosting-assets-import:

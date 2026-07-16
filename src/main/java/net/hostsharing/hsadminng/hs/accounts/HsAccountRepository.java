@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public interface HsAccountRepository extends Repository<HsAccountEntity, UUID> {
 
+    // hs_accounts.account is not RBAC-restricted, thus only to be called for global admins
+    @Timed("app.login.account.repo.findAll")
+    List<HsAccountEntity> findAll();
+
     @Timed("app.login.account.repo.findByUuid")
     Optional<HsAccountEntity> findByUuid(final UUID uuid);
 

@@ -1020,7 +1020,7 @@ create or replace function rbac.is_valid_user_subject_name(subjectName varchar)
     language sql
 as $$
     -- keep regex in sync with RbacUserSubjectInsert.name pattern in the OpenAPI spec
-    select subjectName is not null and subjectName ~ '^[a-z]{3,5}-[^/]+$';
+    select subjectName is not null and subjectName ~ '^[a-z]{3,12}-[^/]+$';
 $$;
 --//
 
@@ -1036,7 +1036,7 @@ create or replace function rbac.is_valid_group_subject_name(subjectName varchar)
     language sql
 as $$
     -- keep regex in sync with RbacGroupSubjectInsert.name pattern in the OpenAPI spec
-    select subjectName is not null and subjectName ~ '^/[a-z]{3,5}-[^/]+$';
+    select subjectName is not null and subjectName ~ '^/[a-z]{3,12}-[^/]+$';
 $$;
 --//
 

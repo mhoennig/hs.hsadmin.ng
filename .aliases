@@ -102,7 +102,6 @@ function gradlewBootRun() {
     fi
 
     unset HSADMINNG_JWT_ISSUER
-    unset HSADMINNG_JWT_JWKS_URL
     unset HSADMINNG_JWT_TOKEN_URL
     set -x
     ./gradlew bootRun "${gradle_args[@]}" --args="--spring.profiles.active=dev,fake-jwt,complete,test-data --server.port=${serverPort} --management.server.port=${managementPort}${additional_args}"
@@ -161,7 +160,7 @@ function _gwTest() {
   rm -f /tmp/gwTest.tmp
   if [ "$1" == "--all" ]; then
     shift # to remove the --all from $@
-    # delierately in separate gradlew-calls to avoid Testcontains-PostgreSQL problem spillover
+    # deliberately in separate gradlew-calls to avoid Testcontains-PostgreSQL problem spillover
     time (_gwTest1 unitTest "$@" &&
         _gwTest1 officeIntegrationTest bookingIntegrationTest hostingIntegrationTest "$@" &&
         _gwTest1 scenarioTest "$@" && _gwTest1 migrationTest "$@");
@@ -181,28 +180,53 @@ alias gw-test=_gwTest
 alias howto=tools/howto
 alias fixmes=tools/fixmes
 alias api=tools/api
-alias jwt-curl=tools/jwt-curl
+alias remote=tools/remote
 
-# HOWTO: execute HTTP requests copy+pasted from the scenario-reports (build/doc/scenarios):
-#   HSADMINNG_API_BASE_URL=...
-#   HSADMINNG_JWT_BEARER=...
-#   HTTP POST "HSADMINNG_API_BASE_URL/api/hs/accounts/accounts" -H "Authorization: Bearer HSADMINNG_JWT_BEARER" ...`
-#
-# Option names differ between curl versions still in use (e.g. RHEL 8: 7.61, Ubuntu 20.04: 7.68),
-# thus probe the locally installed curl once (--version prevents any actual transfer):
-declare -a _httpCurlOptions=(--show-error)
-if curl --no-progress-meter --version >/dev/null 2>&1; then
-    _httpCurlOptions+=(--no-progress-meter) # since curl 7.67
-else
-    _httpCurlOptions+=(--silent) # older equivalent, errors still shown due to --show-error
-fi
-if curl --fail-with-body --version >/dev/null 2>&1; then
-    _httpCurlOptions+=(--fail-with-body) # since curl 7.76
-else
-    _httpCurlOptions+=(--fail) # older variant, unfortunately suppressing the response body on HTTP errors
-fi
+# HOWTO: login to fetch a JWT for use with the HTTP function, e.g.:
+#   LOGIN some-username   # asks for the password, then logs in as that user
+#   LOGIN                 # logs in again with the last given username+password
+#   With HSADMINNG_JWT_TOKEN_URL set (e.g. to a local fake-jwt token endpoint), the direct
+#   OAuth2 password grant is used instead of the Keycloak login-form flow, see tools/jwt-login.
+function LOGIN() {
+    # sources tools/jwt-login, so that it can export HSADMINNG_JWT_BEARER into the current shell;
+    # defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well
+    if [ -n "$1" ]; then
+        export HSADMINNG_JWT_USERNAME=$1
+        # a newly given username invalidates a previously entered password, thus always ask
+        read -r -s -p "Password for $1: " HSADMINNG_JWT_PASSWORD
+        echo >&2
+        export HSADMINNG_JWT_PASSWORD
+    fi
+    source tools/jwt-login
+}
+
+# HOWTO: execute HTTP requests against the REST-API, either manually written or
+#   copy+pasted from the scenario-reports (build/doc/scenarios), e.g.:
+#   HTTP GET /api/hs/accounts/current
+#   HTTP POST /api/hs/accounts/accounts -H 'Content-Type: application/json' --data-binary @- <<EOF
+#   { ... }
+#   EOF
+#   See `tools/http` for details ($HSADMINNG_API_BASE_URL prefix, implicit Authorization
+#   header from $HSADMINNG_JWT_BEARER, jq pretty-printing, error reporting).
+#   Defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well.
 function HTTP() {
-    curl "${_httpCurlOptions[@]}" -X "$@"
+    tools/http "$@"
+}
+
+# HOWTO: fail fast if an expected result (e.g. from HTTP+jq) is missing:
+#   `require` checks the variables given BY NAME and ends the script with an error message
+#   if one is unset, empty, or "null" (as printed by jq for missing JSON properties), e.g.:
+#   personUuid=$(HTTP GET '/api/hs/office/persons?name=...' | jq -r '.[] | select(...) | .uuid')
+#   require personUuid
+function require() {
+    local name
+    for name in "$@"; do
+        if [ -z "${!name}" ] || [ "${!name}" == "null" ]; then
+            echo "ERROR: no value for ${name}" >&2
+            # end a script, but do not close an interactive shell
+            if [[ $- == *i* ]]; then return 1; else exit 1; fi
+        fi
+    done
 }
 
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries

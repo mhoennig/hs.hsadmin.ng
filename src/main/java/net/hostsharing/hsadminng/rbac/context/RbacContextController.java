@@ -13,8 +13,6 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
-import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
-import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,9 +34,6 @@ public class RbacContextController implements RbacContextApi {
     private StrictMapper mapper;
 
     @Autowired
-    private RbacSubjectRepository rbacSubjectRepo;
-
-    @Autowired
     private RealSubjectRepository realSubjectRepo;
 
     @Autowired
@@ -52,7 +47,7 @@ public class RbacContextController implements RbacContextApi {
         // fetch subject data before assuming any roles; otherwise we might have no SELECT permission anymore
         context.define();
         final var currentSubjectUuid = context.fetchCurrentSubjectUuid();
-        final var currentSubject = rbacSubjectRepo.findByUuid(currentSubjectUuid);
+        final var currentSubject = realSubjectRepo.findCurrentSubject();
         if (currentSubject == null) {
             return ResponseEntity.notFound().build();
         }
@@ -73,7 +68,7 @@ public class RbacContextController implements RbacContextApi {
 
     private RbacContextResource rbacContextResponse(
             final UUID currentSubjectUuid,
-            final RbacSubjectEntity currentSubject,
+            final RealSubjectEntity currentSubject,
             final List<String> claimedGroups,
             final List<RealSubjectEntity> effectiveGroups,
             final List<RbacRoleEntity> assumedRoles,

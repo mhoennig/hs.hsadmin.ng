@@ -616,7 +616,7 @@ class RbacSubjectControllerRestTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "name": "invalid-user@example.com"
+                                    "name": "invaliduser@example.com"
                                 }
                                 """)
                         .accept(MediaType.APPLICATION_JSON));
@@ -625,7 +625,7 @@ class RbacSubjectControllerRestTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
-                        "USER-Subjekt 'invalid-user@example.com' entspricht nicht dem erforderlichen Muster")));
+                        "USER-Subjekt 'invaliduser@example.com' entspricht nicht dem erforderlichen Muster")));
         verify(rbacSubjectRepository, never()).create(any());
     }
 
@@ -785,7 +785,7 @@ class RbacSubjectControllerRestTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "name": "invalid-user@example.com"
+                                    "name": "invaliduser@example.com"
                                 }
                                 """)
                         .accept(MediaType.APPLICATION_JSON));
@@ -794,7 +794,7 @@ class RbacSubjectControllerRestTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
-                        "USER subject name 'invalid-user@example.com' does not match required pattern")));
+                        "USER subject name 'invaliduser@example.com' does not match required pattern")));
         verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
     }
 

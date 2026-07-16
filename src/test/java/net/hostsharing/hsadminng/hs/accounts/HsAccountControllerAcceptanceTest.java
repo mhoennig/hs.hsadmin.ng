@@ -33,6 +33,7 @@ import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATU
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 
 @Tag("generalIntegrationTest")
 @Transactional
@@ -88,6 +89,58 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                         .contentType("application/json")
                         .body("subject.name", equalTo("hsh-alex_superuser"))
                         .body("globalAdmin", equalTo(true));
+            // @formatter:on
+        }
+    }
+
+    @Nested
+    class ListAccounts {
+
+        @Test
+        void unknownUser_isNotAllowedToListAccounts() {
+            // @formatter:off
+            RestAssured
+                    .given()
+                    .header("Authorization", bearer("unknown-user"))
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/accounts/accounts")
+                    .then().log().body().assertThat()
+                    .statusCode(401);
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canListAllAccounts() {
+            // @formatter:off
+            RestAssured
+                    .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/accounts/accounts")
+                    .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("subject.name", hasItems(
+                            "hsh-alex_superuser", "hsh-fran_superuser", "tst-drew_selfregistered"));
+            // @formatter:on
+        }
+
+        @Test
+        void normalUser_canListOnlyAccountsOfSamePerson() {
+            // @formatter:off
+            RestAssured
+                    .given()
+                    .header("Authorization", bearer("tst-drew_selfregistered"))
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/accounts/accounts")
+                    .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("size()", equalTo(1))
+                    .body("[0].subject.name", equalTo("tst-drew_selfregistered"));
             // @formatter:on
         }
     }

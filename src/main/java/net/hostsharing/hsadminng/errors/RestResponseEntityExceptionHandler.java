@@ -98,6 +98,12 @@ public class RestResponseEntityExceptionHandler
         return errorResponse(request, HttpStatus.FORBIDDEN, localizedMessage(exc));
     }
 
+    @ExceptionHandler(ConflictException.class)
+    protected ResponseEntity<CustomErrorResponse> handleConflictException(
+            final ConflictException exc, final WebRequest request) {
+        return errorResponse(request, HttpStatus.CONFLICT, localizedMessage(exc));
+    }
+
     @ExceptionHandler({ JpaObjectRetrievalFailureException.class, EntityNotFoundException.class })
     protected ResponseEntity<CustomErrorResponse> handleJpaObjectRetrievalFailureException(
             final RuntimeException exc, final WebRequest request) {

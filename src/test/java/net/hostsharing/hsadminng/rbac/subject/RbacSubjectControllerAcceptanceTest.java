@@ -98,7 +98,7 @@ class RbacSubjectControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("""
                               {
-                                "name": "invalid-username@example.com"
+                                "name": "invalidusername@example.com"
                               }
                               """)
                         .port(port)
@@ -107,7 +107,7 @@ class RbacSubjectControllerAcceptanceTest {
                     .then().assertThat()
                         .statusCode(400)
                         .body("message", containsString(
-                                "USER subject name 'invalid-username@example.com' does not match required pattern"
+                                "USER subject name 'invalidusername@example.com' does not match required pattern"
                         ));
             // @formatter:on
         }
@@ -596,6 +596,20 @@ class RbacSubjectControllerAcceptanceTest {
                     .body("findAll { it.name.startsWith('hsh-') }.size()", is(0))
                     .body("findAll { it.name.startsWith('/hsh-') }.size()", is(0))
                     .body("findAll { it.name.startsWith('/xyz-') }.size()", is(0));
+            // @formatter:on
+        }
+
+        @Test
+        void unknownUser_isNotAllowedListSubject() {
+            // @formatter:off
+            RestAssured
+                    .given()
+                    .header("Authorization", bearer("unknown-user"))
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/rbac/subjects")
+                    .then().log().body().assertThat()
+                    .statusCode(401);
             // @formatter:on
         }
     }

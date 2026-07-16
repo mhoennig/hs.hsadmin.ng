@@ -19,6 +19,29 @@ create table hs_accounts.account
 
 
 -- ============================================================================
+--changeset michael.hoennig:hs-accounts-ACCOUNT-EV runOnChange:true validCheckSum:ANY endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+drop view if exists hs_accounts.account_ev;
+create view hs_accounts.account_ev as
+select account.uuid,
+       account.person_uuid,
+       account.global_uid,
+       account.global_gid,
+       subject.name as subject_name,
+       person.personType as person_type,
+       person.tradeName as person_trade_name,
+       person.salutation as person_salutation,
+       person.title as person_title,
+       person.givenName as person_given_name,
+       person.familyName as person_family_name
+    from hs_accounts.account account
+             join rbac.subject subject on subject.uuid = account.uuid
+             join hs_office.person person on person.uuid = account.person_uuid;
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:hs-accounts-ACCOUNT-SUBJECT-FK-ON-DELETE-CASCADE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 -- When a subject gets physically purged (DELETE /api/rbac/subjects/{uuid}?purge=true), its account

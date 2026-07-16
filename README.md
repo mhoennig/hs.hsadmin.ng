@@ -88,7 +88,7 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
 
     cd your-hsadmin-ng-directory
 
-    # set your Docker host, this might need to be ameneded to your system conf
+    # set your Docker host, this might need to be amended to your system conf
     export DOCKER_HOST=unix:///var/run/docker.sock
     
     source .aliases     # creates some comfortable bash aliases, e.g. 'gw'='./gradlew'
@@ -131,55 +131,61 @@ The meaning of the listed profiles is:
 - **complete**: all modules (rbac, office, account, hosting) are started
 - **test-data**: some test data gets inserted at startup 
 
-Now we can access the REST API, e.g. using curl. But you need to use JWT authentication.
-To make this a bit easier to handle, we use `tools/jwt-curl` (or `jwt-curl` alias).
+<!-- TODO.doc: Maybe we should supply some sensible example-envs like .env-fake-jwt-local,
+               ideally even for all our envs, but we would need to encrypt the .env-files for our hosted environments. -->
 
-Make sure you replace `8080` with the port you used to run the application.`
+Now we can access the REST API, e.g. using curl. But you need to use JWT authentication.
+To make this a bit easier to handle, we use the `HTTP` function from `.aliases`
+(a wrapper around `curl`), which prefixes `$HSADMINNG_API_BASE_URL` to the given path
+and implicitly adds the Authorization header from `$HSADMINNG_JWT_BEARER`.
+
+Make sure you replace `8080` with the port you used to run the application.
 
     # the following command does not need authentication and should reply with "pinged ...".
     curl http://localhost:8080/api/ping
 
     # but when you try endpoints which need authentication, you will get a 401 error:
-    curl http://localhost:8080/api/pong
+    curl http://localhost:8080/api/rbac/subjects
 
-    # For the follinging commands we need to be authenticated by a valid JWT token.
-    # To make JWT handling a bit easier, there is a wrapper scropt `jwt-curl`.
-    # Make sure the following variable is set to the fake JWT issuer:
+    # For the following commands we need to be authenticated by a valid JWT token.
+    # The built-in fake OAuth2/JWT server (profile `fake-jwt`) issues a token for
+    # any username via a simple password grant (the password is not even checked).
+    # With HSADMINNG_JWT_TOKEN_URL pointing to its token endpoint (as already set
+    # by `.tc-environment`), the LOGIN function fetches the Bearer token via that
+    # grant and exports it as HSADMINNG_JWT_BEARER:
     export HSADMINNG_JWT_TOKEN_URL=http://localhost:8080/fake-jwt/token
+    LOGIN hsh-alex_superuser    # asks for a password, any input works here
 
-    # optionally, you can set the username and password to in env-vars as well:
-    export HSADMINNG_JWT_USERNAME=superuser-alex@hostsharing.net
-    export HSADMINNG_JWT_PASSWORD=whatever-as-its-not-checked-by-fake-jwt-auth
+    # and let the HTTP function know where the API is:
+    export HSADMINNG_API_BASE_URL=http://localhost:8080
 
-    # also optionally, you can login explicitly:
-    jwt-curl login
+    # now, the following command should reply with "ponged ... hsh-alex_superuser":
+    HTTP GET /api/pong
 
-    # now, the following command should reply with "ponged ... superuser-alex@hostsharing.net":
-    jwt-curl GET http://localhost:8080/api/pong
+    # the following command should return a JSON array with all customers from the test-data:
+    HTTP GET /api/test/customers
 
-    # the following command should return a JSON array with just all customers:
-    jwt-curl GET http://localhost:8080/api/test/customers \
-    | jq` # just if `jq` is installed, to prettyprint the output
+    # the following command should return a JSON array with just the packages
+    # visible for the admin of the customer yyy, by assuming that role for this request:
+    HTTP GET /api/test/packages -H 'Hostsharing-Assumed-Roles: rbactest.customer#yyy:ADMIN'
 
-    # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
-    jwt-curl ASSUME 'rbactest.customer#yyy:ADMIN'
-    jwt-curl GET http://localhost:8080/api/test/packages \
-    | jq
-    jwt-curl UNASSUME
+    # add a new customer (this is a test-area, not to confuse with a Hostsharing partner)
+    HTTP POST /api/test/customers -H 'Content-Type: application/json' --data-binary @- <<EOF
+    { "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }
+    EOF
 
-    # add a new customer (this is a test-are, not to confuse with a Hostsharing partner)
-    jwt-curl POST \
-        -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
-        http://localhost:8080/api/test/customers \
-    | jq
-
-If you wonder who 'superuser-alex@hostsharing.net' and 'superuser-fran@hostsharing.net' are and where the data comes from:
+If you wonder who 'hsh-alex_superuser' and 'hsh-fran_superuser' are and where the data comes from:
 Alex and Fran are just example global admin accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.
 Also, for example, try 'admin@xxx.example.com' or 'unknown@example.org'.
 
-If you want a formatted JSON output, you can pipe the result to `jq` or similar.
+JSON responses are pretty-printed automatically, if `jq` is installed.
 
 And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html.
+
+To quickly verify if this tooling (bootRun, fake-jwt, `LOGIN`, `HTTP`) works on your machine,
+run `tools/smoke-test`: it runs the application against a throw-away Docker-PostgreSQL
+on separate ports (neither the normal local database nor a running local application
+instance is affected) and exercises the endpoints above; exit code 0 means all PASSED.
 
 ### HOWTO: Run the application with a real (OAuth2) JWT-authentication, e.g. Keycloak OIDC
 
@@ -188,16 +194,29 @@ If you want to run the application with real (OAuth2) JWT-authentication:
     # set the JWT-issuer URI, e.g.
     export HSADMINNG_JWT_ISSUER=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV
 
-    # and the JWT JWKS callback URI:
-    export HSADMINNG_JWT_JWKS_URL=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV/.well-known/openid-configuration
-
-    # as well as the JWT token endpoint URI:
-    export HSADMINNG_JWT_TOKEN_URL=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV/protocol/openid-connect/token
+    # optionally, restrict accepted JWTs to given audience(s) ("aud" claim, comma-separated), e.g.
+    export HSADMINNG_JWT_AUDIENCE=hsadmin-ng-api
 
     # run the application against the specified JWT authenticator, do NOT add the 'fake-jwt' profile: 
     gw bootRun --args='--spring.profiles.active=dev,complete,test-data'
 
-Also run `tools/jwt-curl` (or the alias `jwt-curl`) without any parameters to see the available commands. 
+To fetch a real JWT for the `HTTP` function, use the `LOGIN` function from `.aliases`.
+It sources `tools/jwt-login`, which performs the OAuth2 authorization-code flow (with PKCE)
+scripted through the Keycloak login form and exports the token as `HSADMINNG_JWT_BEARER`:
+
+    LOGIN some-username   # asks for the password, then logs in as that user
+    LOGIN                 # logs in again with the last given username+password
+
+    export HSADMINNG_API_BASE_URL=http://localhost:8080
+    HTTP GET /api/hs/accounts/current
+
+By default, `tools/jwt-login` logs in at the Keycloak behind https://testui.ng.hostsharing.net/;
+for another environment, override `HSADMINNG_KEYCLOAK_ISSUER`, `HSADMINNG_KEYCLOAK_CLIENT_ID`,
+and `HSADMINNG_KEYCLOAK_REDIRECT_URI` accordingly (see `tools/jwt-login` for details).
+
+Beware: If `HSADMINNG_JWT_TOKEN_URL` is set (e.g. from `.tc-environment` for the fake-jwt server,
+see above), `LOGIN` uses the direct password grant against that token endpoint instead of the
+Keycloak login-form flow; `unset HSADMINNG_JWT_TOKEN_URL` to log in via the Keycloak login form.
 
 ### PostgreSQL Server
 
@@ -1164,4 +1183,7 @@ and to be able to use some features, you'd need to rebuild the image.
 ## Further Documentation
 
 - the `doc` directory contains architecture concepts and a glossary
+- [doc/environment-variables.md](doc/environment-variables.md) lists all environment variables
+  (backend, `HTTP`/`LOGIN` shell functions, `tools/remote`, tests and build),
+  where they are loaded from, and their defaults
 - the `ideas` directory contains unstructured ideas for future development or documentation

@@ -17,7 +17,6 @@ export HSADMINNG_SUPERUSER=superuser-alex@hostsharing.net
 export HSADMINNG_MIGRATION_DATA_PATH=migration
 export HSADMINNG_OFFICE_DATA_SQL_FILE=
 
-export HSADMINNG_ACCOUNT_PASSWORD_HASH_ALGORITHM='{SSHA}'
 export HSADMINNG_JWT_ISSUER=https://login.dev.hsadmin.de/realms/testui
 export SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://login.dev.hsadmin.de/realms/testui
 

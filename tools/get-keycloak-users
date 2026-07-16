@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+keycloakHost="${1:-https://login.ng.hostsharing.net}"
+
+# Skip the interactive login if there is already a valid kcadm session for this host.
+# kcadm stores its session (with auto-refreshing tokens) in ~/.keycloak/kcadm.config;
+# `get serverinfo` reuses that session and only succeeds while it is still valid.
+configFile="$HOME/.keycloak/kcadm.config"
+currentServer=""
+[ -f "$configFile" ] && currentServer=$(jq -r '.serverUrl // empty' "$configFile" 2>/dev/null)
+
+if [ "${currentServer%/}" = "${keycloakHost%/}" ] && kcadm.sh get serverinfo >/dev/null 2>&1; then
+  echo "reusing existing kcadm session for $keycloakHost" >&2
+else
+  kcadm.sh config credentials \
+    --server "$keycloakHost" \
+    --realm master \
+    --user hostsharing
+fi
+
+kcadm.sh get users \
+  -r hs \
+  -q first=0 \
+  -q max=1000 |
+jq -r '
+  ["username", "uuid", "firstName", "lastName"],
+  (.[]
+    | select((.firstName // "" | test("\\S")) and (.lastName // "" | test("\\S")))
+    | [.username, .id, .firstName, .lastName])
+  | @csv
+'

@@ -64,14 +64,15 @@ spring:
         oauth2:
             resourceserver:
                 jwt:
-                    issuer-uri: ${HSADMINNG_JWT_ISSUER:}
-                    jwk-set-uri: ${HSADMINNG_JWT_JWKS_URL:}
+                  issuer-uri: ${HSADMINNG_JWT_ISSUER:}
+                  hmac-secret: ${HSADMINNG_JWT_HMAC_SECRET:}
+                  audiences: ${HSADMINNG_JWT_AUDIENCE:}
 
 hsadminng:
     postgres:
         leakproof:
     cors:
-        allowed-origin: ${ALLOWED_ORIGINS} // for compatibility with env-based CORS-configuration
+        allowed-origin: ${ALLOWED_ORIGINS} # for compatibility with env-based CORS-configuration
 
 metrics:
     distribution:
@@ -84,6 +85,7 @@ metrics:
 logging:
     level:
         org.springframework.security: info
+#        org.springframework.web: DEBUG
 #        org.hibernate.SQL: DEBUG # Enable SQL query logging
 #        org.hibernate.orm.jdbc.bind: TRACE # Enable SQL parameter binding logging
 #        org.springframework.web: DEBUG
@@ -104,3 +106,4 @@ spring:
                 jwt:
                     issuer-uri: "http://localhost:${server.port}/fake-jwt"
                     jwk-set-uri: "http://localhost:${server.port}/fake-jwt/.well-known/jwks.json"
+                    hmac-secret: ""

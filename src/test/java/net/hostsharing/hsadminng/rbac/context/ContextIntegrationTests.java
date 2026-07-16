@@ -1,8 +1,10 @@
 package net.hostsharing.hsadminng.rbac.context;
 
+import lombok.val;
 import net.hostsharing.hsadminng.errors.ForbiddenException;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import org.hibernate.exception.GenericJDBCException;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,11 +30,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("generalIntegrationTest")
 @DataJpaTest
@@ -55,6 +59,7 @@ class ContextIntegrationTests {
 
     private RbacGrantTestHelper rbacGranter;
 
+    // TODO.test: remove this everywhere, should come from env
     @BeforeAll
     static void disableRyuk() {
         System.setProperty("testcontainers.ryuk.disabled", "true");
@@ -76,7 +81,7 @@ class ContextIntegrationTests {
 
     @Test
     @Transactional
-    void defineWithCurrentSubjectUuid() {
+    void defineWithSubjectUuid() {
         // when
         final var subjectUuid = uuidOfSubjectName("hsh-alex_superuser");
         context.define(subjectUuid.toString());
@@ -95,7 +100,20 @@ class ContextIntegrationTests {
 
     @Test
     @Transactional
-    void defineWithCurrentSubjectNameWithoutAssumedRoles() {
+    void defineWithUnknownSubjectUuid() {
+        // given
+        final var unknownSubjectUuid = UUID.randomUUID();
+
+        // when
+        val exception = assertThrows(NoSuchElementException.class, () -> context.define(unknownSubjectUuid.toString()));
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("cannot find Subject by uuid: " + unknownSubjectUuid);
+    }
+
+    @Test
+    @Transactional
+    void defineWithSubjectNameWithoutAssumedRoles() {
         // when
         context.define("hsh-alex_superuser");
 
@@ -109,6 +127,20 @@ class ContextIntegrationTests {
 
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
                 .containsExactly(context.fetchCurrentSubjectUuid());
+    }
+
+    @Test
+    @Transactional
+    void defineWithUnknownSubjectName() {
+        // when
+        val exception = assertThrows(RuntimeException.class, () -> context.define("unknown-subject"));
+
+        // then
+        assertThat(exception.getMessage()).contains("[401] subject unknown-subject given in `base.defineContext(...)` does not exist");
+        assertThrows(GenericJDBCException.class, () -> context.fetchCurrentSubject());
+        assertThrows(GenericJDBCException.class, () -> context.fetchCurrentSubjectUuid());
+        assertThrows(GenericJDBCException.class, () -> context.fetchAssumedRolesNames());
+        assertThrows(GenericJDBCException.class, () -> context.fetchCurrentSubjectOrAssumedRolesUuids());
     }
 
     @Test
@@ -233,7 +265,7 @@ class ContextIntegrationTests {
 
     @Test
     @Transactional
-    void defineWithCurrentSubjectAndAssumedRoles() {
+    void defineWithSubjectAndAssumedRoles() {
         // given
         context.define("hsh-alex_superuser", "rbactest.customer#xxx:OWNER;rbactest.customer#yyy:OWNER");
 
@@ -248,7 +280,7 @@ class ContextIntegrationTests {
     }
 
     @Test
-    public void defineContextWithCurrentSubjectAndAssumeInaccessibleRole() {
+    public void defineContextWithSubjectAndAssumeInaccessibleRole() {
         // when
         final var result = jpaAttempt.transacted(() ->
                 context.define("tst-customer_admin_xxx", "rbactest.package#yyy00:ADMIN")

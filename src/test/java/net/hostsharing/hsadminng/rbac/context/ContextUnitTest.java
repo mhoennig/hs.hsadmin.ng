@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Collections;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -109,11 +110,22 @@ class ContextUnitTest {
         void registerWithSubjectUuidResolvesSubjectName() {
             val subjectUuid = UUID.randomUUID();
             lenient().when(nativeQuery.setParameter("uuid", subjectUuid)).thenReturn(nativeQuery);
-            given(nativeQuery.getSingleResult()).willReturn("resolved-subject@example.org");
+            given(nativeQuery.getResultStream()).willAnswer(invocation -> Stream.of("resolved-subject@example.org"));
 
             context.define(subjectUuid.toString());
 
             verify(nativeQuery).setParameter("currentSubject", "resolved-subject@example.org");
+        }
+
+        @Test
+        void registerWithUnknownSubjectUuidThrowsNoSuchElementException() {
+            val subjectUuid = UUID.randomUUID();
+            lenient().when(nativeQuery.setParameter("uuid", subjectUuid)).thenReturn(nativeQuery);
+            given(nativeQuery.getResultStream()).willAnswer(invocation -> Stream.empty());
+
+            assertThatThrownBy(() -> context.define(subjectUuid.toString()))
+                    .isInstanceOf(NoSuchElementException.class)
+                    .hasMessage("cannot find Subject by uuid: " + subjectUuid);
         }
 
         @Test
@@ -395,6 +407,31 @@ class ContextUnitTest {
                             && !currentRequest.contains("given-user-totp-key")
                             && !currentRequest.contains("given-client-secret")
                             && !currentRequest.contains("given-secret-key")));
+        }
+
+        @Test
+        void registerWithHttpServletRequestMasksCredentialHeaders() throws IOException {
+            givenRequest("GET", "http://localhost:9999/api/endpoint", Map.ofEntries(
+                            Map.entry("content-type", "application/json"),
+                            Map.entry("Authorization", "Bearer given-jwt-token"),
+                            Map.entry("Cookie", "SESSION=given-session-id"),
+                            Map.entry("Hostsharing-API-Key", "given-hostsharing-api-key"),
+                            Map.entry("x-api-key", "given-x-api-key")),
+                    "");
+
+            context.define("current-subject");
+
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
+            verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String currentRequest) ->
+                    currentRequest.contains("-H 'Authorization:<masked>'")
+                            && currentRequest.contains("-H 'Cookie:<masked>'")
+                            && currentRequest.contains("-H 'Hostsharing-API-Key:<masked>'")
+                            && currentRequest.contains("-H 'x-api-key:<masked>'")
+                            && currentRequest.contains("-H 'content-type:application/json'")
+                            && !currentRequest.contains("given-jwt-token")
+                            && !currentRequest.contains("given-session-id")
+                            && !currentRequest.contains("given-hostsharing-api-key")
+                            && !currentRequest.contains("given-x-api-key")));
         }
 
         @Test

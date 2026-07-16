@@ -10,10 +10,10 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.role.RbacRoleType;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
-import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.SubjectType;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -31,6 +31,7 @@ import jakarta.persistence.SynchronizationType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -38,6 +39,7 @@ import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -90,11 +92,11 @@ class RbacContextControllerRestTest {
         when(contextMock.fetchCurrentSubjectUuid()).thenReturn(mockUuid);
 
         // find by uuid mock
-        final var fakeSubject = new RbacSubjectEntity();
+        final var fakeSubject = new RealSubjectEntity();
         fakeSubject.setUuid(mockUuid);
         fakeSubject.setName(GIVEN_SUBJECT_NAME);
         fakeSubject.setType(GIVEN_SUBJECT_TYPE);
-        when(rbacSubjectRepository.findByUuid(mockUuid)).thenReturn(fakeSubject);
+        when(realSubjectRepository.findCurrentSubject()).thenReturn(fakeSubject);
 
         // claimed groups stem from the JWT and may include groups not (yet) synchronized as effective subjects
         when(contextMock.fetchClaimedSubjectGroupNames()).thenReturn(List.of("/xyz-Team", "/abc-External"));
@@ -178,6 +180,27 @@ class RbacContextControllerRestTest {
                 Arguments.of(null, GIVEN_ASSUMED_ROLES, GIVEN_ASSUMED_ROLES),
                 Arguments.of(GIVEN_ASSUMED_ROLES, GIVEN_ASSUMED_ROLES, GIVEN_ASSUMED_ROLES)
         );
+    }
+
+    @Test
+    void apiContextWillRespondNotFoundIfAuthenticatedSubjectDoesNotExist() throws Exception {
+
+        // given
+        final var unknownSubjectUuid = UUID.randomUUID();
+        doThrow(new NoSuchElementException("cannot find Subject by uuid: " + unknownSubjectUuid))
+                .when(contextMock).define();
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/context")
+                        .header("Authorization", bearer(GIVEN_SUBJECT_NAME))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+
+                // then
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is(
+                        "ERROR: [404] cannot find Subject by uuid: " + unknownSubjectUuid)));
     }
 
     @ParameterizedTest

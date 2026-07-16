@@ -116,7 +116,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
                 context(null);
                 return rbacSubjectRepository.create(RbacSubjectEntity.builder()
                         .uuid(givenUuid)
-                        .name("invalid-user@example.com")
+                        .name("invaliduser@example.com")
                         .type(USER)
                         .build());
             });

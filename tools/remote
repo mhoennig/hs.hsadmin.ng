@@ -1,0 +1,255 @@
+#!/usr/bin/env bash
+# Commands for the remote backend server (see HSADMINNG_DEPLOY_HOST):
+#
+#   remote deploy       build the application locally and deploy the jar of the
+#                       current working tree (uncommitted changes included!)
+#   remote log [ARGS]   tail the backend log, extra ARGS are passed to tail
+#   remote ssh [CMD]    open an interactive shell or run CMD on the server
+#   remote install-monitoring
+#                       install and start a systemd user timer on the server, running
+#                       the local tools/login-monitoring-check every 5 minutes with
+#                       Matrix alerting; requires HSADMINNG_LOGIN_MONITOR_PASSWORD and
+#                       HSADMINNG_MATRIX_WEBHOOK_URL in ~/.environment on the server;
+#                       HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES there overrides the
+#                       5-minute default (re-run this command after changing it)
+#
+# This tool deploys the local working state to a test stage and is meant ONLY for
+# testing changes which are not yet merged into the target branch (master/prod);
+# regular releases are rolled out via the CI/CD pipeline instead.
+set -euo pipefail
+
+HSADMINNG_DEPLOY_HOST=${HSADMINNG_DEPLOY_HOST:-'hsh11-backend@hsh11.hostsharing.net'}
+JAR_NAME='hsadmin-ng-0.0.1-SNAPSHOT.jar'
+
+# prints the whole header comment (all # lines up to `set -euo pipefail`)
+usage() {
+    awk 'NR > 1 && !/^#/ { exit } NR > 1 { sub(/^# ?/, ""); print }' "$0"
+}
+
+# runs a command with output captured and stdin detached,
+# prints just one line unless the command fails
+# (also defined in the remote script below, keep both in sync)
+step() {
+    local message=$1; shift
+    echo -n "$message: $* ... "
+    local output rc=0
+    output=$("$@" </dev/null 2>&1) || rc=$?
+    if [ "$rc" -eq 0 ]; then
+        echo "done"
+    else
+        echo "FAILED (exit code $rc)"
+        printf '%s\n' "$output"
+        exit "$rc"
+    fi
+}
+
+# Builds the application from the local working tree and deploys the jar to the
+# backend server; unlike the former push-and-build-on-the-server flow, uncommitted
+# changes are thus INCLUDED in the deployment.
+# Warns about uncommitted files and unpushed commits, but continues if confirmed.
+# The uploaded jar is activated by an atomic rename, so the running service keeps
+# its old jar until the restart.
+# Prints one line per step; full command output is only shown if a step fails.
+cmdDeploy() {
+    cd "$(dirname "$0")/.." # the local build needs to run in the repo root
+
+    local branch
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$branch" = "HEAD" ]; then
+        echo "ERROR: detached HEAD, please check out a branch" >&2
+        exit 1
+    fi
+
+    local warnings=0
+
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "WARNING: there are uncommitted changes which WILL be deployed:"
+        git status --short
+        warnings=1
+    fi
+
+    local upstream unpushed
+    if upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null); then
+        unpushed=$(git rev-list --count "$upstream..HEAD")
+        if [ "$unpushed" -gt 0 ]; then
+            echo "WARNING: $unpushed commit(s) not yet pushed to $upstream (they WILL be deployed):"
+            git log --oneline "$upstream..HEAD"
+            warnings=1
+        fi
+    else
+        echo "WARNING: branch '$branch' has no upstream, deploying a state not tracked on any remote"
+        warnings=1
+    fi
+
+    if [ "$warnings" -ne 0 ]; then
+        local answer
+        read -r -p "Continue deployment of branch '$branch' anyway? [y/N] " answer
+        case "$answer" in
+            [yY]|[yY][eE][sS]) ;;
+            *) echo "Deployment aborted."; exit 1 ;;
+        esac
+    fi
+
+    # remove old jars to make sure we never deploy a stale build
+    step "removing previously built jars" bash -c 'rm -f build/libs/hsadmin-ng-*.jar'
+    step "building the application locally" ./gradlew build -x dependencyCheckAnalyze -x compileTestJava -x test -x jacocoTestReport -x jacocoTestCoverageVerification -x spotlessJavaCheck -PincludeBuildTime=true
+
+    # without git.properties (e.g. built in a git worktree), the deployed version
+    # would not be identifiable via /actuator/info
+    local versionInfo
+    versionInfo=$(unzip -p "build/libs/$JAR_NAME" BOOT-INF/classes/git.properties 2>/dev/null |
+        grep -E '^git\.(branch|commit\.id\.abbrev|dirty)=' || true)
+    if [ -z "$versionInfo" ]; then
+        echo "ERROR: the built jar contains no git version info (git.properties)," >&2
+        echo "       e.g. when building in a git worktree; refusing to deploy it" >&2
+        exit 1
+    fi
+    echo "built version info:"
+    sed 's/^/    /' <<<"$versionInfo"
+
+    step "uploading the jar to $HSADMINNG_DEPLOY_HOST" \
+        scp -q "build/libs/$JAR_NAME" "$HSADMINNG_DEPLOY_HOST:backend/$JAR_NAME.upload"
+    step "activating the uploaded jar" \
+        ssh "$HSADMINNG_DEPLOY_HOST" mv "backend/$JAR_NAME.upload" "backend/$JAR_NAME"
+    step "restarting the backend service" \
+        ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user restart backend
+
+    sleep 3
+    if ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --quiet is-active backend; then
+        echo "backend service is active"
+    else
+        echo "backend service FAILED to start:"
+        ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --no-pager --lines=25 status backend || true
+        exit 1
+    fi
+
+    # wait until the application answers (startup incl. Liquibase takes a while)
+    # and report the version info it actually runs with
+    ssh "$HSADMINNG_DEPLOY_HOST" 'set -a; . ~/backend/.environment; set +a
+        for i in $(seq 1 30); do
+            info=$(curl -s "http://localhost:${MANAGEMENT_SERVER_PORT:-8081}/actuator/info") && [ -n "$info" ] &&
+                { echo "running version info: $info"; exit 0; }
+            sleep 2
+        done
+        echo "WARNING: the application did not answer on /actuator/info within 60s" >&2
+        exit 1'
+
+    echo "deployment of branch '$branch' finished"
+    echo "observing log (Ctrl-C to cancel):"
+    cmdLog
+}
+
+cmdLog() {
+    exec ssh -t "$HSADMINNG_DEPLOY_HOST" tail -f "$@" var/backend.log
+}
+
+cmdSsh() {
+    exec ssh -t "$HSADMINNG_DEPLOY_HOST" "$@"
+}
+
+# Installs (or refreshes) a systemd user timer on the backend server which runs
+# the local version of tools/login-monitoring-check every 5 minutes with Matrix
+# alerting. The secrets are NOT deployed by this command: ~/.environment on the server
+# must already contain HSADMINNG_LOGIN_MONITOR_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL
+# (plain VAR=value lines, systemd EnvironmentFile format).
+cmdInstallMonitoring() {
+    local toolsDir
+    toolsDir=$(cd "$(dirname "$0")" && pwd)
+
+    step "creating the remote monitoring directory" \
+        ssh "$HSADMINNG_DEPLOY_HOST" mkdir -p monitoring
+    step "copying tools/login-monitoring-check to $HSADMINNG_DEPLOY_HOST" \
+        scp -q "$toolsDir/login-monitoring-check" "$HSADMINNG_DEPLOY_HOST:monitoring/"
+
+    echo "installing the login-monitoring-check timer on $HSADMINNG_DEPLOY_HOST ..."
+
+    ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
+set -euo pipefail
+
+# same helper as in the local part of the script, keep both in sync
+step() {
+    local message=$1; shift
+    echo -n "$message: $* ... "
+    local output rc=0
+    output=$("$@" </dev/null 2>&1) || rc=$?
+    if [ "$rc" -eq 0 ]; then
+        echo "done"
+    else
+        echo "FAILED (exit code $rc)"
+        printf '%s\n' "$output"
+        exit "$rc"
+    fi
+}
+
+if [ ! -f .environment ]; then
+    echo "ERROR: ~/.environment not found on the server;" >&2
+    echo "       create it (chmod 600) with at least HSADMINNG_LOGIN_MONITOR_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL" >&2
+    exit 1
+fi
+for var in HSADMINNG_LOGIN_MONITOR_PASSWORD HSADMINNG_MATRIX_WEBHOOK_URL; do
+    grep -qE "^$var=" .environment || {
+        echo "ERROR: ~/.environment on the server must contain a plain '$var=...' line" >&2
+        echo "       (systemd EnvironmentFile format: no 'export', no shell expansions)" >&2
+        exit 1
+    }
+done
+interval=$(sed -n 's/^HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES=//p' .environment | tail -1)
+interval=${interval:-5}
+if ! [[ "$interval" =~ ^[0-9]+$ ]] || [ "$interval" -lt 1 ] || [ "$interval" -gt 59 ]; then
+    echo "ERROR: HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES in ~/.environment must be an integer from 1 to 59, got '$interval'" >&2
+    exit 1
+fi
+
+chmod 600 .environment
+chmod 700 monitoring/login-monitoring-check
+mkdir -p var .config/systemd/user
+
+cat >.config/systemd/user/login-monitoring-check.service <<'UNIT'
+[Unit]
+Description=hsadmin-NG login-monitoring-check
+
+[Service]
+Type=oneshot
+TimeoutStartSec=120
+EnvironmentFile=%h/.environment
+ExecStart=%h/monitoring/login-monitoring-check --matrix-webhook
+StandardOutput=append:%h/var/login-monitoring.log
+StandardError=inherit
+UNIT
+
+cat >.config/systemd/user/login-monitoring-check.timer <<UNIT
+[Unit]
+Description=hsadmin-NG login-monitoring-check every $interval minutes
+
+[Timer]
+OnCalendar=*:0/$interval
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+step "reloading the systemd user daemon" systemctl --user daemon-reload
+step "enabling and starting the timer" systemctl --user enable --now login-monitoring-check.timer
+
+echo -n "running the first check now ... "
+if systemctl --user start login-monitoring-check.service </dev/null; then
+    echo "done: $(tail -1 var/login-monitoring.log)"
+else
+    echo "FAILED:"
+    tail -25 var/login-monitoring.log
+    exit 1
+fi
+systemctl --user list-timers login-monitoring-check.timer --no-pager
+REMOTE_SCRIPT
+}
+
+command=${1:-}
+shift || true
+case "$command" in
+    deploy) cmdDeploy "$@" ;;
+    log)    cmdLog "$@" ;;
+    ssh)    cmdSsh "$@" ;;
+    install-monitoring) cmdInstallMonitoring "$@" ;;
+    ''|-h|--help) usage ;;
+    *)      echo "ERROR: unknown command '$command'" >&2; usage >&2; exit 1 ;;
+esac

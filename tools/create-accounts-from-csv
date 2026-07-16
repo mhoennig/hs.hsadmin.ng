@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# Creates hsadmin-NG accounts for existing hs-office persons, linked to
+# existing Keycloak subjects, from a CSV-file (non-interactive mass sync).
+#
+# Expected CSV columns (with or without double-quotes, no header line needed):
+#   subjectName, subjectUuid, givenName, familyName, personUuid, uid, gid
+# givenName+familyName are only used for progress messages.
+#
+# Rows with an invalid subjectUuid/personUuid (e.g. not resolved yet) or an
+# invalid uid/gid are reported and skipped; a header line gets skipped that
+# way as well. Subjects which already have an account (HTTP 409) are reported
+# and skipped, thus the script can be re-run for repeated syncs.
+
+if [ $# -ne 1 ]; then
+    echo "usage: ${0##*/} <csv-file>" >&2
+    echo "  csv-file: columns subjectName,subjectUuid,givenName,familyName,personUuid,uid,gid" >&2
+    exit 1
+fi
+csvFile=$1
+if [ ! -r "$csvFile" ]; then
+    echo "ERROR: cannot read CSV-file: $csvFile" >&2
+    exit 1
+fi
+
+source .aliases
+require HSADMINNG_JWT_USERNAME
+require HSADMINNG_JWT_PASSWORD
+
+export HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-'https://backend.ng.hostsharing.net'}
+
+LOGIN
+
+uuidPattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+numberPattern='^[0-9]+$'
+
+declare -i lineNo=0 created=0 alreadyExisted=0 invalid=0 failed=0
+
+function skipInvalid() {
+    echo "SKIPPED line $lineNo ($subjectName): $1" >&2
+    ((++invalid))
+}
+
+# proper CSV-parsing (quoting, embedded commas) via Python, one TAB-separated line per row
+while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid uid gid; do
+    ((++lineNo))
+    [ -z "$subjectName$subjectUuid$personUuid" ] && continue # ignore empty lines
+
+    if ! [[ "$subjectUuid" =~ $uuidPattern ]]; then
+        skipInvalid "invalid subjectUuid: '$subjectUuid'"; continue
+    fi
+    if ! [[ "$personUuid" =~ $uuidPattern ]]; then
+        skipInvalid "invalid personUuid: '$personUuid'"; continue
+    fi
+    if ! [[ "$uid" =~ $numberPattern ]] || ! [[ "$gid" =~ $numberPattern ]]; then
+        skipInvalid "invalid uid/gid: '$uid'/'$gid'"; continue
+    fi
+
+    echo "creating account '$subjectName' ($givenName $familyName) ..." >&2
+    httpExitCode=0
+    response=$(HTTP POST "/api/hs/accounts/accounts" \
+      -H 'Content-Type: application/json' \
+      --data-binary @- <<EOF
+{
+  "person.uuid" : "$personUuid",
+  "subject" : {
+      "uuid": "$subjectUuid",
+      "name": "$subjectName"
+  },
+  "globalUid" : $uid,
+  "globalGid" : $gid
+}
+EOF
+    ) || httpExitCode=$?
+    [ -n "$response" ] && printf '%s\n' "$response"
+
+    if [ $httpExitCode -eq 0 ]; then
+        ((++created))
+    elif grep -Eq '"status" *: *409' <<<"$response"; then
+        echo "SKIPPED line $lineNo ($subjectName): account already exists (409 Conflict)" >&2
+        ((++alreadyExisted))
+    else
+        echo "FAILED line $lineNo ($subjectName): HTTP POST exited with $httpExitCode" >&2
+        ((++failed))
+    fi
+done < <(python3 -c '
+import csv, sys
+for row in csv.reader(open(sys.argv[1], newline="")):
+    print("\t".join(field.strip() for field in row))
+' "$csvFile")
+
+echo >&2
+echo "${0##*/}: $created created, $alreadyExisted already existed, $invalid invalid rows, $failed failed" >&2
+[ $failed -eq 0 ] || exit 1

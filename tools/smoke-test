@@ -1,0 +1,162 @@
+#!/bin/bash
+
+# Smoke-test for the local dev tooling: boots the application via `bootRun` with
+# --spring.profiles.active=dev,fake-jwt,complete,test-data against a separate throw-away
+# Docker-PostgreSQL, then exercises the LOGIN and HTTP functions from `.aliases` with some
+# simple (ping, version) and some more complex (POST with RBAC grants) endpoints.
+#
+# The throw-away database container (hsadmin-ng-smoke-test-postgres, host port 15432) is
+# reset at the start and removed at the end; the normal `hsadmin-ng-postgres` container
+# and its data remain untouched. The application listens on a separate port (8090) as
+# well, so a normally running local application instance is not affected either.
+# Both ports are checked to be free beforehand, so the test cannot accidentally hit
+# some other service (e.g. a native PostgreSQL cluster).
+#
+# Exit code 0 if everything works, otherwise 1 with an error message naming the failed step.
+#
+# Overridable via environment:
+#   HSADMINNG_SMOKE_TEST_PG_PORT          host port of the throw-away database (default 15432)
+#   HSADMINNG_SMOKE_TEST_APP_PORT         application port, management port is +1 (default 8090)
+#   HSADMINNG_SMOKE_TEST_STARTUP_TIMEOUT  seconds to wait for the application (default 300)
+
+cd "$(dirname "$0")/.." || exit 1
+
+PG_CONTAINER=hsadmin-ng-smoke-test-postgres
+PG_IMAGE=postgres:17.7-trixie # keep in sync with the README and the normal local database
+PG_PORT=${HSADMINNG_SMOKE_TEST_PG_PORT:-15432}
+APP_PORT=${HSADMINNG_SMOKE_TEST_APP_PORT:-8090}
+STARTUP_TIMEOUT=${HSADMINNG_SMOKE_TEST_STARTUP_TIMEOUT:-300}
+LOG_FILE=build/smoke-test/bootRun.log
+
+passed() {
+    echo "PASSED"
+}
+failed() {
+    echo "FAILED" >&2
+    echo >&2
+    echo "SMOKE-TEST FAILED: $*" >&2
+    if [ -f "$LOG_FILE" ]; then
+        echo "--- last lines of $LOG_FILE: ---" >&2
+        tail -n 25 "$LOG_FILE" >&2
+    fi
+    exit 1
+}
+
+GRADLE_PID=
+cleanup() {
+    if [ -n "$GRADLE_PID" ] && kill -0 "$GRADLE_PID" 2>/dev/null; then
+        echo "stopping the application (pid $GRADLE_PID)"
+        # negative pid: terminate the whole process group (gradle + the forked application JVM)
+        kill -TERM -- "-$GRADLE_PID" 2>/dev/null || kill -TERM "$GRADLE_PID" 2>/dev/null
+        for _ in $(seq 1 15); do
+            kill -0 "$GRADLE_PID" 2>/dev/null || break
+            sleep 1
+        done
+        kill -KILL -- "-$GRADLE_PID" 2>/dev/null
+    fi
+    docker rm -f "$PG_CONTAINER" >/dev/null 2>&1
+}
+trap cleanup EXIT
+
+command -v docker >/dev/null || { echo "SMOKE-TEST FAILED: docker is not available" >&2; exit 1; }
+
+portInUse() {
+    (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
+}
+portInUse "$PG_PORT" && failed "host port $PG_PORT is already in use, override via HSADMINNG_SMOKE_TEST_PG_PORT"
+portInUse "$APP_PORT" && failed "host port $APP_PORT is already in use, override via HSADMINNG_SMOKE_TEST_APP_PORT"
+portInUse "$((APP_PORT + 1))" && failed "host port $((APP_PORT + 1)) (management) is already in use, override via HSADMINNG_SMOKE_TEST_APP_PORT"
+
+# get the LOGIN/HTTP functions; .aliases also sources the personal `.environment`,
+# therefore all variables this test depends on are explicitly (re-)exported below
+source .aliases || failed "cannot source .aliases"
+source .unset-environment
+
+# same environment as an .environment-fake-jwt-local setup, but pointing to the
+# throw-away database and to a separate application port
+export HSADMINNG_POSTGRES_JDBC_URL=jdbc:postgresql://127.0.0.1:$PG_PORT/postgres
+export HSADMINNG_POSTGRES_ADMIN_USERNAME=postgres
+export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
+export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
+export HSADMINNG_SUPERUSER=hsh-alex_superuser
+export HSADMINNG_MIGRATION_DATA_PATH=migration
+export HSADMINNG_OFFICE_DATA_SQL_FILE=
+export LANG=en_US.UTF-8
+export ALLOWED_ORIGINS=http://127.0.0.1:8082
+export SERVER_PORT=$APP_PORT
+export MANAGEMENT_SERVER_PORT=$((APP_PORT + 1))
+unset SPRING_DATASOURCE_URL SPRING_DATASOURCE_USERNAME SPRING_DATASOURCE_PASSWORD
+unset SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+
+export HSADMINNG_API_BASE_URL=http://127.0.0.1:$APP_PORT
+export HSADMINNG_JWT_TOKEN_URL=http://127.0.0.1:$APP_PORT/fake-jwt/token
+export HSADMINNG_JWT_CLIENT_ID=hsscript.ng
+export HSADMINNG_JWT_CLIENT_SECRET=
+export HSADMINNG_JWT_USERNAME=hsh-alex_superuser
+export HSADMINNG_JWT_PASSWORD=password # not actually checked by the fake-jwt endpoint
+unset HSADMINNG_JWT_BEARER
+
+echo "resetting the throw-away database container $PG_CONTAINER (host port $PG_PORT)"
+docker rm -f "$PG_CONTAINER" >/dev/null 2>&1
+docker run --name "$PG_CONTAINER" -e POSTGRES_PASSWORD=password \
+        -p "127.0.0.1:$PG_PORT:5432" -d "$PG_IMAGE" >/dev/null ||
+    failed "cannot start the PostgreSQL container $PG_CONTAINER"
+for i in $(seq 1 30); do
+    # -h localhost forces TCP, so PostgreSQL's socket-only init phase does not count as ready
+    docker exec "$PG_CONTAINER" pg_isready -q -h localhost -U postgres 2>/dev/null && break
+    [ "$i" == 30 ] && failed "PostgreSQL in $PG_CONTAINER did not become ready"
+    sleep 1
+done
+
+echo "starting the application on port $APP_PORT (log: $LOG_FILE)"
+mkdir -p "$(dirname "$LOG_FILE")"
+# setsid (if available) makes gradle a process group leader, so cleanup() can
+# terminate gradle and the forked application JVM together
+SETSID=$(command -v setsid || true)
+$SETSID ./gradlew --no-daemon bootRun \
+    --args='--spring.profiles.active=dev,fake-jwt,complete,test-data' >"$LOG_FILE" 2>&1 &
+GRADLE_PID=$!
+
+echo "waiting for the application to answer (up to ${STARTUP_TIMEOUT}s) ..."
+for i in $(seq 1 "$STARTUP_TIMEOUT"); do
+    kill -0 "$GRADLE_PID" 2>/dev/null || failed "bootRun terminated prematurely"
+    curl -sf "http://127.0.0.1:$APP_PORT/api/version" >/dev/null 2>&1 && break
+    [ "$i" == "$STARTUP_TIMEOUT" ] && failed "the application did not answer within ${STARTUP_TIMEOUT}s"
+    sleep 1
+done
+echo "the application is up"
+
+echo "LOGIN as $HSADMINNG_JWT_USERNAME via the fake-jwt token endpoint"
+LOGIN || failed "LOGIN as $HSADMINNG_JWT_USERNAME failed"
+[ -n "$HSADMINNG_JWT_BEARER" ] || failed "LOGIN did not export HSADMINNG_JWT_BEARER"
+passed
+
+response=$(HTTP GET /api/ping) || failed "GET /api/ping failed"
+grep -q 'pinged' <<<"$response" || failed "GET /api/ping did not answer with 'pinged ...' but: $response"
+passed
+
+response=$(HTTP GET /api/version) || failed "GET /api/version failed"
+grep -q '"version"' <<<"$response" || failed "GET /api/version returned no version property but: $response"
+passed
+
+# pong replies with the authenticated username, verifying the JWT actually got applied
+response=$(HTTP GET /api/pong) || failed "GET /api/pong failed"
+grep -q "$HSADMINNG_JWT_USERNAME" <<<"$response" ||
+    failed "GET /api/pong did not reply with the login username but: $response"
+passed
+
+# a POST exercising the RBAC machinery (INSERT permission, role grants), see the README
+response=$(HTTP POST /api/test/customers -H 'Content-Type: application/json' --data-binary @- <<EOF
+{ "prefix": "ttt", "reference": 80001, "adminUserName": "admin@ttt.example.com" }
+EOF
+) || failed "POST /api/test/customers failed"
+grep -q '"uuid"' <<<"$response" || failed "POST /api/test/customers returned no uuid but: $response"
+passed
+
+response=$(HTTP GET /api/test/customers) || failed "GET /api/test/customers failed"
+grep -q '"ttt"' <<<"$response" ||
+    failed "the created test-customer 'ttt' is missing in GET /api/test/customers"
+passed
+
+echo
+echo "SMOKE-TEST PASSED"

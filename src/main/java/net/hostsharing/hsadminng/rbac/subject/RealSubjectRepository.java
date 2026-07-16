@@ -91,4 +91,8 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
             """, nativeQuery = true)
     @Timed("app.rbac.subjects.repo.findEffectiveSubjectGroups.real")
     List<RealSubjectEntity> findEffectiveSubjectGroups();
+
+    @Query(value = "select * from rbac.subject where uuid = rbac.currentSubjectUuid()", nativeQuery = true)
+    @Timed("app.rbac.subjects.repo.findCurrentSubject.real")
+    RealSubjectEntity findCurrentSubject();
 }

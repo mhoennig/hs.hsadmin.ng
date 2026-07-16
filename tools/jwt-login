@@ -1,0 +1,189 @@
+#!/bin/bash
+
+# Fetches a JWT access token from the Keycloak behind the hsadmin-NG test-UI.
+#
+# When sourced, it exports the token as HSADMINNG_JWT_BEARER into the current shell
+# and requires that a token was actually obtained, e.g.:
+#
+#   source tools/jwt-login
+#   export HSADMINNG_API_BASE_URL=https://backend.ng.hostsharing.net
+#   HTTP GET /api/hs/accounts/current
+#
+# When executed as a script, it prints the token to stdout instead.
+#
+# The test-UI client (hs-admin-web) only allows the OAuth2 authorization-code flow,
+# neither the password grant nor the device flow. Thus this script performs the
+# authorization-code flow with PKCE, scripted through the Keycloak login form:
+#   1. GET the login form (which also creates the auth session cookies),
+#   2. POST the credentials to the form's action URL; in a username-first flow
+#      (like the hs realm uses) the username and the password are posted to
+#      two consecutive forms, following identity-broker redirects to the
+#      password form of the brokered realm (e.g. hs -> broker hsh -> realm hsh,
+#      where the username is pre-filled with the email address and re-posted),
+#   3. exchange the authorization code from the final redirect for the tokens.
+#
+# The defaults match https://testui.ng.hostsharing.net/ and can be overridden via environment variables.
+# Username and password are prompted for unless given via HSADMINNG_JWT_USERNAME/HSADMINNG_JWT_PASSWORD.
+# Accounts with OTP/2FA or pending required actions (e.g. update password) are not supported.
+#
+# If HSADMINNG_JWT_TOKEN_URL is set, the OAuth2 password grant is POSTed directly to that
+# token endpoint instead, skipping the login form flow. This works for the fake-jwt token
+# endpoint of a local hsadmin-ng run (profile `fake-jwt`, which accepts any credentials):
+#
+#   export HSADMINNG_JWT_TOKEN_URL=http://localhost:8080/fake-jwt/token
+#
+# as well as for OAuth2/Keycloak clients with direct access grants enabled,
+# then identified via HSADMINNG_JWT_CLIENT_ID and, if needed, HSADMINNG_JWT_CLIENT_SECRET.
+
+# The subshell body `( ... )` keeps `set`, `trap`, `exit`, and all variables local,
+# so that sourcing this script cannot affect or close the calling shell.
+function jwtLogin() (
+  set -o pipefail
+
+  KEYCLOAK_ISSUER="${HSADMINNG_KEYCLOAK_ISSUER:-https://login.ng.hostsharing.net/realms/hs}"
+  CLIENT_ID="${HSADMINNG_KEYCLOAK_CLIENT_ID:-hs-admin-web}"
+  REDIRECT_URI="${HSADMINNG_KEYCLOAK_REDIRECT_URI:-https://testui.ng.hostsharing.net/}"
+
+  if [ -z "$HSADMINNG_JWT_USERNAME" ]; then
+    read -r -e -p "Username: " HSADMINNG_JWT_USERNAME
+  fi
+  if [ -z "$HSADMINNG_JWT_PASSWORD" ]; then
+    read -r -s -p "Password: " HSADMINNG_JWT_PASSWORD
+    echo >&2
+  fi
+
+  CURL=(curl --no-progress-meter --show-error --fail-with-body)
+
+  # password-grant short-cut, e.g. for the fake-jwt token endpoint of a local hsadmin-ng run,
+  # see the header comment; the password is passed via stdin to keep it out of the process list
+  if [ -n "$HSADMINNG_JWT_TOKEN_URL" ]; then
+    CLIENT_ARGUMENTS=()
+    if [ -n "$HSADMINNG_JWT_CLIENT_ID" ]; then
+      CLIENT_ARGUMENTS+=(-d "client_id=$HSADMINNG_JWT_CLIENT_ID")
+    fi
+    if [ -n "$HSADMINNG_JWT_CLIENT_SECRET" ]; then
+      CLIENT_ARGUMENTS+=(--data-urlencode "client_secret=$HSADMINNG_JWT_CLIENT_SECRET")
+    fi
+    ACCESS_TOKEN=$(printf '%s' "$HSADMINNG_JWT_PASSWORD" |
+      "${CURL[@]}" -X POST "$HSADMINNG_JWT_TOKEN_URL" \
+          -d grant_type=password \
+          "${CLIENT_ARGUMENTS[@]}" \
+          --data-urlencode "username=$HSADMINNG_JWT_USERNAME" \
+          --data-urlencode "password@-" |
+      grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
+    if [ -z "$ACCESS_TOKEN" ]; then
+      echo "ERROR: could not fetch an access token from $HSADMINNG_JWT_TOKEN_URL" >&2
+      exit 1
+    fi
+    echo "$ACCESS_TOKEN"
+    exit 0
+  fi
+
+  COOKIE_JAR=$(mktemp) || exit 1
+  RESPONSE_BODY=$(mktemp) || exit 1
+  trap 'rm -f "$COOKIE_JAR" "$RESPONSE_BODY"' EXIT
+
+  function formAction() {
+    grep -o 'action="[^"]*"' <<<"$1" | head -1 | sed -e 's/^action="//' -e 's/"$//' -e 's/&amp;/\&/g'
+  }
+
+  function pageError() {
+    local errorText
+    errorText=$(tr -d '\n' <"$RESPONSE_BODY" |
+        grep -o -E '(kc-feedback-text"|id="input-error[^"]*"[^>]*)>[[:space:]]*[^<[:space:]][^<]*' | head -1 |
+        sed -e 's/^[^>]*>[[:space:]]*//' -e 's/[[:space:]]*$//')
+    echo "${errorText:-check your credentials}"
+  }
+
+  CODE_VERIFIER=$(openssl rand -base64 48 | tr '+/' '-_' | tr -d '=')
+  CODE_CHALLENGE=$(printf '%s' "$CODE_VERIFIER" | openssl dgst -sha256 -binary | base64 | tr '+/' '-_' | tr -d '=')
+
+  LOGIN_FORM=$("${CURL[@]}" -c "$COOKIE_JAR" -G "$KEYCLOAK_ISSUER/protocol/openid-connect/auth" \
+      -d "client_id=$CLIENT_ID" \
+      --data-urlencode "redirect_uri=$REDIRECT_URI" \
+      -d response_type=code \
+      -d scope=openid \
+      -d "code_challenge=$CODE_CHALLENGE" \
+      -d code_challenge_method=S256) || exit 1
+
+  FORM_ACTION=$(formAction "$LOGIN_FORM")
+  if [ -z "$FORM_ACTION" ]; then
+    echo "ERROR: could not find the Keycloak login form at $KEYCLOAK_ISSUER" >&2
+    exit 1
+  fi
+
+  if grep -q 'name="password"' <<<"$LOGIN_FORM"; then
+    # single-page flow: username and password are posted to the same form
+    PASSWORD_FORM=$LOGIN_FORM
+  else
+    # username-first flow: POST the username; -L follows possible identity-broker
+    # redirects, the response then contains the (possibly brokered) password form
+    PASSWORD_FORM=$("${CURL[@]}" -L -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+        --data-urlencode "username=$HSADMINNG_JWT_USERNAME" \
+        "$FORM_ACTION") || exit 1
+    printf '%s' "$PASSWORD_FORM" >"$RESPONSE_BODY"
+    FORM_ACTION=$(formAction "$PASSWORD_FORM")
+    if [ -z "$FORM_ACTION" ] || ! grep -q 'name="password"' <<<"$PASSWORD_FORM"; then
+      echo "ERROR: login failed after submitting the username: $(pageError)" >&2
+      exit 1
+    fi
+  fi
+
+  if grep -q 'name="username"' <<<"$PASSWORD_FORM"; then
+    # a brokered password form pre-fills the username (e.g. with the email address); re-post that value
+    PREFILLED_USERNAME=$(grep -o '<input[^>]*name="username"[^>]*' <<<"$PASSWORD_FORM" |
+        grep -o 'value="[^"]*"' | head -1 | sed -e 's/^value="//' -e 's/"$//')
+    USERNAME_ARGUMENTS=(--data-urlencode "username=${PREFILLED_USERNAME:-$HSADMINNG_JWT_USERNAME}")
+  else
+    USERNAME_ARGUMENTS=()
+  fi
+
+  # The password is passed via stdin (--data-urlencode name@-) to keep it out of the process list.
+  # On success, -L follows the redirects back through the broker to $REDIRECT_URI?...&code=...,
+  # and %{url_effective} keeps that query-string with the authorization code.
+  FINAL_URL=$(printf '%s' "$HSADMINNG_JWT_PASSWORD" | \
+      "${CURL[@]}" -L -b "$COOKIE_JAR" -c "$COOKIE_JAR" -o "$RESPONSE_BODY" -w '%{url_effective}' \
+          "${USERNAME_ARGUMENTS[@]}" \
+          --data-urlencode "password@-" \
+          -d "credentialId=" \
+          "$FORM_ACTION") || exit 1
+
+  AUTH_CODE=$(grep -o '[?&]code=[^&]*' <<<"$FINAL_URL" | tail -1 | cut -d= -f2)
+  if [ -z "$AUTH_CODE" ]; then
+    echo "ERROR: login failed: $(pageError)" >&2
+    echo "       (last page was $FINAL_URL," >&2
+    echo "        maybe the account requires OTP/2FA or another action, which this script does not support)" >&2
+    exit 1
+  fi
+
+  ACCESS_TOKEN=$("${CURL[@]}" -X POST "$KEYCLOAK_ISSUER/protocol/openid-connect/token" \
+      -d grant_type=authorization_code \
+      -d "client_id=$CLIENT_ID" \
+      --data-urlencode "redirect_uri=$REDIRECT_URI" \
+      -d "code=$AUTH_CODE" \
+      -d "code_verifier=$CODE_VERIFIER" |
+    grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
+  if [ -z "$ACCESS_TOKEN" ]; then
+    echo "ERROR: could not exchange the authorization code for an access token" >&2
+    exit 1
+  fi
+
+  echo "$ACCESS_TOKEN"
+)
+
+echo "LOGIN $HSADMINNG_JWT_USERNAME"
+if [ "${BASH_SOURCE[0]}" != "$0" ]; then
+  # sourced: export the token into the current shell environment
+  export HSADMINNG_JWT_BEARER="$(jwtLogin)"
+  unset -f jwtLogin
+  if command -v require >/dev/null 2>&1; then
+    require HSADMINNG_JWT_BEARER
+  elif [ -z "$HSADMINNG_JWT_BEARER" ]; then
+    # same semantics as `require` from .aliases, in case it is not loaded
+    echo "ERROR: no value for HSADMINNG_JWT_BEARER" >&2
+    if [[ $- == *i* ]]; then return 1; else exit 1; fi
+  fi
+else
+  # executed as a script: print the token to stdout, e.g. for HSADMINNG_JWT_BEARER="$(tools/jwt-login)"
+  jwtLogin
+fi

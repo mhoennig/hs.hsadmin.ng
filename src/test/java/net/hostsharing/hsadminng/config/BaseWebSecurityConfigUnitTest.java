@@ -51,12 +51,13 @@ class BaseWebSecurityConfigUnitTest {
 
     @Test
     void jwtDecoderShouldDecodeRealJwtSignedWithConfiguredHmacSecret() throws Exception {
-        val decoder = config.jwtDecoder(
-                "https://unused-issuer.example",
+        val decoder = config.standardJwtDecoder(
+                "https://the-issuer.example",
                 "https://unused-jwks.example/jwks",
-                VALID_HMAC_SECRET);
+                VALID_HMAC_SECRET,
+                "");
 
-        val jwt = decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET));
+        val jwt = decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, "https://the-issuer.example", null));
 
         assertThat(jwt.getSubject()).isEqualTo("some-subject");
         assertThat(jwt.getClaimAsString("given_name")).isEqualTo("Some");
@@ -64,29 +65,71 @@ class BaseWebSecurityConfigUnitTest {
 
     @Test
     void jwtDecoderShouldRejectRealJwtSignedWithDifferentHmacSecret() throws Exception {
-        val decoder = config.jwtDecoder("", "", VALID_HMAC_SECRET);
+        val decoder = config.standardJwtDecoder("", "", VALID_HMAC_SECRET, "");
 
         assertThatExceptionOfType(JwtException.class)
-                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", OTHER_HMAC_SECRET)));
+                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", OTHER_HMAC_SECRET, null, null)));
+    }
+
+    @Test
+    void jwtDecoderShouldRejectJwtWithWrongOrMissingIssuer() throws Exception {
+        val decoder = config.standardJwtDecoder("https://the-issuer.example", "", VALID_HMAC_SECRET, "");
+
+        assertThatExceptionOfType(JwtException.class)
+                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, "https://evil-issuer.example", null)));
+        assertThatExceptionOfType(JwtException.class)
+                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, null, null)));
+    }
+
+    @Test
+    void jwtDecoderShouldAcceptJwtWithAnyOfTheConfiguredAudiences() throws Exception {
+        val decoder = config.standardJwtDecoder("", "", VALID_HMAC_SECRET, "first-audience, second-audience");
+
+        val jwt = decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, null, "second-audience"));
+
+        assertThat(jwt.getAudience()).containsExactly("second-audience");
+    }
+
+    @Test
+    void jwtDecoderShouldRejectJwtWithWrongOrMissingAudience() throws Exception {
+        val decoder = config.standardJwtDecoder("", "", VALID_HMAC_SECRET, "expected-audience");
+
+        assertThatExceptionOfType(JwtException.class)
+                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, null, "other-audience")));
+        assertThatExceptionOfType(JwtException.class)
+                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, null, null)));
     }
 
     @Test
     void jwtDecoderShouldDecodeRealJwtFromConfiguredJwkSetUri() throws Exception {
-        val decoder = config.jwtDecoder(
-                "https://unused-issuer.example",
+        val decoder = config.standardJwtDecoder(
+                "https://the-issuer.example",
                 baseUrl() + "/jwks",
+                "",
                 "");
 
-        val jwt = decoder.decode(signedRsaJwt("some-subject", null));
+        val jwt = decoder.decode(signedRsaJwt("some-subject", "https://the-issuer.example"));
 
         assertThat(jwt.getSubject()).isEqualTo("some-subject");
         assertThat(jwt.getClaimAsString("given_name")).isEqualTo("Some");
     }
 
     @Test
+    void jwtDecoderShouldRejectJwtFromConfiguredJwkSetUriWithWrongIssuer() throws Exception {
+        val decoder = config.standardJwtDecoder(
+                "https://the-issuer.example",
+                baseUrl() + "/jwks",
+                "",
+                "");
+
+        assertThatExceptionOfType(JwtException.class)
+                .isThrownBy(() -> decoder.decode(signedRsaJwt("some-subject", "https://evil-issuer.example")));
+    }
+
+    @Test
     void jwtDecoderShouldDecodeRealJwtFromConfiguredIssuerUri() throws Exception {
         val issuerUri = baseUrl();
-        val decoder = config.jwtDecoder(issuerUri, "", "");
+        val decoder = config.standardJwtDecoder(issuerUri, "", "", "");
 
         val jwt = decoder.decode(signedRsaJwt("some-subject", issuerUri));
 
@@ -95,20 +138,50 @@ class BaseWebSecurityConfigUnitTest {
     }
 
     @Test
+    void jwtDecoderShouldRejectJwtFromConfiguredIssuerUriWithWrongIssuer() throws Exception {
+        val decoder = config.standardJwtDecoder(baseUrl(), "", "", "");
+
+        assertThatExceptionOfType(JwtException.class)
+                .isThrownBy(() -> decoder.decode(signedRsaJwt("some-subject", "https://evil-issuer.example")));
+    }
+
+    @Test
     void jwtDecoderShouldRejectMissingConfiguration() {
-        assertThatThrownBy(() -> config.jwtDecoder("", "", ""))
+        assertThatThrownBy(() -> config.standardJwtDecoder("", "", "", ""))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Either spring.security.oauth2.resourceserver.jwt.hmac-secret");
     }
 
-    private String signedJwt(final String subject, final String secret) throws Exception {
-        val claims = new JWTClaimsSet.Builder()
+    @Test
+    void jwtDecoderShouldRejectFakeUrlWithoutProfile() {
+        assertThatThrownBy(() -> config.standardJwtDecoder("http://localhost:8080/fake-jwt", "", "", ""))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("You are using a fake-jwt issuer URL")
+                .hasMessageContaining("but the 'fake-jwt' profile is not active");
+    }
+
+    @Test
+    void jwtDecoderShouldRejectFakeJwkSetUriWithoutProfile() {
+        assertThatThrownBy(() -> config.standardJwtDecoder("", "http://localhost:8080/fake-jwt/jwks", "", ""))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("You are using a fake-jwt JWK set URI")
+                .hasMessageContaining("but the 'fake-jwt' profile is not active");
+    }
+
+    private String signedJwt(final String subject, final String secret, final String issuer, final String audience)
+            throws Exception {
+        val claimsBuilder = new JWTClaimsSet.Builder()
                 .subject(subject)
                 .claim("given_name", "Some")
-                .expirationTime(new Date(System.currentTimeMillis() + 60_000))
-                .build();
+                .expirationTime(new Date(System.currentTimeMillis() + 60_000));
+        if (issuer != null) {
+            claimsBuilder.issuer(issuer);
+        }
+        if (audience != null) {
+            claimsBuilder.audience(audience);
+        }
 
-        val signed = new SignedJWT(new JWSHeader(JWSAlgorithm.HS512), claims);
+        val signed = new SignedJWT(new JWSHeader(JWSAlgorithm.HS512), claimsBuilder.build());
         signed.sign(new MACSigner(secret.getBytes(StandardCharsets.UTF_8)));
         return signed.serialize();
     }

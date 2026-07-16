@@ -44,3 +44,46 @@ paths:
                         'text/plain':
                             schema:
                                 type: string
+
+    /api/version:
+        get:
+            tags:
+                - test
+            operationId: version
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        'application/json':
+                            schema:
+                                type: object
+                                properties:
+                                    version:
+                                        type: string
+                                    group:
+                                        type: string
+                                    artifact:
+                                        type: string
+                                    name:
+                                        type: string
+                                    buildTime:
+                                        type: string
+                                        format: date-time
+                                        nullable: true
+                                        description: null unless built with -PincludeBuildTime=true
+                                    buildHost:
+                                        type: string
+                                        nullable: true
+                                        description: hostname of the build machine; null for jars built before this property was introduced
+                                    gitBranch:
+                                        type: string
+                                        nullable: true
+                                        description: null when the build had no git information
+                                    gitCommit:
+                                        type: string
+                                        nullable: true
+                                        description: full commit hash; null when the build had no git information
+                                    gitDirty:
+                                        type: boolean
+                                        nullable: true
+                                        description: true if built from a working tree with uncommitted changes; null when the build had no git information

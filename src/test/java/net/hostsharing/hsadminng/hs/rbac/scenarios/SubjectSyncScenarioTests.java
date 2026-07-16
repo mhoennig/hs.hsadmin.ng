@@ -131,7 +131,7 @@ class SubjectSyncScenarioTests extends ScenarioTest {
     void invalidSubjectNamesAreRejected() {
         new SynchronizeSubject(scenarioTest, asGlobalAgent())
                 .given("subjectUuid", INVALID_UUID)
-                .given("subjectName", "invalid-username@example.com")
+                .given("subjectName", "invalidusername@example.com")
                 .given("subjectType", "USER")
                 .thenExpect(HttpStatus.BAD_REQUEST);
     }
