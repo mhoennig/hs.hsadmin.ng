@@ -10,25 +10,17 @@ import java.util.UUID;
 
 public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUID> {
 
-    // TODO.impl[Taiga#471]: extract organization from prefix on ingesting the
-    //  - LIKE patterns built from stable functions are non-sargable (no index on s.name usable, contradicting the
-    //    PR-doc performance contemplation) and may be re-evaluated per row; consider binding the realm prefix as a parameter
-    // - the realm-name grammar is hand-rolled as LIKE fragments (2x same-realm, 1x same-person);
-    //               a symmetric rbac.subject_realm_prefix(s.name) = rbac.subject_realm_prefix(base.currentSubject()) comparison
-    //               would keep the grammar in the one SQL function (mind dash-less names before switching)
-    // - the correlated EXISTS builds the LIKE pattern per row (nested loop with per-row subject_realm_prefix calls);
-    //               precompute the person's realm prefixes once (e.g. in a CTE) and semi-join against that small set
     /**
-     * The complete realm-based subject-visibility policy, shared by the queries below:
+     * The complete organization-(realm-)based subject-visibility policy, shared by the queries below:
      * <ul>
      *     <li>deactivated (soft-deleted) subjects are visible to nobody, not even global admins,</li>
      *     <li>a global admin (directly or via an assumed global admin role) sees all other subjects,</li>
      *     <li>assuming any other role drops all subject-derived visibility,</li>
-     *     <li>otherwise all subjects of the current subject's own realm (by name prefix) are visible,
-     *         plus the groups of realms in which the same natural person holds another user account.</li>
+     *     <li>otherwise all subjects of the current subject's own organization are visible,
+     *         plus the groups of organizations in which the same natural person holds another user account.</li>
      * </ul>
-     * JWT groups always belong to the current subject's own realm, thus they are visible via the realm prefix anyway
-     * and need no visibility source of their own.
+     * JWT groups always belong to the current subject's own organization, thus they are visible via the
+     * organization anyway and need no visibility source of their own.
      */
     // the assumed-role gate uses `cardinality(...) = 0` like rbac.subject_rv does,
     // because base.hasAssumedRole() yields null instead of false for an empty array
@@ -39,8 +31,9 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
                     rbac.hasGlobalAdminRole()
                     or (cardinality(base.assumedRoles()) = 0
                         and (
-                            s.name like concat(rbac.subject_realm_prefix(base.currentSubject()), '-%')
-                            or s.name like concat('/', rbac.subject_realm_prefix(base.currentSubject()), '-%')
+                            s.organization = (select currentSubject.organization
+                                                from rbac.subject currentSubject
+                                               where currentSubject.uuid = rbac.currentSubjectUuid())
                             or (s.type = 'GROUP'
                                 and exists (
                                     select 1
@@ -50,7 +43,7 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
                                       join rbac.subject samePersonSubject
                                         on samePersonSubject.uuid = samePersonAccount.uuid
                                      where ownAccount.uuid = rbac.currentSubjectUuid()
-                                       and s.name like concat('/', rbac.subject_realm_prefix(samePersonSubject.name), '-%')
+                                       and s.organization = samePersonSubject.organization
                                 ))
                         ))
                 )
@@ -61,17 +54,21 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
              select *
                from rbac.subject s
               where (:userName is null or s.name like concat(cast(:userName as text), '%'))
+                and (:organization is null or s.organization = cast(:organization as text))
                 and (:type is null or s.type = cast(:type as rbac.SubjectType))
                 and """ + VISIBLE_SUBJECT_CONDITION + """
               order by s.name
             """, nativeQuery = true)
     @Timed("app.rbac.subjects.repo.findVisibleSubjectsByOptionalNameLike.real")
-    List<RealSubjectEntity> findVisibleSubjectsByOptionalNameLikeAndOptionalTypeName(String userName, String type);
+    List<RealSubjectEntity> findVisibleSubjectsByOptionalNameLikeOrganizationAndTypeName(
+            String userName, String organization, String type);
 
-    default List<RealSubjectEntity> findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+    default List<RealSubjectEntity> findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
             final String userName,
+            final String organization,
             final SubjectType type) {
-        return findVisibleSubjectsByOptionalNameLikeAndOptionalTypeName(userName, type != null ? type.name() : null);
+        return findVisibleSubjectsByOptionalNameLikeOrganizationAndTypeName(
+                userName, organization, type != null ? type.name() : null);
     }
 
     @Query(value = """

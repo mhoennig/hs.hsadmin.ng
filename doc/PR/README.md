@@ -26,60 +26,17 @@ but initially prefix its title with `WIP: ` to mark it as a work in progress unt
 
 ## Structure
 
-```Markdown
+The main (`##`) sections have to appear in exactly this order, omitting sections which do not apply:
 
-## The Problem
+0. Related Links (optional)
+1. The Problem (required)
+2. Non-Goals (required)
+3. The Scenarios (optional for maintenance or bug fixing PRs, required for features)
+4. The Solution (required)
+5. Open Questions (optional)
+6. Additional Changes (optional)
+7. Prerequisite PRs (optional)
+8. Follow-up PRs (optional)
+9. Attachments (optional)
 
-A prosa description of the problem, which this PR is supposed to solve.
-
-## The Requirements
-
-A schematized specification of the requirements, preferably using [Gherkin](https://cucumber.io/docs/gherkin/reference/) vocabulary.
-But Gherkin does not make sense for all kinds of PRs.
-
-Use Markdown-native pseudo-Gherkin instead of fenced Gherkin code blocks.
-This keeps the scenarios linkable and allows direct links to tests, issues, ADRs, or explanations inside the requirement text.
-
-### Feature: headline of the feature
-
-#### Background
-
-- definitions of terms
-- other background information
-
-#### Scenario#236.01: Description of a requirement in the shape of a scenario!
-
-So that ... (describe the goal behind the requirement here).
-
-- **Given** some precondition
-  - **and** another precondition
-- **When** whatever is done
-- **Then** postcondition
-  - **and** another postcondition
-
-##### Verified by
-
-- [ExampleScenarioTests.exampleScenario](../../src/test/java/net/hostsharing/hsadminng/example/ExampleScenarioTests.java)
-
-#### Scenario#236.02: Description of another requirement in the shape of a scenario!
-
-...
-
-See [Examples](2026-06-25-PR%23236-realm-prefix-based-user-and-group-subject-visibility.md).
-
-Such feature descriptions are also very helpful in deriving tests and can lead agentic coding AI very well. 
-
-## The Solution
-
-Here you describe the changes you made and why you made them.
-
-If necessary, you can link to an ADR (Architecture Decision Record).
-
-## Additional Changes
-
-Here you list any additional changes you made, e.g. "fixed formatting in ..." or "fixed some naming issues".
-
-## Attachments
-
-Here you can add any longer sections that would interrupt the reading flow in the previous sections.
-Put each attachment on a level-3 heading ('### ...').
+For details, see [template](TEAMPLATE.md)

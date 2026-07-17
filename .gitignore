@@ -150,6 +150,7 @@ tools/lib/__pycache__/
 /.aiignore
 /.apikeys*
 /.environment*
+/.private/
 /src/test/resources/migration-prod/*
 .aider/
 .aider.tags.cache.*

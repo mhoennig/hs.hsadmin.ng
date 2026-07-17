@@ -23,6 +23,14 @@ class SubjectSyncScenarioTests extends ScenarioTest {
     private static final String EVE_UUID = "238a0004-0000-0000-0000-000000000004";
     private static final String NEW_ALICIA_UUID = "238a0005-0000-0000-0000-000000000005";
     private static final String INVALID_UUID = "238a0007-0000-0000-0000-000000000007";
+    private static final String BOB_UUID = "239a0001-0000-0000-0000-000000000001";
+    private static final String OPERATORS_UUID = "239a0002-0000-0000-0000-000000000002";
+    private static final String CAROL_UUID = "239a0003-0000-0000-0000-000000000003";
+    private static final String INVALID_USER_UUID = "239a0004-0000-0000-0000-000000000004";
+    private static final String INVALID_GROUP_UUID = "239a0005-0000-0000-0000-000000000005";
+    private static final String INVALID_GROUP_ORG_UUID = "239a0006-0000-0000-0000-000000000006";
+    private static final String JANE_UUID = "239a0007-0000-0000-0000-000000000007";
+    private static final String SMITH_OPERATORS_UUID = "239a0008-0000-0000-0000-000000000008";
 
     @SneakyThrows
     @org.junit.jupiter.api.BeforeEach
@@ -154,6 +162,101 @@ class SubjectSyncScenarioTests extends ScenarioTest {
     }
 
     /**
+     * Verifies Scenario#239.01: A global-admin can synchronize a USER subject with an explicit organization.
+     */
+    @Test
+    @Order(9040)
+    @Produces("SubjectSync: bob@example.com")
+    void aGlobalAdminCanSynchronizeAUserSubjectWithAnExplicitOrganization() {
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .given("subjectUuid", BOB_UUID)
+                .given("subjectName", "bob@example.com")
+                .given("organization", "example")
+                .given("subjectType", "USER")
+                .thenExpect(HttpStatus.CREATED)
+                .keep();
+    }
+
+    /**
+     * Verifies Scenario#239.02: A global-admin can synchronize a GROUP subject with an explicit organization.
+     */
+    @Test
+    @Order(9041)
+    @Produces("SubjectSync: /example-Operators")
+    void aGlobalAdminCanSynchronizeAGroupSubjectWithAnExplicitOrganization() {
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .given("subjectUuid", OPERATORS_UUID)
+                .given("subjectName", "/example-Operators")
+                .given("organization", "example")
+                .given("subjectType", "GROUP")
+                .thenExpect(HttpStatus.CREATED);
+    }
+
+    /**
+     * Verifies Scenario#239.03: Without an explicit organization, the organization is derived from the name prefix.
+     */
+    @Test
+    @Order(9042)
+    @Produces("SubjectSync: xyz-carol")
+    void aSubjectSynchronizedWithoutExplicitOrganizationGetsItDerivedFromTheNamePrefix() {
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .introduction("""
+                        The sync program synchronizes a subject with a realm-prefixed name and **no** explicit
+                        organization through the UUID-keyed idempotent `PUT /api/rbac/subjects/{subjectUuid}`,
+                        just like all PR#238 sync requests. The organization is derived from the name prefix
+                        (the part before the first `-`, without the leading `/` of GROUP names) and stored
+                        with the subject.
+                        """)
+                .given("subjectUuid", CAROL_UUID)
+                .given("subjectName", "xyz-carol")
+                .given("subjectType", "USER")
+                .expected("expectedOrganization", "xyz")
+                .thenExpect(HttpStatus.CREATED);
+    }
+
+    /**
+     * Verifies Scenario#239.04: A USER subject name starting with a slash is rejected despite an explicit organization.
+     */
+    @Test
+    @Order(9043)
+    void aUserSubjectNameStartingWithASlashIsRejectedDespiteAnExplicitOrganization() {
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .given("subjectUuid", INVALID_USER_UUID)
+                .given("subjectName", "/bob")
+                .given("organization", "example")
+                .given("subjectType", "USER")
+                .thenExpect(HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Verifies Scenario#239.05: A GROUP subject name without a leading slash is rejected despite an explicit organization.
+     */
+    @Test
+    @Order(9044)
+    void aGroupSubjectNameWithoutALeadingSlashIsRejectedDespiteAnExplicitOrganization() {
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .given("subjectUuid", INVALID_GROUP_UUID)
+                .given("subjectName", "example-Operators")
+                .given("organization", "example")
+                .given("subjectType", "GROUP")
+                .thenExpect(HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Verifies Scenario#239.06: A GROUP organization which does not match the group-name prefix is rejected.
+     */
+    @Test
+    @Order(9045)
+    void aGroupOrganizationWhichDoesNotMatchTheGroupNamePrefixIsRejected() {
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .given("subjectUuid", INVALID_GROUP_ORG_UUID)
+                .given("subjectName", "/example-Operators")
+                .given("organization", "xyz")
+                .given("subjectType", "GROUP")
+                .thenExpect(HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Verifies Scenario#238.09: A deactivated subject is reactivated by the next synchronization with the same UUID.
      *
      * <p>It reactivates with its original name `sync-alice`, because a new subject took over the name
@@ -163,9 +266,65 @@ class SubjectSyncScenarioTests extends ScenarioTest {
     @Order(9039)
     @Requires("SubjectSync: sync-alice - deactivated")
     void aDeactivatedSubjectIsReactivatedByTheNextSynchronizationWithTheSameUuid() {
-        new ReactivateSubjectViaResynchronization(scenarioTest, asGlobalAgent())
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .introduction("""
+                        When a subject reappears in Keycloak, e.g. because the external sync presumed
+                        it was deleted because of some sort of system failure or because it was simply
+                        disabled in Keycloak and got enabled again, the sync program simply synchronizes it again.
+                        And because the earlier removal was just a deactivation, the UUID-keyed PUT reactivates the
+                        retained subject: it keeps its UUID, becomes visible again, and the response reports
+                        an update (`200 OK`), not a creation.
+                        
+                        This is necessary so that explicit RBAC-grant's don't get lost too soon.
+                        """)
                 .given("subjectUuid", "%{SubjectSync: sync-alice}")
                 .given("subjectName", "sync-alice")
+                .given("subjectType", "USER")
+                .thenExpect(HttpStatus.OK);
+    }
+
+    /**
+     * Verifies Scenario#239.07: Subjects can be listed filtered by their organization.
+     */
+    @Test
+    @Order(9046)
+    @Requires("SubjectSync: xyz-carol")
+    void subjectsCanBeListedFilteredByTheirOrganization() {
+        new ListSubjectsFilteredByOrganization(scenarioTest, asGlobalAgent())
+                .given("userUuid", JANE_UUID)
+                .given("userName", "jane@example.com")
+                .given("organization", "smith") // used for both the user+group
+                .given("groupUuid", SMITH_OPERATORS_UUID)
+                .given("groupName", "/smith-Operators")
+                .expected("unexpectedSubjectNames", """
+                        [
+                          { "name": "xyz-carol" },
+                          { "name": "hsh-alex_superuser" }
+                        ]
+                        """)
+                .thenExpect(HttpStatus.OK);
+    }
+
+    /**
+     * Verifies Scenario#239.08: Re-synchronizing a USER subject with a different organization moves it to that
+     * organization.
+     */
+    @Test
+    @Order(9047)
+    @Requires("SubjectSync: bob@example.com")
+    void reSynchronizingAUserSubjectWithADifferentOrganizationMovesItToThatOrganization() {
+        new SynchronizeSubject(scenarioTest, asGlobalAgent())
+                .introduction("""
+                        The sync program re-synchronizes an already existing USER subject with the same UUID
+                        and name, but a different explicit organization, e.g. after the user moved to another
+                        organization in Keycloak. The idempotent PUT updates the organization in place
+                        and returns `200 OK`; the UUID and the name remain unchanged.
+                        For GROUP subjects the organization is bound to the group-name prefix,
+                        so it can only change together with a matching rename.
+                        """)
+                .given("subjectUuid", "%{SubjectSync: bob@example.com}")
+                .given("subjectName", "bob@example.com")
+                .given("organization", "acme")
                 .given("subjectType", "USER")
                 .thenExpect(HttpStatus.OK);
     }

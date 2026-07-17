@@ -38,10 +38,17 @@ public abstract class Subject<T extends Subject<?> & ImmutableBaseEntity<?>> imp
 
     private String name;
 
+    private String organization;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private SubjectType type = SubjectType.USER;
+
+    // mirrors rbac.subject_realm_prefix in 1050-rbac-base.sql
+    public static String organizationFromName(final String subjectName) {
+        return subjectName.replaceFirst("^/+", "").split("-", 2)[0];
+    }
 
     public String generateAccessCode() {
         return generateAccessCode(LocalDateTime.now());

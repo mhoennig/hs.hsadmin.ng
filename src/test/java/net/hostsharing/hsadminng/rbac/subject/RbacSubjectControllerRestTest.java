@@ -10,7 +10,9 @@ import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectInsertResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectWithOrganizationInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectInsertResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectWithOrganizationInsertResource;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
@@ -161,8 +162,9 @@ class RbacSubjectControllerRestTest {
     void getListOfSubjectsReturnsSubjectsFromRepository() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
-        when(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+        when(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
                         "some-user",
+                        null,
                         null)
                 .stream()
                 .<Subject<?>>map(subject -> subject)
@@ -341,7 +343,7 @@ class RbacSubjectControllerRestTest {
         // given
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alice", "USER")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alice", "xyz", "USER")).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -355,14 +357,44 @@ class RbacSubjectControllerRestTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON));
 
-        // then
+        // then the organization got derived from the name prefix
         result
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "http://localhost/api/rbac/subjects/" + givenUuid))
                 .andExpect(jsonPath("uuid", is(givenUuid.toString())))
                 .andExpect(jsonPath("name", is("xyz-alice")))
+                .andExpect(jsonPath("organization", is("xyz")))
                 .andExpect(jsonPath("type", is("USER")));
-        verify(rbacSubjectRepository).upsert(givenUuid, "xyz-alice", "USER");
+        verify(rbacSubjectRepository).upsert(givenUuid, "xyz-alice", "xyz", "USER");
+    }
+
+    @Test
+    void putCreatesNewUserSubjectWithSpecialCharactersInLocalPartReturnsCreated() throws Exception {
+        // given a realm-prefixed name whose local-part contains many kinds of special characters;
+        // the local-part accepts basically anything Keycloak might have accepted
+        val givenName = "xyz-a/b?c&d=e+f%g#h!i(j)k[l]m{n}o's*t~u,v;w:x|y^z§ä ö.é@end";
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, givenName, "xyz", "USER")).thenReturn("created");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "%s"
+                                }
+                                """.formatted(givenName))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then the organization got derived from the name prefix
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is(givenName)))
+                .andExpect(jsonPath("organization", is("xyz")))
+                .andExpect(jsonPath("type", is("USER")));
     }
 
     @Test
@@ -370,7 +402,7 @@ class RbacSubjectControllerRestTest {
         // given
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "/xyz-Team", "GROUP")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, "/xyz-Team", "xyz", "GROUP")).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -385,10 +417,291 @@ class RbacSubjectControllerRestTest {
                                 """)
                         .accept(MediaType.APPLICATION_JSON));
 
+        // then the organization got derived from the name prefix, without the leading '/'
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("organization", is("xyz")))
+                .andExpect(jsonPath("type", is("GROUP")));
+    }
+
+    @Test
+    void putCreatesNewUserSubjectWithExplicitOrganizationReturnsCreated() throws Exception {
+        // given a name which does not match the realm-prefix pattern, but an explicit organization
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, "alice@example.com", "example", "USER")).thenReturn("created");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "alice@example.com",
+                                    "organization": "example"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then the name remains unchanged and the explicit organization is used
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("uuid", is(givenUuid.toString())))
+                .andExpect(jsonPath("name", is("alice@example.com")))
+                .andExpect(jsonPath("organization", is("example")))
+                .andExpect(jsonPath("type", is("USER")));
+        verify(rbacSubjectRepository).upsert(givenUuid, "alice@example.com", "example", "USER");
+    }
+
+    @Test
+    void putCreatesNewGroupSubjectWithExplicitOrganizationReturnsCreated() throws Exception {
+        // given a group name whose prefix is no valid realm-prefix for derivation (too long),
+        // and an explicit organization matching that prefix
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, "/example-Operators", "example", "GROUP")).thenReturn("created");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "/example-Operators",
+                                    "organization": "example",
+                                    "type": "GROUP"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
         // then
         result
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is("/example-Operators")))
+                .andExpect(jsonPath("organization", is("example")))
                 .andExpect(jsonPath("type", is("GROUP")));
+    }
+
+    @Test
+    void putGroupSubjectWithOrganizationNotMatchingNamePrefixReturnsBadRequest() throws Exception {
+        // given a GROUP organization which differs from the group-name prefix;
+        // JWTs reference groups just by name, thus the organization must remain derivable from it
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "/example-Operators",
+                                    "organization": "xyz",
+                                    "type": "GROUP"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "organization derived from the group-name prefix")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+    }
+
+    @Test
+    void putCreatesNewGroupSubjectWithExplicitOrganizationMatchingDerivablePrefixReturnsCreated() throws Exception {
+        // given a group name with a valid realm-prefix matching the explicit organization
+        val requestBodyWithMatchingGroupnamePrefixAndOranization = """
+                {
+                    "name": "/tst-Team",
+                    "organization": "tst",
+                    "type": "GROUP"
+                }
+                """;
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, "/tst-Team", "tst", "GROUP")).thenReturn("created");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBodyWithMatchingGroupnamePrefixAndOranization)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is("/tst-Team")))
+                .andExpect(jsonPath("organization", is("tst")))
+                .andExpect(jsonPath("type", is("GROUP")));
+    }
+
+    @Test
+    void putGroupSubjectWithOrganizationNotMatchingDerivableNamePrefixReturnsBadRequest() throws Exception {
+        // given a group name with a valid realm-prefix and a differing explicit organization
+        val requestBodyWithDifferingGroupnamePrefixAndOranization = """
+                                {
+                                    "name": "/tst-Team",
+                                    "organization": "example",
+                                    "type": "GROUP"
+                                }
+                                """;
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBodyWithDifferingGroupnamePrefixAndOranization)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("must be equal")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+    }
+
+    @Test
+    void putUserSubjectWithExplicitOrganizationButGroupStyleNameReturnsBadRequest() throws Exception {
+        // given a USER subject whose name starts with '/', which is reserved for GROUP subjects
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "/alice",
+                                    "organization": "xyz"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "USER subject name '/alice' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+    }
+
+    @Test
+    void putGroupSubjectWithExplicitOrganizationButNoLeadingSlashReturnsBadRequest() throws Exception {
+        // given a GROUP subject whose name lacks the leading '/'
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "example-Operators",
+                                    "organization": "example",
+                                    "type": "GROUP"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "GROUP subject name 'example-Operators' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+    }
+
+    @Test
+    void putSubjectWithEmptyOrganizationReturnsBadRequest() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "alice",
+                                    "organization": ""
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("organization")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+    }
+
+    @Test
+    void putSubjectWithEmptyOrganizationReturnsBadRequestEvenForDerivableName() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "xyz-alice",
+                                    "organization": ""
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then: an empty organization is not treated as absent, no fallback to name-prefix derivation
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("organization")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+    }
+
+    @Test
+    void putSubjectWithNullOrganizationReturnsBadRequestEvenForDerivableName() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "xyz-alice",
+                                    "organization": null
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then: a null organization is not treated as absent, no fallback to name-prefix derivation
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("organization")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
     }
 
     @Test
@@ -396,7 +709,7 @@ class RbacSubjectControllerRestTest {
         // given
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alicia", "USER")).thenReturn("updated");
+        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alicia", "xyz", "USER")).thenReturn("updated");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -437,7 +750,7 @@ class RbacSubjectControllerRestTest {
 
         // then
         result.andExpect(status().isForbidden());
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
     }
 
     @Test
@@ -462,7 +775,7 @@ class RbacSubjectControllerRestTest {
 
         // then
         result.andExpect(status().isBadRequest());
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
     }
 
     private RbacSubjectPermission givenPermission(
@@ -516,7 +829,8 @@ class RbacSubjectControllerRestTest {
     void getListOfSubjectsFiltersByType() throws Exception {
         // given
         final var givenUuid = UUID.randomUUID();
-        given(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+        given(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
+                        null,
                         null,
                         SubjectType.GROUP)
                 .stream()
@@ -541,17 +855,55 @@ class RbacSubjectControllerRestTest {
                 .andExpect(jsonPath("[0].type", is("GROUP")));
 
         // then
-        Mockito.verify(realSubjectRepository).findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+        Mockito.verify(realSubjectRepository).findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
+                        (String) null,
                         (String) null,
                         SubjectType.GROUP);
+    }
+
+    @Test
+    void getListOfSubjectsFiltersByOrganization() throws Exception {
+        // given
+        final var givenUuid = UUID.randomUUID();
+        given(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
+                        null,
+                        "xyz",
+                        null)
+                .stream()
+                .<Subject<?>>map(subject1 -> subject1)
+                .toList())
+                .willReturn(List.of(RbacSubjectEntity.builder()
+                        .uuid(givenUuid)
+                        .name("xyz-alice")
+                        .organization("xyz")
+                        .build()));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/subjects?organization=xyz")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("[0].uuid", is(givenUuid.toString())))
+                .andExpect(jsonPath("[0].name", is("xyz-alice")))
+                .andExpect(jsonPath("[0].organization", is("xyz")));
+
+        // then
+        Mockito.verify(realSubjectRepository).findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
+                        (String) null,
+                        "xyz",
+                        (SubjectType) null);
     }
 
     @Test
     void getListOfSubjectsDelegatesGroupVisibilityToService() throws Exception {
         // given
         final var givenUuid = UUID.randomUUID();
-        given(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+        given(realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
                         "/xyz-Team",
+                        null,
                         SubjectType.GROUP)
                 .stream()
                 .<Subject<?>>map(subject1 -> subject1)
@@ -577,8 +929,9 @@ class RbacSubjectControllerRestTest {
                 .andExpect(jsonPath("[0].type", is("GROUP")));
 
         // then
-        Mockito.verify(realSubjectRepository).findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+        Mockito.verify(realSubjectRepository).findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
                         "/xyz-Team",
+                        (String) null,
                         SubjectType.GROUP);
     }
 
@@ -785,7 +1138,7 @@ class RbacSubjectControllerRestTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "name": "invaliduser@example.com"
+                                    "name": "invaliduser@for-implicit-organization.example.com"
                                 }
                                 """)
                         .accept(MediaType.APPLICATION_JSON));
@@ -794,8 +1147,8 @@ class RbacSubjectControllerRestTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
-                        "USER subject name 'invaliduser@example.com' does not match required pattern")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
+                        "USER subject name 'invaliduser@for-implicit-organization.example.com' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
     }
 
     @Test
@@ -821,55 +1174,48 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "USER subject name '/xyz-Team' does not match required pattern")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
     }
 
     @Test
-    void openApiUserSubjectNamePatternMatchesGeneratedValidationAndDatabaseFunction() throws Exception {
+    void openApiSubjectNamePatternsMatchGeneratedValidation() throws Exception {
         // given
         final Map<String, Object> yaml = new Yaml().load(Files.newInputStream(
                 Path.of("src/main/resources/api-definition/rbac/rbac-subject-schemas.yaml")));
         final var schemas = map(map(yaml.get("components")).get("schemas"));
         final var anyOf = (List<Map<String, String>>) map(schemas.get("RbacSubjectInsert")).get("anyOf");
-        final var userInsertNameSchema = map(map(map(schemas.get("RbacUserSubjectInsert"))
-                .get("properties"))
-                .get("name"));
-        final var groupInsertNameSchema = map(map(map(schemas.get("RbacGroupSubjectInsert"))
-                .get("properties"))
-                .get("name"));
-        final var userPattern = (String) userInsertNameSchema.get("pattern");
-        final var groupPattern = (String) groupInsertNameSchema.get("pattern");
-
-        final var sql = Files.readString(Path.of("src/main/resources/db/changelog/1-rbac/1050-rbac-base.sql"));
-        final var sqlUserPattern = functionPattern(sql, "is_valid_user_subject_name");
-        final var sqlGroupPattern = functionPattern(sql, "is_valid_group_subject_name");
 
         // then
         assertThat(anyOf).extracting(ref -> ref.get("$ref"))
                 .containsExactly(
                         "#/components/schemas/RbacUserSubjectInsert",
-                        "#/components/schemas/RbacGroupSubjectInsert");
-        assertThat(userInsertNameSchema).doesNotContainKey("x-user-subject-name-pattern");
-        assertThat(RbacUserSubjectInsertResource.class.getDeclaredField("name")
+                        "#/components/schemas/RbacUserSubjectWithOrganizationInsert",
+                        "#/components/schemas/RbacGroupSubjectInsert",
+                        "#/components/schemas/RbacGroupSubjectWithOrganizationInsert");
+        assertNamePatternMatchesGeneratedValidation(schemas,
+                "RbacUserSubjectInsert", RbacUserSubjectInsertResource.class);
+        assertNamePatternMatchesGeneratedValidation(schemas,
+                "RbacUserSubjectWithOrganizationInsert", RbacUserSubjectWithOrganizationInsertResource.class);
+        assertNamePatternMatchesGeneratedValidation(schemas,
+                "RbacGroupSubjectInsert", RbacGroupSubjectInsertResource.class);
+        assertNamePatternMatchesGeneratedValidation(schemas,
+                "RbacGroupSubjectWithOrganizationInsert", RbacGroupSubjectWithOrganizationInsertResource.class);
+    }
+
+    private static void assertNamePatternMatchesGeneratedValidation(
+            final Map<String, Object> schemas,
+            final String schemaName,
+            final Class<?> resourceClass) throws NoSuchFieldException {
+        final var nameSchema = map(map(map(schemas.get(schemaName)).get("properties")).get("name"));
+        assertThat(resourceClass.getDeclaredField("name")
                 .getAnnotation(jakarta.validation.constraints.Pattern.class)
-                .regexp()).isEqualTo(userPattern);
-        assertThat(RbacGroupSubjectInsertResource.class.getDeclaredField("name")
-                .getAnnotation(jakarta.validation.constraints.Pattern.class)
-                .regexp()).isEqualTo(groupPattern);
-        assertThat(sqlUserPattern).isEqualTo(userPattern);
-        assertThat(sqlGroupPattern).isEqualTo(groupPattern);
+                .regexp())
+                .as(schemaName + ".name pattern")
+                .isEqualTo(nameSchema.get("pattern"));
     }
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> map(final Object yamlNode) {
         return (Map<String, Object>) yamlNode;
-    }
-
-    private static String functionPattern(final String sql, final String functionName) {
-        final var matcher = Pattern.compile(
-                "create or replace function rbac\\." + functionName + "\\(subjectName varchar\\).*?subjectName ~ '([^']+)'",
-                Pattern.DOTALL).matcher(sql);
-        assertThat(matcher.find()).isTrue();
-        return matcher.group(1);
     }
 }

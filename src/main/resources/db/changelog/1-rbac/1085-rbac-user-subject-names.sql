@@ -67,3 +67,40 @@ alter table rbac.subject
         type <> 'GROUP'::rbac.SubjectType or rbac.is_valid_group_subject_name(name)
     );
 --//
+
+
+--changeset michael.hoennig:rbac-subject-DROP-SUBJECT-NAME-CHECK endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    With the separate organization column (1050-rbac-base.sql), subject names no longer need
+    to carry a derivable realm-prefix, thus the naming patterns are no longer enforced at the
+    DB level. The pattern functions are dropped as well; they still have to be created in
+    1050-rbac-base.sql because the (already released) constraint changeset above depends on them.
+ */
+alter table rbac.subject
+    drop constraint if exists check_valid_user_subject_name,
+    drop constraint if exists check_valid_group_subject_name;
+drop function if exists rbac.is_valid_user_subject_name(varchar);
+drop function if exists rbac.is_valid_group_subject_name(varchar);
+--//
+
+
+--changeset michael.hoennig:rbac-subject-BACKFILL-ORGANIZATION endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Back-fills the organization column added in 1050-rbac-base.sql from the subject-name prefix
+    for pre-existing subjects, after all old-format names got renamed by the changesets above.
+    New subjects get their organization explicitly or via the default trigger, so the column
+    can be `not null` from here on.
+ */
+do language plpgsql $$
+    begin
+        call base.defineContext('back-filling subject organization from the name prefix', null, null, null);
+        update rbac.subject
+            set organization = rbac.subject_realm_prefix(name)
+            where organization is null;
+    end;
+$$;
+alter table rbac.subject
+    alter column organization set not null;
+--//

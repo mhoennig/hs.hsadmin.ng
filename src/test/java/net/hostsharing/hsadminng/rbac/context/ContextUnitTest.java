@@ -229,7 +229,7 @@ class ContextUnitTest {
             given(em.createNativeQuery("select rbac.isGlobalAdmin()", boolean.class)).willReturn(nativeQuery);
             given(nativeQuery.getSingleResult()).willReturn(true);
 
-            assertThatCode(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+            assertThatCode(() -> context.requireGlobalAdmin("only a global-admin may create or update subjects"))
                     .doesNotThrowAnyException();
         }
 
@@ -239,9 +239,9 @@ class ContextUnitTest {
             given(em.createNativeQuery("select rbac.isGlobalAdmin()", boolean.class)).willReturn(nativeQuery);
             given(nativeQuery.getSingleResult()).willReturn(false);
 
-            assertThatThrownBy(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+            assertThatThrownBy(() -> context.requireGlobalAdmin("only a global-admin may create or update subjects"))
                     .isInstanceOf(ForbiddenException.class)
-                    .hasMessage("only a global-admin may upsert subjects");
+                    .hasMessage("only a global-admin may create or update subjects");
         }
 
         @Test

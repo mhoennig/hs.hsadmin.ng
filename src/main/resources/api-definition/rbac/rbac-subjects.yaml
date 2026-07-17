@@ -1,7 +1,7 @@
 get:
     tags:
         - rbac-subjects
-    description: List accessible RBAC subjects with optional filters by name and type.
+    description: List accessible RBAC subjects with optional filters by name, organization and type.
     operationId: getListOfSubjects
     parameters:
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -10,6 +10,13 @@ get:
           required: false
           schema:
               type: string
+          description: Filter by subject-name prefix.
+        - name: organization
+          in: query
+          required: false
+          schema:
+              type: string
+          description: Filter by the exact organization (realm) of the subject.
         - name: type
           in: query
           required: false

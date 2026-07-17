@@ -21,11 +21,18 @@ components:
                         Subject name. USER subjects use the realm-prefix and local-part format.
                         GROUP subjects start with `/` right before the realm-prefix.
                     example: hsh-alex_superuser
+                organization:
+                    type: string
+                    description: |
+                        The organization (realm) the subject belongs to, either given explicitly
+                        on creation or derived from the subject-name prefix.
+                    example: hostsharing
                 type:
                     $ref: '#/components/schemas/SubjectType'
             required:
                 - uuid
                 - name
+                - organization
                 - type
 
         RbacUserSubjectInsert:
@@ -36,11 +43,13 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^[a-z]{3,12}-[^/]+$'
+                    pattern: '^[a-z]{3,12}-.+$'
                     description: |
                         USER subject name using the realm-prefix and local-part format.
-                        The local-part does not reject anything which might come from Keycloak,
-                        to avoid rejecting valid Keycloak user-names.
+                        Without an explicit organization, the organization is derived from the
+                        realm-prefix, which is therefore enforced by the pattern.
+                        The local-part is not restricted at all, to avoid rejecting any
+                        user-name Keycloak might have accepted.
                     example: hsh-alex_superuser
                 type:
                     type: string
@@ -49,6 +58,37 @@ components:
                     default: USER
             required:
                 - name
+            additionalProperties: false
+
+        RbacUserSubjectWithOrganizationInsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^[^/].*$'
+                    description: |
+                        USER subject name; with an explicit organization it just must not start
+                        with `/` (which marks GROUP subject names), anything else which might
+                        come from Keycloak is accepted.
+                    example: alex_superuser
+                organization:
+                    type: string
+                    minLength: 1
+                    description: |
+                        The organization (realm) the USER subject belongs to;
+                        given explicitly instead of being derived from the subject-name prefix.
+                    example: hsh
+                type:
+                    type: string
+                    enum:
+                        - USER
+                    default: USER
+            required:
+                - name
+                - organization
             additionalProperties: false
 
         RbacGroupSubjectInsert:
@@ -62,7 +102,9 @@ components:
                     pattern: '^/[a-z]{3,12}-[^/]+$'
                     description: |
                         GROUP subject name. GROUP subject names start with `/`, a realm-prefix and a '-'
-                        followed by a local-part.                      
+                        followed by a local-part.
+                        Without an explicit organization, the organization is derived from the
+                        realm-prefix, which is therefore enforced by the pattern.
                         The local-part does not reject anything which might come from Keycloak,
                         to avoid rejecting valid Keycloak group-names.
                     example: /xyz-Team
@@ -75,10 +117,46 @@ components:
                 - type
             additionalProperties: false
 
+        RbacGroupSubjectWithOrganizationInsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^/.+$'
+                    description: |
+                        GROUP subject name; must start with `/` (which marks GROUP subject names)
+                        directly followed by the organization, anything else which might come
+                        from Keycloak is accepted.
+                    example: /example-Operators
+                organization:
+                    type: string
+                    minLength: 1
+                    description: |
+                        The organization (realm) the GROUP subject belongs to.
+                        JWTs reference groups just by name (no UUIDs), thus a GROUP subject's
+                        organization must remain derivable from the group-name prefix:
+                        an explicitly given organization is validated to match the part of the
+                        name between the leading `/` and the first `-`.
+                    example: example
+                type:
+                    type: string
+                    enum:
+                        - GROUP
+            required:
+                - name
+                - organization
+                - type
+            additionalProperties: false
+
         RbacSubjectInsert:
             anyOf:
                 - $ref: '#/components/schemas/RbacUserSubjectInsert'
+                - $ref: '#/components/schemas/RbacUserSubjectWithOrganizationInsert'
                 - $ref: '#/components/schemas/RbacGroupSubjectInsert'
+                - $ref: '#/components/schemas/RbacGroupSubjectWithOrganizationInsert'
 
         RbacSubjectPermission:
             type: object

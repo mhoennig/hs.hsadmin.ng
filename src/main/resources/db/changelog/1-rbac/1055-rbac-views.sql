@@ -198,11 +198,13 @@ execute function rbac.delete_grant_tf();
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-views-USER-ENHANCED-VIEW endDelimiter:--//
+--changeset michael.hoennig:rbac-views-USER-ENHANCED-VIEW runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Creates a view to the users table with additional columns
     for easier human readability.
+    Re-created via runOnChange to pick up the organization column via `select *`.
  */
 drop view if exists rbac.subject_ev;
 create or replace view rbac.subject_ev as
@@ -229,6 +231,8 @@ select distinct *
 /*
     Creates a view to the subjects-table with row-level limitation
     based on the grants of the current user or assumed roles.
+    Re-created via runOnChange to pick up the organization column via `select *`
+    (`create or replace view` appends it as the last view column).
  */
 create or replace view rbac.subject_rv as
     select distinct *
@@ -257,7 +261,9 @@ grant all privileges on rbac.subject_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERN
 -- ----------------------------------------------------------------------------
 
 /**
-    Replaces the insert trigger function for rbac.subject_rv to also handle the type column.
+    Replaces the insert trigger function for rbac.subject_rv to also handle the type and
+    organization columns. A null organization is defaulted from the name prefix by the
+    before-insert trigger on rbac.subject (1050-rbac-base.sql).
  */
 create or replace function rbac.insert_subject_tf()
     returns trigger
@@ -271,8 +277,8 @@ begin
         values( new.uuid, 'rbac.subject')
         returning r.uuid into refUuid;
     insert
-        into rbac.subject (uuid, name, type)
-        values (refUuid, new.name, coalesce(new.type, 'USER'::rbac.SubjectType))
+        into rbac.subject (uuid, name, organization, type)
+        values (refUuid, new.name, new.organization, coalesce(new.type, 'USER'::rbac.SubjectType))
         returning * into newSubject;
     return newSubject;
 end; $$;
@@ -328,13 +334,15 @@ execute function rbac.delete_subject_tf();
     Inserts the subject if the UUID is unknown (returns 'created'), otherwise renames it (returns
     'updated'). A subject cannot exist without its rbac.reference row, so the reference is upserted
     first. The type is immutable: re-synchronizing with a different type is rejected. Re-synchronizing
-    a previously deactivated subject reactivates it (clears deactivated_at). Authorization mirrors the
-    delete trigger (self or global admin). The name-uniqueness constraint still yields a conflict on
-    collision.
+    a previously deactivated subject reactivates it (clears deactivated_at). A null organization is
+    defaulted from the name prefix. Authorization mirrors the delete trigger (self or global admin).
+    The name-uniqueness constraint still yields a conflict on collision.
  */
+drop function if exists rbac.upsert_subject(uuid, varchar, rbac.SubjectType);
 create or replace function rbac.upsert_subject(
         newUuid uuid,
         newName varchar,
+        newOrganization varchar,
         newType rbac.SubjectType)
     returns varchar
     language plpgsql as $$
@@ -351,12 +359,14 @@ begin
         raise exception '[409] cannot change type of subject % from % to %', newUuid, existingType, newType;
     end if;
 
+    newOrganization := coalesce(newOrganization, rbac.subject_realm_prefix(newName));
+
     insert into rbac.reference (uuid, type)
         values (newUuid, 'rbac.subject')
         on conflict (uuid) do nothing;
-    insert into rbac.subject (uuid, name, type)
-        values (newUuid, newName, newType)
-        on conflict (uuid) do update set name = excluded.name, deactivated_at = null
+    insert into rbac.subject (uuid, name, organization, type)
+        values (newUuid, newName, newOrganization, newType)
+        on conflict (uuid) do update set name = excluded.name, organization = excluded.organization, deactivated_at = null
         returning (xmax = 0) into wasInserted;
 
     return case when wasInserted then 'created' else 'updated' end;

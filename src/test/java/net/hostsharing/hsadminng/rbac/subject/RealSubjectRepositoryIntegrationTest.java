@@ -35,13 +35,13 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
     HttpServletRequest request;
 
     @Nested
-    class FindVisibleSubjectsByOptionalNameLikeAndOptionalType {
+    class FindVisibleSubjectsByOptionalNameLikeOrganizationAndType {
 
         @Test
         void returnsSubjectsFromCurrentSubjectsRealmPrefix() {
             context.define("tst-customer_admin_xxx");
 
-            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(null, null);
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(null, null, null);
 
             assertThat(result)
                     .extracting(RealSubjectEntity::getName)
@@ -67,7 +67,7 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
             createSubject(otherRealmGroup, GROUP);
             context.define(currentSubject);
 
-            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(null, GROUP);
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(null, null, GROUP);
 
             assertThat(result)
                     .extracting(RealSubjectEntity::getName)
@@ -76,12 +76,53 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
+        void visibilityFollowsExplicitOrganizationInsteadOfNamePrefix() {
+            val uniquePart = "org_visibility_" + System.currentTimeMillis();
+            val currentSubject = "xyz-" + uniquePart + "_actor";
+            val userWithOtherPrefixButSameOrganization = "abc-" + uniquePart + "_member";
+            context.define("hsh-alex_superuser");
+            createSubject(currentSubject, USER);
+            createSubjectWithOrganization(userWithOtherPrefixButSameOrganization, "xyz", USER);
+            context.define(currentSubject);
+
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(null, null, USER);
+
+            assertThat(result)
+                    .extracting(RealSubjectEntity::getName)
+                    .contains(userWithOtherPrefixButSameOrganization);
+        }
+
+        @Test
+        void canFilterByOrganization() {
+            val uniquePart = "org_filter_" + System.currentTimeMillis();
+            val userWithDerivedOrganization = "xyz-" + uniquePart + "_derived";
+            val userWithExplicitOrganization = uniquePart + "_explicit";
+            val userOfOtherOrganization = "abc-" + uniquePart + "_other";
+            context.define("hsh-alex_superuser");
+            createSubject(userWithDerivedOrganization, USER);
+            createSubjectWithOrganization(userWithExplicitOrganization, "xyz", USER);
+            createSubject(userOfOtherOrganization, USER);
+
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
+                    null, "xyz", null);
+
+            // then both derived and explicit organizations match, other organizations don't
+            assertThat(result)
+                    .extracting(RealSubjectEntity::getOrganization)
+                    .containsOnly("xyz");
+            assertThat(result)
+                    .extracting(RealSubjectEntity::getName)
+                    .contains(userWithDerivedOrganization, userWithExplicitOrganization)
+                    .doesNotContain(userOfOtherOrganization);
+        }
+
+        @Test
         void doesNotReturnCrossRealmJwtGroupSubjects() {
             // JWT groups always belong to the current subject's own realm;
             // a (hypothetical) cross-realm group claim must not widen visibility
             contextWithGroups("/xyz-Team;/xyz-Service");
 
-            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(null, GROUP);
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(null, null, GROUP);
 
             assertThat(result)
                     .extracting(RealSubjectEntity::getName)
@@ -92,7 +133,7 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
         void returnsAllSubjectsForGlobalAdmin() {
             context.define("hsh-alex_superuser");
 
-            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(null, null);
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(null, null, null);
 
             assertThat(result)
                     .extracting(RealSubjectEntity::getName)
@@ -112,7 +153,7 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
                     "rbac.global#global:ADMIN",
                     null);
 
-            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(null, null);
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(null, null, null);
 
             assertThat(result)
                     .extracting(RealSubjectEntity::getName)
@@ -132,7 +173,7 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
                     "rbactest.package#xxx00:ADMIN",
                     null);
 
-            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(null, null);
+            val result = realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(null, null, null);
 
             assertThat(result).isEmpty();
         }
@@ -243,6 +284,18 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
     private void createSubject(final String subjectName, final SubjectType subjectType) {
         em.createNativeQuery("select rbac.create_subject(:name, cast(:type as rbac.SubjectType))")
                 .setParameter("name", subjectName)
+                .setParameter("type", subjectType.name())
+                .getSingleResult();
+    }
+
+    private void createSubjectWithOrganization(
+            final String subjectName,
+            final String organization,
+            final SubjectType subjectType) {
+        em.createNativeQuery("select rbac.upsert_subject(:uuid, :name, :organization, cast(:type as rbac.SubjectType))")
+                .setParameter("uuid", UUID.randomUUID())
+                .setParameter("name", subjectName)
+                .setParameter("organization", organization)
                 .setParameter("type", subjectType.name())
                 .getSingleResult();
     }

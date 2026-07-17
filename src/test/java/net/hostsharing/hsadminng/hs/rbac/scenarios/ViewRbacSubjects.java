@@ -24,6 +24,7 @@ import static org.springframework.http.HttpStatus.OK;
  *     <li>given "assumedRoleIdName": sent as Hostsharing-Assumed-Roles header, if set</li>
  *     <li>using "assumedRoleDescription": describes the assumed role in the report, e.g. "a non-global role",
  *         where the concrete role id would be misleading</li>
+ *     <li>given "organizationFilter": fetches only the subjects of that organization, if set</li>
  *     <li>expected "expectedExactSubjectNames": the response must contain exactly these subjects</li>
  *     <li>expected "expectedSubjectNames": the response must contain at least these subjects</li>
  *     <li>expected "unexpectedSubjectNames": the response must not contain any of these subjects</li>
@@ -43,6 +44,9 @@ public class ViewRbacSubjects extends UseCase<ViewRbacSubjects> {
 
     @Override
     protected HttpResponse run() {
+        final var uri = hasProperty("organizationFilter")
+                ? "/api/rbac/subjects?organization=&{organizationFilter}"
+                : "/api/rbac/subjects";
         if (hasProperty("assumedRoleIdName")) {
             return withTitle(
                     "Fetch visible RBAC subjects while assuming "
@@ -51,7 +55,7 @@ public class ViewRbacSubjects extends UseCase<ViewRbacSubjects> {
                                     : "the role %{assumedRoleIdName}"),
                     () -> httpGet(
                             loginUser,
-                            "/api/rbac/subjects",
+                            uri,
                             request -> request.header(
                                     "Hostsharing-Assumed-Roles",
                                     resolve("%{assumedRoleIdName}", DROP_COMMENTS)))
@@ -59,10 +63,12 @@ public class ViewRbacSubjects extends UseCase<ViewRbacSubjects> {
                             .expecting(OK).expecting(JSON));
         }
         return withTitle(
-                "Fetch visible RBAC subjects",
+                hasProperty("organizationFilter")
+                        ? "Fetch visible RBAC subjects of organization %{organizationFilter}"
+                        : "Fetch visible RBAC subjects",
                 () -> httpGet(
                         loginUser,
-                        "/api/rbac/subjects")
+                        uri)
                         .limitReportedResultTo(5)
                         .expecting(OK).expecting(JSON));
     }
@@ -84,6 +90,11 @@ public class ViewRbacSubjects extends UseCase<ViewRbacSubjects> {
                 .map(subject -> (String) subject.get("name"))
                 .toList();
 
+        if (hasProperty("organizationFilter")) {
+            assertThat(subjects)
+                    .extracting(subject -> subject.get("organization"))
+                    .containsOnly(resolve("%{organizationFilter}", DROP_COMMENTS));
+        }
         if (hasProperty("expectedExactSubjectNames")) {
             assertThat(subjectNames)
                     .containsExactlyInAnyOrderElementsOf(subjectNamesFrom("%{expectedExactSubjectNames}"));

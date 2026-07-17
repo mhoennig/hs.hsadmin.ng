@@ -128,11 +128,13 @@ public abstract class ScenarioTest extends ContextBasedTest {
                 if ( thatMethodProducesSomethingRequired(testMethodProduces, testMethodRequires) &&
                      thatMethodDoesNotProduceAnythingWeAlreadyHave(testMethodProduces)
                 ) {
-                    assertThat(producesAnnot.permanent()).as("cannot depend on non-permanent producer: " + potentialProducerMethod);
+                    assertThat(producesAnnot.permanent())
+                            .as("cannot depend on non-permanent producer: " + potentialProducerMethod)
+                            .isTrue();
 
                     // then we recursively produce the pre-requisites of the producer method
                     callRequiredProducers(potentialProducerMethod);
-                    keepProducesAlias(currentTestMethod);
+                    keepProducesAlias(potentialProducerMethod);
 
                     // and finally we call the producer method
                     invokeProducerMethod(this, potentialProducerMethod);

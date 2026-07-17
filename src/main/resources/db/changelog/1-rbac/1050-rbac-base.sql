@@ -1057,6 +1057,46 @@ $$;
 
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-ORGANIZATION-COLUMN endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Stores the organization (realm) of a subject in its own column instead of deriving it
+    from the subject-name prefix on every access. On databases with pre-existing subjects
+    it is back-filled from the name prefix in 1085-rbac-user-subject-names.sql, after the
+    old-format names got renamed there; only then it is also set to `not null`.
+ */
+alter table rbac.subject
+    add column if not exists organization varchar(63);
+create index if not exists subject_organization_idx on rbac.subject (organization);
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-ORGANIZATION-DEFAULT-TRIGGER runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+/*
+    Defaults the organization of a new subject to its name prefix if no explicit
+    organization is given, e.g. for the legacy rbac.create_subject(...) callers.
+ */
+create or replace function rbac.subject_default_organization_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    if new.organization is null then
+        new.organization := rbac.subject_realm_prefix(new.name);
+    end if;
+    return new;
+end; $$;
+
+drop trigger if exists subject_default_organization_tg on rbac.subject;
+create trigger subject_default_organization_tg
+    before insert on rbac.subject
+    for each row execute procedure rbac.subject_default_organization_tf();
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-base-PGSQL-ROLES runOnChange:true context:!external-db endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------

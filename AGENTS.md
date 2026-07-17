@@ -122,6 +122,10 @@ Tag-scoped Gradle test tasks are registered in `buildSrc/src/main/kotlin/Hsadmin
 - Prefer real API endpoints for lookups needed by a scenario. Do not use unrelated endpoints or temporary assumed-role context changes just to resolve data.
 - When an API surface is missing for a scenario, update the OpenAPI YAML, regenerate interfaces with `./gradlew openApiGenerate`, and adapt controller/repository/tests.
 
+## PR Documentation
+
+- Each pull request has a document under `doc/PR/`; see `doc/PR/README.md`.
+
 ## Code Review
 
 Use this procedure when asked to "review" or "code-review" a branch or PR.

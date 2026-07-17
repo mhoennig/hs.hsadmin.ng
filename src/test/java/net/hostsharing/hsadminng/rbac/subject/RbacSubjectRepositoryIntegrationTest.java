@@ -106,52 +106,73 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         @Transactional(propagation = Propagation.NEVER)
-        void userSubjectNameValidationFunctionMatchesConstraint() {
+        void subjectCreatedWithoutExplicitOrganization_getsOrganizationDerivedFromNamePrefix() {
 
             // given:
             final var givenUuid = UUID.randomUUID();
+            final var newUserName = "tst-user_" + System.currentTimeMillis();
+
+            // when:
+            final var result = jpaAttempt.transacted(() -> {
+                context(null);
+                return rbacSubjectRepository.create(
+                        RbacSubjectEntity.builder().uuid(givenUuid).name(newUserName).type(USER).build());
+            });
+
+            // then:
+            assertThat(result.wasSuccessful()).isTrue();
+            assertThat(rbacSubjectRepository.findByName(newUserName).getOrganization()).isEqualTo("tst");
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        void subjectCreatedWithExplicitOrganization_keepsGivenOrganizationAndArbitraryName() {
+
+            // given a name which was formerly rejected by the dropped DB name-pattern validation:
+            final var givenUuid = UUID.randomUUID();
+            final var newUserName = "user_" + System.currentTimeMillis() + "@example.com";
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
                 context(null);
                 return rbacSubjectRepository.create(RbacSubjectEntity.builder()
                         .uuid(givenUuid)
-                        .name("invaliduser@example.com")
+                        .name(newUserName)
+                        .organization("example")
                         .type(USER)
                         .build());
             });
 
             // then:
-            result.assertExceptionWithRootCauseMessage(
-                    org.postgresql.util.PSQLException.class,
-                    """
-                    violates check constraint "check_valid_user_subject_name"
-                    """.stripTrailing());
+            assertThat(result.wasSuccessful()).isTrue();
+            assertThat(rbacSubjectRepository.findByName(newUserName).getOrganization()).isEqualTo("example");
         }
 
         @Test
         @Transactional(propagation = Propagation.NEVER)
-        void groupSubjectNameValidationFunctionMatchesConstraint() {
+        void groupSubjectCreatedWithExplicitOrganization_keepsGivenOrganization() {
 
-            // given:
+            // given a group name whose prefix is no valid realm-prefix (too long),
+            // formerly rejected by the dropped DB name-pattern validation:
             final var givenUuid = UUID.randomUUID();
+            final var newGroupName = "/example-Team_" + System.currentTimeMillis();
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
                 context(null);
                 return rbacSubjectRepository.create(RbacSubjectEntity.builder()
                         .uuid(givenUuid)
-                        .name("invalid-group")
+                        .name(newGroupName)
+                        .organization("example")
                         .type(GROUP)
                         .build());
             });
 
             // then:
-            result.assertExceptionWithRootCauseMessage(
-                    org.postgresql.util.PSQLException.class,
-                    """
-                    violates check constraint "check_valid_group_subject_name"
-                    """.stripTrailing());
+            assertThat(result.wasSuccessful()).isTrue();
+            final var newGroupSubject = rbacSubjectRepository.findByName(newGroupName);
+            assertThat(newGroupSubject.getType()).isEqualTo(GROUP);
+            assertThat(newGroupSubject.getOrganization()).isEqualTo("example");
         }
     }
 

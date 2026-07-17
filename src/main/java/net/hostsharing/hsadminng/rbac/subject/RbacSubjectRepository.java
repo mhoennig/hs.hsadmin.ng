@@ -28,7 +28,7 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
         And SQL SELECT needs a currentSubject which we don't yet have in the case of self-registration.
      */
     @Modifying
-    @Query(value = "insert into rbac.subject_rv (uuid, name, type) values( :#{#newUser.uuid}, :#{#newUser.name}, cast(:#{#newUser.type.name()} as rbac.SubjectType))", nativeQuery = true)
+    @Query(value = "insert into rbac.subject_rv (uuid, name, organization, type) values( :#{#newUser.uuid}, :#{#newUser.name}, :#{#newUser.organization}, cast(:#{#newUser.type.name()} as rbac.SubjectType))", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.insert.rbac")
     void insert(final RbacSubjectEntity newUser);
 
@@ -48,9 +48,9 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
     }
 
     // idempotent upsert keyed by uuid; returns 'created' or 'updated'. The type is immutable.
-    @Query(value = "select rbac.upsert_subject(:uuid, :name, cast(:type as rbac.SubjectType))", nativeQuery = true)
+    @Query(value = "select rbac.upsert_subject(:uuid, :name, :organization, cast(:type as rbac.SubjectType))", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.upsert.rbac")
-    String upsert(UUID uuid, String name, String type);
+    String upsert(UUID uuid, String name, String organization, String type);
 
     // physical delete: removing the rbac.reference row cascades to the subject and, via the
     // rbac.subject delete triggers, to all of its grants and its account; a no-op if the uuid is

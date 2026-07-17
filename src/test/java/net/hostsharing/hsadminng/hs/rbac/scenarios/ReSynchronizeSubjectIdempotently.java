@@ -19,7 +19,7 @@ public class ReSynchronizeSubjectIdempotently extends UseCase<ReSynchronizeSubje
         introduction("""
                 The sync program re-synchronizes an already existing subject with the same UUID but a
                 new name (a Keycloak rename). Because the sync program cannot know whether this backend
-                already has the subject, adding and renaming are the same idempotent upsert: it updates
+                already has the subject, adding and renaming are the same idempotent PUT: it updates
                 the name in place, creates no second subject, and replaying the identical request is a
                 no-op — all returning `200 OK`.
                 """);
@@ -29,10 +29,10 @@ public class ReSynchronizeSubjectIdempotently extends UseCase<ReSynchronizeSubje
     protected HttpResponse run(final HttpStatus expectedStatus) {
         return withTitle(
                 "Re-synchronize the subject with a new name (rename) via PUT",
-                () -> upsertNewName().expecting(expectedStatus));
+                () -> putNewName().expecting(expectedStatus));
     }
 
-    private HttpResponse upsertNewName() {
+    private HttpResponse putNewName() {
         return httpPut(
                 loginUser,
                 "/api/rbac/subjects/%{subjectUuid}",
@@ -50,11 +50,11 @@ public class ReSynchronizeSubjectIdempotently extends UseCase<ReSynchronizeSubje
         response.path("uuid").isEqualTo(ScenarioTest.resolve("%{subjectUuid}", DROP_COMMENTS));
         response.path("name").isEqualTo(ScenarioTest.resolve("%{newSubjectName}", DROP_COMMENTS));
 
-        // replaying the identical upsert leaves the subject unchanged and still returns 200 OK
+        // replaying the identical PUT leaves the subject unchanged and still returns 200 OK
         withTitle(
-                "Replaying the identical upsert is a no-op (idempotent)",
+                "Replaying the identical PUT is a no-op (idempotent)",
                 () -> {
-                    final var replay = upsertNewName().expecting(OK);
+                    final var replay = putNewName().expecting(OK);
                     replay.path("name").isEqualTo(ScenarioTest.resolve("%{newSubjectName}", DROP_COMMENTS));
                     return replay;
                 });

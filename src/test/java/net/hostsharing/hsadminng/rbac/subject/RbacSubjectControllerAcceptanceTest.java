@@ -76,6 +76,7 @@ class RbacSubjectControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("name", is("tst-new_user"))
+                        .body("organization", is("tst"))
                         .header("Location", startsWith("http://localhost"))
                         .extract().header("Location");
             // @formatter:on
@@ -134,8 +135,40 @@ class RbacSubjectControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("name", is(newGroupName))
+                        .body("organization", is("xyz"))
                         .body("type", is("GROUP"));
             // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canCreateANewUserWithExplicitOrganizationAndArbitraryName() {
+            final var newUserName = "new_user_" + System.currentTimeMillis() + "@example.com";
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "%s",
+                                "organization": "example"
+                              }
+                              """.formatted(newUserName))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("name", is(newUserName))
+                        .body("organization", is("example"))
+                        .body("type", is("USER"));
+            // @formatter:on
+
+            // finally, the explicitly given organization is stored, not derived from the name
+            assertThat(findRbacSubjectByName(newUserName))
+                    .extracting(RbacSubjectEntity::getOrganization).isEqualTo("example");
         }
 
         @Test

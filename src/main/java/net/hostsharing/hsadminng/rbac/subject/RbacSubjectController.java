@@ -12,9 +12,11 @@ import net.hostsharing.hsadminng.mapper.StrictBodyConverter;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacSubjectsApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectInsertResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectWithOrganizationInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectPermissionResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectInsertResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectWithOrganizationInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.SubjectTypeResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,11 @@ import static net.hostsharing.hsadminng.rbac.subject.SubjectType.USER;
 @PreAuthorize("isAuthenticated()")
 @SecurityRequirement(name = "bearerAuth")
 public class RbacSubjectController implements RbacSubjectsApi {
+
+    private static final String USER_SUBJECT_NAME_PATTERN_MESSAGE_KEY =
+            "rbac.user-subject-name-{0}-does-not-match-required-pattern";
+    private static final String GROUP_SUBJECT_NAME_PATTERN_MESSAGE_KEY =
+            "rbac.group-subject-name-{0}-does-not-match-required-pattern";
 
     @Autowired
     private Context context;
@@ -80,21 +87,58 @@ public class RbacSubjectController implements RbacSubjectsApi {
         return ResponseEntity.created(uri).body(mapper.map(saved, RbacSubjectResource.class));
     }
 
-    // The `RbacSubjectInsert` request body is an `anyOf` which the generator emits as a bare `Object`,
-    // thus `@Valid` cannot run; this dispatches on the `type` discriminator to the generated member
-    // resources and applies the OpenAPI schema constraints via the `StrictBodyConverter`.
-    // The USER default for a missing `type` is implemented here and only here.
+    // The `RbacSubjectInsert` request body is an `anyOf`, which the generator emits as a bare `Object`
+    // where `@Valid` cannot run. Thus, we validate based on the `type` discriminator (a missing `type`
+    // at the API level defaults to 'USER') and the presence of an explicit `organization` to the
+    // matching generated member resource, whose OpenAPI schema constraints are then applied.
     private RbacSubjectEntity toValidatedSubjectEntity(final Object body) {
-        if (body instanceof Map<?, ?> properties && GROUP.name().equals(properties.get("type"))) {
-            final var resource = strictBodyConverter.convertAndValidate(body, RbacGroupSubjectInsertResource.class,
-                    violation -> subjectNameViolationMessage(violation,
-                            "rbac.group-subject-name-{0}-does-not-match-required-pattern"));
-            return RbacSubjectEntity.builder().uuid(resource.getUuid()).name(resource.getName()).type(GROUP).build();
+        val properties = body instanceof Map<?, ?> map ? map : Map.of();
+        val isGroup = GROUP.name().equals(properties.get("type"));
+        val hasExplicitOrganization = properties.containsKey("organization");
+        if (isGroup) {
+            return hasExplicitOrganization
+                    ? toGroupSubjectEntityWithExplicitOrganization(body)
+                    : toGroupSubjectEntityWithDerivedOrganization(body);
         }
-        final var resource = strictBodyConverter.convertAndValidate(body, RbacUserSubjectInsertResource.class,
-                violation -> subjectNameViolationMessage(violation,
-                        "rbac.user-subject-name-{0}-does-not-match-required-pattern"));
-        return RbacSubjectEntity.builder().uuid(resource.getUuid()).name(resource.getName()).type(USER).build();
+        return hasExplicitOrganization
+                ? toUserSubjectEntityWithExplicitOrganization(body)
+                : toUserSubjectEntityWithDerivedOrganization(body);
+    }
+
+    private RbacSubjectEntity toUserSubjectEntityWithDerivedOrganization(final Object body) {
+        val resource = convertAndValidate(body, RbacUserSubjectInsertResource.class, USER_SUBJECT_NAME_PATTERN_MESSAGE_KEY);
+        return subjectEntity(resource.getUuid(), resource.getName(), Subject.organizationFromName(resource.getName()), USER);
+    }
+
+    private RbacSubjectEntity toUserSubjectEntityWithExplicitOrganization(final Object body) {
+        val resource = convertAndValidate(
+                body, RbacUserSubjectWithOrganizationInsertResource.class, USER_SUBJECT_NAME_PATTERN_MESSAGE_KEY);
+        return subjectEntity(resource.getUuid(), resource.getName(), resource.getOrganization(), USER);
+    }
+
+    private RbacSubjectEntity toGroupSubjectEntityWithDerivedOrganization(final Object body) {
+        val resource = convertAndValidate(body, RbacGroupSubjectInsertResource.class, GROUP_SUBJECT_NAME_PATTERN_MESSAGE_KEY);
+        return subjectEntity(resource.getUuid(), resource.getName(), Subject.organizationFromName(resource.getName()), GROUP);
+    }
+
+    private RbacSubjectEntity toGroupSubjectEntityWithExplicitOrganization(final Object body) {
+        // JWTs reference groups just by name (Keycloak default), no UUIDs; thus a GROUP subject's
+        // organization must remain derivable from the group-name prefix and is validated against it
+        val resource = convertAndValidate(
+                body, RbacGroupSubjectWithOrganizationInsertResource.class, GROUP_SUBJECT_NAME_PATTERN_MESSAGE_KEY);
+        validate("organization, organization derived from the group-name prefix")
+                .areEqual(resource.getOrganization(), Subject.organizationFromName(resource.getName()));
+        return subjectEntity(resource.getUuid(), resource.getName(), resource.getOrganization(), GROUP);
+    }
+
+    private <R> R convertAndValidate(final Object body, final Class<R> resourceClass, final String namePatternMessageKey) {
+        return strictBodyConverter.convertAndValidate(body, resourceClass,
+                violation -> subjectNameViolationMessage(violation, namePatternMessageKey));
+    }
+
+    private static RbacSubjectEntity subjectEntity(
+            final UUID uuid, final String name, final String organization, final SubjectType type) {
+        return RbacSubjectEntity.builder().uuid(uuid).name(name).organization(organization).type(type).build();
     }
 
     private String subjectNameViolationMessage(final ConstraintViolation<?> violation, final String namePatternMessageKey) {
@@ -110,7 +154,7 @@ public class RbacSubjectController implements RbacSubjectsApi {
             final UUID subjectUuid,
             final Object body // anyOf in OpenAPI is generated as a Map in an Object, ugly, but it is as it is
     ) {
-        context.requireGlobalAdmin("only a global-admin may upsert subjects");
+        context.requireGlobalAdmin("only a global-admin may create or update subjects");
 
         val incoming = toValidatedSubjectEntity(body);
         if (incoming.getUuid() != null) {
@@ -119,9 +163,10 @@ public class RbacSubjectController implements RbacSubjectsApi {
             incoming.setUuid(subjectUuid); // default to UUID from URI-path
         }
 
-        // single idempotent upsert keyed by uuid; the type is immutable and validated in the DB function
+        // a single call to the DB-level upsert, keyed by uuid; the type is immutable and validated in the DB function
         val created = "created".equals(
-                rbacSubjectRepository.upsert(subjectUuid, incoming.getName(), incoming.getType().name()));
+                rbacSubjectRepository.upsert(
+                        subjectUuid, incoming.getName(), incoming.getOrganization(), incoming.getType().name()));
         val resource = mapper.map(incoming, RbacSubjectResource.class);
         if (created) {
             val uri = MvcUriComponentsBuilder.fromController(getClass())
@@ -177,14 +222,16 @@ public class RbacSubjectController implements RbacSubjectsApi {
     public ResponseEntity<List<RbacSubjectResource>> getListOfSubjects(
             final String assumedRoles,
             final String userName,
+            final String organization,
             final SubjectTypeResource type
     ) {
         context.assumeRoles(assumedRoles);
 
         final var subjectType = type != null ? SubjectType.valueOf(type.name()) : null;
         return ResponseEntity.ok(mapper.mapList(
-                realSubjectRepository.findVisibleSubjectsByOptionalNameLikeAndOptionalType(
+                realSubjectRepository.findVisibleSubjectsByOptionalNameLikeOrganizationAndType(
                                 userName,
+                                organization,
                                 subjectType),
                 RbacSubjectResource.class));
     }

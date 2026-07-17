@@ -408,7 +408,7 @@ class ContextIntegrationTests {
         givenJwtAuthentication("hsh-alex_superuser", withoutGroups());
 
         // when / then
-        assertThatCode(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+        assertThatCode(() -> context.requireGlobalAdmin("only a global-admin may create or update subjects"))
                 .doesNotThrowAnyException();
     }
 
@@ -419,9 +419,9 @@ class ContextIntegrationTests {
         givenJwtAuthentication("tst-customer_admin_xxx", withoutGroups());
 
         // when / then
-        assertThatThrownBy(() -> context.requireGlobalAdmin("only a global-admin may upsert subjects"))
+        assertThatThrownBy(() -> context.requireGlobalAdmin("only a global-admin may create or update subjects"))
                 .isInstanceOf(ForbiddenException.class)
-                .hasMessage("only a global-admin may upsert subjects");
+                .hasMessage("only a global-admin may create or update subjects");
     }
 
     private static @NonNull List<String> withoutGroups() {
