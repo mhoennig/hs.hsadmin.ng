@@ -333,17 +333,25 @@ execute function rbac.delete_subject_tf();
 
     Inserts the subject if the UUID is unknown (returns 'created'), otherwise renames it (returns
     'updated'). A subject cannot exist without its rbac.reference row, so the reference is upserted
-    first. The type is immutable: re-synchronizing with a different type is rejected. Re-synchronizing
-    a previously deactivated subject reactivates it (clears deactivated_at). A null organization is
-    defaulted from the name prefix. Authorization mirrors the delete trigger (self or global admin).
-    The name-uniqueness constraint still yields a conflict on collision.
+    first. The type is immutable: re-synchronizing with a different type is rejected. A null
+    organization is defaulted from the name prefix. The newDeactivated flag synchronizes the
+    activation state: true deactivates the subject (an already deactivated subject keeps its
+    original deactivated_at timestamp), false reactivates it (clears deactivated_at).
+    Authorization mirrors the delete trigger (self or global admin). The name-uniqueness
+    constraint still yields a conflict on collision.
  */
+
+-- adding parameters would otherwise create overloads of the previous signatures
 drop function if exists rbac.upsert_subject(uuid, varchar, rbac.SubjectType);
+drop function if exists rbac.upsert_subject(uuid, varchar, rbac.SubjectType, boolean);
+drop function if exists rbac.upsert_subject(uuid, varchar, varchar, rbac.SubjectType);
+
 create or replace function rbac.upsert_subject(
         newUuid uuid,
         newName varchar,
         newOrganization varchar,
-        newType rbac.SubjectType)
+        newType rbac.SubjectType,
+        newDeactivated boolean default false)
     returns varchar
     language plpgsql as $$
 declare
@@ -364,9 +372,14 @@ begin
     insert into rbac.reference (uuid, type)
         values (newUuid, 'rbac.subject')
         on conflict (uuid) do nothing;
-    insert into rbac.subject (uuid, name, organization, type)
-        values (newUuid, newName, newOrganization, newType)
-        on conflict (uuid) do update set name = excluded.name, organization = excluded.organization, deactivated_at = null
+    insert into rbac.subject (uuid, name, organization, type, deactivated_at)
+        values (newUuid, newName, newOrganization, newType, case when newDeactivated then now() end)
+        on conflict (uuid) do update
+            set name = excluded.name,
+                organization = excluded.organization,
+                deactivated_at = case when newDeactivated
+                                          then coalesce(subject.deactivated_at, now())
+                                          else null end
         returning (xmax = 0) into wasInserted;
 
     return case when wasInserted then 'created' else 'updated' end;

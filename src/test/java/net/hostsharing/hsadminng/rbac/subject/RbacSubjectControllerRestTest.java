@@ -8,7 +8,12 @@ import net.hostsharing.hsadminng.rbac.context.RbacTranslations;
 import net.hostsharing.hsadminng.mapper.StrictBodyConverter;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import com.jayway.jsonpath.JsonPath;
+import net.hostsharing.hsadminng.config.ApiKey;
+import net.hostsharing.hsadminng.config.ApiKeyScope;
 import net.hostsharing.hsadminng.rbac.context.Context;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.ApiKeyScopeResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacApiKeySubjectInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectWithOrganizationInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectInsertResource;
@@ -29,19 +34,27 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -257,22 +270,119 @@ class RbacSubjectControllerRestTest {
     }
 
     @Test
-    void deleteSubjectByUuidDeactivatesSubjectByDefault() throws Exception {
+    void deleteSubjectByUuidWithMatchingNameAndTypePhysicallyDeletesSubject() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(realSubjectRepository.findSubjectByUuidIncludingDeactivated(givenSubjectUuid))
+                .thenReturn(Optional.of(RealSubjectEntity.builder()
+                        .uuid(givenSubjectUuid).name("xyz-alice").type(SubjectType.USER).build()));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .param("name", "xyz-alice")
+                        .param("type", "USER")
                         .header("Authorization", bearer("hsh-alex_superuser"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
                 .andExpect(status().isNoContent());
 
-        // then the default (purge omitted) goes through the soft-delete/deactivation path
-        verify(rbacSubjectRepository).deactivateByUuid(givenSubjectUuid);
+        // then the subject is physically deleted
+        verify(rbacSubjectRepository).deleteByUuid(givenSubjectUuid);
+    }
+
+    @Test
+    void deleteSubjectByUuidWithMismatchingNameReturnsBadRequest() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(realSubjectRepository.findSubjectByUuidIncludingDeactivated(givenSubjectUuid))
+                .thenReturn(Optional.of(RealSubjectEntity.builder()
+                        .uuid(givenSubjectUuid).name("xyz-alice").type(SubjectType.USER).build()));
+
+        // when the given name does not match the subject identified by the UUID
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .param("name", "xyz-bob")
+                        .param("type", "USER")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then the safeguard rejects the request
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "(name from query-parameter, name of the subject to delete) must be equal")));
+
+        // then nothing is deleted
+        verify(rbacSubjectRepository, never()).deleteByUuid(any());
+    }
+
+    @Test
+    void deleteSubjectByUuidWithMismatchingTypeReturnsBadRequest() throws Exception {
+        // given an API_KEY subject
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(realSubjectRepository.findSubjectByUuidIncludingDeactivated(givenSubjectUuid))
+                .thenReturn(Optional.of(RealSubjectEntity.builder()
+                        .uuid(givenSubjectUuid).name("master.key").type(SubjectType.API_KEY).build()));
+
+        // when the given type does not match the subject identified by the UUID
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .param("name", "master.key")
+                        .param("type", "USER")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then the safeguard rejects the request
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "(type from query-parameter, type of the subject to delete) must be equal")));
+
+        // then nothing is deleted
+        verify(rbacSubjectRepository, never()).deleteByUuid(any());
+    }
+
+    @Test
+    void deleteSubjectByUuidWithUnknownUuidIsIdempotent() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(realSubjectRepository.findSubjectByUuidIncludingDeactivated(givenSubjectUuid))
+                .thenReturn(Optional.empty());
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .param("name", "xyz-alice")
+                        .param("type", "USER")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then an unknown UUID still answers 204, the delete is idempotent
+                .andExpect(status().isNoContent());
+
+        verify(rbacSubjectRepository, never()).deleteByUuid(any());
+    }
+
+    @Test
+    void deleteSubjectByUuidWithoutNameAndTypeReturnsBadRequest() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when the mandatory name+type safeguard query-parameters are missing
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isBadRequest());
+
+        // then nothing is deleted
         verify(rbacSubjectRepository, never()).deleteByUuid(any());
     }
 
@@ -285,57 +395,16 @@ class RbacSubjectControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
+                        .param("name", "xyz-alice")
+                        .param("type", "USER")
                         .header("Authorization", bearer("tst-drew_selfregistered"))
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then the whole delete operation is restricted to global-admins
                 .andExpect(status().isForbidden());
 
-        // then neither delete path is taken
-        verify(rbacSubjectRepository, never()).deactivateByUuid(any());
+        // then nothing is deleted
         verify(rbacSubjectRepository, never()).deleteByUuid(any());
-    }
-
-    @Test
-    void deleteSubjectByUuidWithPurgeTrueAsGlobalAdminPhysicallyDeletesSubject() throws Exception {
-        // given
-        val givenSubjectUuid = UUID.randomUUID();
-        when(contextMock.isGlobalAdmin()).thenReturn(true);
-
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
-                        .param("purge", "true")
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .accept(MediaType.APPLICATION_JSON))
-
-                // then
-                .andExpect(status().isNoContent());
-
-        // then the physical-delete path is used and the soft-delete/deactivation path is not
-        verify(rbacSubjectRepository).deleteByUuid(givenSubjectUuid);
-        verify(rbacSubjectRepository, never()).deactivateByUuid(any());
-    }
-
-    @Test
-    void deleteSubjectByUuidWithPurgeTrueAsNonGlobalAdminReturnsForbidden() throws Exception {
-        // given
-        val givenSubjectUuid = UUID.randomUUID();
-        when(contextMock.isGlobalAdmin()).thenReturn(false);
-
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                        .delete("/api/rbac/subjects/{subjectUuid}", givenSubjectUuid)
-                        .param("purge", "true")
-                        .header("Authorization", bearer("tst-drew_selfregistered"))
-                        .accept(MediaType.APPLICATION_JSON))
-
-                // then
-                .andExpect(status().isForbidden());
-
-        // then neither delete path is taken
-        verify(rbacSubjectRepository, never()).deleteByUuid(any());
-        verify(rbacSubjectRepository, never()).deactivateByUuid(any());
     }
 
     @Test
@@ -343,7 +412,7 @@ class RbacSubjectControllerRestTest {
         // given
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alice", "xyz", "USER")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alice", "xyz", "USER", false)).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -365,7 +434,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(jsonPath("name", is("xyz-alice")))
                 .andExpect(jsonPath("organization", is("xyz")))
                 .andExpect(jsonPath("type", is("USER")));
-        verify(rbacSubjectRepository).upsert(givenUuid, "xyz-alice", "xyz", "USER");
+        verify(rbacSubjectRepository).upsert(givenUuid, "xyz-alice", "xyz", "USER", false);
     }
 
     @Test
@@ -375,7 +444,7 @@ class RbacSubjectControllerRestTest {
         val givenName = "xyz-a/b?c&d=e+f%g#h!i(j)k[l]m{n}o's*t~u,v;w:x|y^z§ä ö.é@end";
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, givenName, "xyz", "USER")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, givenName, "xyz", "USER", false)).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -395,6 +464,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(jsonPath("name", is(givenName)))
                 .andExpect(jsonPath("organization", is("xyz")))
                 .andExpect(jsonPath("type", is("USER")));
+        verify(rbacSubjectRepository).upsert(givenUuid, givenName, "xyz", "USER", false);
     }
 
     @Test
@@ -402,7 +472,7 @@ class RbacSubjectControllerRestTest {
         // given
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "/xyz-Team", "xyz", "GROUP")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, "/xyz-Team", "xyz", "GROUP", false)).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -429,7 +499,7 @@ class RbacSubjectControllerRestTest {
         // given a name which does not match the realm-prefix pattern, but an explicit organization
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "alice@example.com", "example", "USER")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, "alice@example.com", "example", "USER", false)).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -451,7 +521,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(jsonPath("name", is("alice@example.com")))
                 .andExpect(jsonPath("organization", is("example")))
                 .andExpect(jsonPath("type", is("USER")));
-        verify(rbacSubjectRepository).upsert(givenUuid, "alice@example.com", "example", "USER");
+        verify(rbacSubjectRepository).upsert(givenUuid, "alice@example.com", "example", "USER", false);
     }
 
     @Test
@@ -460,7 +530,7 @@ class RbacSubjectControllerRestTest {
         // and an explicit organization matching that prefix
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "/example-Operators", "example", "GROUP")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, "/example-Operators", "example", "GROUP", false)).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -510,7 +580,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "organization derived from the group-name prefix")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -525,7 +595,7 @@ class RbacSubjectControllerRestTest {
                 """;
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "/tst-Team", "tst", "GROUP")).thenReturn("created");
+        when(rbacSubjectRepository.upsert(givenUuid, "/tst-Team", "tst", "GROUP", false)).thenReturn("created");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -568,7 +638,7 @@ class RbacSubjectControllerRestTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString("must be equal")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -595,7 +665,35 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "USER subject name '/alice' does not match required pattern")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void putUserSubjectWithNameMatchingApiKeyNameGrammarReturnsBadRequest() throws Exception {
+        // given a USER subject name without any '-' or '@' marker, which would collide
+        // with the API_KEY subject-name grammar
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "ci.main",
+                                    "organization": "xyz"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "USER subject name 'ci.main' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -623,7 +721,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "GROUP subject name 'example-Operators' does not match required pattern")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -649,7 +747,7 @@ class RbacSubjectControllerRestTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString("organization")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -675,7 +773,7 @@ class RbacSubjectControllerRestTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString("organization")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -701,7 +799,7 @@ class RbacSubjectControllerRestTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString("organization")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -709,7 +807,7 @@ class RbacSubjectControllerRestTest {
         // given
         val givenUuid = UUID.randomUUID();
         when(contextMock.isGlobalAdmin()).thenReturn(true);
-        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alicia", "xyz", "USER")).thenReturn("updated");
+        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alicia", "xyz", "USER", false)).thenReturn("updated");
 
         // when
         val result = mockMvc.perform(MockMvcRequestBuilders
@@ -728,6 +826,58 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("uuid", is(givenUuid.toString())))
                 .andExpect(jsonPath("name", is("xyz-alicia")));
+    }
+
+    @Test
+    void putWithDeactivatedTrueDeactivatesTheSubject() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(rbacSubjectRepository.upsert(givenUuid, "xyz-alice", "xyz", "USER", true)).thenReturn("updated");
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "xyz-alice",
+                                    "deactivated": true
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isOk());
+        verify(rbacSubjectRepository).upsert(givenUuid, "xyz-alice", "xyz", "USER", true);
+    }
+
+    @Test
+    void putApiKeySubjectReturnsBadRequest() throws Exception {
+        // given
+        val givenUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when an API_KEY subject is upserted, which never stems from Keycloak
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/rbac/subjects/{subjectUuid}", givenUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "some.key",
+                                    "type": "API_KEY"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "subjects of type API_KEY are not subject to synchronization")));
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -750,7 +900,7 @@ class RbacSubjectControllerRestTest {
 
         // then
         result.andExpect(status().isForbidden());
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -775,7 +925,7 @@ class RbacSubjectControllerRestTest {
 
         // then
         result.andExpect(status().isBadRequest());
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     private RbacSubjectPermission givenPermission(
@@ -1054,6 +1204,162 @@ class RbacSubjectControllerRestTest {
     }
 
     @Test
+    void postNewApiKeySubjectReturnsClearTextApiKeyOnlyOnce() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "master.key",
+                                    "type": "API_KEY"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then the clear-text API-key with the embedded subject name is returned in the response ...
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is("master.key")))
+                .andExpect(jsonPath("type", is("API_KEY")))
+                .andExpect(jsonPath("apiKey", startsWith(ApiKey.PREFIX + "master.key.")));
+
+        // ... but just its SHA-256 hash gets stored, without any scopes (unrestricted) and without expiry
+        final String returnedApiKey = JsonPath.read(
+                result.andReturn().getResponse().getContentAsString(), "$.apiKey");
+        assertThat(ApiKey.subjectNameOf(returnedApiKey)).contains("master.key");
+        verify(rbacSubjectRepository).createApiKey(
+                any(UUID.class), eq(ApiKey.hash(returnedApiKey)), eq(new String[0]), isNull());
+    }
+
+    @Test
+    void postNewApiKeySubjectWithExpiryStoresAndReturnsExpiresAt() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "expiring.key",
+                                    "type": "API_KEY",
+                                    "expiresAt": "2027-01-01T00:00:00Z"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then the expiry is echoed in the response ...
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is("expiring.key")))
+                .andExpect(jsonPath("expiresAt", startsWith("2027-01-01T00:00")));
+
+        // ... and stored along with the API-key hash
+        final String returnedApiKey = JsonPath.read(
+                result.andReturn().getResponse().getContentAsString(), "$.apiKey");
+        verify(rbacSubjectRepository).createApiKey(
+                any(UUID.class), eq(ApiKey.hash(returnedApiKey)), eq(new String[0]),
+                eq(OffsetDateTime.parse("2027-01-01T00:00:00Z")));
+    }
+
+    @Test
+    void postNewApiKeySubjectWithScopesStoresAndReturnsScopes() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "subject.sync.key",
+                                    "type": "API_KEY",
+                                    "scopes": ["rbac.subjects:sync"]
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then the scopes are echoed in the response ...
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is("subject.sync.key")))
+                .andExpect(jsonPath("type", is("API_KEY")))
+                .andExpect(jsonPath("apiKey", startsWith(ApiKey.PREFIX)))
+                .andExpect(jsonPath("scopes", contains("rbac.subjects:sync")));
+
+        // ... and stored along with the API-key hash
+        final String returnedApiKey = JsonPath.read(
+                result.andReturn().getResponse().getContentAsString(), "$.apiKey");
+        verify(rbacSubjectRepository).createApiKey(
+                any(UUID.class), eq(ApiKey.hash(returnedApiKey)), eq(new String[] { "rbac.subjects:sync" }), isNull());
+    }
+
+    @Test
+    void postNewApiKeySubjectWithUnknownScopeReturnsBadRequest() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "subject.sync.key",
+                                    "type": "API_KEY",
+                                    "scopes": ["unknown:scope"]
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "scopes[0] 'unknown:scope' is not valid, valid values are: "
+                                + "[rbac.subjects:sync, *:read]")));
+        verify(rbacSubjectRepository, never()).create(any());
+        verify(rbacSubjectRepository, never()).createApiKey(any(), any(), any(), any());
+    }
+
+    @Test
+    void postNewApiKeySubjectWithInvalidNameReturnsBadRequest() throws Exception {
+        // given a name with a '-', which is reserved as realm-prefix delimiter
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "master-api-key",
+                                    "type": "API_KEY"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "API_KEY subject name 'master-api-key' does not match required pattern")));
+        verify(rbacSubjectRepository, never()).create(any());
+        verify(rbacSubjectRepository, never()).createApiKey(any(), any(), any(), any());
+    }
+
+    @Test
     void postNewSubjectWithoutNameReturnsBadRequest() throws Exception {
         // given
         when(contextMock.isGlobalAdmin()).thenReturn(true);
@@ -1148,7 +1454,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "USER subject name 'invaliduser@for-implicit-organization.example.com' does not match required pattern")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -1174,7 +1480,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "USER subject name '/xyz-Team' does not match required pattern")));
-        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any());
+        verify(rbacSubjectRepository, never()).upsert(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -1191,7 +1497,8 @@ class RbacSubjectControllerRestTest {
                         "#/components/schemas/RbacUserSubjectInsert",
                         "#/components/schemas/RbacUserSubjectWithOrganizationInsert",
                         "#/components/schemas/RbacGroupSubjectInsert",
-                        "#/components/schemas/RbacGroupSubjectWithOrganizationInsert");
+                        "#/components/schemas/RbacGroupSubjectWithOrganizationInsert",
+                        "#/components/schemas/RbacApiKeySubjectInsert");
         assertNamePatternMatchesGeneratedValidation(schemas,
                 "RbacUserSubjectInsert", RbacUserSubjectInsertResource.class);
         assertNamePatternMatchesGeneratedValidation(schemas,
@@ -1200,6 +1507,29 @@ class RbacSubjectControllerRestTest {
                 "RbacGroupSubjectInsert", RbacGroupSubjectInsertResource.class);
         assertNamePatternMatchesGeneratedValidation(schemas,
                 "RbacGroupSubjectWithOrganizationInsert", RbacGroupSubjectWithOrganizationInsertResource.class);
+        assertNamePatternMatchesGeneratedValidation(schemas,
+                "RbacApiKeySubjectInsert", RbacApiKeySubjectInsertResource.class);
+
+        // the API_KEY name pattern is the only one still enforced at the DB level
+        // (the USER/GROUP name constraints got dropped with the explicit organization column)
+        final var apiKeyPattern = map(map(map(schemas.get("RbacApiKeySubjectInsert"))
+                .get("properties"))
+                .get("name"))
+                .get("pattern");
+        final var sql = Files.readString(Path.of("src/main/resources/db/changelog/1-rbac/1050-rbac-base.sql"));
+        assertThat(functionPattern(sql, "is_valid_api_key_subject_name")).isEqualTo(apiKeyPattern);
+    }
+
+    @Test
+    void openApiApiKeyScopeEnumMatchesEndpointMappingEnum() {
+        // the generated OpenAPI enum (API surface) and the config.ApiKeyScope enum (endpoint
+        // mapping) must stay in sync, by wire-name; the constant names may differ, e.g. for
+        // `*:read` the generator strips the `*`
+        assertThat(Arrays.stream(ApiKeyScope.values()).map(ApiKeyScope::wireName))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(ApiKeyScopeResource.values())
+                                .map(ApiKeyScopeResource::getValue)
+                                .toList());
     }
 
     private static void assertNamePatternMatchesGeneratedValidation(
@@ -1212,6 +1542,14 @@ class RbacSubjectControllerRestTest {
                 .regexp())
                 .as(schemaName + ".name pattern")
                 .isEqualTo(nameSchema.get("pattern"));
+    }
+
+    private static String functionPattern(final String sql, final String functionName) {
+        final var matcher = Pattern.compile(
+                "create or replace function rbac\\." + functionName + "\\(subjectName varchar\\).*?subjectName ~ '([^']+)'",
+                Pattern.DOTALL).matcher(sql);
+        assertThat(matcher.find()).isTrue();
+        return matcher.group(1);
     }
 
     @SuppressWarnings("unchecked")

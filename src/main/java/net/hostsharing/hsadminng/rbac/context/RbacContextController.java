@@ -2,8 +2,10 @@ package net.hostsharing.hsadminng.rbac.context;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import net.hostsharing.hsadminng.config.ApiKeyAuthenticationFilter;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacContextApi;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacContextApiKeyResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacContextResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectGroupResource;
@@ -19,6 +21,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -84,6 +88,21 @@ public class RbacContextController implements RbacContextApi {
         result.setGlobalAdmin(isGlobalAdmin);
         final var assumedRolesResource = mapper.mapList(assumedRoles, RbacRoleResource.class);
         result.setAssumedRoles(assumedRolesResource);
+        result.setApiKey(currentApiKeyProperties());
         return result;
+    }
+
+    /** The properties of the API-key used to authenticate the current request, from the synthesized JWT;
+     * null if the request was authenticated via an OIDC JWT instead. */
+    private static RbacContextApiKeyResource currentApiKeyProperties() {
+        return ApiKeyAuthenticationFilter.currentApiKeyJwt().map(jwt -> {
+            final var apiKeyResource = new RbacContextApiKeyResource();
+            final var scopeClaim = jwt.getClaimAsString(ApiKeyAuthenticationFilter.SCOPE_CLAIM);
+            apiKeyResource.setScopes(
+                    scopeClaim == null || scopeClaim.isBlank() ? List.of() : Arrays.asList(scopeClaim.split(" ")));
+            final var expiresAt = jwt.getClaimAsInstant(ApiKeyAuthenticationFilter.API_KEY_EXPIRES_AT_CLAIM);
+            apiKeyResource.setExpiresAt(expiresAt == null ? null : expiresAt.atOffset(ZoneOffset.UTC));
+            return apiKeyResource;
+        }).orElse(null);
     }
 }

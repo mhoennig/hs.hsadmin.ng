@@ -54,6 +54,8 @@ databaseChangeLog:
         file: db/changelog/1-rbac/1080-rbac-global.sql
     - include:
         file: db/changelog/1-rbac/1085-rbac-user-subject-names.sql
+    - include:
+        file: db/changelog/1-rbac/1086-rbac-api-key.sql
 
     - include:
         file: db/changelog/2-rbactest/200-rbactest-schema.sql

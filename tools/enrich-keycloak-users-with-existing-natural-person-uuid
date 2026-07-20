@@ -9,7 +9,7 @@
 # (none or ambiguous) get an empty personUuid and a note on stderr.
 #
 # Usage:
-#   LOGIN <username>        # global-admin rights required, see natural-partner-person-by-name
+#   APIKEY <api-key-name>   # or LOGIN; global-admin rights required, see natural-partner-person-by-name
 #   tools/get-keycloak-users | tools/enrich-keycloak-users-with-existing-natural-person-uuid
 #
 # Example:

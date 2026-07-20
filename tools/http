@@ -20,8 +20,32 @@
 # is printed (to stderr) as well.
 # JSON responses are pretty-printed via jq, if installed; other responses are printed as-is.
 
+case "${1:-}" in
+    -h|-\?|--help)
+        source tools/lib/unindented.sh
+        unindented <<'HELP'
+            usage: HTTP <METHOD> </api/... path> [curl arguments...]
+
+            Executes an HTTP request against the hsadmin-ng REST-API via curl.
+              - prefixes $HSADMINNG_API_BASE_URL to a /path; a full http(s):// URL is used as given
+              - adds an Authorization header from $HSADMINNG_JWT_BEARER, or a Hostsharing-Api-Key header
+                from $HSADMINNG_API_KEY, unless the request already carries one of them
+              - prints the command (and any stdin request body) to stderr, so output/errors are traceable
+              - pretty-prints JSON responses via jq, if installed
+
+            HTTP GET /api/hs/accounts/current
+            HTTP POST /api/... -H 'Content-Type: application/json' --data-binary @- <<EOF
+            { ... }
+            EOF
+            HTTP -h|-?|--help    shows this help
+
+            Use LOGIN for a JWT, APIKEY for an API-key, LOGOUT to drop the active identity.
+HELP
+        exit 0 ;;
+esac
+
 if [ $# -lt 2 ]; then
-    echo "usage: ${0##*/} <HTTP-METHOD> </api/... path> [additional curl arguments]" >&2
+    echo "usage: ${0##*/} <HTTP-METHOD> </api/... path> [additional curl arguments], see HTTP --help" >&2
     exit 1
 fi
 method="$1" path="$2"
@@ -129,15 +153,18 @@ fi
 addAuthorizationHeader=yes
 for arg in "$@"; do
     case "$arg" in
-        [Aa]uthorization:*) addAuthorizationHeader=no ;;
+        [Aa]uthorization:*|[Hh]ostsharing-[Aa]pi-[Kk]ey:*) addAuthorizationHeader=no ;;
     esac
 done
 if [ "$addAuthorizationHeader" == yes ]; then
-    if [ -z "$HSADMINNG_JWT_BEARER" ]; then
-        echo "${0##*/}: HSADMINNG_JWT_BEARER is not set, expecting a valid JWT" >&2
+    if [ -n "$HSADMINNG_JWT_BEARER" ]; then
+        curlOptions+=(-H "Authorization: Bearer $HSADMINNG_JWT_BEARER")
+    elif [ -n "$HSADMINNG_API_KEY" ]; then
+        curlOptions+=(-H "Hostsharing-Api-Key: $HSADMINNG_API_KEY")
+    else
+        echo "${0##*/}: neither HSADMINNG_JWT_BEARER (JWT) nor HSADMINNG_API_KEY (API-key) is set" >&2
         exit 1
     fi
-    curlOptions+=(-H "Authorization: Bearer $HSADMINNG_JWT_BEARER")
 fi
 
 httpExitCode=0

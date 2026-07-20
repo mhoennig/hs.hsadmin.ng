@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager;
 import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.rbac.context.Context;
+import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -52,6 +53,9 @@ class RbacSubjectControllerAcceptanceTest {
 
     @Autowired
     RbacSubjectRepository rbacSubjectRepository;
+
+    @Autowired
+    RbacRoleRepository rbacRoleRepository;
 
     @Nested
     class CreateRbacSubject {
@@ -236,6 +240,25 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:on
 
             assertThat(findRbacSubjectByName("tst-forbidden_user")).isNull();
+        }
+    }
+
+    @Nested
+    class ApiKeySubjects {
+
+        @Test
+        void unknownApiKey_cannotAuthenticate() {
+
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Hostsharing-Api-Key", "hsak_" + "0".repeat(64))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/rbac/subjects")
+                    .then().assertThat()
+                        .statusCode(401);
+            // @formatter:on
         }
     }
 
@@ -770,6 +793,8 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                     .given()
                         .header("Authorization", bearer(givenUser.getName()))
+                        .queryParam("name", givenUser.getName())
+                        .queryParam("type", "USER")
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -778,7 +803,7 @@ class RbacSubjectControllerAcceptanceTest {
                         .statusCode(403);
             // @formatter:on
 
-            // finally, the user is untouched: still present and still visible, i.e. not deactivated
+            // finally, the user is untouched: still present and still visible
             assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
             assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNotNull();
         }
@@ -793,6 +818,8 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                     .given()
                         .header("Authorization", bearer("tst-customer_admin_xxx"))
+                        .queryParam("name", givenUser.getName())
+                        .queryParam("type", "USER")
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -801,7 +828,7 @@ class RbacSubjectControllerAcceptanceTest {
                         .statusCode(403);
             // @formatter:on
 
-            // finally, the user is untouched: still present and still visible, i.e. not deactivated
+            // finally, the user is untouched: still present and still visible
             assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
             assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNotNull();
         }
@@ -816,6 +843,8 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                     .given()
                         .header("Authorization", bearer("hsh-alex_superuser"))
+                        .queryParam("name", givenUser.getName())
+                        .queryParam("type", "USER")
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -823,10 +852,90 @@ class RbacSubjectControllerAcceptanceTest {
                         .statusCode(204);
             // @formatter:on
 
-            // finally, the user is deactivated (soft-deleted): the row is retained but no longer visible
-            assertThat(rbacSubjectRepository.findByName(givenUser.getName())).isNotNull();
-            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNull();
+            // finally, the user is physically deleted: the row is gone, not just deactivated
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
         }
+
+        @Test
+        void globalAdmin_canNotDeleteWithMismatchingName() {
+
+            // given
+            final var givenUser = givenANewUser();
+
+            // when the name query-parameter does not match the subject identified by the UUID
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .queryParam("name", givenUser.getName() + ".other")
+                        .queryParam("type", "USER")
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        // then the safeguard rejects the request
+                        .statusCode(400);
+            // @formatter:on
+
+            // finally, the user is untouched: still present and still visible
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNotNull();
+            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNotNull();
+        }
+
+        @Test
+        void globalAdmin_canDeleteAUserWithAnAccount() {
+
+            // given a user subject with an associated account
+            final var givenUser = givenANewUser();
+            givenAnAccountFor(givenUser);
+
+            // when the subject gets deleted
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .queryParam("name", givenUser.getName())
+                        .queryParam("type", "USER")
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // then the subject and its account are physically deleted
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
+            assertThat(countAccountsOf(givenUser.getUuid())).isZero();
+        }
+
+        @Test
+        void globalAdmin_canDeleteAnAlreadyDeactivatedUser() {
+
+            // given a deactivated (soft-deleted) user
+            final var givenUser = givenANewUser();
+            deactivateSubjectViaPut(givenUser.getUuid(), givenUser.getName(), SubjectType.USER);
+
+            // when the deactivated user gets deleted
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .queryParam("name", givenUser.getName())
+                        .queryParam("type", "USER")
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
+                    .then().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // then the row is gone, not just deactivated
+            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
+        }
+    }
+
+    @Nested
+    class DeactivateRbacSubjectViaPut {
 
         @Test
         void deactivatedUser_canNoLongerUseTheApi() {
@@ -847,16 +956,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:on
 
             // when the user gets deactivated (soft-deleted)
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
-                    .then().assertThat()
-                        .statusCode(204);
-            // @formatter:on
+            deactivateSubjectViaPut(givenUser.getUuid(), givenUser.getName(), SubjectType.USER);
 
             // then the deactivated user can no longer use the API, even with a still valid JWT
             // @formatter:off
@@ -892,16 +992,7 @@ class RbacSubjectControllerAcceptanceTest {
             // @formatter:on
 
             // when the group gets deactivated (soft-deleted)
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenGroup.getUuid())
-                    .then().assertThat()
-                        .statusCode(204);
-            // @formatter:on
+            deactivateSubjectViaPut(givenGroup.getUuid(), givenGroup.getName(), SubjectType.GROUP);
 
             // then the JWT groups claim no longer resolves to the deactivated group
             // @formatter:off
@@ -918,102 +1009,11 @@ class RbacSubjectControllerAcceptanceTest {
         }
 
         @Test
-        void globalAdmin_canPurgeArbitraryUser() {
-
-            // given
-            final var givenUser = givenANewUser();
-
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .queryParam("purge", true)
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
-                    .then().log().all().assertThat()
-                        .statusCode(204);
-            // @formatter:on
-
-            // finally, the user is physically purged: the row is gone, not just deactivated
-            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
-        }
-
-        @Test
-        void globalAdmin_canPurgeAUserWithAnAccount() {
-
-            // given a user subject with an associated account
-            final var givenUser = givenANewUser();
-            givenAnAccountFor(givenUser);
-
-            // when the subject gets physically purged
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .queryParam("purge", true)
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
-                    .then().log().all().assertThat()
-                        .statusCode(204);
-            // @formatter:on
-
-            // then the subject and its account are physically deleted
-            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
-            assertThat(countAccountsOf(givenUser.getUuid())).isZero();
-        }
-
-        @Test
-        void globalAdmin_canPurgeAnAlreadyDeactivatedUser() {
-
-            // given a deactivated (soft-deleted) user
-            final var givenUser = givenANewUser();
-
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
-                    .then().assertThat()
-                        .statusCode(204);
-            // @formatter:on
-
-            // when the deactivated user gets physically purged
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .queryParam("purge", true)
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
-                    .then().assertThat()
-                        .statusCode(204);
-            // @formatter:on
-
-            // then the row is gone, not just deactivated
-            assertThat(findRbacSubjectByName(givenUser.getName())).isNull();
-        }
-
-        @Test
         void subjectNameCanBeReusedByANewUuidAfterDeactivation() {
 
             // given a user whose Keycloak account got deleted, and which is therefore deactivated
             final var givenUser = givenANewUser();
-
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("hsh-alex_superuser"))
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
-                    .then().assertThat()
-                        .statusCode(204);
-            // @formatter:on
+            deactivateSubjectViaPut(givenUser.getUuid(), givenUser.getName(), SubjectType.USER);
 
             // when the same name reappears in Keycloak under a fresh UUID and gets synced
             final var freshUuid = randomUUID();
@@ -1040,29 +1040,27 @@ class RbacSubjectControllerAcceptanceTest {
                     .extracting(RbacSubjectEntity::getName).isEqualTo(givenUser.getName());
             assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNull();
         }
+    }
 
-        @Test
-        void customerAdmin_canNotPurgeUser() {
-
-            // given
-            final var givenUser = givenANewUser();
-
-            // @formatter:off
-            RestAssured
-                    .given()
-                        .header("Authorization", bearer("tst-customer_admin_xxx"))
-                        .queryParam("purge", true)
-                        .port(port)
-                    .when()
-                        .delete("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
-                    .then().log().all().assertThat()
-                        .statusCode(403);
-            // @formatter:on
-
-            // finally, the user is untouched: still present and still visible, i.e. neither purged nor deactivated
-            assertThat(findRbacSubjectByName(givenUser.getName())).isNotNull();
-            assertThat(findVisibleRbacSubjectByUuid(givenUser.getUuid())).isNotNull();
-        }
+    void deactivateSubjectViaPut(final UUID subjectUuid, final String subjectName, final SubjectType type) {
+        // @formatter:off
+        RestAssured
+                .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .contentType(ContentType.JSON)
+                    .body("""
+                          {
+                            "name": "%s",
+                            "type": "%s",
+                            "deactivated": true
+                          }
+                          """.formatted(subjectName, type.name()))
+                    .port(port)
+                .when()
+                    .put("http://localhost/api/rbac/subjects/" + subjectUuid)
+                .then().assertThat()
+                    .statusCode(200);
+        // @formatter:on
     }
 
     RbacSubjectEntity findVisibleRbacSubjectByUuid(final UUID subjectUuid) {

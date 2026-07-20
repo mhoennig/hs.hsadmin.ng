@@ -119,7 +119,6 @@ Desktop.ini
 ######################
 /deploy/
 /local/
-/.private/
 
 ######################
 # Logs

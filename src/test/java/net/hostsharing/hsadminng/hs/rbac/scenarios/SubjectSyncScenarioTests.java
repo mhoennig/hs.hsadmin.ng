@@ -105,9 +105,11 @@ class SubjectSyncScenarioTests extends ScenarioTest {
     @Requires("SubjectSync: sync-alice - renamed to sync-alicia")
     @Produces("SubjectSync: sync-alice - deactivated")
     void aGlobalAdminCanDeactivateARemovedSubject() {
-        new DeactivateSubject(scenarioTest, asGlobalAgent())
+        new DeactivateSubjectViaSynchronization(scenarioTest, asGlobalAgent())
                 .given("subjectUuid", "%{SubjectSync: sync-alice}")
-                .thenExpect(HttpStatus.NO_CONTENT);
+                .given("subjectName", "sync-alicia") // the current name, from the rename in Scenario#238.03
+                .given("subjectType", "USER")
+                .thenExpect(HttpStatus.OK);
     }
 
     /**
@@ -327,5 +329,20 @@ class SubjectSyncScenarioTests extends ScenarioTest {
                 .given("organization", "acme")
                 .given("subjectType", "USER")
                 .thenExpect(HttpStatus.OK);
+    }
+
+    /**
+     * Verifies Scenario#238.10: A subject which is gone for good can be permanently deleted;
+     * as a safeguard, the DELETE request has to repeat the subject's name and type.
+     */
+    @Test
+    @Order(9048)
+    @Requires("SubjectSync: sync-alicia (successor)")
+    void aGlobalAdminCanPermanentlyDeleteASubject() {
+        new DeleteSubjectPermanently(scenarioTest, asGlobalAgent())
+                .given("subjectUuid", "%{SubjectSync: sync-alicia (successor)}")
+                .given("subjectName", "sync-alicia")
+                .given("subjectType", "USER")
+                .thenExpect(HttpStatus.NO_CONTENT);
     }
 }

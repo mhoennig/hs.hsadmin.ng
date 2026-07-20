@@ -35,6 +35,29 @@
 # as well as for OAuth2/Keycloak clients with direct access grants enabled,
 # then identified via HSADMINNG_JWT_CLIENT_ID and, if needed, HSADMINNG_JWT_CLIENT_SECRET.
 
+# help: shown by `LOGIN --help` (which sources this with the flag) or by `tools/jwt-login --help`
+case "${1:-}" in
+    -h|-\?|--help)
+        source tools/lib/unindented.sh
+        unindented <<'HELP'
+            usage: LOGIN [username]
+
+            Fetches a JWT from Keycloak and exports it as HSADMINNG_JWT_BEARER, so the HTTP function
+            authenticates with it. Run via the LOGIN function from `.aliases`.
+
+              LOGIN <username>      asks for the password, then logs in as that user
+              LOGIN                 logs in again with the last given username+password
+              LOGIN -h|-?|--help    shows this help
+
+            With HSADMINNG_JWT_TOKEN_URL set (e.g. a local fake-jwt token endpoint), the OAuth2 password
+            grant is used instead of the Keycloak login-form flow. Override HSADMINNG_KEYCLOAK_ISSUER /
+            _CLIENT_ID / _REDIRECT_URI for another environment. Use APIKEY for an API-key instead of a
+            JWT, and LOGOUT to drop the active identity.
+HELP
+        if [ "${BASH_SOURCE[0]}" != "$0" ]; then return 0; else exit 0; fi
+        ;;
+esac
+
 # The subshell body `( ... )` keeps `set`, `trap`, `exit`, and all variables local,
 # so that sourcing this script cannot affect or close the calling shell.
 function jwtLogin() (

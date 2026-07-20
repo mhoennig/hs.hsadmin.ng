@@ -11,6 +11,7 @@ import com.nimbusds.jwt.SignedJWT;
 import lombok.SneakyThrows;
 import lombok.val;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
@@ -50,6 +51,27 @@ public class JwtFakeBearer {
                 .build();
 
         return sign(claims);
+    }
+
+    /** Fakes a bearer with the same claims as the JWT synthesized by the ApiKeyAuthenticationFilter,
+     * e.g. for RestTests of controllers which inspect API-key authentications. */
+    @SneakyThrows
+    public static String apiKeyBearer(
+            final String subjectUuid, final Collection<String> scopes, final Instant apiKeyExpiresAt) {
+        val claimsBuilder = new JWTClaimsSet.Builder()
+                .subject(subjectUuid)
+                .issuer("http://test-issuer")
+                .audience("api")
+                .claim(ApiKeyAuthenticationFilter.TOKEN_TYPE_CLAIM, ApiKeyAuthenticationFilter.TOKEN_TYPE_API_KEY)
+                .jwtID(UUID.randomUUID().toString())
+                .expirationTime(expiresIn(ACCESS_TOKEN_EXPIRES_IN_SECONDS));
+        if (!scopes.isEmpty()) {
+            claimsBuilder.claim(ApiKeyAuthenticationFilter.SCOPE_CLAIM, String.join(" ", scopes));
+        }
+        if (apiKeyExpiresAt != null) {
+            claimsBuilder.claim(ApiKeyAuthenticationFilter.API_KEY_EXPIRES_AT_CLAIM, apiKeyExpiresAt.getEpochSecond());
+        }
+        return "Bearer " + sign(claimsBuilder.build());
     }
 
     @SneakyThrows

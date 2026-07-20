@@ -42,6 +42,19 @@
 
 set -o pipefail
 
+function failed() {
+    echo "FAILED: $*"
+    exit 1
+}
+
+HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-https://backend.ng.hostsharing.net}
+[ -n "$HSADMINNG_JWT_USERNAME" ] || failed "HSADMINNG_JWT_USERNAME is not set"
+[ -n "$HSADMINNG_JWT_PASSWORD" ] || failed "HSADMINNG_JWT_PASSWORD is not set"
+
+KEYCLOAK_ISSUER="${HSADMINNG_KEYCLOAK_ISSUER:-https://login.ng.hostsharing.net/realms/hs}"
+CLIENT_ID="${HSADMINNG_KEYCLOAK_CLIENT_ID:-hs-admin-web}"
+REDIRECT_URI="${HSADMINNG_KEYCLOAK_REDIRECT_URI:-https://testui.ng.hostsharing.net/}"
+
 # Option names differ between curl versions still in use (e.g. RHEL 8: 7.61),
 # thus probe the locally installed curl (--version prevents any actual transfer):
 CURL=(curl --show-error)

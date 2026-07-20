@@ -3,7 +3,7 @@
 # Looks up hs-office relations by a person's given and family name and prints the natural holder persons.
 #
 # Usage:
-#   LOGIN <username>                                         # log in once (see .aliases); or have a JWT set up
+#   APIKEY <api-key-name>                                    # log in once (see .aliases); or have a JWT set up
 #   tools/natural-partner-person-by-name <givenName> <familyName>
 #
 # The <familyName> is passed to GET /api/hs/office/relations as the `personData` query parameter,
@@ -36,8 +36,8 @@ matching the given name: <familyName> drives the backend query (personData),
 match its JSON object is printed to stdout (exit 0); on multiple matches an error
 goes to stderr (exit 2); on no match an error goes to stderr (exit 1).
 
-Requires an authenticated session with global-admin rights: run LOGIN (JWT)
-beforehand; see .aliases.
+Requires an authenticated session with global-admin rights: run either LOGIN (JWT)
+or APIKEY (API-key) beforehand; see .aliases.
 EOF
 }
 

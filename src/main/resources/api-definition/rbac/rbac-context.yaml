@@ -1,7 +1,11 @@
 get:
     tags:
         - rbac-context
-    description: Information about the current subject.
+    description: |
+        Information about the current subject.
+        If the request is authenticated with an API-key, the response additionally contains
+        the properties of that API-key (endpoint-scopes and expiry timestamp); this endpoint
+        is always allowed for scoped API-keys, to support such self-inspection.
     operationId: getContext
     parameters:
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

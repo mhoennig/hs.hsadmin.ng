@@ -5,6 +5,10 @@
 #                       current working tree (uncommitted changes included!)
 #   remote log [ARGS]   tail the backend log, extra ARGS are passed to tail
 #   remote ssh [CMD]    open an interactive shell or run CMD on the server
+#   remote provisioning-api-key
+#                       generate an API-key locally, provision just its SHA-256 hash
+#                       in the EnvironmentFile of the backend service on the server,
+#                       and verify the bootstrap outcome via the backend log
 #   remote install-monitoring
 #                       install and start a systemd user timer on the server, running
 #                       the local tools/login-monitoring-check every 5 minutes with
@@ -147,6 +151,86 @@ cmdSsh() {
     exec ssh -t "$HSADMINNG_DEPLOY_HOST" "$@"
 }
 
+# Generates a new API-key locally and provisions just its SHA-256 hash on the server
+# (see ProvisioningApiKeyBootstrap.java and "Bootstrapping the provisioning API-key" in README.md):
+# the hash is appended to the EnvironmentFile of the backend service, the service is
+# restarted, and the bootstrap outcome is verified via the backend log.
+# The clear-text API-key is printed at the very end; it only ever exists at the client.
+cmdProvisioningApiKey() {
+    local apiKey keyHash
+    apiKey=$(tools/generate-api-key hsadminng.provisioning.key)
+    keyHash=$(printf '%s' "$apiKey" | sha256sum | cut -d' ' -f1)
+
+    local rc=0
+    ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$keyHash" <<'REMOTE_SCRIPT' || rc=$?
+set -euo pipefail
+keyHash=$1
+envFile="$HOME/backend/.environment"
+logFile="$HOME/var/backend.log"
+
+if grep -q '^HSADMINNG_PROVISIONING_API_KEY_SHA256=' "$envFile"; then
+    echo "ERROR: HSADMINNG_PROVISIONING_API_KEY_SHA256 is already configured in $envFile," >&2
+    echo "       remove that line first if you really want to reconfigure it" >&2
+    exit 3
+fi
+
+logOffset=$(stat -c%s "$logFile" 2>/dev/null || echo 0)
+
+echo "appending HSADMINNG_PROVISIONING_API_KEY_SHA256 to $envFile"
+echo "HSADMINNG_PROVISIONING_API_KEY_SHA256=$keyHash" >>"$envFile"
+chmod 600 "$envFile"
+
+echo "restarting the backend service ..."
+systemctl --user restart backend
+
+echo -n "waiting for the bootstrap message in the backend log "
+for _ in $(seq 60); do
+    sleep 2
+    if ! systemctl --user --quiet is-active backend; then
+        echo
+        echo "backend service FAILED to start:"
+        systemctl --user --no-pager --lines=25 status backend || true
+        exit 1
+    fi
+    newLog=$(tail -c "+$((logOffset+1))" "$logFile" 2>/dev/null || true)
+    if grep -qE "already provisioned|provisioning API-key hash differs" <<<"$newLog"; then
+        echo
+        grep -E "already provisioned|provisioning API-key hash differs" <<<"$newLog"
+        exit 2
+    fi
+    if grep -q "provisioned the provisioning API-key subject" <<<"$newLog"; then
+        echo
+        grep "provisioned the provisioning API-key subject" <<<"$newLog"
+        exit 0
+    fi
+    echo -n .
+done
+echo
+echo "WARNING: no provisioning API-key bootstrap message found in the backend log within 120s" >&2
+exit 4
+REMOTE_SCRIPT
+
+    case "$rc" in
+        0)  echo
+            echo "store the API-key in your password manager, it cannot be retrieved again:"
+            echo
+            echo "    export HSADMINNG_API_KEY=$apiKey"
+            ;;
+        2)  echo "ERROR: a provisioning API-key was already provisioned in the database;" >&2
+            echo "       the stored API-key takes precedence, the newly generated one is NOT valid" >&2
+            exit 1
+            ;;
+        3)  exit 1
+            ;;
+        *)  echo "WARNING: could not confirm the provisioning, check with '$0 log';" >&2
+            echo "if the bootstrap succeeds on a later start, this is the matching API-key:" >&2
+            echo
+            echo "    export HSADMINNG_API_KEY=$apiKey"
+            exit "$rc"
+            ;;
+    esac
+}
+
 # Installs (or refreshes) a systemd user timer on the backend server which runs
 # the local version of tools/login-monitoring-check every 5 minutes with Matrix
 # alerting. The secrets are NOT deployed by this command: ~/.environment on the server
@@ -249,6 +333,7 @@ case "$command" in
     deploy) cmdDeploy "$@" ;;
     log)    cmdLog "$@" ;;
     ssh)    cmdSsh "$@" ;;
+    provisioning-api-key) cmdProvisioningApiKey "$@" ;;
     install-monitoring) cmdInstallMonitoring "$@" ;;
     ''|-h|--help) usage ;;
     *)      echo "ERROR: unknown command '$command'" >&2; usage >&2; exit 1 ;;

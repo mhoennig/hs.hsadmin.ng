@@ -73,6 +73,10 @@ hsadminng:
         leakproof:
     cors:
         allowed-origin: ${ALLOWED_ORIGINS} # for compatibility with env-based CORS-configuration
+    security:
+        # SHA-256 hash (hex) of the API-key for provisioning the global-admin API_KEY subject,
+        # e.g. generated via `printf '%s' "$apiKey" | sha256sum`, see ProvisioningApiKeyBootstrap
+        provisioning-api-key-sha256: ${HSADMINNG_PROVISIONING_API_KEY_SHA256:}
 
 metrics:
     distribution:

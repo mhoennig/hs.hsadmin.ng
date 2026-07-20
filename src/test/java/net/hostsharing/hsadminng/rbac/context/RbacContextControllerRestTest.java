@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.SynchronizationType;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +36,12 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static net.hostsharing.hsadminng.config.JwtFakeBearer.apiKeyBearer;
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -160,9 +164,69 @@ class RbacContextControllerRestTest {
                 .andExpect(jsonPath("$.assumedRoles[0].roleName", is(givenAssumedRoles.get(0).getRoleName())))
                 .andExpect(jsonPath("$.assumedRoles[0].roleIdName", is("rbactest.package#xxx00:OWNER")))
                 .andExpect(jsonPath("$.assumedRoles[1].roleName", is(givenAssumedRoles.get(1).getRoleName())))
-                .andExpect(jsonPath("$.assumedRoles[1].roleIdName", is("rbactest.package#yyy00:OWNER")));
+                .andExpect(jsonPath("$.assumedRoles[1].roleIdName", is("rbactest.package#yyy00:OWNER")))
+                .andExpect(jsonPath("$.apiKey", nullValue()));
 
         verify(contextMock).assumeRoles(expectedAssumedRoles);
+    }
+
+    @Test
+    void apiContextForApiKeyAuthenticationWillReturnApiKeyProperties() throws Exception {
+
+        // given an API_KEY subject, authenticated with the same claims as the JWT
+        // synthesized by the ApiKeyAuthenticationFilter
+        final var subjectUuid = UUID.randomUUID();
+        final var fakeApiKeySubject = new RealSubjectEntity();
+        fakeApiKeySubject.setUuid(subjectUuid);
+        fakeApiKeySubject.setName("test.key");
+        fakeApiKeySubject.setType(SubjectType.API_KEY);
+        when(realSubjectRepository.findCurrentSubject()).thenReturn(fakeApiKeySubject);
+        when(contextMock.fetchClaimedSubjectGroupNames()).thenReturn(List.of());
+        when(realSubjectRepository.findEffectiveSubjectGroups()).thenReturn(List.of());
+        when(rbacRoleRepository.fetchAssumedRoles()).thenReturn(List.of());
+        final var expiresAt = Instant.parse("2030-01-01T00:00:00Z");
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/context")
+                        .header("Authorization",
+                                apiKeyBearer(subjectUuid.toString(), List.of("rbac.subjects:sync"), expiresAt))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.subject.name", is("test.key")))
+                .andExpect(jsonPath("$.subject.type", is(SubjectType.API_KEY.name())))
+                .andExpect(jsonPath("$.apiKey.scopes", contains("rbac.subjects:sync")))
+                .andExpect(jsonPath("$.apiKey.expiresAt", is("2030-01-01T00:00:00Z")));
+    }
+
+    @Test
+    void apiContextForUnrestrictedApiKeyAuthenticationWillReturnEmptyApiKeyProperties() throws Exception {
+
+        // given an API_KEY subject without endpoint-scopes and without expiry
+        final var subjectUuid = UUID.randomUUID();
+        final var fakeApiKeySubject = new RealSubjectEntity();
+        fakeApiKeySubject.setUuid(subjectUuid);
+        fakeApiKeySubject.setName("test.key");
+        fakeApiKeySubject.setType(SubjectType.API_KEY);
+        when(realSubjectRepository.findCurrentSubject()).thenReturn(fakeApiKeySubject);
+        when(contextMock.fetchClaimedSubjectGroupNames()).thenReturn(List.of());
+        when(realSubjectRepository.findEffectiveSubjectGroups()).thenReturn(List.of());
+        when(rbacRoleRepository.fetchAssumedRoles()).thenReturn(List.of());
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/context")
+                        .header("Authorization", apiKeyBearer(subjectUuid.toString(), List.of(), null))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+
+                // then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apiKey.scopes", hasSize(0)))
+                .andExpect(jsonPath("$.apiKey.expiresAt", nullValue()));
     }
 
     private static RealSubjectEntity givenGroupSubject(final String name) {

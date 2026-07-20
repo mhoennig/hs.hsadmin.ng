@@ -93,6 +93,10 @@ public class TestReport {
         this.requiredProducerLinks = requiredProducerLinks;
     }
 
+    boolean hasRequiredProducerLinks() {
+        return !requiredProducerLinks.isEmpty();
+    }
+
     void printRequiredProducerLinks() {
         if (requiredProducerLinks.isEmpty()) {
             return;

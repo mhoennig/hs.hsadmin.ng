@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.SneakyThrows;
 import lombok.val;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
@@ -23,6 +25,7 @@ import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.util.StringUtils;
@@ -50,7 +53,17 @@ import static net.hostsharing.hsadminng.config.JwtFakeBearer.RSA_KEY;
 public abstract class BaseWebSecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            final HttpSecurity http,
+            final ObjectProvider<JdbcTemplate> jdbcTemplate) throws Exception {
+        // @WebMvcTest slices have no DataSource, thus no JdbcTemplate and no API-key authentication;
+        // in the real application the JdbcTemplate is always available
+        jdbcTemplate.ifAvailable(jdbc -> {
+            http.addFilterBefore(new ApiKeyAuthenticationFilter(jdbc), BearerTokenAuthenticationFilter.class);
+            // after the Bearer filter: scopes are only enforced if the surviving authentication is
+            // the one synthesized from an API-key (requests with both auth headers get rejected before)
+            http.addFilterAfter(new ApiKeyScopeEnforcementFilter(), BearerTokenAuthenticationFilter.class);
+        });
         return http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
@@ -86,6 +99,16 @@ public abstract class BaseWebSecurityConfig {
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") final String jwkSetUri,
             @Value("${spring.security.oauth2.resourceserver.jwt.hmac-secret:}") final String hmacSecret,
             @Value("${spring.security.oauth2.resourceserver.jwt.audiences:}") final String audiences) {
+        // the issuer is mandatory, so that every decoder validates the "iss" claim (a token minted
+        // under the same signing key but by a different issuer cannot be replayed against us)
+        if (!StringUtils.hasText(issuerUri)) {
+            throw new IllegalStateException(
+                    "spring.security.oauth2.resourceserver.jwt.issuer-uri (HSADMINNG_JWT_ISSUER) must be configured.");
+        }
+        if (issuerUri.contains("/fake-jwt")) {
+            throw new IllegalStateException("You are using a fake-jwt issuer URL (\"" + issuerUri + "\") but the 'fake-jwt' profile is not active. " +
+                    "Either activate the 'fake-jwt' profile or set a real JWT issuer URL in HSADMINNG_JWT_ISSUER.");
+        }
         if (StringUtils.hasText(hmacSecret)) {
             val decoder = NimbusJwtDecoder.withSecretKey(new SecretKeySpec(hmacSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA512"))
                     .macAlgorithm(MacAlgorithm.HS512)
@@ -99,19 +122,12 @@ public abstract class BaseWebSecurityConfig {
             }
             return withTokenValidators(NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build(), issuerUri, audiences);
         }
-        if (StringUtils.hasText(issuerUri)) {
-            if (issuerUri.contains("/fake-jwt")) {
-                throw new IllegalStateException("You are using a fake-jwt issuer URL (\"" + issuerUri + "\") but the 'fake-jwt' profile is not active. " +
-                        "Either activate the 'fake-jwt' profile or set a real JWT issuer URL in HSADMINNG_JWT_ISSUER.");
-            }
-            final NimbusJwtDecoder decoder = JwtDecoders.fromIssuerLocation(issuerUri);
-            return withTokenValidators(decoder, issuerUri, audiences);
-        }
-        throw new IllegalStateException("Either spring.security.oauth2.resourceserver.jwt.hmac-secret (HSADMINNG_JWT_HMAC_SECRET), spring.security.oauth2.resourceserver.jwt.jwk-set-uri or ...issuer-uri (HSADMINNG_JWT_ISSUER) must be configured.");
+        return withTokenValidators(JwtDecoders.fromIssuerLocation(issuerUri), issuerUri, audiences);
     }
 
-    // The audience ("aud") claim is only validated if audiences (HSADMINNG_JWT_AUDIENCE) is configured,
-    // because it's not known yet which audience values the real HS Keycloak access tokens carry, if any.
+    // The issuer is always validated (issuer-uri is mandatory). The audience ("aud") claim is only
+    // validated if audiences (HSADMINNG_JWT_AUDIENCE) is configured, because the real HS Keycloak
+    // access tokens currently carry no "aud" claim at all; once they do, configure the expected value.
     private static NimbusJwtDecoder withTokenValidators(
             final NimbusJwtDecoder decoder, final String issuerUri, final String audiences) {
         final var validators = new ArrayList<OAuth2TokenValidator<Jwt>>();

@@ -96,6 +96,7 @@ public class ArchitectureTest {
                     "..rbac",
                     "..rbac.context",
                     "..rbac.generator",
+                    "..rbac.scope",
                     "..rbac.subject",
                     "..rbac.grant",
                     "..rbac.role",
@@ -327,6 +328,13 @@ public class ArchitectureTest {
             .that().resideInAPackage("..hs.migration..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.migration..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule rbacScopePackageRule = classes()
+            .that().resideInAPackage("..rbac.scope..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..rbac.scope..");
 
     @ArchTest
     @SuppressWarnings("unused")

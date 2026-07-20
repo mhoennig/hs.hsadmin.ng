@@ -56,13 +56,21 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:17.7-trixie:///scenariosTC}",
                 "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
                 "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
-                "hsadminng.superuser=${HSADMINNG_SUPERUSER:hsh-alex_superuser}"
+                "hsadminng.superuser=${HSADMINNG_SUPERUSER:hsh-alex_superuser}",
+                "hsadminng.security.provisioning-api-key-sha256=" + ScenarioTest.PROVISIONING_API_KEY_SHA256
         }
 )
 @ActiveProfiles({ "fake-jwt" })
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @ExtendWith(IgnoreOnFailureExtension.class)
 public abstract class ScenarioTest extends ContextBasedTest {
+
+    // the clear-text API-key clients use in scenarios; only its SHA-256 hash gets configured (property above)
+    // and provisioned by the ProvisioningApiKeyBootstrap on application start
+    public static final String PROVISIONING_API_KEY =
+            "hsak_1234567890123456789012345678901234567890123456789012345678901234";
+    public static final String PROVISIONING_API_KEY_SHA256 =
+            "0e74ea1ff70afd40d4cee4cb548ccfa50099496ad80bdb69e70cdf43cb680918";
 
     private final Stack<String> currentTestMethodProduces = new Stack<>();
 

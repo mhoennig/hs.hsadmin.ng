@@ -79,6 +79,12 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
     @Timed("app.rbac.subjects.repo.findVisibleSubjectByUuid.real")
     Optional<RealSubjectEntity> findVisibleSubjectByUuid(UUID subjectUuid);
 
+    // deliberately WITHOUT the visibility condition: a global-admin must be able to physically
+    // delete even a deactivated (soft-deleted) subject; only used by the admin-gated DELETE endpoint
+    @Query(value = "select * from rbac.subject s where s.uuid = :subjectUuid", nativeQuery = true)
+    @Timed("app.rbac.subjects.repo.findSubjectByUuidIncludingDeactivated.real")
+    Optional<RealSubjectEntity> findSubjectByUuidIncludingDeactivated(UUID subjectUuid);
+
     @Query(value = """
              select *
                from rbac.subject s

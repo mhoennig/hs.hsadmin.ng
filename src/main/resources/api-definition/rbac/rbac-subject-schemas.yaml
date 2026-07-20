@@ -8,6 +8,34 @@ components:
             enum:
                 - USER
                 - GROUP
+                - API_KEY
+
+        ApiKeyScope:
+            type: string
+            description: |
+                Named endpoint-scope of an API-key. Each scope name maps to a fixed allowlist of
+                HTTP-method+path patterns (defined in the backend). A scoped API-key may only call
+                endpoints matched by at least one of its scopes; all other endpoints respond with
+                403 Forbidden, regardless of the roles granted to the API_KEY subject.
+            enum:
+                - rbac.subjects:sync
+                - "*:read"
+
+        ApiKeyScopeInfo:
+            type: object
+            description: An available API-key endpoint-scope and the endpoints it allows.
+            properties:
+                scope:
+                    $ref: '#/components/schemas/ApiKeyScope'
+                allows:
+                    type: array
+                    items:
+                        type: string
+                    description: The allowed endpoints as HTTP-method and path pattern.
+                    example: ["GET /api/rbac/subjects", "GET /api/rbac/subjects/{uuid}"]
+            required:
+                - scope
+                - allows
 
         RbacSubject:
             type: object
@@ -20,6 +48,7 @@ components:
                     description: |
                         Subject name. USER subjects use the realm-prefix and local-part format.
                         GROUP subjects start with `/` right before the realm-prefix.
+                        API_KEY subjects use a plain name without any realm-prefix.
                     example: hsh-alex_superuser
                 organization:
                     type: string
@@ -33,6 +62,51 @@ components:
                 - uuid
                 - name
                 - organization
+                - type
+
+        RbacSubjectCreated:
+            type: object
+            description: |
+                The response of creating a new RBAC subject. For API_KEY subjects, it additionally
+                contains the clear-text API-key, only in this response; it cannot be retrieved
+                again, only its hash is stored.
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                organization:
+                    type: string
+                    description: |
+                        The organization (realm) the subject belongs to, either given explicitly
+                        on creation or derived from the subject-name prefix; for API_KEY subjects,
+                        which do not belong to a realm, it defaults to the subject name.
+                    example: hostsharing
+                type:
+                    $ref: '#/components/schemas/SubjectType'
+                apiKey:
+                    type: string
+                    description: |
+                        The clear-text API-key, only returned once, in the response of creating
+                        an API_KEY subject; null for other subject types.
+                scopes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ApiKeyScope'
+                    uniqueItems: true
+                    description: |
+                        The named endpoint-scopes of the created API-key, as given in the request;
+                        null or empty for an unrestricted API-key and for other subject types.
+                expiresAt:
+                    type: string
+                    format: date-time
+                    description: |
+                        The expiry timestamp of the created API-key, as given in the request;
+                        null for a never-expiring API-key and for other subject types.
+            required:
+                - uuid
+                - name
                 - type
 
         RbacUserSubjectInsert:
@@ -68,12 +142,16 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^[^/].*$'
+                    pattern: '^[^/]*[-@].*$'
                     description: |
-                        USER subject name; with an explicit organization it just must not start
-                        with `/` (which marks GROUP subject names), anything else which might
-                        come from Keycloak is accepted.
-                    example: alex_superuser
+                        USER subject name; must not start with `/` (which marks GROUP subject
+                        names) and must contain at least one `-` or `@` (which all username
+                        forms carry: organization-prefixed, e-mail address, Matrix handle),
+                        e.g. `hsh-alex_superuser` (organization-prefixed) or
+                        `alex@example.org` (e-mail address).
+                        The marker requirement keeps usernames disjoint from API_KEY
+                        subject names, which match `^[a-z0-9]+(\.[a-z0-9]+)*$`.
+                    example: hostsharing-alex_superuser
                 organization:
                     type: string
                     minLength: 1
@@ -151,12 +229,202 @@ components:
                 - type
             additionalProperties: false
 
+        RbacApiKeySubjectInsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^[a-z0-9]+(\.[a-z0-9]+)*$'
+                    description: |
+                        API_KEY subject name: lowercase ASCII letters and digits, with single
+                        dots separating hierarchical name components, e.g. `purpose.environment`.
+                        This grammar is disjoint from all username forms (which contain `-`
+                        or `@`) and from GROUP subject names (which start with `/`).
+                        The leading component `hsadminng.` is reserved for Hostsharing-operated
+                        keys (e.g. `hsadminng.provisioning.key`), keeping the rest of the flat
+                        namespace free for customer-created keys without conflicts.
+                    example: deployment.production
+                type:
+                    type: string
+                    enum:
+                        - API_KEY
+                scopes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ApiKeyScope'
+                    uniqueItems: true
+                    description: |
+                        Named endpoint-scopes restricting which endpoints the API-key may call.
+                        If omitted or empty, the API-key is unrestricted, limited only by the
+                        roles granted to its subject.
+                expiresAt:
+                    type: string
+                    format: date-time
+                    description: |
+                        Optional expiry timestamp of the API-key: authentication with the
+                        API-key is rejected once this timestamp has passed. If omitted,
+                        the API-key never expires.
+            required:
+                - name
+                - type
+            additionalProperties: false
+
         RbacSubjectInsert:
             anyOf:
                 - $ref: '#/components/schemas/RbacUserSubjectInsert'
                 - $ref: '#/components/schemas/RbacUserSubjectWithOrganizationInsert'
                 - $ref: '#/components/schemas/RbacGroupSubjectInsert'
                 - $ref: '#/components/schemas/RbacGroupSubjectWithOrganizationInsert'
+                - $ref: '#/components/schemas/RbacApiKeySubjectInsert'
+
+        # deliberately without an API_KEY variant: API_KEY subjects never stem from Keycloak,
+        # thus they cannot be created, renamed, deactivated, or reactivated via HTTP PUT
+        RbacSubjectUpsert:
+            anyOf:
+                - $ref: '#/components/schemas/RbacUserSubjectUpsert'
+                - $ref: '#/components/schemas/RbacUserSubjectWithOrganizationUpsert'
+                - $ref: '#/components/schemas/RbacGroupSubjectUpsert'
+                - $ref: '#/components/schemas/RbacGroupSubjectWithOrganizationUpsert'
+
+        RbacUserSubjectUpsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^[a-z]{3,12}-.+$'
+                    description: |
+                        USER subject name using the realm-prefix and local-part format.
+                        Without an explicit organization, the organization is derived from the
+                        realm-prefix, which is therefore enforced by the pattern.
+                        The local-part is not restricted at all, to avoid rejecting any
+                        user-name Keycloak might have accepted.
+                    example: hsh-alex_superuser
+                type:
+                    type: string
+                    enum:
+                        - USER
+                    default: USER
+                deactivated:
+                    $ref: '#/components/schemas/SubjectDeactivated'
+            required:
+                - name
+            additionalProperties: false
+
+        RbacUserSubjectWithOrganizationUpsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^[^/]*[-@].*$'
+                    description: |
+                        USER subject name; must not start with `/` (which marks GROUP subject
+                        names) and must contain at least one `-` or `@` (which all username
+                        forms carry: organization-prefixed, e-mail address, Matrix handle),
+                        e.g. `hsh-alex_superuser` (organization-prefixed) or
+                        `alex@example.org` (e-mail address).
+                        The marker requirement keeps usernames disjoint from API_KEY
+                        subject names, which match `^[a-z0-9]+(\.[a-z0-9]+)*$`.
+                    example: alex@example.org
+                organization:
+                    type: string
+                    minLength: 1
+                    description: |
+                        The organization (realm) the USER subject belongs to;
+                        given explicitly instead of being derived from the subject-name prefix.
+                    example: hsh
+                type:
+                    type: string
+                    enum:
+                        - USER
+                    default: USER
+                deactivated:
+                    $ref: '#/components/schemas/SubjectDeactivated'
+            required:
+                - name
+                - organization
+            additionalProperties: false
+
+        RbacGroupSubjectUpsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^/[a-z]{3,12}-[^/]+$'
+                    description: |
+                        GROUP subject name. GROUP subject names start with `/`, a realm-prefix and a '-'
+                        followed by a local-part.
+                        Without an explicit organization, the organization is derived from the
+                        realm-prefix, which is therefore enforced by the pattern.
+                        The local-part does not reject anything which might come from Keycloak,
+                        to avoid rejecting valid Keycloak group-names.
+                    example: /xyz-Team
+                type:
+                    type: string
+                    enum:
+                        - GROUP
+                deactivated:
+                    $ref: '#/components/schemas/SubjectDeactivated'
+            required:
+                - name
+                - type
+            additionalProperties: false
+
+        RbacGroupSubjectWithOrganizationUpsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^/.+$'
+                    description: |
+                        GROUP subject name; must start with `/` (which marks GROUP subject names)
+                        directly followed by the organization, anything else which might come
+                        from Keycloak is accepted.
+                    example: /example-Operators
+                organization:
+                    type: string
+                    minLength: 1
+                    description: |
+                        The organization (realm) the GROUP subject belongs to.
+                        JWTs reference groups just by name (no UUIDs), thus a GROUP subject's
+                        organization must remain derivable from the group-name prefix:
+                        an explicitly given organization is validated to match the part of the
+                        name between the leading `/` and the first `-`.
+                    example: example
+                type:
+                    type: string
+                    enum:
+                        - GROUP
+                deactivated:
+                    $ref: '#/components/schemas/SubjectDeactivated'
+            required:
+                - name
+                - organization
+                - type
+            additionalProperties: false
+
+        SubjectDeactivated:
+            type: boolean
+            default: false
+            description: |
+                Desired activation state of the subject: `true` deactivates it (a soft-delete:
+                the subject row is retained but excluded from all read paths, e.g. for a user
+                disabled or deleted in Keycloak), `false` or omitted (re)activates it. A subject which is
+                already deactivated keeps its original deactivation timestamp.
 
         RbacSubjectPermission:
             type: object

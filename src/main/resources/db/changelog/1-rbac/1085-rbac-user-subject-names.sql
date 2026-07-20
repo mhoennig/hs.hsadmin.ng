@@ -46,7 +46,8 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-subject-CHECK-SUBJECT-NAME-CHECK endDelimiter:--//
+--changeset michael.hoennig:rbac-subject-CHECK-SUBJECT-NAME-CHECK runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Enforces the naming conventions for subjects.
@@ -62,9 +63,15 @@ alter table rbac.subject
     check (
         type <> 'USER'::rbac.SubjectType or rbac.is_valid_user_subject_name(name)
     ),
+    drop constraint if exists check_valid_group_subject_name,
     add constraint check_valid_group_subject_name
     check (
         type <> 'GROUP'::rbac.SubjectType or rbac.is_valid_group_subject_name(name)
+    ),
+    drop constraint if exists check_valid_api_key_subject_name,
+    add constraint check_valid_api_key_subject_name
+    check (
+        type <> 'API_KEY'::rbac.SubjectType or rbac.is_valid_api_key_subject_name(name)
     );
 --//
 

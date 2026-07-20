@@ -182,14 +182,15 @@ alias fixmes=tools/fixmes
 alias api=tools/api
 alias remote=tools/remote
 
-# HOWTO: login to fetch a JWT for use with the HTTP function, e.g.:
-#   LOGIN some-username   # asks for the password, then logs in as that user
-#   LOGIN                 # logs in again with the last given username+password
-#   With HSADMINNG_JWT_TOKEN_URL set (e.g. to a local fake-jwt token endpoint), the direct
-#   OAuth2 password grant is used instead of the Keycloak login-form flow, see tools/jwt-login.
+# LOGIN: fetch a JWT for the HTTP function; run `LOGIN --help` for usage.
+# Defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well.
 function LOGIN() {
-    # sources tools/jwt-login, so that it can export HSADMINNG_JWT_BEARER into the current shell;
-    # defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well
+    # the help (-h|-?|--help) lives in tools/jwt-login
+    if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
+        source tools/jwt-login --help
+        return
+    fi
+    # sources tools/jwt-login, so that it can export HSADMINNG_JWT_BEARER into the current shell
     if [ -n "$1" ]; then
         export HSADMINNG_JWT_USERNAME=$1
         # a newly given username invalidates a previously entered password, thus always ask
@@ -200,15 +201,24 @@ function LOGIN() {
     source tools/jwt-login
 }
 
-# HOWTO: execute HTTP requests against the REST-API, either manually written or
-#   copy+pasted from the scenario-reports (build/doc/scenarios), e.g.:
-#   HTTP GET /api/hs/accounts/current
-#   HTTP POST /api/hs/accounts/accounts -H 'Content-Type: application/json' --data-binary @- <<EOF
-#   { ... }
-#   EOF
-#   See `tools/http` for details ($HSADMINNG_API_BASE_URL prefix, implicit Authorization
-#   header from $HSADMINNG_JWT_BEARER, jq pretty-printing, error reporting).
-#   Defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well.
+# APIKEY: use an API-key instead of a JWT for the HTTP function; run `APIKEY --help` for usage.
+# Defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well.
+function APIKEY() {
+    # sources the implementation on demand, so that it can export HSADMINNG_API_KEY into the
+    # current shell; the help (-h|-?|--help) lives in tools/lib/apikey-login.sh
+    source tools/lib/apikey-login.sh "$@"
+}
+
+# LOGOUT: drop the active identity so HTTP requests are unauthenticated; run `LOGOUT --help` for usage.
+# Defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well.
+function LOGOUT() {
+    # sources the implementation on demand, so that it can unset the identity env-vars in the
+    # current shell; the help (-h|-?|--help) lives in tools/lib/logout.sh
+    source tools/lib/logout.sh "$@"
+}
+
+# HTTP: execute REST-API requests (also copy+pasted from scenario-reports); run `HTTP --help` for usage.
+# Defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well.
 function HTTP() {
     tools/http "$@"
 }

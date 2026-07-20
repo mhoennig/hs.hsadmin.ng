@@ -51,8 +51,15 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     private static final HttpClient client = HttpClient.newHttpClient();
     private static final ObjectMapper REPORT_OBJECT_MAPPER = new ObjectMapper();
-    private static final String AUTH_HEADER_KEY = "Authorization";
-    private static final String FAKE_AUTH_HEADER_KEY = "X-Fake-Authorization";
+    static final String AUTH_HEADER_KEY = "Authorization";
+    static final String FAKE_AUTH_HEADER_KEY = "X-Fake-Authorization";
+    static final String API_KEY_HEADER_KEY = "Hostsharing-Api-Key";
+    static final String FAKE_API_KEY_HEADER_KEY = "X-Fake-Hostsharing-Api-Key";
+    // not defined in this repo; reports render the fake API-key header with this shell variable,
+    // thus the user can paste the command with a real HSADMINNG_API_KEY defined in their environment
+    // TODO.test: also show the name of the actually used key (parsed from its hsak_<name>.<hash> form),
+    //  so the report reveals WHICH key was used, not just the generic $HSADMINNG_API_KEY placeholder
+    static final String API_KEY_ENV_VAR = "$HSADMINNG_API_KEY";
     private static final String ASSUMED_ROLES_HEADER_KEY = "Hostsharing-Assumed-Roles";
     private static final String CONTENT_TYPE_HEADER_KEY = "Content-Type";
     private static final String HTTP_TIMEOUT_SECONDS_ENV_VAR = "HSADMINNG_SCENARIO_HTTP_TIMEOUT_SECONDS";
@@ -93,7 +100,10 @@ public abstract class UseCase<T extends UseCase<?>> {
         if (introduction != null) {
             testReport.printPara(introduction);
         }
-        testReport.printPara("### Properties");
+        // sub-use-cases without own properties (e.g. run inside another use-case) get no dangling heading
+        if (testReport.hasRequiredProducerLinks() || !givenProperties.isEmpty() || !expectedProperties.isEmpty()) {
+            testReport.printPara("### Properties");
+        }
         testReport.printRequiredProducerLinks();
         renderProperties("Given", givenProperties);
         renderProperties("Expected", expectedProperties);
@@ -225,11 +235,9 @@ public abstract class UseCase<T extends UseCase<?>> {
             final String uriPathWithPlaceholder,
             final Function<HttpRequest.Builder, HttpRequest.Builder> requestCustomizer) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholder, DROP_COMMENTS);
-        final var requestBuilder = HttpRequest.newBuilder()
+        final var requestBuilder = loginUser.addAuthHeadersTo(HttpRequest.newBuilder()
                 .GET()
-                .uri(new URI("http://localhost:" + testSuite.port + uriPath))
-                .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", loginUser.reportableBearer());
+                .uri(new URI("http://localhost:" + testSuite.port + uriPath)));
         final var customizedRequestBuilder = requestCustomizer.apply(requestBuilder);
         final var request = customizedRequestBuilder.build();
         final var response = client.send(request, BodyHandlers.ofString());
@@ -256,13 +264,11 @@ public abstract class UseCase<T extends UseCase<?>> {
             final Function<HttpRequest.Builder, HttpRequest.Builder> requestCustomizer) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
-        final var requestBuilder = HttpRequest.newBuilder()
+        final var requestBuilder = loginUser.addAuthHeadersTo(HttpRequest.newBuilder()
                 .POST(BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", loginUser.reportableBearer())
-                .timeout(seconds(HTTP_TIMEOUT_SECONDS));
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS)));
         final var request = requestCustomizer.apply(requestBuilder).build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.POST, uriPath, requestBody, response);
@@ -275,13 +281,11 @@ public abstract class UseCase<T extends UseCase<?>> {
     ) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
-        final var request = HttpRequest.newBuilder()
+        final var request = loginUser.addAuthHeadersTo(HttpRequest.newBuilder()
                 .PUT(BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", loginUser.reportableBearer())
-                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS)))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.PUT, uriPath, requestBody, response);
@@ -294,13 +298,11 @@ public abstract class UseCase<T extends UseCase<?>> {
     ) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
-        final var request = HttpRequest.newBuilder()
+        final var request = loginUser.addAuthHeadersTo(HttpRequest.newBuilder()
                 .method(HttpMethod.PATCH.toString(), BodyPublishers.ofString(requestBody))
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", loginUser.reportableBearer())
-                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS)))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.PATCH, uriPath, requestBody, response);
@@ -309,13 +311,11 @@ public abstract class UseCase<T extends UseCase<?>> {
     @SneakyThrows
     public final HttpResponse httpDelete(final FakeLoginUser loginUser, final String uriPathWithPlaceholders) {
         final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
-        final var request = HttpRequest.newBuilder()
+        final var request = loginUser.addAuthHeadersTo(HttpRequest.newBuilder()
                 .DELETE()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
-                .header("Authorization", loginUser.bearer())
-                .header("X-Fake-Authorization", loginUser.reportableBearer())
-                .timeout(seconds(HTTP_TIMEOUT_SECONDS))
+                .timeout(seconds(HTTP_TIMEOUT_SECONDS)))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.DELETE, uriPath, null, response);
@@ -394,18 +394,27 @@ public abstract class UseCase<T extends UseCase<?>> {
         throw new IllegalArgumentException(HTTP_TIMEOUT_SECONDS_ENV_VAR + " must be a positive integer");
     }
 
-    // Scenario reports hide the real JWT and show the readable fake-auth header as Authorization.
+    // Scenario reports hide the real JWT and show the readable fake-auth header as Authorization;
+    // likewise they hide the real (secret!) API-key and show the fake API-key header with a shell variable.
     static String reportableRequestHeaderName(final String headerName) {
-        return FAKE_AUTH_HEADER_KEY.equalsIgnoreCase(headerName) ? AUTH_HEADER_KEY : headerName;
+        if (FAKE_AUTH_HEADER_KEY.equalsIgnoreCase(headerName)) {
+            return AUTH_HEADER_KEY;
+        }
+        if (FAKE_API_KEY_HEADER_KEY.equalsIgnoreCase(headerName)) {
+            return API_KEY_HEADER_KEY;
+        }
+        return headerName;
     }
 
     static List<Map.Entry<String, List<String>>> reportableRequestHeaders(
             final Map<String, List<String>> requestHeaders,
             final boolean requestHasBody) {
         return requestHeaders.entrySet().stream()
-                // the Authorization header with the long Bearer token is of no value here
-                .filter(entry -> !AUTH_HEADER_KEY.equalsIgnoreCase(entry.getKey()))
-                // instead, use the X-Fake-Authorization header as if it was the real Authorization header
+                // the Authorization header with the long Bearer token is of no value here,
+                // and the real API-key is a secret which must not leak into the reports
+                .filter(entry -> !AUTH_HEADER_KEY.equalsIgnoreCase(entry.getKey())
+                        && !API_KEY_HEADER_KEY.equalsIgnoreCase(entry.getKey()))
+                // instead, use the X-Fake-... headers as if they were the real headers
                 .map(entry -> Map.entry(reportableRequestHeaderName(entry.getKey()), entry.getValue()))
                 .sorted((left, right) -> {
                     final var rankComparison = Integer.compare(
@@ -419,7 +428,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     private static int reportableRequestHeaderRank(final String headerName, final boolean requestHasBody) {
-        if (AUTH_HEADER_KEY.equalsIgnoreCase(headerName)) {
+        if (AUTH_HEADER_KEY.equalsIgnoreCase(headerName) || API_KEY_HEADER_KEY.equalsIgnoreCase(headerName)) {
             return 0;
         }
         if (ASSUMED_ROLES_HEADER_KEY.equalsIgnoreCase(headerName)) {

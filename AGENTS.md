@@ -68,13 +68,32 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 - Use Java 21 language features.
 - Use Lombok according to the existing code-style.
 - Prefer Lombok `val` instead of `final var` for local inferred variables.
-- Keep comments sparse and useful. Prefer expressive and readable code to explanatory comments.
+- Comments explain WHY, never WHAT or HOW; if a comment restates what the code already shows,
+  delete it. Default to no comment. Keep a comment to a single line where possible; a class or
+  method doc-comment is at most two sentences and must give a rationale, not a walkthrough — no
+  narrating control flow, no listing fields or steps, no repeating the name of the thing.
 - Preserve existing transaction boundaries and security annotations.
 - Use `StrictMapper` and local mapping conventions instead of handwritten mappings unless the local code already does so.
 - Do not introduce new dependencies without a clear need.
 - Avoid deprecated APIs and Gradle features unless there is a clear reason, for example to avoid disproportionate refactoring or to keep tests for this project's own deprecated behavior.
 - Do not create new files for helper classes that are used from only one file. Put such helper classes into the file where
   they are used, similar to Kotlin-style colocated helper classes.
+
+## Shell Tooling Conventions
+
+- User-facing commands are thin functions in `.aliases` that delegate to an implementation under
+  `tools/`: executed (like `tools/http`) or sourced (like `tools/lib/apikey-login.sh`,
+  `tools/jwt-login`) when they must export/unset variables in the caller's shell.
+- Each tool accepts `-h`, `-?` and `--help`, and the help text lives in the implementation — not
+  duplicated in the `.aliases` function or a separate header comment. Emit it from the header
+  comment (`awk` over `$0`, see `tools/remote`) or from a space-indented, quoted heredoc through the
+  shared `unindented` filter: `source tools/lib/unindented.sh`, then `unindented <<'HELP' … HELP`
+  with the body one level below the command and the terminating `HELP` in column 0. Do NOT use `<<-`
+  (strips only tabs, which `.editorconfig`'s `indent_style = space` reformats away, silently
+  breaking the delimiter). Keep the delimiter quoted so example `$(...)`/`$var` stay literal.
+- Tools run from the repo root and call sibling tools with repo-root-relative paths.
+- Generate a clear-text API-key with `tools/generate-api-key [subject-name]`
+  (format `hsak_<subject-name>.<64 hex>`) instead of an ad-hoc `openssl` call.
 
 ## Testing Guidance
 
@@ -135,6 +154,7 @@ Use this procedure when asked to "review" or "code-review" a branch or PR.
 - To understand intent and scope, first read the PR document under `doc/PR/`, which belongs to the branch under review.
 - The PR-document must exist, otherwise create it and make a review-comment that it was missing.
 - Separate signal from noise: focus on the substantive core (logic, SQL, constraints, migrations, API contracts); do not get lost in mechanical churn such as bulk renames.
+- Flag any comment longer than one line that does not give a reason, or that narrates the implementation instead of the rationale; propose deleting or shortening it.
 <!-- disable:fixmes -->
 - Mark every finding with a terse in-code comment using a `FIXME:` marker on the first line of your review-comment, at the exact finding location: 
   - Java: `// FIXME.review: <terse note>`

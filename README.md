@@ -76,6 +76,7 @@ Optionally, the following tools are suggested:
 - An IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)*) and a GUI frontend for *PostgreSQL* like *Postbird*.
   - IntelliJ IDEA Ultimate contains a great SQL GUI frontend, and for its Community edition, there is a community plugin.
 - Python 3 on your `PATH` if you want to run the Python tools such as `howto` and `fixmes` (see `tools/howto` and `tools/fixmes`)
+- GnuPG (`gpg`) in your `PATH` to store encrypted API-keys with the `APIKEY` tool.
 
 > **Tip:** A minimal, reproducible build environment containing exactly these prerequisites is defined under
 > [`etc/local-reference-build-env`](etc/local-reference-build-env).
@@ -164,11 +165,11 @@ Make sure you replace `8080` with the port you used to run the application.
 
     # the following command should return a JSON array with all customers from the test-data:
     HTTP GET /api/test/customers
-
+    
     # the following command should return a JSON array with just the packages
     # visible for the admin of the customer yyy, by assuming that role for this request:
     HTTP GET /api/test/packages -H 'Hostsharing-Assumed-Roles: rbactest.customer#yyy:ADMIN'
-
+    
     # add a new customer (this is a test-area, not to confuse with a Hostsharing partner)
     HTTP POST /api/test/customers -H 'Content-Type: application/json' --data-binary @- <<EOF
     { "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }
@@ -191,24 +192,31 @@ instance is affected) and exercises the endpoints above; exit code 0 means all P
 
 If you want to run the application with real (OAuth2) JWT-authentication:
 
-    # set the JWT-issuer URI, e.g.
+    # set the JWT-issuer URI (mandatory, the application refuses to start without it,
+    # so that the issuer "iss" claim of every JWT is validated), e.g.
     export HSADMINNG_JWT_ISSUER=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV
 
+    # as well as the JWT token endpoint URI:
+    export HSADMINNG_JWT_TOKEN_URL=https://login.hshsngdev.hs-example.de/realms/HSAdminDEV/protocol/openid-connect/token
+    
     # optionally, restrict accepted JWTs to given audience(s) ("aud" claim, comma-separated), e.g.
     export HSADMINNG_JWT_AUDIENCE=hsadmin-ng-api
 
     # run the application against the specified JWT authenticator, do NOT add the 'fake-jwt' profile: 
     gw bootRun --args='--spring.profiles.active=dev,complete,test-data'
 
-To fetch a real JWT for the `HTTP` function, use the `LOGIN` function from `.aliases`.
-It sources `tools/jwt-login`, which performs the OAuth2 authorization-code flow (with PKCE)
-scripted through the Keycloak login form and exports the token as `HSADMINNG_JWT_BEARER`:
+To authenticate, use these functions from `.aliases`:
 
     LOGIN some-username   # asks for the password, then logs in as that user
     LOGIN                 # logs in again with the last given username+password
+    APIKEY some-key-name  # uses an API-key instead of a JWT, see HOWTO below
 
     export HSADMINNG_API_BASE_URL=http://localhost:8080
     HTTP GET /api/hs/accounts/current
+
+Run `LOGIN --help` for usage, or `APIKEY --help` for details.
+
+See also [HOWTO: Authenticate with an API-Key instead of a Keycloak JWT](#howto-authenticate-with-an-api-key-instead-of-a-keycloak-jwt)
 
 By default, `tools/jwt-login` logs in at the Keycloak behind https://testui.ng.hostsharing.net/;
 for another environment, override `HSADMINNG_KEYCLOAK_ISSUER`, `HSADMINNG_KEYCLOAK_CLIENT_ID`,
@@ -217,6 +225,139 @@ and `HSADMINNG_KEYCLOAK_REDIRECT_URI` accordingly (see `tools/jwt-login` for det
 Beware: If `HSADMINNG_JWT_TOKEN_URL` is set (e.g. from `.tc-environment` for the fake-jwt server,
 see above), `LOGIN` uses the direct password grant against that token endpoint instead of the
 Keycloak login-form flow; `unset HSADMINNG_JWT_TOKEN_URL` to log in via the Keycloak login form.
+
+### HOWTO: Authenticate with an API-Key instead of a Keycloak JWT
+
+API_KEY subjects authenticate technical clients via the `Hostsharing-Api-Key` HTTP header
+instead of a Keycloak OIDC JWT, completely bypassing Keycloak. Their authorization is
+determined by whatever RBAC roles got granted to them, like for any other subject.
+
+#### Bootstrapping the provisioning API-key
+
+With a new or restored legacy database there is no global-admin subject yet, 
+so nobody could create the first API-key via the API.
+Configuring the SHA-256 hash of a provisioning key makes the application provision the API_KEY
+subject `hsadminng.provisioning.key` with the global ADMIN  role on start.
+This is idempotent: an already stored API-key always takes precedence, thus
+further application starts never change it, not even if the configured hash differs.
+
+**On the deployed backend server, use `tools/remote provisioning-api-key`** — it performs all
+the steps at once: it generates the API-key locally, configures just its hash in the
+`EnvironmentFile` of the backend service, restarts the service, verifies the provisioning via
+the backend log, and finally prints the clear-text API-key for use as `HSADMINNG_API_KEY`
+(see below).
+
+**For a local server**, do the same steps by hand: generate the API-key, configure just its
+hash in the environment, then start the application:
+
+    # generate an API-key embedding the subject name; keep it secret, it exists only at the client:
+    apiKey=$(tools/generate-api-key hsadminng.provisioning.key); echo "$apiKey"
+
+    # configure just its hash in the environment, then start the application:
+    export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(printf '%s' "$apiKey" | sha256sum | cut -d' ' -f1)
+
+#### Using an API-key
+
+Clients send the clear-text API-key in the `Hostsharing-Api-Key` header. The `HTTP` function
+from `.aliases` adds that header implicitly from `HSADMINNG_API_KEY`, if `HSADMINNG_JWT_BEARER`
+is not set (no `LOGIN` needed). The `APIKEY` function takes care of both: it stores the key
+GPG-encrypted in the git-ignored `.apikeys.gpg` file and unsets the JWT so the API-key takes
+effect (run `APIKEY --help` for all subcommands and details; `LOGOUT` drops the active identity,
+`LOGIN` switches back to a JWT):
+
+    APIKEY provisioning   # asks for the API-key just once, then stores it in `.apikeys.gpg`
+    HTTP GET /api/hs/accounts/current   # shows the API_KEY subject and its global-admin flag
+
+The `.apikeys.gpg` file keeps a section per Keycloak environment, identified by
+`HSADMINNG_KEYCLOAK_ISSUER` (same default as `tools/jwt-login`), so keys of different
+environments with the same name (e.g. `provisioning`) do not clash:
+
+    [https://login.ng.hostsharing.net/realms/hs]
+    provisioning=hsak_...
+    keycloak_sync=hsak_...
+
+Keys are only ever stored GPG-encrypted, by default to your own key
+(`gpg --default-recipient-self`); to target a specific key, set
+`HSADMINNG_APIKEYS_GPG_RECIPIENT` (e.g. in the git-ignored `.environment`). Reading asks for
+your GPG passphrase, which `gpg-agent` caches. A legacy plain `.apikeys` file is migrated on
+next use.
+
+See also [HOWTO: Run the application with a real (OAuth2) JWT-authentication, e.g. Keycloak OIDC](#howto-run-the-application-with-a-real-oauth2-jwt-authentication-eg-keycloak-oidc).
+
+#### Creating further API-keys at runtime
+
+Acting as global-admin (via JWT or an existing API-key), create an API_KEY subject; the
+response contains the generated clear-text API-key exactly once, only its hash gets stored:
+
+    HTTP POST /api/rbac/subjects -H 'Content-Type: application/json' --data-binary @- <<EOF
+    { "name": "some.key", "type": "API_KEY" }
+    EOF
+
+An API-key can optionally be created with an expiry timestamp (property
+`"expiresAt": "2030-01-01T00:00:00Z"`); an expired key is rejected with `401 Unauthorized`.
+Without `expiresAt`, the key never expires.
+
+Unlike the bootstrapped `hsadminng.provisioning.key`, API-keys created at runtime start without any
+roles and thus can neither see nor change any data yet. Grant the wanted roles to the new
+subject, e.g. the global ADMIN role (mind `roleIdName`, `roleName` uses the object UUID):
+
+    HTTP GET /api/rbac/roles -H "Hostsharing-Assumed-Roles: rbac.global#global:ADMIN" \
+        | jq -r '.[] | select(.roleIdName == "rbac.global#global:ADMIN") | .uuid'
+
+    HTTP POST /api/rbac/grants \
+        -H "Hostsharing-Assumed-Roles: rbac.global#global:ADMIN" \
+        -H "Content-Type: application/json" --data-binary @- <<EOF
+    {
+        "assumed": true,
+        "grantedRole.uuid": "<the role uuid from above>",
+        "granteeSubject.uuid": "<the uuid of the created API_KEY subject>"
+    }
+    EOF
+
+To revoke an API-key, delete its subject; as a safeguard against deleting the wrong subject,
+the subject's name and type must be repeated as query parameters and are verified against
+the subject identified by the UUID:
+
+    HTTP DELETE "/api/rbac/subjects/<uuid>?name=some.key&type=API_KEY"
+
+This physically deletes the subject together with its grants and its stored API-key hash —
+the key immediately and permanently stops authenticating.
+
+#### Restricting an API-key to named endpoint-scopes
+
+An API-key can be restricted to named endpoint-scopes given at creation time; each scope
+name maps to a fixed allowlist of HTTP-method+path patterns (defined in the backend enum
+`ApiKeyScope`). A scoped API-key may only call endpoints matched by at least one of its
+scopes, everything else responds with `403 Forbidden` — an additional fence on top of the
+roles granted to the API_KEY subject. An API-key without scopes remains unrestricted.
+
+E.g. for a Keycloak subject synchronization that needs to read and upsert ALL subjects
+(thus the global ADMIN role, granted manually as shown above), but must not be able to
+use any other endpoint:
+
+    HTTP POST /api/rbac/subjects -H 'Content-Type: application/json' --data-binary @- <<EOF
+    {
+      "name": "subject.sync.key", "type": "API_KEY",
+      "scopes": ["rbac.subjects:sync"]
+    }
+    EOF
+
+And for an API-key for a global-admin but just with read-only access:
+
+    HTTP POST /api/rbac/subjects -H 'Content-Type: application/json' --data-binary @- <<EOF
+    { "name": "readonly.key", "type": "API_KEY", "scopes": ["*:read"] }
+    EOF
+
+Scopes only restrict, they never grant anything: also a scoped API-key starts without any
+roles and needs them granted manually, as shown above.
+
+The available scopes and the endpoints they allow can be listed via `GET /api/rbac/scopes`.
+
+Every API-key can inspect its own properties (subject, endpoint-scopes, and expiry
+timestamp) via `GET /api/rbac/context`, which is always allowed, even for scoped API-keys.
+
+The scenario-test reports in order range 96xx (generated into `build/doc/scenarios` by
+`gw scenarioTest`) document these workflows with concrete requests and responses.
 
 ### PostgreSQL Server
 
@@ -1184,6 +1325,6 @@ and to be able to use some features, you'd need to rebuild the image.
 
 - the `doc` directory contains architecture concepts and a glossary
 - [doc/environment-variables.md](doc/environment-variables.md) lists all environment variables
-  (backend, `HTTP`/`LOGIN` shell functions, `tools/remote`, tests and build),
+  (backend, `HTTP`/`LOGIN`/`APIKEY` shell functions, `tools/remote`, tests and build),
   where they are loaded from, and their defaults
 - the `ideas` directory contains unstructured ideas for future development or documentation

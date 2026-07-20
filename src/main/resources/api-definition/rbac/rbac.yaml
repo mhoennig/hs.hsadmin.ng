@@ -20,6 +20,9 @@ paths:
     /api/rbac/subjects/{subjectUuid}:
         $ref: 'rbac-subjects-with-uuid.yaml'
 
+    /api/rbac/scopes:
+        $ref: 'rbac-scopes.yaml'
+
     /api/rbac/roles:
         $ref: 'rbac-roles.yaml'
 

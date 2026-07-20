@@ -24,6 +24,27 @@ components:
             $ref: '#/components/schemas/RbacSubjectGroup'
         globalAdmin:
           type: boolean
+        apiKey:
+          $ref: '#/components/schemas/RbacContextApiKey'
+
+    RbacContextApiKey:
+      type: object
+      description: |
+        Properties of the API-key used to authenticate the current request;
+        null if the request was authenticated via an OIDC JWT instead.
+      properties:
+        scopes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          description: |
+            The named endpoint-scopes of the API-key; empty for an unrestricted API-key.
+            See `GET /api/rbac/scopes` for the endpoints each scope allows.
+        expiresAt:
+          type: string
+          format: date-time
+          description: The expiry timestamp of the API-key; null for a never-expiring API-key.
 
     RbacSubjectGroup:
       type: object

@@ -65,10 +65,11 @@ class BaseWebSecurityConfigUnitTest {
 
     @Test
     void jwtDecoderShouldRejectRealJwtSignedWithDifferentHmacSecret() throws Exception {
-        val decoder = config.standardJwtDecoder("", "", VALID_HMAC_SECRET, "");
+        val decoder = config.standardJwtDecoder("https://the-issuer.example", "", VALID_HMAC_SECRET, "");
 
         assertThatExceptionOfType(JwtException.class)
-                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", OTHER_HMAC_SECRET, null, null)));
+                .isThrownBy(() -> decoder.decode(
+                        signedJwt("some-subject", OTHER_HMAC_SECRET, "https://the-issuer.example", null)));
     }
 
     @Test
@@ -83,21 +84,26 @@ class BaseWebSecurityConfigUnitTest {
 
     @Test
     void jwtDecoderShouldAcceptJwtWithAnyOfTheConfiguredAudiences() throws Exception {
-        val decoder = config.standardJwtDecoder("", "", VALID_HMAC_SECRET, "first-audience, second-audience");
+        val decoder = config.standardJwtDecoder(
+                "https://the-issuer.example", "", VALID_HMAC_SECRET, "first-audience, second-audience");
 
-        val jwt = decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, null, "second-audience"));
+        val jwt = decoder.decode(
+                signedJwt("some-subject", VALID_HMAC_SECRET, "https://the-issuer.example", "second-audience"));
 
         assertThat(jwt.getAudience()).containsExactly("second-audience");
     }
 
     @Test
     void jwtDecoderShouldRejectJwtWithWrongOrMissingAudience() throws Exception {
-        val decoder = config.standardJwtDecoder("", "", VALID_HMAC_SECRET, "expected-audience");
+        val decoder = config.standardJwtDecoder(
+                "https://the-issuer.example", "", VALID_HMAC_SECRET, "expected-audience");
 
         assertThatExceptionOfType(JwtException.class)
-                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, null, "other-audience")));
+                .isThrownBy(() -> decoder.decode(
+                        signedJwt("some-subject", VALID_HMAC_SECRET, "https://the-issuer.example", "other-audience")));
         assertThatExceptionOfType(JwtException.class)
-                .isThrownBy(() -> decoder.decode(signedJwt("some-subject", VALID_HMAC_SECRET, null, null)));
+                .isThrownBy(() -> decoder.decode(
+                        signedJwt("some-subject", VALID_HMAC_SECRET, "https://the-issuer.example", null)));
     }
 
     @Test
@@ -146,10 +152,11 @@ class BaseWebSecurityConfigUnitTest {
     }
 
     @Test
-    void jwtDecoderShouldRejectMissingConfiguration() {
-        assertThatThrownBy(() -> config.standardJwtDecoder("", "", "", ""))
+    void jwtDecoderShouldRejectMissingIssuer() {
+        // the issuer is mandatory, even when a signature source (here the hmac-secret) is configured
+        assertThatThrownBy(() -> config.standardJwtDecoder("", "", VALID_HMAC_SECRET, ""))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Either spring.security.oauth2.resourceserver.jwt.hmac-secret");
+                .hasMessageContaining("issuer-uri (HSADMINNG_JWT_ISSUER) must be configured");
     }
 
     @Test
@@ -162,7 +169,8 @@ class BaseWebSecurityConfigUnitTest {
 
     @Test
     void jwtDecoderShouldRejectFakeJwkSetUriWithoutProfile() {
-        assertThatThrownBy(() -> config.standardJwtDecoder("", "http://localhost:8080/fake-jwt/jwks", "", ""))
+        assertThatThrownBy(() -> config.standardJwtDecoder(
+                "https://the-issuer.example", "http://localhost:8080/fake-jwt/jwks", "", ""))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("You are using a fake-jwt JWK set URI")
                 .hasMessageContaining("but the 'fake-jwt' profile is not active");

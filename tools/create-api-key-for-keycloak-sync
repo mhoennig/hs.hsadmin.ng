@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+APIKEY provisioning
+POST /api/rbac/subjects \
+  -H 'Content-Type: application/json' --data-binary @- <<JSON
+{
+    "type": "API_KEY",
+    "name": "hsadminng.keycloak.sync",
+    "scopes": [ "rbac.subjects:sync" ]
+}
+JSON
+

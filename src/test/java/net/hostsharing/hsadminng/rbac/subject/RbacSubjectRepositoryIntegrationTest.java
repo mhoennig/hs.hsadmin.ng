@@ -202,49 +202,107 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Nested
-    class DeactivateSubject {
+    class UpsertSubject {
 
         @Test
         @Transactional(propagation = Propagation.NEVER)
-        public void deactivateByUuidSoftDeletesSubjectRetainingTheRow() {
-            // given
-            final RbacSubjectEntity givenSubject = givenANewSubject();
+        public void upsertWithDeactivatedTrueDeactivatesRetainingTheOriginalTimestamp() {
+            // given an active subject
+            final var givenSubject = givenANewSubject();
 
-            // when
-            final var result = jpaAttempt.transacted(() -> {
+            // when it is deactivated via upsert
+            jpaAttempt.transacted(() -> {
                 context("hsh-alex_superuser");
-                rbacSubjectRepository.deactivateByUuid(givenSubject.getUuid());
-            });
+                rbacSubjectRepository.upsert(givenSubject.getUuid(), givenSubject.getName(), null, "USER", true);
+            }).assertSuccessful();
 
-            // then the subject is deactivated (soft-deleted): the row is retained but no longer visible
-            result.assertSuccessful();
-            assertThat(rbacSubjectRepository.findByName(givenSubject.getName())).isNotNull();
-            final var stillVisible = jpaAttempt.transacted(() -> {
+            // then it is deactivated
+            final var initialDeactivatedAt = deactivatedAtOf(givenSubject.getUuid());
+            assertThat(initialDeactivatedAt).isNotNull();
+
+            // and when it is deactivated again
+            jpaAttempt.transacted(() -> {
                 context("hsh-alex_superuser");
-                return rbacSubjectRepository.findByUuid(givenSubject.getUuid());
-            }).returnedValue();
-            assertThat(stillVisible).isNull();
+                rbacSubjectRepository.upsert(givenSubject.getUuid(), givenSubject.getName(), null, "USER", true);
+            }).assertSuccessful();
+
+            // then the original deactivation timestamp is retained
+            assertThat(deactivatedAtOf(givenSubject.getUuid())).isEqualTo(initialDeactivatedAt);
         }
 
         @Test
         @Transactional(propagation = Propagation.NEVER)
-        public void deactivateByUuidIsIdempotent() {
-            // given an already deactivated subject
-            final RbacSubjectEntity givenSubject = givenANewSubject();
+        public void upsertCannotDeactivateAnApiKeySubjectViaClaimedUserType() {
+            // given an API_KEY subject, e.g. of an API-key used by the Keycloak subject sync itself
+            final var givenName = "virtual.subject." + System.currentTimeMillis();
+            final var givenUuid = UUID.randomUUID();
             jpaAttempt.transacted(() -> {
                 context("hsh-alex_superuser");
-                rbacSubjectRepository.deactivateByUuid(givenSubject.getUuid());
+                rbacSubjectRepository.create(
+                        RbacSubjectEntity.builder().uuid(givenUuid).name(givenName).type(SubjectType.API_KEY).build());
             }).assertSuccessful();
 
-            // when it is deactivated again
+            // when it is upserted with deactivated=true, claiming type USER
+            // (the controller already rejects explicit type API_KEY with 400, this guards the DB level)
             final var result = jpaAttempt.transacted(() -> {
                 context("hsh-alex_superuser");
-                rbacSubjectRepository.deactivateByUuid(givenSubject.getUuid());
+                rbacSubjectRepository.upsert(givenUuid, givenName, null, "USER", true);
             });
 
-            // then this is a no-op and the row is still retained
-            result.assertSuccessful();
-            assertThat(rbacSubjectRepository.findByName(givenSubject.getName())).isNotNull();
+            // then the type-immutability check rejects the upsert before anything is modified ...
+            result.assertExceptionWithRootCauseMessage(
+                    org.postgresql.util.PSQLException.class,
+                    "[409] cannot change type of subject " + givenUuid + " from API_KEY to USER");
+            // ... and the API_KEY subject is still active
+            assertThat(deactivatedAtOf(givenUuid)).isNull();
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void upsertWithDeactivatedFalseReactivatesTheSubject() {
+            // given a deactivated subject
+            final var givenSubject = givenANewSubject();
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.upsert(givenSubject.getUuid(), givenSubject.getName(), null, "USER", true);
+            }).assertSuccessful();
+            assertThat(deactivatedAtOf(givenSubject.getUuid())).isNotNull();
+
+            // when it is re-synchronized without the deactivated flag
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.upsert(givenSubject.getUuid(), givenSubject.getName(), null, "USER", false);
+            }).assertSuccessful();
+
+            // then it is reactivated
+            assertThat(deactivatedAtOf(givenSubject.getUuid())).isNull();
+        }
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void upsertWithDeactivatedTrueCreatesTheSubjectAlreadyDeactivated() {
+            // given a new UUID, e.g. of a Keycloak user which is created in disabled state
+            final var givenUuid = UUID.randomUUID();
+            final var givenName = "tst-user_" + System.currentTimeMillis();
+
+            // when it is synchronized with deactivated=true
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.upsert(givenUuid, givenName, null, "USER", true);
+            }).assertSuccessful();
+
+            // then the subject row exists, but deactivated
+            assertThat(rbacSubjectRepository.findByName(givenName)).isNotNull();
+            assertThat(deactivatedAtOf(givenUuid)).isNotNull();
+        }
+
+        private Object deactivatedAtOf(final UUID subjectUuid) {
+            return jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return em.createNativeQuery("select deactivated_at from rbac.subject where uuid = :uuid")
+                        .setParameter("uuid", subjectUuid)
+                        .getSingleResult();
+            }).assumeSuccessful().returnedValue();
         }
     }
 

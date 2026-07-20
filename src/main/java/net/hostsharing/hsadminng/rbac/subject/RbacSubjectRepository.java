@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,9 +49,21 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
     }
 
     // idempotent upsert keyed by uuid; returns 'created' or 'updated'. The type is immutable.
-    @Query(value = "select rbac.upsert_subject(:uuid, :name, :organization, cast(:type as rbac.SubjectType))", nativeQuery = true)
+    // A null organization is defaulted from the name prefix in the DB function.
+    // deactivated=true deactivates the subject (soft-delete), false (re)activates it.
+    @Query(value = "select rbac.upsert_subject(:uuid, :name, :organization, cast(:type as rbac.SubjectType), :deactivated)", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.upsert.rbac")
-    String upsert(UUID uuid, String name, String organization, String type);
+    String upsert(UUID uuid, String name, String organization, String type, boolean deactivated);
+
+    // stores the SHA-256 hash of the API-key of an API_KEY subject, its named
+    // endpoint-scopes (empty array = unrestricted API-key), and its optional expiry
+    // timestamp (null = never expires);
+    // the DB function re-checks global-admin permission and the subject type
+    @Query(
+            value = "select rbac.create_api_key(:subjectUuid, :keyHash, cast(:scopes as varchar[]), cast(:expiresAt as timestamptz))",
+            nativeQuery = true)
+    @Timed("app.rbac.subjects.repo.createApiKey.rbac")
+    UUID createApiKey(UUID subjectUuid, String keyHash, String[] scopes, OffsetDateTime expiresAt);
 
     // physical delete: removing the rbac.reference row cascades to the subject and, via the
     // rbac.subject delete triggers, to all of its grants and its account; a no-op if the uuid is
@@ -59,11 +72,4 @@ public interface RbacSubjectRepository extends Repository<RbacSubjectEntity, UUI
     @Query(value = "delete from rbac.reference where uuid = :subjectUuid", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.deleteByUuid.rbac")
     void deleteByUuid(UUID subjectUuid);
-
-    // soft-delete: mark the subject deactivated so it is retained but excluded from all read paths;
-    // idempotent - a no-op if the uuid is unknown or the subject is already deactivated
-    @Modifying
-    @Query(value = "update rbac.subject set deactivated_at = now() where uuid = :subjectUuid and deactivated_at is null", nativeQuery = true)
-    @Timed("app.rbac.subjects.repo.deactivateByUuid.rbac")
-    void deactivateByUuid(UUID subjectUuid);
 }

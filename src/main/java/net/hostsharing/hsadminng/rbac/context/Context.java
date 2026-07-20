@@ -267,7 +267,7 @@ public class Context {
 
         // append headers
         final var headers = Collections.list(request.getHeaderNames()).stream()
-                .filter(not(HEADERS_TO_IGNORE::contains))
+                .filter(headerName -> !HEADERS_TO_IGNORE.contains(headerName.toLowerCase()))
                 .collect(Collectors.toSet());
         for (String headerName : headers) {
             final var headerValue = HEADERS_TO_MASK.contains(headerName.toLowerCase())

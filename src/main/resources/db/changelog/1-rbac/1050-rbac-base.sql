@@ -865,6 +865,15 @@ alter table rbac.subject
 
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-TYPE-API-KEY endDelimiter:--//
+-- ----------------------------------------------------------------------------
+-- API_KEY subjects authenticate via an API-key instead of a Keycloak OIDC JWT
+-- and, like GROUP subjects, cannot have an hs_accounts.account.
+alter type rbac.SubjectType add value if not exists 'API_KEY';
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-base-SUBJECT-DEACTIVATION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 -- Soft-delete marker: a deactivated subject (removed from Keycloak) is retained but no longer
@@ -1037,6 +1046,25 @@ create or replace function rbac.is_valid_group_subject_name(subjectName varchar)
 as $$
     -- keep regex in sync with RbacGroupSubjectInsert.name pattern in the OpenAPI spec
     select subjectName is not null and subjectName ~ '^/[a-z]{3,12}-[^/]+$';
+$$;
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-SUBJECT-API-KEY-NAME-VALIDATION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+
+create or replace function rbac.is_valid_api_key_subject_name(subjectName varchar)
+    returns boolean
+    immutable
+    language sql
+as $$
+    -- keep regex in sync with RbacApiKeySubjectInsert.name pattern in the OpenAPI spec
+    -- lowercase ASCII letters and digits with single dots as hierarchical separators,
+    -- e.g. 'purpose.environment'; disjoint from all username forms (those contain
+    -- '-' or '@') and from GROUP names (leading '/')
+    select subjectName is not null and subjectName ~ '^[a-z0-9]+(\.[a-z0-9]+)*$';
 $$;
 --//
 

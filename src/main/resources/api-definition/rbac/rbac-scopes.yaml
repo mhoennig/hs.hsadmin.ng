@@ -1,0 +1,21 @@
+get:
+    tags:
+        - rbac-scopes
+    description: |
+        List the available named API-key endpoint-scopes and the endpoints each of them allows.
+        Scopes can be given when creating an API_KEY subject (`POST /api/rbac/subjects`) to
+        restrict which endpoints the API-key may call.
+    operationId: getListOfApiKeyScopes
+    responses:
+        '200':
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: 'rbac-subject-schemas.yaml#/components/schemas/ApiKeyScopeInfo'
+        '401':
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        '403':
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

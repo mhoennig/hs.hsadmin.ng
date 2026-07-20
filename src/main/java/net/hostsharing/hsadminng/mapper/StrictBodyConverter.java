@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.mapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
@@ -12,7 +13,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Applies the OpenAPI schema constraints to request bodies which the generator emits as a bare {@code Object}
@@ -65,8 +68,29 @@ public class StrictBodyConverter {
             return objectMapper.readerFor(resourceClass)
                     .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                     .readValue(bodyTree);
+        } catch (final ValueInstantiationException exc) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, invalidValueMessage(exc), exc);
         } catch (final IOException | IllegalArgumentException exc) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exc.getMessage(), exc);
         }
+    }
+
+    // e.g. `scopes[1] 'foo:bar' is not valid, valid values are: [rbac.subjects:sync, *:read]`
+    // instead of Jackson's "Cannot construct instance of ..." with the full reference chain
+    private String invalidValueMessage(final ValueInstantiationException exc) {
+        final var path = exc.getPath().stream()
+                .map(ref -> ref.getFieldName() != null ? ref.getFieldName() : "[" + ref.getIndex() + "]")
+                .collect(Collectors.joining());
+        final var targetClass = exc.getType().getRawClass();
+        if (targetClass.isEnum()) {
+            // the generated enums' @JsonCreator throws IllegalArgumentException(value), thus
+            // the cause's message is the invalid value itself
+            final var invalidValue = exc.getCause() != null ? exc.getCause().getMessage() : exc.getOriginalMessage();
+            final var validValues = Arrays.stream(targetClass.getEnumConstants())
+                    .map(constant -> objectMapper.convertValue(constant, String.class))
+                    .toList();
+            return path + " '" + invalidValue + "' is not valid, valid values are: " + validValues;
+        }
+        return path + " " + exc.getOriginalMessage();
     }
 }

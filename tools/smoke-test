@@ -2,8 +2,10 @@
 
 # Smoke-test for the local dev tooling: boots the application via `bootRun` with
 # --spring.profiles.active=dev,fake-jwt,complete,test-data against a separate throw-away
-# Docker-PostgreSQL, then exercises the LOGIN and HTTP functions from `.aliases` with some
-# simple (ping, version) and some more complex (POST with RBAC grants) endpoints.
+# Docker-PostgreSQL, then exercises the LOGIN, APIKEY and HTTP functions from `.aliases`
+# with some simple (ping, version) and some more complex (POST with RBAC grants) endpoints,
+# including the provisioning API-key bootstrap (HSADMINNG_PROVISIONING_API_KEY_SHA256) and creating
+# a further API-key with it.
 #
 # The throw-away database container (hsadmin-ng-smoke-test-postgres, host port 15432) is
 # reset at the start and removed at the end; the normal `hsadmin-ng-postgres` container
@@ -94,7 +96,13 @@ export HSADMINNG_JWT_CLIENT_ID=hsscript.ng
 export HSADMINNG_JWT_CLIENT_SECRET=
 export HSADMINNG_JWT_USERNAME=hsh-alex_superuser
 export HSADMINNG_JWT_PASSWORD=password # not actually checked by the fake-jwt endpoint
-unset HSADMINNG_JWT_BEARER
+unset HSADMINNG_JWT_BEARER HSADMINNG_API_KEY
+
+# the bootstrap provisions the API_KEY subject 'hsadminng.provisioning.key' with the global ADMIN
+# role from just the SHA-256 hash; the clear-text key exists only in this shell,
+# like at a real client
+provisioningApiKey=$(tools/generate-api-key hsadminng.provisioning.key)
+export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(printf '%s' "$provisioningApiKey" | sha256sum | cut -d' ' -f1)
 
 echo "resetting the throw-away database container $PG_CONTAINER (host port $PG_PORT)"
 docker rm -f "$PG_CONTAINER" >/dev/null 2>&1
@@ -156,6 +164,32 @@ passed
 response=$(HTTP GET /api/test/customers) || failed "GET /api/test/customers failed"
 grep -q '"ttt"' <<<"$response" ||
     failed "the created test-customer 'ttt' is missing in GET /api/test/customers"
+passed
+
+# switch HTTP from the JWT to the bootstrapped provisioning API-key (global-admin)
+echo "APIKEY --transient switches the HTTP function from the JWT to the provisioning API-key"
+APIKEY --transient <<<"$provisioningApiKey" || failed "APIKEY --transient (provisioning API-key) failed"
+[ -n "$HSADMINNG_API_KEY" ] || failed "APIKEY did not export HSADMINNG_API_KEY"
+[ -z "$HSADMINNG_JWT_BEARER" ] || failed "APIKEY did not unset HSADMINNG_JWT_BEARER"
+passed
+
+# acting as the provisioning API-key, create a further API_KEY subject;
+# the clear-text API-key is contained in the creation response exactly once
+response=$(HTTP POST /api/rbac/subjects -H 'Content-Type: application/json' --data-binary @- <<EOF
+{ "name": "smoke.test.key", "type": "API_KEY" }
+EOF
+) || failed "POST /api/rbac/subjects (type API_KEY) with the provisioning API-key failed"
+apiKey=$(sed -n 's/.*"apiKey" *: *"\(hsak_[^"]*\)".*/\1/p' <<<"$response")
+[ -n "$apiKey" ] || failed "POST /api/rbac/subjects returned no clear-text apiKey but: $response"
+passed
+
+# switch to the created API-key; the context endpoint reflects its subject, verifying
+# the implicit Hostsharing-Api-Key header actually got applied
+echo "APIKEY --transient switches the HTTP function to the created API-key"
+APIKEY --transient <<<"$apiKey" || failed "APIKEY --transient (created API-key) failed"
+response=$(HTTP GET /api/rbac/context) || failed "GET /api/rbac/context with the created API-key failed"
+grep -q '"smoke.test.key"' <<<"$response" ||
+    failed "GET /api/rbac/context does not reflect the API-key subject but: $response"
 passed
 
 echo
