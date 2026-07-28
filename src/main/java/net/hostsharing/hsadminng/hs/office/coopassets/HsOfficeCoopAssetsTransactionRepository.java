@@ -14,6 +14,9 @@ public interface HsOfficeCoopAssetsTransactionRepository extends Repository<HsOf
     @Timed("app.office.coopAssets.repo.findByUuid")
     Optional<HsOfficeCoopAssetsTransactionEntity> findByUuid(UUID id);
 
+    @Timed("app.office.coopAssets.repo.existsByUuid")
+    boolean existsByUuid(UUID uuid);
+
     @Query("""
             SELECT at FROM HsOfficeCoopAssetsTransactionEntity at
                 WHERE ( CAST(:membershipUuid AS org.hibernate.type.UUIDCharType) IS NULL OR at.membership.uuid = :membershipUuid)
@@ -23,6 +26,19 @@ public interface HsOfficeCoopAssetsTransactionRepository extends Repository<HsOf
             """)
     @Timed("app.office.coopAssets.repo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange")
     List<HsOfficeCoopAssetsTransactionEntity> findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            UUID membershipUuid, LocalDate fromValueDate, LocalDate toValueDate);
+
+    // RBAC-gated root visibility only; the self-referential graph is then resolved via the raw
+    // HsOfficeCoopAssetsTransactionRealRepository, so the restricted view is paid once, not per link.
+    @Query("""
+            SELECT at.uuid FROM HsOfficeCoopAssetsTransactionEntity at
+                WHERE ( CAST(:membershipUuid AS org.hibernate.type.UUIDCharType) IS NULL OR at.membership.uuid = :membershipUuid)
+                    AND ( CAST(:fromValueDate AS java.time.LocalDate) IS NULL OR (at.valueDate >= :fromValueDate))
+                    AND ( CAST(:toValueDate AS java.time.LocalDate)IS NULL OR (at.valueDate <= :toValueDate))
+                ORDER BY at.membership.memberNumberSuffix, at.valueDate
+            """)
+    @Timed("app.office.coopAssets.repo.findVisibleUuidsByOptionalMembershipUuidAndDateRange")
+    List<UUID> findVisibleUuidsByOptionalMembershipUuidAndDateRange(
             UUID membershipUuid, LocalDate fromValueDate, LocalDate toValueDate);
 
     @Timed("app.office.coopAssets.repo.save")

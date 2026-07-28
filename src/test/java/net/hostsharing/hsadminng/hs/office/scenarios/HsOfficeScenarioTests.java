@@ -26,6 +26,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.Creat
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertSimpleTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertTransferTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsTransferTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.ListCoopAssetsTransactions;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesCancellationTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesRevertTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesSubscriptionTransaction;
@@ -594,6 +595,19 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("valueForLimitation", 2 * 64)
                     .given("comment", "adjust coop ")
                     .given("transactionDate", "2024-02-15").thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(4308)
+        @Requires("Coop-Assets: M-3101000 - Test AG - TRANSFER Transaction")
+        void shouldListCoopAssetsTransactionsWithResolvedLinkedTransactions() {
+            new ListCoopAssetsTransactions(scenarioTest)
+                    .given("memberNumber", "M-3101000")
+                    // these values match the TRANSFER transaction produced by shouldTransferCoopAssets:
+                    .given("adoptingMemberNumber", "M-4303000")
+                    .given("transferredValue", 2 * 64)
+                    .given("fromValueDate", "2024-12-31")
+                    .given("toValueDate", "2024-12-31").thenExpect(HttpStatus.OK);
         }
     }
 

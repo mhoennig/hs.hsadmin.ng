@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
+import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRealEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
@@ -28,7 +29,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -519,6 +522,9 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
 
     @MockitoBean
+    HsOfficeCoopAssetsTransactionRealRepository coopAssetsTransactionRealRepo;
+
+    @MockitoBean
     HsOfficeMembershipRepository membershipRepo;
 
     static final String INSERT_REQUEST_BODY_TEMPLATE = """
@@ -853,8 +859,10 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     @Test
     void getSingleGeneratesProperJsonForAvailableUuid() throws Exception {
         // given
-        when(coopAssetsTransactionRepo.findByUuid(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getUuid()))
-                .thenReturn(Optional.of(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY));
+        when(coopAssetsTransactionRepo.existsByUuid(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getUuid()))
+                .thenReturn(true);
+        when(coopAssetsTransactionRealRepo.findByUuid(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getUuid()))
+                .thenReturn(Optional.of(asReal(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY)));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -870,7 +878,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     @Test
     void getSingleGeneratesNotFoundForUnavailableUuid() throws Exception {
         // given
-        when(coopAssetsTransactionRepo.findByUuid(UNAVAILABLE_UUID)).thenReturn(Optional.empty());
+        when(coopAssetsTransactionRepo.existsByUuid(UNAVAILABLE_UUID)).thenReturn(false);
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -885,18 +893,21 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     @Test
     void getListGeneratesProperJson() throws Exception {
         // given
-        when(coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, null, null))
-                .thenReturn(List.of(
-                        SOME_EXISTING_LOSS_ASSET_TX_ENTITY,
-                        SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY,
-                        SOME_EXISTING_ADOPTION_ASSET_TX_ENTITY,
-                        SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY,
-                        SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY.getReversalAssetTx(),
-                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY,
-                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx(),
-                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getReversalAssetTx(),
-                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx().getReversalAssetTx()
-                ));
+        final var visibleTransactions = List.of(
+                SOME_EXISTING_LOSS_ASSET_TX_ENTITY,
+                SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY,
+                SOME_EXISTING_ADOPTION_ASSET_TX_ENTITY,
+                SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY,
+                SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY.getReversalAssetTx(),
+                SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY,
+                SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx(),
+                SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getReversalAssetTx(),
+                SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx().getReversalAssetTx()
+        );
+        when(coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(null, null, null))
+                .thenReturn(visibleTransactions.stream().map(HsOfficeCoopAssetsTransactionEntity::getUuid).toList());
+        when(coopAssetsTransactionRealRepo.findByUuidIn(any()))
+                .thenReturn(visibleTransactions.stream().map(this::asReal).toList());
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -951,5 +962,43 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
     private String suffixOf(final String memberNumber) {
         return memberNumber.substring("M-".length() + 5);
+    }
+
+    // the read path resolves the self-referential graph via the raw entity; mirror the rbac fixtures into it
+    private final Map<UUID, HsOfficeCoopAssetsTransactionRealEntity> realCache = new HashMap<>();
+
+    private HsOfficeCoopAssetsTransactionRealEntity asReal(final HsOfficeCoopAssetsTransactionEntity rv) {
+        if (rv == null) {
+            return null;
+        }
+        final var cached = realCache.get(rv.getUuid());
+        if (cached != null) {
+            return cached;
+        }
+        final var real = new HsOfficeCoopAssetsTransactionRealEntity();
+        real.setUuid(rv.getUuid());
+        realCache.put(rv.getUuid(), real); // put before recursing to tolerate cycles
+        real.setMembership(asReal(rv.getMembership()));
+        real.setTransactionType(rv.getTransactionType());
+        real.setValueDate(rv.getValueDate());
+        real.setAssetValue(rv.getAssetValue());
+        real.setReference(rv.getReference());
+        real.setComment(rv.getComment());
+        real.setRevertedAssetTx(asReal(rv.getRevertedAssetTx()));
+        real.setReversalAssetTx(asReal(rv.getReversalAssetTx()));
+        real.setAdoptionAssetTx(asReal(rv.getAdoptionAssetTx()));
+        real.setTransferAssetTx(asReal(rv.getTransferAssetTx()));
+        return real;
+    }
+
+    private HsOfficeMembershipRealEntity asReal(final HsOfficeMembershipEntity rv) {
+        if (rv == null) {
+            return null;
+        }
+        return HsOfficeMembershipRealEntity.builder()
+                .uuid(rv.getUuid())
+                .partner(rv.getPartner())
+                .memberNumberSuffix(rv.getMemberNumberSuffix())
+                .build();
     }
 }

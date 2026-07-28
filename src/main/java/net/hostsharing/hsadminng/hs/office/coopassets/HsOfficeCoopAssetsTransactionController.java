@@ -27,10 +27,13 @@ import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.REVERSAL;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.CLEARING;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.DEPOSIT;
@@ -59,6 +62,9 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     private HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
 
     @Autowired
+    private HsOfficeCoopAssetsTransactionRealRepository coopAssetsTransactionRealRepo;
+
+    @Autowired
     private HsOfficeMembershipRepository membershipRepo;
 
     @Override
@@ -71,15 +77,18 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
             final @DateTimeFormat(iso = ISO.DATE) LocalDate toValueDate) {
         context.assumeRoles(assumedRoles);
 
-        final var entities = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+        final var visibleUuids = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                 membershipUuid,
                 fromValueDate,
                 toValueDate);
+        final var realByUuid = coopAssetsTransactionRealRepo.findByUuidIn(visibleUuids).stream()
+                .collect(toMap(HsOfficeCoopAssetsTransactionRealEntity::getUuid, identity()));
+        final var entities = visibleUuids.stream().map(realByUuid::get).filter(Objects::nonNull).toList();
 
         final var resources = mapper.mapList(
                 entities,
                 HsOfficeCoopAssetsTransactionResource.class,
-                ENTITY_TO_RESOURCE_POSTMAPPER);
+                REAL_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
 
@@ -116,14 +125,17 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
         context.assumeRoles(assumedRoles);
 
-        final var result = coopAssetsTransactionRepo.findByUuid(assetTransactionUuid);
+        if (!coopAssetsTransactionRepo.existsByUuid(assetTransactionUuid)) {
+            return ResponseEntity.notFound().build();
+        }
+        final var result = coopAssetsTransactionRealRepo.findByUuid(assetTransactionUuid);
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         final var resource = mapper.map(
                 result.get(),
                 HsOfficeCoopAssetsTransactionResource.class,
-                ENTITY_TO_RESOURCE_POSTMAPPER);
+                REAL_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resource);
 
     }
@@ -169,6 +181,59 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     // TODO.refa: this logic needs to get extracted to a service
     final BiConsumer<HsOfficeCoopAssetsTransactionEntity, HsOfficeCoopAssetsTransactionResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        resource.setMembershipUuid(entity.getMembership().getUuid());
+        resource.setMembershipMemberNumber(entity.getMembership().getTaggedMemberNumber());
+
+        withNonNull(
+                resource.getReversalAssetTx(), reversalAssetTxResource -> {
+                    reversalAssetTxResource.setMembershipUuid(entity.getMembership().getUuid());
+                    reversalAssetTxResource.setMembershipMemberNumber(entity.getTaggedMemberNumber());
+                    reversalAssetTxResource.setRevertedAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getAdoptionAssetTx(), adoptionAssetTx ->
+                                    reversalAssetTxResource.setAdoptionAssetTxUuid(adoptionAssetTx.getUuid()));
+                    withNonNull(
+                            entity.getTransferAssetTx(), transferAssetTxResource ->
+                                    reversalAssetTxResource.setTransferAssetTxUuid(transferAssetTxResource.getUuid()));
+                });
+
+        withNonNull(
+                resource.getRevertedAssetTx(), revertAssetTxResource -> {
+                    revertAssetTxResource.setMembershipUuid(entity.getMembership().getUuid());
+                    revertAssetTxResource.setMembershipMemberNumber(entity.getTaggedMemberNumber());
+                    revertAssetTxResource.setReversalAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getRevertedAssetTx().getAdoptionAssetTx(), adoptionAssetTx ->
+                                    revertAssetTxResource.setAdoptionAssetTxUuid(adoptionAssetTx.getUuid()));
+                    withNonNull(
+                            entity.getRevertedAssetTx().getTransferAssetTx(), transferAssetTxResource ->
+                                    revertAssetTxResource.setTransferAssetTxUuid(transferAssetTxResource.getUuid()));
+                });
+
+        withNonNull(
+                resource.getAdoptionAssetTx(), adoptionAssetTxResource -> {
+                    adoptionAssetTxResource.setMembershipUuid(entity.getAdoptionAssetTx().getMembership().getUuid());
+                    adoptionAssetTxResource.setMembershipMemberNumber(entity.getAdoptionAssetTx().getTaggedMemberNumber());
+                    adoptionAssetTxResource.setTransferAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getAdoptionAssetTx().getReversalAssetTx(), reversalAssetTx ->
+                                    adoptionAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
+                });
+
+        withNonNull(
+                resource.getTransferAssetTx(), transferAssetTxResource -> {
+                    resource.getTransferAssetTx().setMembershipUuid(entity.getTransferAssetTx().getMembership().getUuid());
+                    resource.getTransferAssetTx()
+                            .setMembershipMemberNumber(entity.getTransferAssetTx().getTaggedMemberNumber());
+                    resource.getTransferAssetTx().setAdoptionAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getTransferAssetTx().getReversalAssetTx(), reversalAssetTx ->
+                                    transferAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
+                });
+    };
+
+    // TODO.impl: read-path twin of ENTITY_TO_RESOURCE_POSTMAPPER over the raw entity; consolidate once extracted to a service
+    final BiConsumer<HsOfficeCoopAssetsTransactionRealEntity, HsOfficeCoopAssetsTransactionResource> REAL_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setMembershipUuid(entity.getMembership().getUuid());
         resource.setMembershipMemberNumber(entity.getMembership().getTaggedMemberNumber());
 
