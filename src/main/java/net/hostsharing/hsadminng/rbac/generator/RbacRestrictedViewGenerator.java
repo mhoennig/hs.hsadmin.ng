@@ -7,6 +7,11 @@ import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.withQuoted;
 
 public class RbacRestrictedViewGenerator {
+
+    // bump to force re-execution of the generated runOnChange changesets,
+    // e.g. after structural changes to rbac.generateRbacRestrictedView
+    private static final int GENERATOR_VERSION = 2;
+
     private final RbacSpec rbacDef;
     private final String liquibaseTagPrefix;
     private final String rawTableName;
@@ -18,11 +23,12 @@ public class RbacRestrictedViewGenerator {
     }
 
     void generateTo(final StringWriter plPgSql) {
-        // TODO.impl[Taiga#471]: validCheckSum:ANY needs to get generated in a separate line, as in the direct changesets
         plPgSql.writeLn("""
                 -- ============================================================================
-                --changeset RbacRestrictedViewGenerator:${liquibaseTagPrefix}-rbac-RESTRICTED-VIEW runOnChange:true validCheckSum:ANY endDelimiter:--//
+                --changeset RbacRestrictedViewGenerator:${liquibaseTagPrefix}-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
+                --validCheckSum: ANY
                 -- ----------------------------------------------------------------------------
+                -- generator version: ${generatorVersion}
                 call rbac.generateRbacRestrictedView('${rawTableName}',
                     ${orderBy},
                     ${updates}
@@ -30,6 +36,7 @@ public class RbacRestrictedViewGenerator {
                 --//
 
                 """,
+                with("generatorVersion", String.valueOf(GENERATOR_VERSION)),
                 with("liquibaseTagPrefix", liquibaseTagPrefix),
                 withQuoted("orderBy", indented(2, rbacDef.getOrderBySqlExpression().sql)),
                 withQuoted("updates",

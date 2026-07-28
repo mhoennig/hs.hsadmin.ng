@@ -92,6 +92,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.person',
 --changeset RbacRestrictedViewGenerator:hs-office-person-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.person',
     $orderBy$
         concat(tradeName, familyName, givenName)

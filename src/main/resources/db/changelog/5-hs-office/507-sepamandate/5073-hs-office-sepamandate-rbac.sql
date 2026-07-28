@@ -203,6 +203,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.sepamandate',
 --changeset RbacRestrictedViewGenerator:hs-office-sepamandate-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.sepamandate',
     $orderBy$
         validity

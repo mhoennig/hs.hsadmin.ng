@@ -266,6 +266,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_booking.item',
 --changeset RbacRestrictedViewGenerator:hs-booking-item-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_booking.item',
     $orderBy$
         validity

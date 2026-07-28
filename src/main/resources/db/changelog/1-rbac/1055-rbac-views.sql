@@ -115,6 +115,15 @@ create or replace view rbac.grant_ev as
  */
 create or replace view rbac.grant_rv as
 -- @formatter:off
+-- a single downward closure from the current subject replaces an upward rbac.isGranted() recursion per grant row;
+-- deliberately without an `assumed` filter: grants only reachable via assumeRoles must remain visible
+with recursive reachable_role(uuid) as (
+        select t.uuid from unnest(rbac.currentSubjectOrAssumedRolesUuids()) as t(uuid)
+    union
+        select g.descendantUuid
+            from rbac.grant g
+                join reachable_role rr on g.ascendantUuid = rr.uuid
+)
 select o.objectTable || '#' || rbac.findIdNameByObjectUuid(o.objectTable, o.uuid) || ':' || r.roletype as grantedByRoleIdName,
        g.objectTable || '#' || g.objectIdName || ':' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
        g.grantedByRoleUuid, g.descendantUuid as grantedRoleUuid, g.ascendantUuid as subjectUuid,
@@ -127,13 +136,13 @@ select o.objectTable || '#' || rbac.findIdNameByObjectUuid(o.objectTable, o.uuid
                           join rbac.role as r on r.uuid = g.descendantUuid
                           join rbac.object o on o.uuid = r.objectuuid
                           left outer join rbac.subject u on u.uuid = g.ascendantuuid
-                 where rbac.isGranted(rbac.currentSubjectOrAssumedRolesUuids(), r.uuid)
+                 where g.descendantUuid in (select uuid from reachable_role)
          ) as g
              join rbac.role as r on r.uuid = grantedByRoleUuid
              join rbac.object as o on o.uuid = r.objectUuid
     order by grantedRoleIdName;
 -- @formatter:on
-grant all privileges on rbac.role_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+grant all privileges on rbac.grant_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
 

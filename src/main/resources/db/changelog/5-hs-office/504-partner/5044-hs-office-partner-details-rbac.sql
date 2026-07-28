@@ -154,6 +154,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.partner_details',
 --changeset RbacRestrictedViewGenerator:hs-office-partner-details-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.partner_details',
     $orderBy$
         uuid

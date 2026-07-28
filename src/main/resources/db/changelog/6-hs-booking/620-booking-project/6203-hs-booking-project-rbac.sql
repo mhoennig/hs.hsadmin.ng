@@ -204,6 +204,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_booking.project',
 --changeset RbacRestrictedViewGenerator:hs-booking-project-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_booking.project',
     $orderBy$
         caption

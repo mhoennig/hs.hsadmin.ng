@@ -92,6 +92,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.bankaccount',
 --changeset RbacRestrictedViewGenerator:hs-office-bankaccount-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.bankaccount',
     $orderBy$
         iban

@@ -774,48 +774,57 @@ begin
 end; $$;
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS runOnChange=true endDelimiter:--//
+--changeset michael.hoennig:rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
-
+    The single implementation of the recursive query behind all generated restricted views
+    and their instead-of triggers; optimize it here, it re-applies via runOnChange on deploy.
  */
 create or replace function rbac.queryAccessibleObjectUuidsOfSubjectIds(
     requiredOp rbac.RbacOp,
     forObjectTable varchar,
     subjectIds uuid[],
-    maxObjects integer = 8000)
+    maxObjects integer = 8000) -- null means unlimited
     returns setof uuid
-    returns null on null input
     language plpgsql as $$
 declare
     foundRows bigint;
 begin
     return query
-        WITH RECURSIVE grants AS (
-            SELECT descendantUuid, ascendantUuid, 1 AS level
-                FROM rbac.grant
-                WHERE assumed
-                  AND ascendantUuid = any(subjectIds)
-            UNION ALL
-            SELECT g.descendantUuid, g.ascendantUuid, grants.level + 1 AS level
-                FROM rbac.grant g
-                         INNER JOIN grants ON grants.descendantUuid = g.ascendantUuid
-                WHERE g.assumed
-        ),
-       granted AS (
-           SELECT DISTINCT descendantUuid
-               FROM grants
-       )
-        SELECT DISTINCT perm.objectUuid
-            FROM granted
-                     JOIN rbac.permission perm ON granted.descendantUuid = perm.uuid
-                     JOIN rbac.object obj ON obj.uuid = perm.objectUuid
-            WHERE (requiredOp = 'SELECT' OR perm.op = requiredOp)
-              AND obj.objectTable = forObjectTable
-            LIMIT maxObjects+1;
+        with recursive
+            recursive_grants as (
+                select distinct rbac.grant.descendantuuid,
+                                rbac.grant.ascendantuuid,
+                                1 as level,
+                                true as valid
+                    from rbac.grant
+                    where rbac.grant.assumed
+                      and rbac.grant.ascendantuuid = any (subjectIds)
+                union all
+                select distinct g.descendantuuid,
+                                g.ascendantuuid,
+                                grants.level + 1 as level,
+                                base.assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
+                    from rbac.grant g
+                             join recursive_grants grants on grants.descendantuuid = g.ascendantuuid
+                    where g.assumed),
+            count_check as (
+                select base.assertTrue((select count(*) from recursive_grants) < 400000,
+                            'too many grants for current subjects: ' || (select count(*) from recursive_grants))
+                           as valid)
+        select distinct perm.objectuuid
+            from recursive_grants
+                     join rbac.permission perm on recursive_grants.descendantuuid = perm.uuid
+                     join rbac.object obj on obj.uuid = perm.objectuuid
+                     join count_check cc on cc.valid
+            where obj.objectTable = forObjectTable
+              -- 'SELECT' permission is included in all other permissions
+              and (requiredOp = 'SELECT' or perm.op = requiredOp)
+            limit maxObjects + 1; -- 'limit null' means no limit
 
     foundRows = base.lastRowCount();
-    if foundRows > maxObjects then
+    if maxObjects is not null and foundRows > maxObjects then
         raise exception '[400] Too many accessible objects, limit is %, found %.', maxObjects, foundRows
             using
                 errcode = 'P0003',

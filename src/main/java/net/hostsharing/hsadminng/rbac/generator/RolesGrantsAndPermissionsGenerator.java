@@ -50,10 +50,10 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private void generateHeader(final StringWriter plPgSql, final String triggerType) {
-        // TODO.impl[Taiga#471]: validCheckSum:ANY needs to get generated in a separate line, as in the direct changesets
         plPgSql.writeLn("""
                 -- ============================================================================
-                --changeset RolesGrantsAndPermissionsGenerator:${liquibaseTagPrefix}-rbac-${triggerType}-trigger runOnChange:true validCheckSum:ANY endDelimiter:--//
+                --changeset RolesGrantsAndPermissionsGenerator:${liquibaseTagPrefix}-rbac-${triggerType}-trigger runOnChange:true endDelimiter:--//
+                --validCheckSum: ANY
                 -- ----------------------------------------------------------------------------
                 """,
                 with("liquibaseTagPrefix", liquibaseTagPrefix),

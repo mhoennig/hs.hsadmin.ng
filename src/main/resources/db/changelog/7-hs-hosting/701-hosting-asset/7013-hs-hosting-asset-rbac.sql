@@ -171,6 +171,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_hosting.asset',
 --changeset RbacRestrictedViewGenerator:hs-hosting-asset-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_hosting.asset',
     $orderBy$
         identifier

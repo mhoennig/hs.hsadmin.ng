@@ -185,6 +185,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office.membership',
 --changeset RbacRestrictedViewGenerator:hs-office-membership-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.membership',
     $orderBy$
         validity

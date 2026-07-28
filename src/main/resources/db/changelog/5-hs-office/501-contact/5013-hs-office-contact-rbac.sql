@@ -92,6 +92,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.contact',
 --changeset RbacRestrictedViewGenerator:hs-office-contact-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.contact',
     $orderBy$
         caption

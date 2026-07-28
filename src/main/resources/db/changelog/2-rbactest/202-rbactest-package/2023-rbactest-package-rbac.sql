@@ -236,6 +236,7 @@ call rbac.generateRbacIdentityViewFromProjection('rbactest.package',
 --changeset RbacRestrictedViewGenerator:rbactest-package-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('rbactest.package',
     $orderBy$
         name

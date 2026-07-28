@@ -158,6 +158,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.coopsharetx',
 --changeset RbacRestrictedViewGenerator:hs-office-coopsharetx-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.coopsharetx',
     $orderBy$
         reference

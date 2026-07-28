@@ -248,6 +248,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office.partner',
 --changeset RbacRestrictedViewGenerator:hs-office-partner-rbac-RESTRICTED-VIEW runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
+-- generator version: 2
 call rbac.generateRbacRestrictedView('hs_office.partner',
     $orderBy$
         'P-' || partnerNumber
