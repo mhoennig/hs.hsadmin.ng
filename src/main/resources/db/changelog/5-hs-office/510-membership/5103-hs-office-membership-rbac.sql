@@ -45,8 +45,7 @@ begin
 
 
     perform rbac.defineRoleWithGrants(
-        hs_office.membership_OWNER(NEW),
-            subjectUuids => array[rbac.currentSubjectUuid()]
+        hs_office.membership_OWNER(NEW)
     );
 
     perform rbac.defineRoleWithGrants(
@@ -65,6 +64,8 @@ begin
             	hs_office.relation_AGENT(newPartnerRel)],
             outgoingSubRoles => array[hs_office.relation_TENANT(newPartnerRel)]
     );
+
+    call rbac.grantRoleToCurrentContext(hs_office.membership_OWNER(NEW));
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;

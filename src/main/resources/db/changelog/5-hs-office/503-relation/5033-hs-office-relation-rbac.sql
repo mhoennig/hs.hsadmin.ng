@@ -51,8 +51,7 @@ begin
     perform rbac.defineRoleWithGrants(
         hs_office.relation_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.global_ADMIN()],
-            subjectUuids => array[rbac.currentSubjectUuid()]
+            incomingSuperRoles => array[rbac.global_ADMIN()]
     );
 
     perform rbac.defineRoleWithGrants(
@@ -63,7 +62,8 @@ begin
 
     perform rbac.defineRoleWithGrants(
         hs_office.relation_AGENT(NEW),
-            incomingSuperRoles => array[hs_office.relation_ADMIN(NEW)]
+            incomingSuperRoles => array[hs_office.relation_ADMIN(NEW)],
+            outgoingSubRoles => array[hs_office.contact_ADMIN(newContact)]
     );
 
     perform rbac.defineRoleWithGrants(
@@ -86,6 +86,8 @@ begin
         call rbac.grantRoleToRole(hs_office.relation_AGENT(NEW), hs_office.person_ADMIN(newHolderPerson));
         call rbac.grantRoleToRole(hs_office.relation_OWNER(NEW), hs_office.person_ADMIN(newAnchorPerson));
     END IF;
+
+    call rbac.grantRoleToCurrentContext(hs_office.relation_OWNER(NEW));
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;

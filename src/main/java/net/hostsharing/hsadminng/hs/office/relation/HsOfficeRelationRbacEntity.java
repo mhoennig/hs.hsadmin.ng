@@ -79,6 +79,8 @@ public class HsOfficeRelationRbacEntity extends HsOfficeRelation {
                                     })
                                     .createSubRole(AGENT, (with) -> {
                                         with.incomingSuperRole("anchorPerson", ADMIN);
+                                        // the holder (agent-level and above) may edit the relation's contact data
+                                        with.outgoingSubRole("contact", ADMIN);
                                     })
                                     .createSubRole(TENANT, (with) -> {
                                         with.incomingSuperRole("contact", ADMIN);
@@ -105,6 +107,8 @@ public class HsOfficeRelationRbacEntity extends HsOfficeRelation {
                                         // but then the partner holder person could update the partner relation itself,
                                         // see partner entity.
                                         with.incomingSuperRole("holderPerson", ADMIN);
+                                        // the holder (agent-level and above) may edit the relation's contact data
+                                        with.outgoingSubRole("contact", ADMIN);
                                     })
                                     .createSubRole(TENANT, (with) -> {
                                         with.incomingSuperRole("contact", ADMIN);

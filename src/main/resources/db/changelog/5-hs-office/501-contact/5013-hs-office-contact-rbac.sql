@@ -38,8 +38,7 @@ begin
     perform rbac.defineRoleWithGrants(
         hs_office.contact_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.global_ADMIN()],
-            subjectUuids => array[rbac.currentSubjectUuid()]
+            incomingSuperRoles => array[rbac.global_ADMIN()]
     );
 
     perform rbac.defineRoleWithGrants(
@@ -53,6 +52,8 @@ begin
             permissions => array['SELECT'],
             incomingSuperRoles => array[hs_office.contact_ADMIN(NEW)]
     );
+
+    call rbac.grantRoleToCurrentContext(hs_office.contact_OWNER(NEW));
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;

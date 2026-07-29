@@ -208,6 +208,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT    to role:person#FourtheG:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT    to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT    to role:relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT by system and assume }",
+                    "{ grant role:contact#fourthcontact:ADMIN                       to role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT by system and assume }",
 
                     // tenant
                     "{ grant perm:debitor#D-1000122:SELECT                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",

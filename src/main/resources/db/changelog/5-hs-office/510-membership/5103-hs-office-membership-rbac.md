@@ -97,6 +97,7 @@ role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
 role:rbac.global:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
 role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
+role:partnerRel:AGENT -.-> role:partnerRel.contact:ADMIN
 role:partnerRel:AGENT -.-> role:partnerRel:TENANT
 role:partnerRel.contact:ADMIN -.-> role:partnerRel:TENANT
 role:partnerRel:TENANT -.-> role:partnerRel.anchorPerson:REFERRER

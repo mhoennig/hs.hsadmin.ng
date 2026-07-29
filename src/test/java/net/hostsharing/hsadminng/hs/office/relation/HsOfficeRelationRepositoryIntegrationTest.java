@@ -1,6 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
 import net.hostsharing.hsadminng.rbac.context.Context;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.lambda.Reducer;
@@ -48,6 +50,9 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
     @Autowired
     HsOfficeContactRealRepository contactRealRepo;
+
+    @Autowired
+    HsOfficeContactRbacRepository contactRbacRepo;
 
     @Autowired
     RawRbacRoleRepository rawRoleRepo;
@@ -179,6 +184,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
                     "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office.person#ErbenBesslerMelBessler:ADMIN by system and assume }",
                     "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
+                    "{ grant role:hs_office.contact#fourthcontact:ADMIN to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT by system and assume }",
 
                     "{ grant perm:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:SELECT to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
                     "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT by system and assume }",
@@ -456,6 +462,61 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                 context("hsh-alex_superuser", assumedRoles);
                 final var found = relationRbacRepo.findByUuid(entity.getUuid());
                 assertThat(found).isEmpty();
+            }).assertSuccessful();
+        }
+    }
+
+    @Nested
+    class UpdateRelatedContactData {
+
+        @Test
+        public void holderPersonAdmin_canUpdateContactDataOfItsRelation() {
+            // given a SUBSCRIBER relation held by Bert with its own temporary contact
+            final var givenRelation = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                final var newContact = toCleanup(contactRealRepo.save(
+                        HsOfficeContactRealEntity.builder().caption("temp subscriber contact").build()));
+                final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").getFirst();
+                final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Bert").getFirst();
+                return toCleanup(relationRbacRepo.save(HsOfficeRelationRbacEntity.builder()
+                        .type(HsOfficeRelationType.SUBSCRIBER)
+                        .mark("members-announce")
+                        .anchor(givenAnchorPerson)
+                        .holder(givenHolderPerson)
+                        .contact(newContact)
+                        .build()));
+            }).assertSuccessful().returnedValue();
+
+            // when the holder person's ADMIN updates the contact data of that relation
+            final var result = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser", "hs_office.person#BesslerBert:ADMIN");
+                final var contact = contactRbacRepo.findByUuid(givenRelation.getContact().getUuid()).orElseThrow();
+                contact.setCaption("updated by holder person admin");
+                return contactRbacRepo.save(contact);
+            });
+
+            // then
+            result.assertSuccessful();
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                assertThat(contactRealRepo.findByUuid(givenRelation.getContact().getUuid()))
+                        .map(HsOfficeContactRealEntity::getCaption)
+                        .contains("updated by holder person admin");
+            }).assertSuccessful();
+        }
+
+        @Test
+        public void holderPersonAdmin_cannotEvenSeeUnrelatedContacts() {
+            // given an unrelated contact
+            final var unrelatedContactUuid = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return contactRealRepo.findContactByOptionalCaptionLike("sixth contact").getFirst().getUuid();
+            }).assertSuccessful().returnedValue();
+
+            // when+then: it is not even visible for the holder person's ADMIN, thus not updatable either
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser", "hs_office.person#BesslerBert:ADMIN");
+                assertThat(contactRbacRepo.findByUuid(unrelatedContactUuid)).isEmpty();
             }).assertSuccessful();
         }
     }

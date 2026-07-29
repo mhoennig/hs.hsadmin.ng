@@ -53,8 +53,7 @@ begin
             incomingSuperRoles => array[
             	hs_booking.item_ADMIN(newBookingItem),
             	hs_hosting.asset_ADMIN(newParentAsset),
-            	rbac.global_ADMIN(rbac.unassumed())],
-            subjectUuids => array[rbac.currentSubjectUuid()]
+            	rbac.global_ADMIN(rbac.unassumed())]
     );
 
     perform rbac.defineRoleWithGrants(
@@ -89,6 +88,8 @@ begin
 
     IF NEW.type = 'DOMAIN_SETUP' THEN
     END IF;
+
+    call rbac.grantRoleToCurrentContext(hs_hosting.asset_OWNER(NEW));
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;

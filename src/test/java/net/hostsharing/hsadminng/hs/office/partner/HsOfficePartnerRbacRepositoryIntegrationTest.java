@@ -175,6 +175,7 @@ class HsOfficePartnerRbacRepositoryIntegrationTest extends ContextBasedTestWithC
                             // relation agent
                             "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:AGENT to role:person#EBess:ADMIN by system and assume }",
                             "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:AGENT to role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN by system and assume }",
+                            "{ grant role:contact#4th:ADMIN to role:relation#HostsharingeG-with-PARTNER-EBess:AGENT by system and assume }",
 
                             // relation tenant
                             "{ grant role:contact#4th:REFERRER to role:relation#HostsharingeG-with-PARTNER-EBess:TENANT by system and assume }",

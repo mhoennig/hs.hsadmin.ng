@@ -139,12 +139,12 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
                             "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER by system and assume }",
 
                             // agent
-                            "{ grant role:bankaccount#DE02600501010002034304:REFERRER to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT by system and assume }",
                             "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN by system and assume }",
                             "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT by system and assume }",
 
                             // referrer
                             "{ grant perm:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):SELECT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
+                            "{ grant role:bankaccount#DE02600501010002034304:REFERRER to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
                             "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT by system and assume }",
                             "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER to role:bankaccount#DE02600501010002034304:ADMIN by system and assume }",
                             "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:TENANT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",

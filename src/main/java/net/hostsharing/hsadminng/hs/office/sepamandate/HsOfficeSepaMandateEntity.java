@@ -133,12 +133,13 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, BaseEntity<HsOf
                     with.permission(UPDATE);
                 })
                 .createSubRole(AGENT, (with) -> {
-                    with.outgoingSubRole("bankAccount", REFERRER);
                     with.outgoingSubRole("debitorRel", AGENT);
                 })
                 .createSubRole(REFERRER, (with) -> {
                     with.incomingSuperRole("bankAccount", ADMIN);
                     with.incomingSuperRole("debitorRel", AGENT);
+                    // a mandate is identified by its IBAN, thus seeing the mandate implies seeing its bank account
+                    with.outgoingSubRole("bankAccount", REFERRER);
                     with.outgoingSubRole("debitorRel", TENANT);
                     with.permission(SELECT);
                 })

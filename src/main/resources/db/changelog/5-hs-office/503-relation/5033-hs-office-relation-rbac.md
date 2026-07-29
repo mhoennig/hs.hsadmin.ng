@@ -84,6 +84,7 @@ role:contact:ADMIN -.-> role:contact:REFERRER
 role:rbac.global:ADMIN ==> role:relation:OWNER
 role:relation:OWNER ==> role:relation:ADMIN
 role:relation:ADMIN ==> role:relation:AGENT
+role:relation:AGENT ==> role:contact:ADMIN
 role:relation:AGENT ==> role:relation:TENANT
 role:contact:ADMIN ==> role:relation:TENANT
 role:relation:TENANT ==> role:anchorPerson:REFERRER

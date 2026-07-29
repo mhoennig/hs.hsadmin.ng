@@ -98,6 +98,7 @@ role:membership.partnerRel.contact:ADMIN -.-> role:membership.partnerRel.contact
 role:rbac.global:ADMIN -.-> role:membership.partnerRel:OWNER
 role:membership.partnerRel:OWNER -.-> role:membership.partnerRel:ADMIN
 role:membership.partnerRel:ADMIN -.-> role:membership.partnerRel:AGENT
+role:membership.partnerRel:AGENT -.-> role:membership.partnerRel.contact:ADMIN
 role:membership.partnerRel:AGENT -.-> role:membership.partnerRel:TENANT
 role:membership.partnerRel.contact:ADMIN -.-> role:membership.partnerRel:TENANT
 role:membership.partnerRel:TENANT -.-> role:membership.partnerRel.anchorPerson:REFERRER

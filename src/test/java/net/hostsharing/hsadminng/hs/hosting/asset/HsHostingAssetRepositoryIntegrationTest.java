@@ -228,8 +228,8 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             // rbac.global-admin
                             "{ grant role:hs_hosting.asset#fir00:OWNER to role:rbac.global#global:ADMIN by system }", // workaround
 
-                            // owner
-                            "{ grant role:hs_hosting.asset#fir00:OWNER to user:hsh-alex_superuser by hs_hosting.asset#fir00:OWNER and assume }",
+                            // owner: no grant to the creating context here — the assumed role
+                            // hs_booking.project#...:AGENT already reaches asset:OWNER via item:ADMIN
                             "{ grant role:hs_hosting.asset#fir00:OWNER to role:hs_booking.item#fir01:ADMIN by system and assume }",
                             "{ grant role:hs_hosting.asset#fir00:OWNER to role:hs_hosting.asset#vm1011:ADMIN by system and assume }",
                             "{ grant perm:hs_hosting.asset#fir00:DELETE to role:hs_hosting.asset#fir00:OWNER by system and assume }",

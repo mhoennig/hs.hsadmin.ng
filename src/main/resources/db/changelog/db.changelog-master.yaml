@@ -39,6 +39,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/1-rbac/1051-rbac-subject-grant.sql
     - include:
+        file: db/changelog/1-rbac/1052-rbac-current-context-grant.sql
+    - include:
         file: db/changelog/1-rbac/1054-rbac-context.sql
     - include:
         file: db/changelog/1-rbac/1055-rbac-views.sql

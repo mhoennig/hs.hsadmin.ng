@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacGrantDefinition;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacPermissionDefinition;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,6 +26,7 @@ class RolesGrantsAndPermissionsGenerator {
 
     private final RbacSpec rbacDef;
     private final Set<RbacGrantDefinition> rbacGrants = new HashSet<>();
+    private final Set<RbacSpec.Role> rolesWithCreatorGrant = new LinkedHashSet<>();
     private final String liquibaseTagPrefix;
     private final String simpleEntityName;
     private final String simpleEntityVarName;
@@ -214,6 +216,13 @@ class RolesGrantsAndPermissionsGenerator {
         }
 
         generateGrants(plPgSql, PERM_TO_ROLE);
+
+        if (!rolesWithCreatorGrant.isEmpty()) {
+            plPgSql.ensureSingleEmptyLine();
+            rolesWithCreatorGrant.forEach(role ->
+                    plPgSql.writeLn("call rbac.grantRoleToCurrentContext(" +
+                            qualifiedRawTableName + "_" + capitalize(role.name()) + "(NEW));"));
+        }
     }
 
     private Stream<RbacSpec.EntityAlias> referencedEntityAliases() {
@@ -410,12 +419,14 @@ class RolesGrantsAndPermissionsGenerator {
     private void generateUserGrantsForRole(final StringWriter plPgSql, final RbacSpec.Role role) {
         final var grantsToUsers = findGrantsToUserForRole(rbacDef.getRootEntityAlias(), role);
         if (!grantsToUsers.isEmpty()) {
-            final var arrayElements = grantsToUsers.stream()
-                    .map(RbacGrantDefinition::getUserDef)
-                    .map(this::toPlPgSqlReference)
-                    .toList();
-            plPgSql.indented(() ->
-                    plPgSql.writeLn("subjectUuids => array[" + joinArrayElements(arrayElements, 2) + "],\n"));
+            grantsToUsers.forEach(g -> {
+                if (g.getUserDef().role != RbacSpec.RbacSubjectReference.UserRole.CREATOR) {
+                    throw new IllegalArgumentException("unknown user role: " + g.getUserDef());
+                }
+            });
+            // deferred to the end of the trigger (rbac.grantRoleToCurrentContext), so an assumed
+            // role which already reaches this role via the spec-grants can be detected and skipped
+            rolesWithCreatorGrant.add(role);
             rbacGrants.removeAll(grantsToUsers);
         }
     }
@@ -580,13 +591,6 @@ class RolesGrantsAndPermissionsGenerator {
     private static void generateFooter(final StringWriter plPgSql) {
         plPgSql.writeLn("--//");
         plPgSql.writeLn();
-    }
-
-    private String toPlPgSqlReference(final RbacSpec.RbacSubjectReference userRef) {
-        return switch (userRef.role) {
-            case CREATOR -> "rbac.currentSubjectUuid()";
-            default -> throw new IllegalArgumentException("unknown user role: " + userRef);
-        };
     }
 
     private String toPlPgSqlReference(

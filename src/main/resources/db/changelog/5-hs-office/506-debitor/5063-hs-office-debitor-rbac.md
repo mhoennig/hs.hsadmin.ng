@@ -152,6 +152,7 @@ role:debitorRel.contact:ADMIN -.-> role:debitorRel.contact:REFERRER
 role:rbac.global:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
 role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
+role:debitorRel:AGENT -.-> role:debitorRel.contact:ADMIN
 role:debitorRel:AGENT -.-> role:debitorRel:TENANT
 role:debitorRel.contact:ADMIN -.-> role:debitorRel:TENANT
 role:debitorRel:TENANT -.-> role:debitorRel.anchorPerson:REFERRER
@@ -176,6 +177,7 @@ role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
 role:rbac.global:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
 role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
+role:partnerRel:AGENT -.-> role:partnerRel.contact:ADMIN
 role:partnerRel:AGENT -.-> role:partnerRel:TENANT
 role:partnerRel.contact:ADMIN -.-> role:partnerRel:TENANT
 role:partnerRel:TENANT -.-> role:partnerRel.anchorPerson:REFERRER

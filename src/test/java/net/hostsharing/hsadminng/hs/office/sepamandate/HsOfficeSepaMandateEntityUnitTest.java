@@ -162,6 +162,7 @@ class HsOfficeSepaMandateEntityUnitTest {
                 role:rbac.global:ADMIN -.-> role:debitorRel:OWNER
                 role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
                 role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
+                role:debitorRel:AGENT -.-> role:debitorRel.contact:ADMIN
                 role:debitorRel:AGENT -.-> role:debitorRel:TENANT
                 role:debitorRel.contact:ADMIN -.-> role:debitorRel:TENANT
                 role:debitorRel:TENANT -.-> role:debitorRel.anchorPerson:REFERRER
@@ -175,11 +176,11 @@ class HsOfficeSepaMandateEntityUnitTest {
                 role:rbac.global:ADMIN ==> role:sepaMandate:OWNER
                 role:sepaMandate:OWNER ==> role:sepaMandate:ADMIN
                 role:sepaMandate:ADMIN ==> role:sepaMandate:AGENT
-                role:sepaMandate:AGENT ==> role:bankAccount:REFERRER
                 role:sepaMandate:AGENT ==> role:debitorRel:AGENT
                 role:sepaMandate:AGENT ==> role:sepaMandate:REFERRER
                 role:bankAccount:ADMIN ==> role:sepaMandate:REFERRER
                 role:debitorRel:AGENT ==> role:sepaMandate:REFERRER
+                role:sepaMandate:REFERRER ==> role:bankAccount:REFERRER
                 role:sepaMandate:REFERRER ==> role:debitorRel:TENANT
                 
                 %% granting permissions to roles

@@ -51,8 +51,7 @@ begin
     perform rbac.defineRoleWithGrants(
         hs_office.sepamandate_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.global_ADMIN()],
-            subjectUuids => array[rbac.currentSubjectUuid()]
+            incomingSuperRoles => array[rbac.global_ADMIN()]
     );
 
     perform rbac.defineRoleWithGrants(
@@ -64,9 +63,7 @@ begin
     perform rbac.defineRoleWithGrants(
         hs_office.sepamandate_AGENT(NEW),
             incomingSuperRoles => array[hs_office.sepamandate_ADMIN(NEW)],
-            outgoingSubRoles => array[
-            	hs_office.bankaccount_REFERRER(newBankAccount),
-            	hs_office.relation_AGENT(newDebitorRel)]
+            outgoingSubRoles => array[hs_office.relation_AGENT(newDebitorRel)]
     );
 
     perform rbac.defineRoleWithGrants(
@@ -76,8 +73,12 @@ begin
             	hs_office.bankaccount_ADMIN(newBankAccount),
             	hs_office.relation_AGENT(newDebitorRel),
             	hs_office.sepamandate_AGENT(NEW)],
-            outgoingSubRoles => array[hs_office.relation_TENANT(newDebitorRel)]
+            outgoingSubRoles => array[
+            	hs_office.bankaccount_REFERRER(newBankAccount),
+            	hs_office.relation_TENANT(newDebitorRel)]
     );
+
+    call rbac.grantRoleToCurrentContext(hs_office.sepamandate_OWNER(NEW));
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
