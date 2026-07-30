@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Grants the global-admin role to a single subject given by name; see --help.
+
+set -o pipefail
+
+case "${1:-}" in
+    -h|-\?|--help)
+        source tools/lib/unindented.sh
+        unindented <<'HELP'
+            usage: tools/grant-global-admin-to-subject <subject-name>
+
+            Grants the role rbac.global#global:ADMIN (with assume) to the subject with the
+            given exact name, via the REST-API, authenticated with the stored `provisioning`
+            API-key (see APIKEY --help).
+
+            If the subject already has that grant the API answers 409 Conflict, which is
+            reported and treated as success, thus the command can be re-run anytime.
+
+            Environment:
+              HSADMINNG_API_BASE_URL  target API, default https://backend.ng.hostsharing.net
+HELP
+        exit 0 ;;
+esac
+if [ $# -ne 1 ]; then
+    echo "usage: ${0##*/} <subject-name>, see --help" >&2
+    exit 1
+fi
+subjectName=$1
+
+source .aliases
+APIKEY provisioning
+require HSADMINNG_API_KEY
+
+export HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-'https://backend.ng.hostsharing.net'}
+
+# global:ADMIN is booked as the granting role, thus assume it for the write
+assumeGlobalAdmin=(-H 'Hostsharing-Assumed-Roles: rbac.global#global:ADMIN')
+
+globalAdminRoleUuid=$(HTTP GET /api/rbac/roles \
+    | jq -r '.[] | select(.roleIdName == "rbac.global#global:ADMIN") | .uuid')
+require globalAdminRoleUuid
+
+# the name query-parameter is a prefix filter, thus select the exact-name match
+subjectUuid=$(HTTP GET "/api/rbac/subjects?name=$subjectName" \
+    | jq -r --arg n "$subjectName" '[.[] | select(.name == $n)] | .[0].uuid // empty')
+require subjectUuid
+
+echo "granting global-admin to '$subjectName' ($subjectUuid) ..." >&2
+httpExitCode=0
+response=$(HTTP POST /api/rbac/grants "${assumeGlobalAdmin[@]}" <<EOF
+{
+    "assumed": true,
+    "grantedRole.uuid": "$globalAdminRoleUuid",
+    "granteeSubject.uuid": "$subjectUuid"
+}
+EOF
+) || httpExitCode=$?
+
+if [ $httpExitCode -eq 0 ]; then
+    echo "${0##*/}: granted global-admin to '$subjectName'" >&2
+elif grep -Eq '"status" *: *409' <<<"$response"; then
+    echo "${0##*/}: '$subjectName' already holds global-admin (409 Conflict)" >&2
+else
+    [ -n "$response" ] && printf '%s\n' "$response" >&2
+    echo "${0##*/}: FAILED to grant global-admin to '$subjectName' (HTTP POST exited with $httpExitCode)" >&2
+    exit 1
+fi
