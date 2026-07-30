@@ -1038,7 +1038,7 @@ create or replace function rbac.is_valid_user_subject_name(subjectName varchar)
     language sql
 as $$
     -- keep regex in sync with RbacUserSubjectInsert.name pattern in the OpenAPI spec
-    select subjectName is not null and subjectName ~ '^[a-z]{3,12}-[^/]+$';
+    select subjectName is not null and subjectName ~ '^[a-z]{3,16}-[^/]+$';
 $$;
 --//
 
@@ -1054,7 +1054,7 @@ create or replace function rbac.is_valid_group_subject_name(subjectName varchar)
     language sql
 as $$
     -- keep regex in sync with RbacGroupSubjectInsert.name pattern in the OpenAPI spec
-    select subjectName is not null and subjectName ~ '^/[a-z]{3,12}-[^/]+$';
+    select subjectName is not null and subjectName ~ '^/[a-z]{3,16}-[^/]+$';
 $$;
 --//
 
@@ -1115,13 +1115,17 @@ create index if not exists subject_organization_idx on rbac.subject (organizatio
 /*
     Defaults the organization of a new subject to its name prefix if no explicit
     organization is given, e.g. for the legacy rbac.create_subject(...) callers.
+    API_KEY names use '.' instead of the '-' realm-prefix delimiter of USER/GROUP names.
  */
 create or replace function rbac.subject_default_organization_tf()
     returns trigger
     language plpgsql as $$
 begin
     if new.organization is null then
-        new.organization := rbac.subject_realm_prefix(new.name);
+        new.organization := case
+            when new.type = 'API_KEY' then split_part(new.name, '.', 1)
+            else rbac.subject_realm_prefix(new.name)
+        end;
     end if;
     return new;
 end; $$;

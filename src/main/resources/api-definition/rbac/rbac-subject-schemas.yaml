@@ -79,9 +79,9 @@ components:
                 organization:
                     type: string
                     description: |
-                        The organization (realm) the subject belongs to, either given explicitly
-                        on creation or derived from the subject-name prefix; for API_KEY subjects,
-                        which do not belong to a realm, it defaults to the subject name.
+                        The organization the subject belongs to, either given explicitly
+                        on creation or derived from the subject-name prefix; for API_KEY subjects
+                        it is derived from the part of the name before the first `.`.
                     example: hostsharing
                 type:
                     $ref: '#/components/schemas/SubjectType'
@@ -117,7 +117,7 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^[a-z]{3,12}-.+$'
+                    pattern: '^[a-z]{3,16}-.+$'
                     description: |
                         USER subject name using the realm-prefix and local-part format.
                         Without an explicit organization, the organization is derived from the
@@ -177,7 +177,7 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^/[a-z]{3,12}-[^/]+$'
+                    pattern: '^/[a-z]{3,16}-[^/]+$'
                     description: |
                         GROUP subject name. GROUP subject names start with `/`, a realm-prefix and a '-'
                         followed by a local-part.
@@ -246,6 +246,8 @@ components:
                         The leading component `hsadminng.` is reserved for Hostsharing-operated
                         keys (e.g. `hsadminng.provisioning.key`), keeping the rest of the flat
                         namespace free for customer-created keys without conflicts.
+                        Without an explicit organization, the organization is derived from the
+                        part of the name before the first `.`.
                     example: deployment.production
                 type:
                     type: string
@@ -272,6 +274,49 @@ components:
                 - type
             additionalProperties: false
 
+        RbacApiKeySubjectWithOrganizationInsert:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+                    pattern: '^[a-z0-9]+(\.[a-z0-9]+)*$'
+                    description: |
+                        API_KEY subject name, see `RbacApiKeySubjectInsert.name`.
+                    example: deployment.production
+                organization:
+                    type: string
+                    minLength: 1
+                    description: |
+                        The organization the API_KEY subject belongs to;
+                        given explicitly instead of being derived from the part of the name
+                        before the first `.`. Unlike GROUP subjects, an API_KEY is never
+                        referenced by name, thus its organization need not match the name.
+                    example: deployment
+                type:
+                    type: string
+                    enum:
+                        - API_KEY
+                scopes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ApiKeyScope'
+                    uniqueItems: true
+                    description: |
+                        Named endpoint-scopes, see `RbacApiKeySubjectInsert.scopes`.
+                expiresAt:
+                    type: string
+                    format: date-time
+                    description: |
+                        Optional expiry timestamp, see `RbacApiKeySubjectInsert.expiresAt`.
+            required:
+                - name
+                - organization
+                - type
+            additionalProperties: false
+
         RbacSubjectInsert:
             anyOf:
                 - $ref: '#/components/schemas/RbacUserSubjectInsert'
@@ -279,6 +324,7 @@ components:
                 - $ref: '#/components/schemas/RbacGroupSubjectInsert'
                 - $ref: '#/components/schemas/RbacGroupSubjectWithOrganizationInsert'
                 - $ref: '#/components/schemas/RbacApiKeySubjectInsert'
+                - $ref: '#/components/schemas/RbacApiKeySubjectWithOrganizationInsert'
 
         # deliberately without an API_KEY variant: API_KEY subjects never stem from Keycloak,
         # thus they cannot be created, renamed, deactivated, or reactivated via HTTP PUT
@@ -297,7 +343,7 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^[a-z]{3,12}-.+$'
+                    pattern: '^[a-z]{3,16}-.+$'
                     description: |
                         USER subject name using the realm-prefix and local-part format.
                         Without an explicit organization, the organization is derived from the
@@ -361,7 +407,7 @@ components:
                     format: uuid
                 name:
                     type: string
-                    pattern: '^/[a-z]{3,12}-[^/]+$'
+                    pattern: '^/[a-z]{3,16}-[^/]+$'
                     description: |
                         GROUP subject name. GROUP subject names start with `/`, a realm-prefix and a '-'
                         followed by a local-part.

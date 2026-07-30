@@ -15,6 +15,7 @@ import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacSubjectsApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.ApiKeyScopeResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacApiKeySubjectInsertResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacApiKeySubjectWithOrganizationInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectUpsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectWithOrganizationInsertResource;
@@ -129,10 +130,12 @@ public class RbacSubjectController implements RbacSubjectsApi {
     // matching generated member resource, whose OpenAPI schema constraints are then applied.
     private ValidatedSubjectInsert toValidatedSubjectInsert(final Object body) {
         val properties = body instanceof Map<?, ?> map ? map : Map.of();
-        if (API_KEY.name().equals(properties.get("type"))) {
-            return toApiKeySubjectInsert(body);
-        }
         val hasExplicitOrganization = properties.containsKey("organization");
+        if (API_KEY.name().equals(properties.get("type"))) {
+            return hasExplicitOrganization
+                    ? toApiKeySubjectInsertWithExplicitOrganization(body)
+                    : toApiKeySubjectInsertWithDerivedOrganization(body);
+        }
         if (GROUP.name().equals(properties.get("type"))) {
             return new ValidatedSubjectInsert(
                     hasExplicitOrganization
@@ -147,14 +150,23 @@ public class RbacSubjectController implements RbacSubjectsApi {
                 null, null);
     }
 
-    private ValidatedSubjectInsert toApiKeySubjectInsert(final Object body) {
+    private ValidatedSubjectInsert toApiKeySubjectInsertWithDerivedOrganization(final Object body) {
         val resource = convertAndValidate(
                 body, RbacApiKeySubjectInsertResource.class, API_KEY_SUBJECT_NAME_PATTERN_MESSAGE_KEY);
-        // global API_KEY subjects do not belong to a realm; their organization defaults to the
-        // subject name (which cannot contain the '-' realm-prefix delimiter), mirroring the
-        // DB-level default trigger
+        // API_KEY names carry no '-' realm-prefix, thus the organization is derived from the part
+        // before the first '.', mirroring the API_KEY branch of the DB-level default trigger
         return new ValidatedSubjectInsert(
-                subjectEntity(resource.getUuid(), resource.getName(), Subject.organizationFromName(resource.getName()), API_KEY),
+                subjectEntity(resource.getUuid(), resource.getName(),
+                        Subject.apiKeyOrganizationFromName(resource.getName()), API_KEY),
+                resource.getScopes(), resource.getExpiresAt());
+    }
+
+    private ValidatedSubjectInsert toApiKeySubjectInsertWithExplicitOrganization(final Object body) {
+        // an API_KEY is never referenced by name, thus its organization need not match the name
+        val resource = convertAndValidate(
+                body, RbacApiKeySubjectWithOrganizationInsertResource.class, API_KEY_SUBJECT_NAME_PATTERN_MESSAGE_KEY);
+        return new ValidatedSubjectInsert(
+                subjectEntity(resource.getUuid(), resource.getName(), resource.getOrganization(), API_KEY),
                 resource.getScopes(), resource.getExpiresAt());
     }
 

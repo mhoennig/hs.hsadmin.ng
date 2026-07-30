@@ -50,6 +50,12 @@ public abstract class Subject<T extends Subject<?> & ImmutableBaseEntity<?>> imp
         return subjectName.replaceFirst("^/+", "").split("-", 2)[0];
     }
 
+    // API_KEY names use '.' instead of the '-' realm-prefix delimiter; mirrors the API_KEY branch
+    // of rbac.subject_default_organization_tf in 1050-rbac-base.sql
+    public static String apiKeyOrganizationFromName(final String subjectName) {
+        return subjectName.split("\\.", 2)[0];
+    }
+
     public String generateAccessCode() {
         return generateAccessCode(LocalDateTime.now());
     }

@@ -55,12 +55,12 @@ components:
                     type: string
                     description: "
                         Two parts separated by a single '-'.
-                        The first part is the Keycloak realm name of 3-9 chars length.
+                        The first part is the Keycloak realm name of 3-16 chars length.
                         The second part a account name local to that realm, which is 3-32 chars in length.
                         Each part starts with a lowercase letter and may contain lowercase letters, digits, '.' or '_',
                         but '.'/'_' must be followed by a letter or digit.
                         "
-                    pattern: '^[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,8}-[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,31}$'
+                    pattern: '^[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,15}-[a-z](?:[a-z0-9]|[._](?=[a-z0-9])){2,31}$'
                 type:
                     type: string
                     enum:

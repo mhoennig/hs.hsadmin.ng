@@ -14,6 +14,7 @@ import net.hostsharing.hsadminng.config.ApiKeyScope;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.ApiKeyScopeResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacApiKeySubjectInsertResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacApiKeySubjectWithOrganizationInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectWithOrganizationInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectInsertResource;
@@ -1304,6 +1305,59 @@ class RbacSubjectControllerRestTest {
     }
 
     @Test
+    void postNewApiKeySubjectDerivesOrganizationFromNameBeforeFirstDot() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "deployment.production",
+                                    "type": "API_KEY"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then the organization got derived from the part before the first '.'
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is("deployment.production")))
+                .andExpect(jsonPath("organization", is("deployment")))
+                .andExpect(jsonPath("type", is("API_KEY")));
+    }
+
+    @Test
+    void postNewApiKeySubjectWithExplicitOrganizationUsesIt() throws Exception {
+        // given an explicit organization which need not match the name prefix
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "deployment.production",
+                                    "organization": "acme",
+                                    "type": "API_KEY"
+                                }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then the explicit organization is used instead of the derived one
+        result
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("name", is("deployment.production")))
+                .andExpect(jsonPath("organization", is("acme")))
+                .andExpect(jsonPath("type", is("API_KEY")));
+    }
+
+    @Test
     void postNewApiKeySubjectWithUnknownScopeReturnsBadRequest() throws Exception {
         // given
         when(contextMock.isGlobalAdmin()).thenReturn(true);
@@ -1498,7 +1552,8 @@ class RbacSubjectControllerRestTest {
                         "#/components/schemas/RbacUserSubjectWithOrganizationInsert",
                         "#/components/schemas/RbacGroupSubjectInsert",
                         "#/components/schemas/RbacGroupSubjectWithOrganizationInsert",
-                        "#/components/schemas/RbacApiKeySubjectInsert");
+                        "#/components/schemas/RbacApiKeySubjectInsert",
+                        "#/components/schemas/RbacApiKeySubjectWithOrganizationInsert");
         assertNamePatternMatchesGeneratedValidation(schemas,
                 "RbacUserSubjectInsert", RbacUserSubjectInsertResource.class);
         assertNamePatternMatchesGeneratedValidation(schemas,
@@ -1509,6 +1564,8 @@ class RbacSubjectControllerRestTest {
                 "RbacGroupSubjectWithOrganizationInsert", RbacGroupSubjectWithOrganizationInsertResource.class);
         assertNamePatternMatchesGeneratedValidation(schemas,
                 "RbacApiKeySubjectInsert", RbacApiKeySubjectInsertResource.class);
+        assertNamePatternMatchesGeneratedValidation(schemas,
+                "RbacApiKeySubjectWithOrganizationInsert", RbacApiKeySubjectWithOrganizationInsertResource.class);
 
         // the API_KEY name pattern is the only one still enforced at the DB level
         // (the USER/GROUP name constraints got dropped with the explicit organization column)
