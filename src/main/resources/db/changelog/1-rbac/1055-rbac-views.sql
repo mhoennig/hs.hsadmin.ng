@@ -389,6 +389,12 @@ begin
                 deactivated_at = case when newDeactivated
                                           then coalesce(subject.deactivated_at, now())
                                           else null end
+            -- skip the no-op update so the periodic sync does not fill the audit journal with empty deltas
+            where subject.name is distinct from excluded.name
+               or subject.organization is distinct from excluded.organization
+               or subject.deactivated_at is distinct from case when newDeactivated
+                                                                   then coalesce(subject.deactivated_at, now())
+                                                                   else null end
         returning (xmax = 0) into wasInserted;
 
     return case when wasInserted then 'created' else 'updated' end;

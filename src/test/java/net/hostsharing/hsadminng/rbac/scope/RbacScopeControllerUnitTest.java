@@ -23,8 +23,12 @@ class RbacScopeControllerUnitTest {
                 .extracting(resource -> resource.getScope().getValue(), ApiKeyScopeInfoResource::getAllows)
                 .containsExactly(
                         tuple("rbac.subjects:sync",
-                                List.of("GET /api/rbac/subjects", "GET /api/rbac/subjects/{uuid}",
-                                        "PUT /api/rbac/subjects/{uuid}")),
+                                List.of(
+                                        "GET /api/rbac/subjects",
+                                        "GET /api/rbac/subjects/{uuid}",
+                                        "PUT /api/rbac/subjects/{uuid}",
+                                        "POST /api/rbac/subjects/sync-report"
+                                )),
                         tuple("*:read",
                                 List.of("GET /api/**")));
     }

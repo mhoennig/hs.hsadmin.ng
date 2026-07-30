@@ -1,6 +1,10 @@
 # PR#257: API-key organization and unified subject-name length limits
 
-Extracted from the PR#246 branch (`mihoe/Taiga480-keycloak-integration-aftermaths`).
+## Related Links (Hostsharing-internal)
+
+- Taiga-Epic: https://plan.hostsharing.net/project/admin-hostsharing/epic/5972
+- GitEA-PR: https://dev.hostsharing.net/hostsharing/hs.hsadmin.ng/pulls/257
+- Extracted from PR: https://dev.hostsharing.net/hostsharing/hs.hsadmin.ng/pulls/246
 
 ## The Problem
 

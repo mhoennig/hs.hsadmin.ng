@@ -14,6 +14,12 @@ paths:
     /api/rbac/subjects:
         $ref: 'rbac-subjects.yaml'
 
+    /api/rbac/subjects/last-sync:
+        $ref: 'rbac-subjects-last-sync.yaml'
+
+    /api/rbac/subjects/sync-report:
+        $ref: 'rbac-subjects-sync-report.yaml'
+
     /api/rbac/subjects/{subjectUuid}/permissions:
         $ref: 'rbac-subjects-with-id-permissions.yaml'
 

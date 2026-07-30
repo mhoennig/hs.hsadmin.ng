@@ -288,6 +288,24 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(deactivatedAtOf(givenUuid)).isNotNull();
         }
 
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void reUpsertingUnchangedSubjectWritesNoAuditJournalEntry() {
+            // given an existing subject
+            final var givenSubject = givenANewSubject();
+            final var givenOrganization = organizationOf(givenSubject.getUuid());
+            final var journalCountAfterCreation = subjectJournalCount(givenSubject.getUuid());
+
+            // when it is re-synchronized with identical values, as the periodic Keycloak sync does
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                rbacSubjectRepository.upsert(givenSubject.getUuid(), givenSubject.getName(), givenOrganization, "USER", false);
+            }).assertSuccessful();
+
+            // then the no-op update fires no journal trigger, so the audit journal does not grow
+            assertThat(subjectJournalCount(givenSubject.getUuid())).isEqualTo(journalCountAfterCreation);
+        }
+
         private Object deactivatedAtOf(final UUID subjectUuid) {
             return jpaAttempt.transacted(() -> {
                 context("hsh-alex_superuser");
@@ -295,6 +313,25 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
                         .setParameter("uuid", subjectUuid)
                         .getSingleResult();
             }).assumeSuccessful().returnedValue();
+        }
+
+        private String organizationOf(final UUID subjectUuid) {
+            return (String) jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return em.createNativeQuery("select organization from rbac.subject where uuid = :uuid")
+                        .setParameter("uuid", subjectUuid)
+                        .getSingleResult();
+            }).assumeSuccessful().returnedValue();
+        }
+
+        private long subjectJournalCount(final UUID subjectUuid) {
+            return ((Number) jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return em.createNativeQuery(
+                                "select count(*) from base.tx_journal where targettable = 'rbac.subject' and targetuuid = :uuid")
+                        .setParameter("uuid", subjectUuid)
+                        .getSingleResult();
+            }).assumeSuccessful().returnedValue()).longValue();
         }
     }
 

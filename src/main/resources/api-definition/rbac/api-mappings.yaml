@@ -11,3 +11,5 @@ map:
     types:
         - type: array => java.util.List
         - type: string:uuid => java.util.UUID
+        # free-form sync-report body: received and stored as raw JSON
+        - type: SubjectSyncReport => java.util.Map

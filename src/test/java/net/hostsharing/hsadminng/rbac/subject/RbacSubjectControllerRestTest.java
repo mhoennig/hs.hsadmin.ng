@@ -91,6 +91,9 @@ class RbacSubjectControllerRestTest {
     @MockitoBean
     EntityManagerWrapper em;
 
+    @MockitoBean
+    SubjectSyncReportRepository subjectSyncReportRepository;
+
     @BeforeEach
     void beforeEach() {
         given(rbacSubjectRepository.create(any())).willAnswer(invocation ->
@@ -1575,6 +1578,109 @@ class RbacSubjectControllerRestTest {
                 .get("pattern");
         final var sql = Files.readString(Path.of("src/main/resources/db/changelog/1-rbac/1050-rbac-base.sql"));
         assertThat(functionPattern(sql, "is_valid_api_key_subject_name")).isEqualTo(apiKeyPattern);
+    }
+
+    @Test
+    void getLastSubjectSyncReturnsTheReportedTimestampAndStatisticsWithoutAuthentication() throws Exception {
+        // given
+        val report = SubjectSyncReportEntity.builder()
+                .reportedAt(OffsetDateTime.parse("2026-07-22T10:15:30Z"))
+                .reportedBy("hsadminng.keycloak.sync")
+                .statistics(Map.of("processed", 1234, "created", 3))
+                .build();
+        when(subjectSyncReportRepository
+                .findFirstByReportedByAndReportedAtGreaterThanOrderByReportedAtDesc(eq("hsadminng.keycloak.sync"), any()))
+                .thenReturn(report);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/subjects/last-sync")
+                        .param("name", "hsadminng.keycloak.sync")
+                        .param("interval", "PT10M")
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("timestamp", startsWith("2026-07-22T10:15:30")))
+                .andExpect(jsonPath("statistics.processed", is(1234)))
+                .andExpect(jsonPath("statistics.created", is(3)));
+    }
+
+    @Test
+    void getLastSubjectSyncReturnsOkWhenNoRecentReport() throws Exception {
+        // given
+        when(subjectSyncReportRepository
+                .findFirstByReportedByAndReportedAtGreaterThanOrderByReportedAtDesc(anyString(), any()))
+                .thenReturn(null);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/subjects/last-sync")
+                        .param("name", "hsadminng.keycloak.sync")
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isOk());
+    }
+
+    @Test
+    void getLastSubjectSyncWithInvalidIntervalReturnsBadRequest() throws Exception {
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/rbac/subjects/last-sync")
+                        .param("name", "hsadminng.keycloak.sync")
+                        .param("interval", "not-a-duration")
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void postSubjectSyncReportRecordsTheReportAndReturnsNoContent() throws Exception {
+        // given the API-key JWT carries the subject UUID, which is resolved to the subject-name
+        val givenSubjectUuid = UUID.randomUUID();
+        when(contextMock.isGlobalAdmin()).thenReturn(true);
+        when(realSubjectRepository.findSubjectByUuidIncludingDeactivated(givenSubjectUuid))
+                .thenReturn(Optional.of(RealSubjectEntity.builder()
+                        .uuid(givenSubjectUuid).name("hsadminng.keycloak.sync").type(SubjectType.API_KEY).build()));
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects/sync-report")
+                        .header("Authorization", bearer(givenSubjectUuid.toString()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "processed": 1234, "created": 3, "updated": 5 }
+                                """));
+
+        // then
+        result.andExpect(status().isNoContent());
+        verify(subjectSyncReportRepository).save(argThat(report ->
+                report.getReportedBy().equals("hsadminng.keycloak.sync")
+                        && report.getStatistics().get("processed").equals(1234)
+                        && report.getReportedAt() != null));
+        verify(subjectSyncReportRepository).deleteReportedBefore(any());
+    }
+
+    @Test
+    void postSubjectSyncReportByNonGlobalAdminReturnsForbidden() throws Exception {
+        // given
+        when(contextMock.isGlobalAdmin()).thenReturn(false);
+
+        // when
+        val result = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/rbac/subjects/sync-report")
+                        .header("Authorization", bearer(UUID.randomUUID().toString()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "processed": 1234 }
+                                """));
+
+        // then
+        result.andExpect(status().isForbidden());
+        verify(subjectSyncReportRepository, never()).save(any());
     }
 
     @Test

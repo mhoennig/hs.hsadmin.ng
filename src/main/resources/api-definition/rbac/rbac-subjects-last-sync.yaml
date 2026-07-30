@@ -1,0 +1,34 @@
+get:
+    tags:
+        - rbac-subjects
+    description: |
+        Returns the timestamp and the reported statistics of the most recent subject-sync report by
+        the given API-key within the given look-back interval, or nulls if there was none.
+        Deliberately public (unauthenticated) so that external monitoring can poll it without
+        credentials; the statistics are aggregate run counts and never reveal which subjects were synced.
+    operationId: getLastSubjectSync
+    parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+              type: string
+          description: The API-key subject-name whose last sync report is queried.
+        - name: interval
+          in: query
+          required: false
+          schema:
+              type: string
+              default: PT1H
+          description: |
+              ISO-8601 look-back window (e.g. PT5M, PT1H); reports older than this are ignored.
+              Bounds the query cost and defines what "recent" means. Default PT1H.
+    responses:
+        '200':
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'rbac-subject-schemas.yaml#/components/schemas/SubjectLastSync'
+        '400':
+            $ref: 'error-responses.yaml#/components/responses/BadRequest'

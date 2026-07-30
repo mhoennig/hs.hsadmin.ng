@@ -472,6 +472,26 @@ components:
                 disabled or deleted in Keycloak), `false` or omitted (re)activates it. A subject which is
                 already deactivated keeps its original deactivation timestamp.
 
+        # deliberately type-less (free-form JSON): the syncer may post any statistics fields,
+        # which the backend stores as-is; this maps to a plain `Object` request-body
+        SubjectSyncReport:
+            description: |
+                Free-form statistics of a finished sync run; any properties are accepted and
+                stored as-is. The backend adds the reporting subject and the receive timestamp.
+
+        SubjectLastSync:
+            type: object
+            properties:
+                timestamp:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    description: |
+                        Timestamp of the most recent subject-sync report by the queried API-key
+                        within the look-back interval; null if there was none.
+                statistics:
+                    $ref: '#/components/schemas/SubjectSyncReport'
+
         RbacSubjectPermission:
             type: object
             properties:

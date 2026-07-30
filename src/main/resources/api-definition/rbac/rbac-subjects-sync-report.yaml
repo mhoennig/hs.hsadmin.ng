@@ -1,0 +1,21 @@
+post:
+    tags:
+        - rbac-subjects
+    description: |
+        Records a subject-sync run report, posted by the syncing API-key at the end of each run.
+        The backend adds the reporting subject and the receive timestamp itself. Monitoring uses
+        the recorded timestamp via GET /api/rbac/subjects/last-sync to verify the sync is alive.
+    operationId: postSubjectSyncReport
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: 'rbac-subject-schemas.yaml#/components/schemas/SubjectSyncReport'
+    responses:
+        '204':
+            description: Report recorded.
+        '401':
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        '403':
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

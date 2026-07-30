@@ -23,6 +23,7 @@ import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGroupSubjectWit
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectCreatedResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectPermissionResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.SubjectLastSyncResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectInsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectUpsertResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserSubjectWithOrganizationInsertResource;
@@ -31,11 +32,14 @@ import net.hostsharing.hsadminng.rbac.generated.api.v1.model.SubjectTypeResource
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -58,6 +62,8 @@ public class RbacSubjectController implements RbacSubjectsApi {
     private static final String API_KEY_SUBJECT_NAME_PATTERN_MESSAGE_KEY =
             "rbac.api-key-subject-name-{0}-does-not-match-required-pattern";
 
+    private static final Duration SYNC_REPORT_RETENTION = Duration.ofDays(7);
+
     @Autowired
     private Context context;
 
@@ -75,6 +81,9 @@ public class RbacSubjectController implements RbacSubjectsApi {
 
     @Autowired
     private RealSubjectRepository realSubjectRepository; // visibility bypasses RBAC, suvjects are no objects anyway
+
+    @Autowired
+    private SubjectSyncReportRepository subjectSyncReportRepository;
 
     @Override
     @Transactional
@@ -379,5 +388,53 @@ public class RbacSubjectController implements RbacSubjectsApi {
         return ResponseEntity.ok(mapper.mapList(
                 rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid),
                 RbacSubjectPermissionResource.class));
+    }
+
+    @Override
+    @Transactional
+    @Timed("app.rbac.subjects.api.postSubjectSyncReport")
+    @SuppressWarnings("unchecked")
+    public ResponseEntity<Void> postSubjectSyncReport(final Map body) {
+        // the report is the monitoring heartbeat and its insert prunes every reporter's history
+        context.requireGlobalAdmin("only a global-admin may report a subject-sync");
+
+        val now = OffsetDateTime.now();
+        // the API-key JWT carries the subject UUID as its name; store the subject-name so last-sync can query by it
+        val subjectUuid = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
+        val reportedBy = realSubjectRepository.findSubjectByUuidIncludingDeactivated(subjectUuid)
+                .map(RealSubjectEntity::getName)
+                .orElseThrow(() -> new ValidationException("unknown reporting subject: " + subjectUuid));
+        subjectSyncReportRepository.save(SubjectSyncReportEntity.builder()
+                .uuid(UUID.randomUUID())
+                .reportedAt(now)
+                .reportedBy(reportedBy)
+                .statistics((Map<String, Object>) body)
+                .build());
+        subjectSyncReportRepository.deleteReportedBefore(now.minus(SYNC_REPORT_RETENTION));
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    @PreAuthorize("permitAll()") // public, so external monitoring can poll it without credentials
+    @Transactional(readOnly = true)
+    @Timed("app.rbac.subjects.api.getLastSubjectSync")
+    public ResponseEntity<SubjectLastSyncResource> getLastSubjectSync(final String name, final String interval) {
+        val lookback = parseLookbackInterval(interval);
+        val latest = subjectSyncReportRepository
+                .findFirstByReportedByAndReportedAtGreaterThanOrderByReportedAtDesc(name, OffsetDateTime.now().minus(lookback));
+        val result = new SubjectLastSyncResource();
+        if (latest != null) {
+            result.setTimestamp(latest.getReportedAt());
+            result.setStatistics(latest.getStatistics());
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    private static Duration parseLookbackInterval(final String interval) {
+        try {
+            return Duration.parse(interval);
+        } catch (final DateTimeParseException e) {
+            throw new ValidationException("interval must be an ISO-8601 duration like PT5M or PT1H, but was: " + interval);
+        }
     }
 }

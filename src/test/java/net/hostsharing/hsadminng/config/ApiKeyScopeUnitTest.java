@@ -15,6 +15,7 @@ class ApiKeyScopeUnitTest {
             "GET, /api/rbac/subjects, true",
             "GET, /api/rbac/subjects/40e2a1e8-0000-0000-0000-000000000000, true",
             "PUT, /api/rbac/subjects/40e2a1e8-0000-0000-0000-000000000000, true",
+            "POST, /api/rbac/subjects/sync-report, true",
             "POST, /api/rbac/subjects, false",
             "DELETE, /api/rbac/subjects/40e2a1e8-0000-0000-0000-000000000000, false",
             "GET, /api/rbac/subjects/40e2a1e8-0000-0000-0000-000000000000/permissions, false",

@@ -29,10 +29,13 @@ public enum ApiKeyScope {
             endpoint(HttpMethod.GET, "/api/rbac/subjects"),
             endpoint(HttpMethod.GET, "/api/rbac/subjects/{uuid}"),
             // deliberately without .../{uuid}/permissions, which is not needed by the sync
-            endpoint(HttpMethod.PUT, "/api/rbac/subjects/{uuid}")
+            endpoint(HttpMethod.PUT, "/api/rbac/subjects/{uuid}"),
             // without POST /api/rbac/subjects - as it would allow creation of unrestricted API-Keys
             // without DELETE /api/rbac/subjects/{uuid} - the sync deactivates via PUT with deactivated=true;
             // together with the PUT rejection of type API_KEY, a sync-key cannot touch API-keys at all
+
+            // lets the sync post its end-of-run report (GET .../last-sync is public, hence not listed)
+            endpoint(HttpMethod.POST, "/api/rbac/subjects/sync-report")
     ),
 
     // read-only API-keys: any GET endpoint, but nothing which changes data
