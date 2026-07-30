@@ -1,26 +1,22 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -32,8 +28,7 @@ import static net.hostsharing.hsadminng.mapper.Array.fromFormatted;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import({ Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("bookingIntegrationTest")
 class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -57,9 +52,6 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
 
     @PersistenceContext
     EntityManager em;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Test
     public void auditJournalLogIsAvailable() {

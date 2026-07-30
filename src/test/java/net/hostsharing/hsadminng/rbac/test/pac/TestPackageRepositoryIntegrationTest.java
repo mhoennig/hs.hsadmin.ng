@@ -1,26 +1,21 @@
 package net.hostsharing.hsadminng.rbac.test.pac;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
 
@@ -32,9 +27,6 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     JpaAttempt jpaAttempt;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class FindAllByOptionalNameLike {

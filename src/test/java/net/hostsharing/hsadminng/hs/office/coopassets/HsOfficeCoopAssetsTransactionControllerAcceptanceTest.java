@@ -268,10 +268,10 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryCoopAssetTransaction() {
             context.define("hsh-alex_superuser");
-            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                     null,
                     LocalDate.of(2010, 3, 15),
-                    LocalDate.of(2010, 3, 15)).get(0).getUuid();
+                    LocalDate.of(2010, 3, 15)).get(0);
 
             RestAssured // @formatter:off
                 .given().header("Authorization", bearer("hsh-alex_superuser"))
@@ -291,10 +291,10 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
         @Test
         void normalUser_canNotGetUnrelatedCoopAssetTransaction() {
             context.define("hsh-alex_superuser");
-            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                     null,
                     LocalDate.of(2010, 3, 15),
-                    LocalDate.of(2010, 3, 15)).get(0).getUuid();
+                    LocalDate.of(2010, 3, 15)).get(0);
 
             RestAssured // @formatter:off
                 .given().header("Authorization", bearer("tst-drew_selfregistered"))
@@ -308,10 +308,10 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
         @Test
         void partnerPersonUser_canGetRelatedCoopAssetTransaction() {
             context.define("hsh-alex_superuser");
-            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                     null,
                     LocalDate.of(2010, 3, 15),
-                    LocalDate.of(2010, 3, 15)).get(0).getUuid();
+                    LocalDate.of(2010, 3, 15)).get(0);
 
             RestAssured // @formatter:off
                 .given()

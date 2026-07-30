@@ -1,27 +1,22 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import lombok.val;
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.subject.SubjectType.GROUP;
 import static net.hostsharing.hsadminng.rbac.subject.SubjectType.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import(Context.class)
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
@@ -30,9 +25,6 @@ class RealSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
     @PersistenceContext
     EntityManager em;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class FindVisibleSubjectsByOptionalNameLikeOrganizationAndType {

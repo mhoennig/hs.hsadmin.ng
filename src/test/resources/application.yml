@@ -20,6 +20,9 @@ spring:
         url: ${spring.datasource.url-tc}
         username: postgres
         password: password
+        hikari:
+            # the tests run single-threaded per worker, but each cached context holds its own pool
+            maximum-pool-size: 3
 
     jpa:
         properties:
@@ -45,7 +48,7 @@ spring:
 logging:
     level:
         liquibase: WARN
-        net.ttddyy.dsproxy.listener: DEBUG # HOWTO: log meaningful SQL statements
+        net.ttddyy.dsproxy.listener: WARN # HOWTO: set to DEBUG to log meaningful SQL statements
         # just for the case there are problems with Testcontainers/Docker integration
         # org.testcontainers: DEBUG
         # com.github.dockerjava: DEBUG

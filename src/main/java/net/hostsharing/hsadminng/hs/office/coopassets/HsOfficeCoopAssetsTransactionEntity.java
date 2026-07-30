@@ -16,6 +16,7 @@ import net.hostsharing.hsadminng.repr.Stringifyable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -107,7 +108,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
     private String comment;
 
     // Optionally, the UUID of the corresponding transaction for a reversal transaction.
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "revertedassettxuuid")
     private HsOfficeCoopAssetsTransactionEntity revertedAssetTx;
 
@@ -116,7 +117,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
     private HsOfficeCoopAssetsTransactionEntity reversalAssetTx;
 
     // Optionally, the UUID of the corresponding transaction for a transfer transaction.
-    @OneToOne(cascade = CascadeType.PERSIST)
+    @OneToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "assetadoptiontxuuid")
     private HsOfficeCoopAssetsTransactionEntity adoptionAssetTx;
 

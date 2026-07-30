@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -9,18 +8,15 @@ import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -31,8 +27,7 @@ import static net.hostsharing.hsadminng.mapper.Array.fromFormatted;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import({ Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("officeIntegrationTest")
 class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -56,9 +51,6 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
     @PersistenceContext
     EntityManager em;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class CreateSepaMandate {

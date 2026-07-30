@@ -1,33 +1,24 @@
 package net.hostsharing.hsadminng.rbac.test.cust;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 
 import jakarta.persistence.PersistenceException;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     TestCustomerRepository testCustomerRepository;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class CreateCustomer {

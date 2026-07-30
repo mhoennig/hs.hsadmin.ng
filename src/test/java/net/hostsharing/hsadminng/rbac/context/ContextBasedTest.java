@@ -5,14 +5,12 @@ import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Table;
 import java.sql.Timestamp;
 
-@Import(RbacGrantsDiagramService.class)
 public abstract class ContextBasedTest {
 
     @Autowired

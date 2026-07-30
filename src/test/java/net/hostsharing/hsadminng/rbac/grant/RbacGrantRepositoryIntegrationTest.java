@@ -7,36 +7,29 @@ import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectEntity;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     Context context;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Autowired
     RbacGrantRepository rbacGrantRepository;

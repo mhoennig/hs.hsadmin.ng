@@ -1,42 +1,41 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("officeIntegrationTest")
 class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
+
+    @Autowired
+    HsOfficeCoopAssetsTransactionRealRepository coopAssetsTransactionRealRepo;
 
     @Autowired
     HsOfficeMembershipRepository membershipRepo;
@@ -52,9 +51,6 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
 
     @Autowired
     JpaAttempt jpaAttempt;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class CreateCoopAssetsTransaction {
@@ -135,7 +131,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             context("hsh-alex_superuser");
 
             // when
-            final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            final var result = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                     null,
                     null,
                     null);
@@ -172,7 +168,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             // when
-            final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            final var result = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                     givenMembership.getUuid(),
                     null,
                     null);
@@ -195,7 +191,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
 
             // when
-            final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            final var result = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                     givenMembership.getUuid(),
                     LocalDate.parse("2021-09-01"),
                     LocalDate.parse("2021-09-01"));
@@ -212,7 +208,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             context("hsh-alex_superuser", "hs_office.person#FirstGmbH:ADMIN");
 
             // when:
-            final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+            final var result = coopAssetsTransactionRepo.findVisibleUuidsByOptionalMembershipUuidAndDateRange(
                     null,
                     null,
                     null);
@@ -266,19 +262,20 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
         });
     }
 
+    // resolves the visible uuids via the raw table, exactly as the controller does
     void exactlyTheseCoopAssetsTransactionsAreReturned(
-            final List<HsOfficeCoopAssetsTransactionEntity> actualResult,
+            final List<UUID> visibleUuids,
             final String... coopAssetsTransactionNames) {
-        assertThat(actualResult)
-                .extracting(coopAssetsTransactionEntity -> coopAssetsTransactionEntity.toString())
+        assertThat(coopAssetsTransactionRealRepo.findByUuidIn(visibleUuids))
+                .extracting(HsOfficeCoopAssetsTransactionRealEntity::toString)
                 .containsExactlyInAnyOrder(coopAssetsTransactionNames);
     }
 
     void allTheseCoopAssetsTransactionsAreReturned(
-            final List<HsOfficeCoopAssetsTransactionEntity> actualResult,
+            final List<UUID> visibleUuids,
             final String... coopAssetsTransactionNames) {
-        assertThat(actualResult)
-                .extracting(coopAssetsTransactionEntity -> coopAssetsTransactionEntity.toString())
+        assertThat(coopAssetsTransactionRealRepo.findByUuidIn(visibleUuids))
+                .extracting(HsOfficeCoopAssetsTransactionRealEntity::toString)
                 .contains(coopAssetsTransactionNames);
     }
 }

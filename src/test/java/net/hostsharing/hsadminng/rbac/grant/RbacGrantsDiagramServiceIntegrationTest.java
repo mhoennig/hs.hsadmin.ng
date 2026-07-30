@@ -3,18 +3,14 @@ package net.hostsharing.hsadminng.rbac.grant;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService.Include;
-import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -22,16 +18,12 @@ import java.util.UUID;
 import static java.lang.String.join;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class, RbacGrantsDiagramService.class})
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     RbacGrantsDiagramService grantsMermaidService;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Autowired
     Context context;

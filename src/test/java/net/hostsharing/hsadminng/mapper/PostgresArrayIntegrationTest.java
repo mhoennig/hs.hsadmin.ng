@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// deliberately not @RbacDataJpaTest, because that would make the mapper package depend on rbac
 @DataJpaTest
 @Tag("generalIntegrationTest")
 class PostgresArrayIntegrationTest {

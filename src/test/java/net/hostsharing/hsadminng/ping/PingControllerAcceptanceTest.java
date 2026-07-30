@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
@@ -24,10 +23,6 @@ import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = HsadminNgApplication.class)
 @ActiveProfiles("fake-jwt")
-@TestPropertySource(properties = {
-        "server.port=0",
-        "logging.level.root=DEBUG"
-})
 @Transactional
 class PingControllerAcceptanceTest {
 

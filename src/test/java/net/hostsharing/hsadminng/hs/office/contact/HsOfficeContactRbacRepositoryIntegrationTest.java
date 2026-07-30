@@ -1,23 +1,19 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -28,8 +24,7 @@ import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRole
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import({ Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("officeIntegrationTest")
 class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -47,9 +42,6 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
     @Autowired
     JpaAttempt jpaAttempt;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class CreateContact {

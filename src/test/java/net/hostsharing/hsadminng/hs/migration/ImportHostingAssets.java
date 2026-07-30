@@ -19,6 +19,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityS
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator;
 import net.hostsharing.hsadminng.rbac.context.Context;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.collections4.ListUtils;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +103,7 @@ import static org.springframework.util.FileCopyUtils.copyToByteArray;
         "spring.liquibase.enabled=false" // @Sql should go first, Liquibase will be initialized programmatically
 })
 @DirtiesContext
-@Import({ Context.class, JpaAttempt.class, LiquibaseConfig.class })
+@Import({ Context.class, JpaAttempt.class, LiquibaseConfig.class, RbacGrantsDiagramService.class })
 @ActiveProfiles({ "without-test-data", "liquibase-migration", "hosting-asset-import" })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)

@@ -4,6 +4,7 @@ import lombok.val;
 import net.hostsharing.hsadminng.errors.ForbiddenException;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.hibernate.exception.GenericJDBCException;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,19 +12,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -39,17 +35,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("generalIntegrationTest")
-@DataJpaTest
-@Import({ Context.class, JpaAttempt.class })
-@DirtiesContext
+@RbacDataJpaTest
 class ContextIntegrationTests {
 
     @Autowired
     private Context context;
-
-    @MockitoBean
-    @SuppressWarnings("unused") // the bean must be present, even though it's not used directly
-    private HttpServletRequest request;
 
     @Autowired
     private JpaAttempt jpaAttempt;

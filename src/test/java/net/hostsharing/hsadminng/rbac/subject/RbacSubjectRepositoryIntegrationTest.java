@@ -1,23 +1,19 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,8 +23,7 @@ import static net.hostsharing.hsadminng.rbac.subject.SubjectType.GROUP;
 import static net.hostsharing.hsadminng.rbac.subject.SubjectType.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
@@ -40,9 +35,6 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
     @PersistenceContext
     EntityManager em;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class PostNewSubject {

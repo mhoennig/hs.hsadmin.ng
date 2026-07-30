@@ -1,23 +1,18 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
-import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,8 +21,7 @@ import static net.hostsharing.hsadminng.rbac.test.EntityList.one;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("officeIntegrationTest")
 class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -42,9 +36,6 @@ class HsOfficeRealRelationRepositoryIntegrationTest extends ContextBasedTestWith
 
     @PersistenceContext
     EntityManager em;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class FindRelations {

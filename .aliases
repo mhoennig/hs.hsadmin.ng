@@ -162,7 +162,7 @@ function _gwTest() {
     shift # to remove the --all from $@
     # deliberately in separate gradlew-calls to avoid Testcontains-PostgreSQL problem spillover
     time (_gwTest1 unitTest "$@" &&
-        _gwTest1 officeIntegrationTest bookingIntegrationTest hostingIntegrationTest "$@" &&
+        _gwTest1 officeIntegrationTest bookingIntegrationTest hostingIntegrationTest generalIntegrationTest "$@" &&
         _gwTest1 scenarioTest "$@" && _gwTest1 migrationTest "$@");
   elif [ "$1" == "--quick" ]; then
     shift # to remove the --quick from $@

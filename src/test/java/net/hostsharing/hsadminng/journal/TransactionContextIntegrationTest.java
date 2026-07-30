@@ -1,29 +1,24 @@
 package net.hostsharing.hsadminng.journal;
 
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import net.hostsharing.hsadminng.rbac.test.cust.TestCustomerEntity;
 import net.hostsharing.hsadminng.rbac.test.cust.TestCustomerRepository;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.transaction.annotation.Propagation.NEVER;
 
-@DataJpaTest
-@Import({ Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class TransactionContextIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -32,9 +27,6 @@ class TransactionContextIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     JpaAttempt jpaAttempt;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Autowired
     private TestCustomerRepository repository;

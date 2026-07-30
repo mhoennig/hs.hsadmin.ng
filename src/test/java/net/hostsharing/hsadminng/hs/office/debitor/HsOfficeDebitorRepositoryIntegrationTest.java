@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
@@ -14,6 +13,7 @@ import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
@@ -22,15 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,8 +37,7 @@ import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRole
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class, RbacGrantsDiagramService.class })
+@RbacDataJpaTest
 @Tag("officeIntegrationTest")
 class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
@@ -75,9 +70,6 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
     @Autowired
     RbacGrantsDiagramService mermaidService;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class CreateDebitor {

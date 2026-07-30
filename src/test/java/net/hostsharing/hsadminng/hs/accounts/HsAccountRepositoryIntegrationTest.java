@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
 import lombok.val;
-import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
@@ -12,17 +11,14 @@ import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
 import net.hostsharing.hsadminng.rbac.subject.RealSubjectEntity;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
-import jakarta.servlet.http.HttpServletRequest;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -33,9 +29,8 @@ import static net.hostsharing.hsadminng.rbac.subject.SubjectType.GROUP;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
-@Import({ Context.class, JpaAttempt.class })
 class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     private static final String SUPERUSER_ALEX_SUBJECT_NAME = "hsh-alex_superuser";
@@ -43,13 +38,6 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     private static final String USER_DREW_SUBJECT_NAME = "tst-drew_selfregistered";
     private static final String TEST_USER_SUBJECT_NAME = "tst-rene_selfregistered";
     public static final String FIRST_GMBH = "first-gmbh";
-
-    // HOWTO fix UnsatisfiedDependencyException with cause "No qualifying bean of type 'jakarta.servlet.http.HttpServletRequest'"
-    //  This dependency comes from class net.hostsharing.hsadminng.context.Context,
-    //  which is not automatically wired in a @DataJpaTest, but just in @SpringBootTest.
-    //  If, e.g. for validators, the current user or assumed roles are needed, the values need to be mocked.
-    @MockitoBean
-    HttpServletRequest request;
 
     @Autowired
     private RbacSubjectRepository rbacSubjectRepo;

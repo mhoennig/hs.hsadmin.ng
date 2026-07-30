@@ -2,25 +2,20 @@ package net.hostsharing.hsadminng.rbac.role;
 
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.mapper.Array;
-import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 
 import jakarta.persistence.EntityManager;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@RbacDataJpaTest
 @Tag("generalIntegrationTest")
 class RbacRoleRepositoryIntegrationTest {
 
@@ -32,9 +27,6 @@ class RbacRoleRepositoryIntegrationTest {
 
     @Autowired
     EntityManager em;
-
-    @MockitoBean
-    HttpServletRequest request;
 
     @Nested
     class FindAllRbacRoles {
