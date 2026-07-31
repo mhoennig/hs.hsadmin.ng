@@ -404,6 +404,56 @@ class HsAccountControllerRestTest {
     }
 
     @Test
+    void postNewAccountWithoutGlobalIdsAutoAssignsThemEqual() throws Exception {
+        // given
+        val givenSubjectUuid = UUID.randomUUID();
+        val givenPerson = givenNaturalPerson("Test", "Person");
+        val givenNewSubjectUuid = UUID.randomUUID();
+        val givenNewSubject = RealSubjectEntity.builder()
+                .uuid(givenNewSubjectUuid)
+                .name("abc-newuser")
+                .type(SubjectType.USER)
+                .build();
+        val givenPersonRole = new RbacRoleEntity();
+        givenPersonRole.setUuid(UUID.randomUUID());
+        val grantMock = mock(RbacGrantService.RbacRoleGranter.class);
+
+        given(contextMock.fetchCurrentSubjectUuid()).willReturn(givenSubjectUuid);
+        given(contextMock.isGlobalAdmin()).willReturn(true);
+        given(realSubjectRepo.findVisibleSubjectByUuid(givenNewSubjectUuid)).willReturn(Optional.empty());
+        given(rbacSubjectRepo.create(any())).willAnswer(invocation -> invocation.getArgument(0));
+        given(em.find(RealSubjectEntity.class, givenNewSubjectUuid)).willReturn(givenNewSubject);
+        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+        given(rbacRoleService.rbacRole(givenPerson, RbacRoleType.ADMIN)).willReturn(givenPersonRole);
+        given(rbacGrantService.grant(givenPersonRole)).willReturn(grantMock);
+        given(em.merge(givenNewSubject)).willReturn(givenNewSubject);
+        given(accountRepo.findNextFreeGlobalId()).willReturn(100000);
+
+        // when
+        val response = mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/accounts/accounts")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "person.uuid": "%s",
+                                    "subject": {
+                                        "uuid": "%s",
+                                        "name": "abc-newuser",
+                                        "type": "USER"
+                                    }
+                                }
+                                """.formatted(givenPerson.getUuid(), givenNewSubjectUuid))
+                        .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        response.andExpect(status().isCreated())
+                .andExpect(jsonPath("globalUid").value(100000))
+                .andExpect(jsonPath("globalGid").value(100000));
+        verify(accountRepo).findNextFreeGlobalId();
+    }
+
+    @Test
     void postNewAccountReferencingAnUnknownSubjectUuidIsRejected() throws Exception {
         // given
         val givenSubjectUuid = UUID.randomUUID();

@@ -99,6 +99,40 @@ execute function hs_accounts.assert_account_subject_is_user_tf();
 
 
 -- ============================================================================
+--changeset michael.hoennig:hs-accounts-NEXT-FREE-GLOBAL-ID runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+-- Gap-filling allocator: the lowest number in [100000, 999999] still free in both columns.
+-- The advisory lock serializes concurrent allocations so they cannot pick the same number.
+create or replace function hs_accounts.next_free_global_id()
+    returns integer
+    language plpgsql as $$
+declare
+    result integer;
+begin
+    perform pg_advisory_xact_lock(hashtext('hs_accounts.global_id'));
+
+    with used as (
+        select global_uid as n from hs_accounts.account where global_uid between 100000 and 999999
+        union
+        select global_gid from hs_accounts.account where global_gid between 100000 and 999999
+    )
+    select coalesce(
+        (select 100000 where not exists (select 1 from used where n = 100000)),
+        (select min(u.n + 1) from used u
+            where u.n + 1 between 100000 and 999999
+              and not exists (select 1 from used taken where taken.n = u.n + 1))
+    ) into result;
+
+    if result is null then
+        raise exception '[500] no free global uid/gid available in range 100000..999999';
+    end if;
+    return result;
+end; $$;
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:hs-hs_accounts-JOURNALS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 

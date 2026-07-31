@@ -176,6 +176,25 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     }
 
     @Test
+    void nextFreeGlobalIdSkipsUsedNumbersInRange() {
+        // given the lowest currently free number in the accounts uid/gid range
+        final int base = accountRepository.findNextFreeGlobalId();
+        assertThat(base).isBetween(100000, 999999);
+
+        // when an account occupies exactly that number
+        toCleanup(accountRepository.save(HsAccountEntity.builder()
+                .subject(testUserSubject)
+                .person(testUserPerson)
+                .globalUid(base)
+                .globalGid(base)
+                .build()));
+        em.flush();
+
+        // then the next free number skips the now-used one
+        assertThat(accountRepository.findNextFreeGlobalId()).isEqualTo(base + 1);
+    }
+
+    @Test
     void shouldRejectAccountForGroupSubject() {
         // when
         final var result = jpaAttempt.transacted(() -> {

@@ -94,14 +94,21 @@ components:
                     $ref: '#/components/schemas/AccountSubjectInsert'
                 globalUid:
                     type: number
+                    description: "
+                        Optional. If omitted (together with `globalGid`), the lowest still unused
+                        number in the range 100000-999999 is assigned automatically to both
+                        `globalUid` and `globalGid` (kept equal).
+                        "
                 globalGid:
                     type: number
-            required:
-                - globalUid
-                - globalGid
-                # soon we might need to be able to use this:
-                # https://community.smartbear.com/discussions/swaggerostools/defining-conditional-attributes-in-openapi/222410
-                # For now we just describe the conditionally required properties:
+                    description: "
+                        Optional, see `globalUid`.
+                        "
+            # No property is unconditionally required:
+            # either person.uuid or person, and either subject.uuid or subject, must be given;
+            # globalUid/globalGid are auto-assigned when omitted. These conditions cannot yet be
+            # expressed in OpenAPI, see:
+            # https://community.smartbear.com/discussions/swaggerostools/defining-conditional-attributes-in-openapi/222410
             description:
                 Either `person.uuid` (referencing an existing person) or `person`
                 (creating a new person along with the account) need to be given.

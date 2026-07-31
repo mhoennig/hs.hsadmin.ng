@@ -44,4 +44,8 @@ public interface HsAccountRepository extends Repository<HsAccountEntity, UUID> {
 
     @Timed("app.login.account.repo.save")
     HsAccountEntity save(final HsAccountEntity entity);
+
+    @Timed("app.login.account.repo.findNextFreeGlobalId")
+    @Query(nativeQuery = true, value = "SELECT hs_accounts.next_free_global_id()")
+    Integer findNextFreeGlobalId();
 }

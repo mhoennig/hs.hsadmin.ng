@@ -3,17 +3,24 @@
 # existing Keycloak subjects, from a CSV-file (non-interactive mass sync).
 #
 # Expected CSV columns (with or without double-quotes, no header line needed):
-#   subjectName, subjectUuid, givenName, familyName, personUuid, uid, gid
-# givenName+familyName are only used for progress messages.
+#   subjectName, subjectUuid, givenName, familyName, personUuid
+# givenName+familyName are only used for progress messages. globalUid and globalGid
+# are not read from the CSV but derived from the <starting-uid-gid> argument: both
+# get the same value, starting at <starting-uid-gid> for the first line and increasing
+# by one per line (line N gets <starting-uid-gid> + N - 1).
 #
-# Rows with an invalid subjectUuid/personUuid (e.g. not resolved yet) or an
-# invalid uid/gid are reported and skipped; a header line gets skipped that
-# way as well. Subjects which already have an account (HTTP 409) are reported
-# and skipped, thus the script can be re-run for repeated syncs.
+# Rows with an invalid subjectUuid/personUuid (e.g. not resolved yet) are reported and
+# skipped; a header line gets skipped that way as well. Subjects which already have an
+# account (HTTP 409) are reported and skipped, thus the script can be re-run for repeated
+# syncs. Since uid/gid follow the line position, keep the line order stable between runs.
+#
+# Authenticates via an API-key: establish it with `APIKEY <name>` (which exports
+# HSADMINNG_API_KEY) before running, or export HSADMINNG_API_KEY directly.
 
-if [ $# -ne 1 ]; then
-    echo "usage: ${0##*/} <csv-file>" >&2
-    echo "  csv-file: columns subjectName,subjectUuid,givenName,familyName,personUuid,uid,gid" >&2
+if [ $# -ne 2 ]; then
+    echo "usage: ${0##*/} <csv-file> <starting-uid-gid>" >&2
+    echo "  csv-file:         columns subjectName,subjectUuid,givenName,familyName,personUuid" >&2
+    echo "  starting-uid-gid: globalUid/globalGid for the first line, +1 per following line" >&2
     exit 1
 fi
 csvFile=$1
@@ -21,17 +28,22 @@ if [ ! -r "$csvFile" ]; then
     echo "ERROR: cannot read CSV-file: $csvFile" >&2
     exit 1
 fi
+startUidGid=$2
+if ! [[ "$startUidGid" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: starting-uid-gid must be a non-negative integer: '$startUidGid'" >&2
+    exit 1
+fi
 
 source .aliases
-require HSADMINNG_JWT_USERNAME
-require HSADMINNG_JWT_PASSWORD
+require HSADMINNG_API_KEY
 
 export HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-'https://backend.ng.hostsharing.net'}
 
-LOGIN
+# tools/http builds the Hostsharing-Api-Key header from HSADMINNG_API_KEY, but prefers a JWT
+# bearer if one is set, so drop any stray JWT to ensure the API-key is used
+unset HSADMINNG_JWT_BEARER
 
 uuidPattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-numberPattern='^[0-9]+$'
 
 declare -i lineNo=0 created=0 alreadyExisted=0 invalid=0 failed=0
 
@@ -41,7 +53,7 @@ function skipInvalid() {
 }
 
 # proper CSV-parsing (quoting, embedded commas) via Python, one TAB-separated line per row
-while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid uid gid; do
+while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid _rest; do
     ((++lineNo))
     [ -z "$subjectName$subjectUuid$personUuid" ] && continue # ignore empty lines
 
@@ -51,11 +63,9 @@ while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid 
     if ! [[ "$personUuid" =~ $uuidPattern ]]; then
         skipInvalid "invalid personUuid: '$personUuid'"; continue
     fi
-    if ! [[ "$uid" =~ $numberPattern ]] || ! [[ "$gid" =~ $numberPattern ]]; then
-        skipInvalid "invalid uid/gid: '$uid'/'$gid'"; continue
-    fi
 
-    echo "creating account '$subjectName' ($givenName $familyName) ..." >&2
+    uidGid=$(( startUidGid + lineNo - 1 ))
+    echo "creating account '$subjectName' ($givenName $familyName) with uid/gid $uidGid ..." >&2
     httpExitCode=0
     response=$(HTTP POST "/api/hs/accounts/accounts" \
       -H 'Content-Type: application/json' \
@@ -66,8 +76,8 @@ while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid 
       "uuid": "$subjectUuid",
       "name": "$subjectName"
   },
-  "globalUid" : $uid,
-  "globalGid" : $gid
+  "globalUid" : $uidGid,
+  "globalGid" : $uidGid
 }
 EOF
     ) || httpExitCode=$?

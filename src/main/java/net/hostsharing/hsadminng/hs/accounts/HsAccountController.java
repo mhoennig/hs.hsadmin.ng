@@ -139,6 +139,7 @@ public class HsAccountController implements AccountApi {
         val newAccountEntity = mapper.map(
                 body, HsAccountEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
         validateOnCreate(newAccountEntity);
+        assignGlobalIdsIfMissing(newAccountEntity);
 
         // fetch the existing subject or create and save a new one to get its UUID
         val accountSubject = fetchOrCreateSubject(body);
@@ -200,6 +201,20 @@ public class HsAccountController implements AccountApi {
 
     private void validateOnCreate(final HsAccountEntity newAccountEntity) {
         validateReferencedPersonToBeANaturalPerson(newAccountEntity);
+    }
+
+    // when the client provides neither uid nor gid, both are auto-assigned equal; a single given
+    // value fills the other, and two explicitly given values are kept as an override.
+    private void assignGlobalIdsIfMissing(final HsAccountEntity entity) {
+        if (entity.getGlobalUid() == null && entity.getGlobalGid() == null) {
+            val nextFreeGlobalId = accountRepo.findNextFreeGlobalId();
+            entity.setGlobalUid(nextFreeGlobalId);
+            entity.setGlobalGid(nextFreeGlobalId);
+        } else if (entity.getGlobalUid() == null) {
+            entity.setGlobalUid(entity.getGlobalGid());
+        } else if (entity.getGlobalGid() == null) {
+            entity.setGlobalGid(entity.getGlobalUid());
+        }
     }
 
     private void validateOnDelete(final HsAccountEntity current) {
