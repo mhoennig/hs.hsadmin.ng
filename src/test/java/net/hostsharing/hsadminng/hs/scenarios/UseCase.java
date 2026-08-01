@@ -407,19 +407,20 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     static List<Map.Entry<String, List<String>>> reportableRequestHeaders(
-            final Map<String, List<String>> requestHeaders,
-            final boolean requestHasBody) {
+            final Map<String, List<String>> requestHeaders) {
         return requestHeaders.entrySet().stream()
                 // the Authorization header with the long Bearer token is of no value here,
                 // and the real API-key is a secret which must not leak into the reports
                 .filter(entry -> !AUTH_HEADER_KEY.equalsIgnoreCase(entry.getKey())
                         && !API_KEY_HEADER_KEY.equalsIgnoreCase(entry.getKey()))
+                // the JSON content-type is the only one we support and the HTTP shell-function defaults it
+                .filter(entry -> !CONTENT_TYPE_HEADER_KEY.equalsIgnoreCase(entry.getKey()))
                 // instead, use the X-Fake-... headers as if they were the real headers
                 .map(entry -> Map.entry(reportableRequestHeaderName(entry.getKey()), entry.getValue()))
                 .sorted((left, right) -> {
                     final var rankComparison = Integer.compare(
-                            reportableRequestHeaderRank(left.getKey(), requestHasBody),
-                            reportableRequestHeaderRank(right.getKey(), requestHasBody));
+                            reportableRequestHeaderRank(left.getKey()),
+                            reportableRequestHeaderRank(right.getKey()));
                     return rankComparison != 0
                             ? rankComparison
                             : String.CASE_INSENSITIVE_ORDER.compare(left.getKey(), right.getKey());
@@ -427,15 +428,12 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .toList();
     }
 
-    private static int reportableRequestHeaderRank(final String headerName, final boolean requestHasBody) {
+    private static int reportableRequestHeaderRank(final String headerName) {
         if (AUTH_HEADER_KEY.equalsIgnoreCase(headerName) || API_KEY_HEADER_KEY.equalsIgnoreCase(headerName)) {
             return 0;
         }
         if (ASSUMED_ROLES_HEADER_KEY.equalsIgnoreCase(headerName)) {
             return 1;
-        }
-        if (requestHasBody && CONTENT_TYPE_HEADER_KEY.equalsIgnoreCase(headerName)) {
-            return 3;
         }
         return 2;
     }
@@ -453,8 +451,8 @@ public abstract class UseCase<T extends UseCase<?>> {
     static String requestBodyArgument(final String requestBody) {
         final var json = REPORT_OBJECT_MAPPER.readTree(requestBody);
         final var prettyJson = REPORT_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(json);
-        // --data-binary (not -d) keeps the newlines, thus trailing `// alias` comments cannot swallow the rest of the body
-        return "--data-binary @- <<" + HERE_DOCUMENT_DELIMITER + "\n"
+        // just the here-document; the HTTP shell-function defaults --data-binary @- to read it from stdin
+        return "<<" + HERE_DOCUMENT_DELIMITER + "\n"
                 + escapedForHereDocument(prettyJson) + "\n"
                 + HERE_DOCUMENT_DELIMITER;
     }
@@ -697,7 +695,7 @@ public abstract class UseCase<T extends UseCase<?>> {
             if (request == null) {
                 return List.of();
             }
-            final var arguments = reportableRequestHeaders(request.headers().map(), hasRequestBody()).stream()
+            final var arguments = reportableRequestHeaders(request.headers().map()).stream()
                     .flatMap(entry -> Stream.concat(
                             Stream.of(headerArgument(entry.getKey(), headerValue(entry))),
                             jwtClaimsCommentArguments(entry).stream()))

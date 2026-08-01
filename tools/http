@@ -4,9 +4,13 @@
 # usually invoked via the `HTTP` function from `.aliases`, e.g.:
 #
 #   HTTP GET /api/hs/accounts/current
-#   HTTP POST /api/hs/accounts/accounts -H 'Content-Type: application/json' --data-binary @- <<EOF
+#   HTTP POST /api/hs/accounts/accounts <<EOF
 #   { ... }
 #   EOF
+#
+# For POST/PUT/PATCH it defaults `-H 'Content-Type: application/json' --data-binary @-`,
+# so a JSON body can be piped in (e.g. via a here-document) without those options; both
+# defaults are skipped when the caller already gives an equivalent header or data option.
 #
 # It prefixes $HSADMINNG_API_BASE_URL to the given path and implicitly adds
 # the Authorization header from $HSADMINNG_JWT_BEARER.
@@ -30,11 +34,13 @@ case "${1:-}" in
               - prefixes $HSADMINNG_API_BASE_URL to a /path; a full http(s):// URL is used as given
               - adds an Authorization header from $HSADMINNG_JWT_BEARER, or a Hostsharing-Api-Key header
                 from $HSADMINNG_API_KEY, unless the request already carries one of them
+              - for POST/PUT/PATCH defaults -H 'Content-Type: application/json' --data-binary @-,
+                unless the caller already gives an equivalent header or data option
               - prints the command (and any stdin request body) to stderr, so output/errors are traceable
               - pretty-prints JSON responses via jq, if installed
 
             HTTP GET /api/hs/accounts/current
-            HTTP POST /api/... -H 'Content-Type: application/json' --data-binary @- <<EOF
+            HTTP POST /api/... <<EOF
             { ... }
             EOF
             HTTP -h|-?|--help    shows this help
@@ -50,6 +56,32 @@ if [ $# -lt 2 ]; then
 fi
 method="$1" path="$2"
 shift 2
+
+# For body-carrying methods, default the JSON content-type and a stdin request body,
+# so that the common `HTTP POST /api/... <<EOF ... EOF` needs no boilerplate options.
+# Each default is only added when the caller did not already supply an equivalent, and
+# the body default is skipped when stdin is a terminal (an interactive call without a body).
+hasDataOption=no hasContentType=no
+for arg in "$@"; do
+    case "$arg" in
+        -d|-d?*|--data|--data=*|--data-raw|--data-raw=*|--data-binary|--data-binary=*|\
+        --data-ascii|--data-ascii=*|--data-urlencode|--data-urlencode=*|\
+        -F|--form|--form=*|--form-string|--form-string=*) hasDataOption=yes ;;
+    esac
+    case "$arg" in
+        [Cc]ontent-[Tt]ype:*) hasContentType=yes ;;
+    esac
+done
+defaultArgs=()
+if [ "$hasDataOption" == no ] && [ ! -t 0 ]; then
+    case "$method" in
+        POST|PUT|PATCH) defaultArgs+=(--data-binary @-) ;;
+    esac
+fi
+if [ "$hasContentType" == no ] && { [ "$hasDataOption" == yes ] || [ ${#defaultArgs[@]} -gt 0 ]; }; then
+    defaultArgs=(-H 'Content-Type: application/json' "${defaultArgs[@]}")
+fi
+set -- "$@" "${defaultArgs[@]}"
 
 # print the command; to stderr, so that captured output (e.g. for jq) stays clean;
 # without the base-URL prefix and without the Authorization header (it contains the expanded token)

@@ -67,25 +67,24 @@ while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid 
     uidGid=$(( startUidGid + lineNo - 1 ))
     echo "creating account '$subjectName' ($givenName $familyName) with uid/gid $uidGid ..." >&2
     httpExitCode=0
-    response=$(HTTP POST "/api/hs/accounts/accounts" \
-      -H 'Content-Type: application/json' \
-      --data-binary @- <<EOF
-{
-  "person.uuid" : "$personUuid",
-  "subject" : {
-      "uuid": "$subjectUuid",
-      "name": "$subjectName"
-  },
-  "globalUid" : $uidGid,
-  "globalGid" : $uidGid
-}
+    response=$(
+        HTTP POST "/api/hs/accounts/accounts" <<EOF
+        {
+          "person.uuid" : "$personUuid",
+          "subject" : {
+              "uuid": "$subjectUuid",
+              "name": "$subjectName"
+          },
+          "globalUid" : $uidGid,
+          "globalGid" : $uidGid
+        }
 EOF
     ) || httpExitCode=$?
     [ -n "$response" ] && printf '%s\n' "$response"
 
     if [ $httpExitCode -eq 0 ]; then
         ((++created))
-    elif grep -Eq '"status" *: *409' <<<"$response"; then
+    elif grep -Eq '"statusCode" *: *409' <<<"$response"; then
         echo "SKIPPED line $lineNo ($subjectName): account already exists (409 Conflict)" >&2
         ((++alreadyExisted))
     else

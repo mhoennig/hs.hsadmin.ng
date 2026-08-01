@@ -245,10 +245,15 @@ alias gw-importHostingAssets-in-docker-compose='
         docker-compose -f etc/docker-compose.yml up -d && sleep 10 &&
         time gw-importHostingAssets'
 
-if [ ! -f .environment ]; then
-    cp .tc-environment .environment
+# TODO.env: this is a bit hacky, we need to find a more straight-forward way when to read the .environment file
+# HSADMINNG_SKIP_ENVIRONMENT_FILE protects a fully explicitly exported environment (e.g. of
+# tools/smoke-test) from being overridden by the personal `.environment`, also in child processes
+if [ -z "${HSADMINNG_SKIP_ENVIRONMENT_FILE:-}" ]; then
+    if [ ! -f .environment ]; then
+        cp .tc-environment .environment
+    fi
+    source .environment
 fi
-source .environment
 
 alias scenario-reports-upload='./gradlew scenarioTest convertMarkdownToHtml && ssh hsh03-hsngdev@hsh03.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@hsh03.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
 alias scenario-reports-open='open https://hsngdev.hs-example.de/scenarios/office'

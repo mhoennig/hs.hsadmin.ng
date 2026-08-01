@@ -19,7 +19,7 @@ class UseCaseUnitTest {
     }
 
     @Test
-    void reportsRequestHeadersInScenarioReportOrder() {
+    void reportsRequestHeadersInScenarioReportOrderWithoutTheDefaultedContentType() {
         final var requestHeaders = new LinkedHashMap<String, List<String>>();
         requestHeaders.put("Content-Type", List.of("application/json"));
         requestHeaders.put("X-Other", List.of("other"));
@@ -27,10 +27,11 @@ class UseCaseUnitTest {
         requestHeaders.put("Hostsharing-Assumed-Roles", List.of("rbactest.customer#yyy:OWNER"));
         requestHeaders.put("Authorization", List.of("Bearer real.jwt.token"));
 
-        assertThat(UseCase.reportableRequestHeaders(requestHeaders, true).stream()
+        assertThat(UseCase.reportableRequestHeaders(requestHeaders).stream()
                 .map(Map.Entry::getKey)
                 .toList())
-                .containsExactly("Authorization", "Hostsharing-Assumed-Roles", "X-Other", "Content-Type");
+                // the JSON content-type is dropped, as the HTTP shell-function defaults it
+                .containsExactly("Authorization", "Hostsharing-Assumed-Roles", "X-Other");
     }
 
     @Test
@@ -41,7 +42,7 @@ class UseCaseUnitTest {
                   "tradeName": "Test AG"
                 }
                 """)).isEqualTo("""
-                --data-binary @- <<EOF
+                <<EOF
                 {
                   "personType" : "LEGAL_PERSON",
                   "tradeName" : "Test AG"
@@ -58,7 +59,7 @@ class UseCaseUnitTest {
                   "tradeName": "$100 `backticked` back\\\\slash"
                 }
                 """)).isEqualTo("""
-                --data-binary @- <<EOF
+                <<EOF
                 {
                   "tradeName" : "\\$100 \\`backticked\\` back\\\\\\\\slash"
                 }

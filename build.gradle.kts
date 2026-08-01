@@ -363,6 +363,14 @@ tasks.register("compile") {
     dependsOn("compileJava", "compileTestJava")
 }
 
+tasks.register<Exec>("smokeTest") {
+    group = "verification"
+    description = "Runs tools/smoke-test: bootRun against a throw-away Docker-PostgreSQL plus dev-tooling checks."
+    // .gitTally appends this task last; keep it last even if the task graph runs in parallel
+    mustRunAfter("jacocoTestReport", "check", "generateDocumentation")
+    commandLine("tools/smoke-test")
+}
+
 tasks.register<GradleBuild>("bootJarWithBuildTime") {
     group = "build"
     description = "Builds bootJar with build.time included in META-INF/build-info.properties."

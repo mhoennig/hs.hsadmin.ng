@@ -1,29 +1,50 @@
 #!/usr/bin/env bash
-# Commands for the remote backend server (see HSADMINNG_DEPLOY_HOST):
+# Commands for the remote backend server (see HSADMINNG_DEPLOY_HOST).
 #
-#   remote deploy       build the application locally and deploy the jar of the
-#                       current working tree (uncommitted changes included!)
-#   remote log [ARGS]   tail the backend log, extra ARGS are passed to tail
-#   remote ssh [CMD]    open an interactive shell or run CMD on the server
-#   remote provisioning-api-key
-#                       generate an API-key locally, provision just its SHA-256 hash
-#                       in the EnvironmentFile of the backend service on the server,
-#                       and verify the bootstrap outcome via the backend log
-#   remote install-monitoring
-#                       install and start a systemd user timer on the server, running
-#                       the local tools/login-monitoring-check every 5 minutes with
-#                       Matrix alerting; requires HSADMINNG_LOGIN_MONITOR_PASSWORD and
-#                       HSADMINNG_MATRIX_WEBHOOK_URL in ~/.environment on the server;
-#                       HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES there overrides the
-#                       5-minute default (re-run this command after changing it)
+# Usage: remote <target> <action> [ARGS]
 #
-# This tool deploys the local working state to a test stage and is meant ONLY for
-# testing changes which are not yet merged into the target branch (master/prod);
-# regular releases are rolled out via the CI/CD pipeline instead.
+# Backend service (systemd user unit: backend):
+#   remote backend deploy             build & deploy the local working-tree jar, restart the service,
+#                                     stream the startup log until the application reports it has started
+#   remote backend start              start the backend service
+#   remote backend stop               stop the backend service
+#   remote backend restart            restart the backend service
+#   remote backend status             show the backend service status
+#   remote backend enable             enable and start the backend service (--now)
+#   remote backend disable            disable and stop the backend service (--now)
+#   remote backend log [ARGS]         tail the backend log (extra ARGS go to tail)
+#   remote backend provision-api-key  generate an API-key locally and provision just its hash on the server
+#   remote backend sql [SQL]          run SQL on the backend database with its own datasource credentials;
+#                                     with SQL runs that statement, otherwise opens psql or reads SQL from stdin
+#   remote backend sql-tunnel [PORT]  forward a local port (default 15432) to the backend database and print
+#                                     the connection parameters, so a local SQL GUI can edit it (Ctrl-C closes)
+#
+# Login-monitor (systemd user units: login-monitoring-check.{service,timer}):
+#   remote login-monitor deploy       install (or refresh) the monitoring timer (see notes)
+#   remote login-monitor run          run the monitoring check once now
+#   remote login-monitor start        start the monitoring timer (resume monitoring)
+#   remote login-monitor stop         stop the monitoring timer (pause monitoring)
+#   remote login-monitor restart      restart the monitoring timer
+#   remote login-monitor status       show the timer status, schedule and last check result
+#   remote login-monitor alerts       list the alerts currently active (from the monitor's state files)
+#   remote login-monitor enable       enable and start the monitoring timer (--now)
+#   remote login-monitor disable      disable and stop the monitoring timer (--now)
+#   remote login-monitor log [ARGS]   tail the monitoring log (extra ARGS go to tail)
+#
+# Host:
+#   remote ssh [CMD]                  open a shell or run CMD on the server
+#
+# Notes: `login-monitor deploy` reads its secrets and the optional interval
+# from ~/.environment on the server; see doc/environment-variables.md.
+#
+# This deploys the local working state to a test stage for unmerged changes only;
+# regular releases go via the CI/CD pipeline.
 set -euo pipefail
 
 HSADMINNG_DEPLOY_HOST=${HSADMINNG_DEPLOY_HOST:-'hsh11-backend@hsh11.hostsharing.net'}
 JAR_NAME='hsadmin-ng-0.0.1-SNAPSHOT.jar'
+STARTUP_LOG_TIMEOUT_SECONDS=300
+STARTUP_SETTLE_SECONDS=2 # systemd needs a moment until is-active reflects a just-failed startup
 
 # prints the whole header comment (all # lines up to `set -euo pipefail`)
 usage() {
@@ -47,6 +68,35 @@ step() {
     fi
 }
 
+# the systemd user unit a target's lifecycle verbs (start/stop/...) act on;
+# for the login-monitor this is the timer, while `run` triggers the .service
+unitOf() {
+    case "$1" in
+        backend)       echo backend ;;
+        login-monitor) echo login-monitoring-check.timer ;;
+    esac
+}
+
+# thin passthrough for the systemd lifecycle verbs, uniform across both targets
+lifecycle() { # $1=target  $2=verb
+    local unit; unit=$(unitOf "$1")
+    case "$2" in
+        enable|disable) ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user "$2" --now "$unit" ;;
+        status)         exec ssh -t "$HSADMINNG_DEPLOY_HOST" systemctl --user status "$unit" ;;
+        *)              ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user "$2" "$unit" ;;
+    esac
+}
+
+# tails a remote logfile; $1 is the logfile, remaining args are passed to tail
+cmdLog() {
+    local logfile=$1; shift
+    exec ssh -t "$HSADMINNG_DEPLOY_HOST" tail -f "$@" "$logfile"
+}
+
+cmdSsh() {
+    exec ssh -t "$HSADMINNG_DEPLOY_HOST" "$@"
+}
+
 # Builds the application from the local working tree and deploys the jar to the
 # backend server; unlike the former push-and-build-on-the-server flow, uncommitted
 # changes are thus INCLUDED in the deployment.
@@ -54,7 +104,7 @@ step() {
 # The uploaded jar is activated by an atomic rename, so the running service keeps
 # its old jar until the restart.
 # Prints one line per step; full command output is only shown if a step fails.
-cmdDeploy() {
+cmdBackendDeploy() {
     cd "$(dirname "$0")/.." # the local build needs to run in the repo root
 
     local branch
@@ -115,6 +165,12 @@ cmdDeploy() {
         scp -q "build/libs/$JAR_NAME" "$HSADMINNG_DEPLOY_HOST:backend/$JAR_NAME.upload"
     step "activating the uploaded jar" \
         ssh "$HSADMINNG_DEPLOY_HOST" mv "backend/$JAR_NAME.upload" "backend/$JAR_NAME"
+
+    # remember the log size before the restart, so the startup can be streamed from exactly
+    # the first new line and stopped at the "Started" marker further down
+    local logOffset
+    logOffset=$(ssh "$HSADMINNG_DEPLOY_HOST" "stat -c%s var/backend.log 2>/dev/null || echo 0")
+
     step "restarting the backend service" \
         ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user restart backend
 
@@ -127,28 +183,27 @@ cmdDeploy() {
         exit 1
     fi
 
-    # wait until the application answers (startup incl. Liquibase takes a while)
-    # and report the version info it actually runs with
-    ssh "$HSADMINNG_DEPLOY_HOST" 'set -a; . ~/backend/.environment; set +a
-        for i in $(seq 1 30); do
+    # stream the startup log from where it stood right before the restart and stop as soon as
+    # the application logs that it has (or has failed to) started, so the end of the — possibly
+    # lengthy, Liquibase-included — startup is easy to notice; the timeout guards against an
+    # indefinite hang if neither marker ever appears, and sed exiting closes the pipe so tail stops
+    echo "waiting for the backend to finish starting (Ctrl-C to stop watching the log):"
+    ssh -t "$HSADMINNG_DEPLOY_HOST" \
+        "timeout $STARTUP_LOG_TIMEOUT_SECONDS tail -f -c +$((logOffset + 1)) var/backend.log |
+            sed -E '/Started HsadminNgApplication|APPLICATION FAILED TO START/q'" || true
+
+    sleep $STARTUP_SETTLE_SECONDS
+    if ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --quiet is-active backend; then
+        # the app answers now, so report the version it actually runs with
+        ssh "$HSADMINNG_DEPLOY_HOST" 'set -a; . ~/backend/.environment; set +a
             info=$(curl -s "http://localhost:${MANAGEMENT_SERVER_PORT:-8081}/actuator/info") && [ -n "$info" ] &&
-                { echo "running version info: $info"; exit 0; }
-            sleep 2
-        done
-        echo "WARNING: the application did not answer on /actuator/info within 60s" >&2
-        exit 1'
-
-    echo "deployment of branch '$branch' finished"
-    echo "observing log (Ctrl-C to cancel):"
-    cmdLog
-}
-
-cmdLog() {
-    exec ssh -t "$HSADMINNG_DEPLOY_HOST" tail -f "$@" var/backend.log
-}
-
-cmdSsh() {
-    exec ssh -t "$HSADMINNG_DEPLOY_HOST" "$@"
+                echo "running version info: $info"' || true
+        echo "deployment of branch '$branch' finished, the backend has started"
+    else
+        echo "ERROR: the backend service is not active after startup:" >&2
+        ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --no-pager --lines=25 status backend >&2 || true
+        exit 1
+    fi
 }
 
 # Generates a new API-key locally and provisions just its SHA-256 hash on the server
@@ -222,7 +277,7 @@ REMOTE_SCRIPT
             ;;
         3)  exit 1
             ;;
-        *)  echo "WARNING: could not confirm the provisioning, check with '$0 log';" >&2
+        *)  echo "WARNING: could not confirm the provisioning, check with '$0 backend log';" >&2
             echo "if the bootstrap succeeds on a later start, this is the matching API-key:" >&2
             echo
             echo "    export HSADMINNG_API_KEY=$apiKey"
@@ -231,12 +286,91 @@ REMOTE_SCRIPT
     esac
 }
 
+# Runs SQL against the backend database using the backend service's own datasource
+# credentials from ~/backend/.environment (SPRING_DATASOURCE_*, falling back to the
+# application.yml defaults). With a SQL argument it runs that single statement
+# (ON_ERROR_STOP, unaligned pipe-separated output); with none it opens an interactive
+# psql session, or pipes SQL from stdin when stdin is not a terminal. The JDBC-URL is
+# reduced to a libpq URI: the `jdbc:` prefix and any `?...` query-parameters (e.g.
+# currentSchema) are stripped, so address objects schema-qualified (e.g. rbac.grant).
+cmdBackendSql() {
+    if [ "$#" -gt 0 ]; then
+        ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$*" <<'REMOTE_SCRIPT'
+set -uo pipefail
+sql=$1
+set -a; . "$HOME/backend/.environment"; set +a
+url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
+url=${url#jdbc:}; url=${url%%\?*}
+psql --version >&2 || { echo "no working psql on $(hostname)" >&2; exit 127; }
+# -X ignores any server-side ~/.psqlrc; -A gives unaligned output (no border/separator lines)
+PGPASSWORD=${SPRING_DATASOURCE_PASSWORD:-password} \
+    psql "$url" -U "${SPRING_DATASOURCE_USERNAME:-postgres}" -X -A -P pager=off -v ON_ERROR_STOP=1 -c "$sql"
+rc=$?
+[ "$rc" -ne 0 ] && echo "psql exited with code $rc" >&2
+exit "$rc"
+REMOTE_SCRIPT
+        return
+    fi
+
+    # no SQL argument: keep the remote script as a single ssh argument so stdin stays
+    # free for an interactive session (tty) or for SQL piped in (no tty)
+    local ttyOpt=-t; [ -t 0 ] || ttyOpt=
+    exec ssh $ttyOpt "$HSADMINNG_DEPLOY_HOST" '
+        set -euo pipefail
+        set -a; . "$HOME/backend/.environment"; set +a
+        url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
+        url=${url#jdbc:}; url=${url%%\?*}
+        PGPASSWORD=${SPRING_DATASOURCE_PASSWORD:-password} \
+            exec psql "$url" -U "${SPRING_DATASOURCE_USERNAME:-postgres}" -X
+    '
+}
+
+# Forwards a local port to the backend database over SSH so it can be edited with a
+# local SQL GUI (or local psql). Reads the DB host/port/name/credentials from the
+# backend's ~/backend/.environment (SPRING_DATASOURCE_*), prints the local connection
+# parameters, then holds the tunnel in the foreground until Ctrl-C. The credentials are
+# printed to stderr (this terminal only), as a local GUI needs them.
+cmdBackendSqlTunnel() {
+    local localPort=${1:-15432}
+
+    # one round trip to resolve the datasource host/port/name/user/password
+    local params
+    params=$(ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
+set -euo pipefail
+set -a; . "$HOME/backend/.environment"; set +a
+url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
+u=${url#jdbc:postgresql://}; hostport=${u%%/*}; rest=${u#*/}
+printf '%s\n' \
+    "${hostport%%:*}" \
+    "$([ "$hostport" = "${hostport##*:}" ] && echo 5432 || echo "${hostport##*:}")" \
+    "${rest%%\?*}" \
+    "${SPRING_DATASOURCE_USERNAME:-postgres}" \
+    "${SPRING_DATASOURCE_PASSWORD:-password}"
+REMOTE_SCRIPT
+    )
+    local dbHost dbPort dbName dbUser dbPass
+    { read -r dbHost; read -r dbPort; read -r dbName; read -r dbUser; read -r dbPass; } <<<"$params"
+
+    cat >&2 <<INFO
+tunnel: localhost:$localPort -> $dbHost:$dbPort (via $HSADMINNG_DEPLOY_HOST)
+connect your SQL GUI (or: psql "postgresql://$dbUser@localhost:$localPort/$dbName") to:
+    host:     localhost
+    port:     $localPort
+    database: $dbName
+    username: $dbUser
+    password: $dbPass
+keep this command running; press Ctrl-C to close the tunnel
+INFO
+
+    exec ssh -N -L "$localPort:$dbHost:$dbPort" "$HSADMINNG_DEPLOY_HOST"
+}
+
 # Installs (or refreshes) a systemd user timer on the backend server which runs
 # the local version of tools/login-monitoring-check every 5 minutes with Matrix
 # alerting. The secrets are NOT deployed by this command: ~/.environment on the server
 # must already contain HSADMINNG_LOGIN_MONITOR_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL
 # (plain VAR=value lines, systemd EnvironmentFile format).
-cmdInstallMonitoring() {
+cmdMonitorDeploy() {
     local toolsDir
     toolsDir=$(cd "$(dirname "$0")" && pwd)
 
@@ -327,14 +461,114 @@ systemctl --user list-timers login-monitoring-check.timer --no-pager
 REMOTE_SCRIPT
 }
 
-command=${1:-}
+# Runs the monitoring check once now (the oneshot .service, not the timer) and
+# reports the last log line; on failure it shows the tail of the log.
+cmdMonitorRun() {
+    if ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user start login-monitoring-check.service </dev/null; then
+        ssh "$HSADMINNG_DEPLOY_HOST" tail -1 var/login-monitoring.log
+    else
+        echo "check FAILED:" >&2
+        ssh "$HSADMINNG_DEPLOY_HOST" tail -25 var/login-monitoring.log >&2
+        exit 1
+    fi
+}
+
+# Lists the alerts the monitor currently holds active. An alert is active exactly while its
+# state file exists (the checker removes it on RESOLVED), so this reads the three state files
+# the checker uses and reports each active one with since/count/next-due. The state-file path
+# and backoff are resolved from ~/.environment just as the checker's defaults do.
+cmdMonitorAlerts() {
+    ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
+set -uo pipefail
+[ -f .environment ] && { set -a; . ./.environment; set +a; }
+
+stateFile=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
+alarmRepeat=${HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT:-1,2,4,8,16,24}
+now=$(date +%s)
+found=0
+
+fmtAgo() { # $1=seconds
+    local s=$1
+    if   [ "$s" -ge 86400 ]; then printf '%dd%dh' $((s/86400)) $((s%86400/3600))
+    elif [ "$s" -ge 3600 ];  then printf '%dh%dm' $((s/3600)) $((s%3600/60))
+    elif [ "$s" -ge 60 ];    then printf '%dm%ds' $((s/60)) $((s%60))
+    else printf '%ds' "$s"; fi
+}
+
+report() { # $1=label  $2=stateFile
+    local label=$1 file=$2
+    [ -f "$file" ] || return 0
+    found=1
+    local FIRST_FAILURE_TS='' LAST_ALERT_TS=0 ALERT_COUNT=0
+    . "$file"
+    local gaps; IFS=, read -ra gaps <<<"$alarmRepeat"
+    local idx=$(( ALERT_COUNT <= ${#gaps[@]} ? ALERT_COUNT - 1 : ${#gaps[@]} - 1 ))
+    [ "$idx" -lt 0 ] && idx=0
+    local dueTs=$(( LAST_ALERT_TS + gaps[idx] * 3600 ))
+    printf '%-14s active since %s (%s ago), %s alert(s), last %s, next due %s\n' \
+        "$label" \
+        "$(date -d "@$FIRST_FAILURE_TS" '+%F %T')" "$(fmtAgo $(( now - FIRST_FAILURE_TS )))" \
+        "$ALERT_COUNT" \
+        "$(date -d "@$LAST_ALERT_TS" '+%F %T')" \
+        "$(date -d "@$dueTs" '+%F %T')"
+}
+
+report "login/backend" "$stateFile"
+report "latency (SLOW)" "${stateFile%.state}.slow.state"
+report "keycloak-sync"  "${stateFile%.state}.sync.state"
+
+[ "$found" -eq 0 ] && echo "no active alerts"
+exit 0
+REMOTE_SCRIPT
+}
+
+# The bare timer status says little, so also show the schedule and the last check result.
+cmdMonitorStatus() {
+    exec ssh -t "$HSADMINNG_DEPLOY_HOST" bash -c '
+        systemctl --user status login-monitoring-check.timer --no-pager || true
+        echo
+        systemctl --user list-timers login-monitoring-check.timer --no-pager || true
+        echo "last check:"
+        tail -1 var/login-monitoring.log 2>/dev/null || echo "  (no log yet)"
+    '
+}
+
+badAction() { # $1=target  $2=action
+    if [ -z "$2" ]; then
+        echo "ERROR: target '$1' needs an action" >&2
+    else
+        echo "ERROR: unknown action '$2' for target '$1'" >&2
+    fi
+    usage >&2
+    exit 1
+}
+
+target=${1:-}
 shift || true
-case "$command" in
-    deploy) cmdDeploy "$@" ;;
-    log)    cmdLog "$@" ;;
-    ssh)    cmdSsh "$@" ;;
-    provisioning-api-key) cmdProvisioningApiKey "$@" ;;
-    install-monitoring) cmdInstallMonitoring "$@" ;;
+case "$target" in
+    backend)
+        action=${1:-}; shift || true
+        case "$action" in
+            deploy)                                    cmdBackendDeploy "$@" ;;
+            log)                                       cmdLog var/backend.log "$@" ;;
+            provision-api-key)                         cmdProvisioningApiKey "$@" ;;
+            sql)                                       cmdBackendSql "$@" ;;
+            sql-tunnel)                                cmdBackendSqlTunnel "$@" ;;
+            start|stop|restart|status|enable|disable)  lifecycle backend "$action" ;;
+            *)                                         badAction backend "$action" ;;
+        esac ;;
+    login-monitor)
+        action=${1:-}; shift || true
+        case "$action" in
+            deploy)                             cmdMonitorDeploy "$@" ;;
+            run)                                cmdMonitorRun ;;
+            log)                                cmdLog var/login-monitoring.log "$@" ;;
+            status)                             cmdMonitorStatus ;;
+            alerts)                             cmdMonitorAlerts ;;
+            start|stop|restart|enable|disable)  lifecycle login-monitor "$action" ;;
+            *)                                  badAction login-monitor "$action" ;;
+        esac ;;
+    ssh)          cmdSsh "$@" ;;
     ''|-h|--help) usage ;;
-    *)      echo "ERROR: unknown command '$command'" >&2; usage >&2; exit 1 ;;
+    *)            echo "ERROR: unknown target '$target'" >&2; usage >&2; exit 1 ;;
 esac

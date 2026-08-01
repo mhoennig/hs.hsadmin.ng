@@ -1,12 +1,101 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-APIKEY provisioning
-POST /api/rbac/subjects \
-  -H 'Content-Type: application/json' --data-binary @- <<JSON
-{
+if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
+    source tools/lib/unindented.sh
+    unindented <<'HELP'
+        usage: tools/create-api-key-for-keycloak-sync [subject-name]
+
+        Creates an API_KEY subject for the Keycloak-sync and grants it the global-admin role,
+        in one step, then prints the clear-text API-key (once!) to stdout.
+
+        The subject is created with the endpoint-scope 'rbac.subjects:sync', so the key may only
+        call the subject-sync endpoints; the granted global-admin role authorizes those calls.
+        Without an argument the subject-name defaults to 'hsadminng.keycloak.sync'.
+
+        Requires an authenticated global-admin session, established beforehand via
+        'APIKEY <name>' (API-key) or 'LOGIN' (JWT); see .aliases. Also honors HSADMINNG_API_BASE_URL.
+
+        The clear-text API-key is a secret, returned only in this creation response and never
+        retrievable again -- capture it, e.g.:
+          apiKey=$(tools/create-api-key-for-keycloak-sync)
+HELP
+    exit 0
+fi
+
+# run from the repository root, because the HTTP function calls `tools/http` via a relative path
+cd "$(dirname "$0")/.." || exit 1
+
+subjectName="${1:-hsadminng.keycloak.sync}"
+scope="rbac.subjects:sync"
+globalAdminRole="rbac.global#global:ADMIN"
+
+# shellcheck source=/dev/null
+source .aliases
+
+if [ -z "${HSADMINNG_API_KEY:-}" ] && [ -z "${HSADMINNG_JWT_BEARER:-}" ]; then
+    echo "ERROR: not authenticated; run APIKEY <name> or LOGIN as a global-admin first (see .aliases)" >&2
+    exit 1
+fi
+
+echo "creating API_KEY subject '$subjectName' with scope '$scope' ..." >&2
+createRc=0
+created=$(
+  HTTP POST /api/rbac/subjects <<JSON
+  {
     "type": "API_KEY",
-    "name": "hsadminng.keycloak.sync",
-    "scopes": [ "rbac.subjects:sync" ]
-}
+    "name": "$subjectName",
+    "scopes": [ "$scope" ]
+  }
 JSON
+) || createRc=$?
+if [ "$createRc" -ne 0 ]; then
+    if grep -Eq '"statusCode" *: *409' <<<"$created"; then
+        echo "ERROR: subject '$subjectName' already exists; its API-key cannot be recovered -- delete it first" >&2
+    else
+        echo "ERROR: could not create the API_KEY subject:" >&2
+        printf '%s\n' "$created" >&2
+    fi
+    exit 1
+fi
 
+subjectUuid=$(jq -r '.uuid // empty' <<<"$created")
+apiKey=$(jq -r '.apiKey // empty' <<<"$created")
+if [ -z "$subjectUuid" ] || [ -z "$apiKey" ]; then
+    echo "ERROR: creation response lacked uuid or apiKey:" >&2
+    printf '%s\n' "$created" >&2
+    exit 1
+fi
+
+echo "resolving the '$globalAdminRole' role UUID ..." >&2
+globalAdminRoleUriEncoded="${globalAdminRole/\#/%23}"
+roleUuid=$(
+  HTTP GET "/api/rbac/roles?name=$globalAdminRoleUriEncoded" \
+  | jq -r '.[0].uuid // empty'
+)
+if [ -z "$roleUuid" ]; then
+    echo "ERROR: could not resolve the '$globalAdminRole' role UUID" >&2
+    exit 1
+fi
+
+# the DB grants only if exactly the granted role is assumed, thus assume it via the header
+echo "granting the global-admin role to '$subjectName' ..." >&2
+grantRc=0
+grantResponse=$(
+  HTTP POST /api/rbac/grants \
+    -H "Hostsharing-Assumed-Roles: $globalAdminRole" <<JSON
+  {
+    "grantedRole.uuid": "$roleUuid",
+    "granteeSubject.uuid": "$subjectUuid"
+  }
+JSON
+) || grantRc=$?
+if [ "$grantRc" -ne 0 ]; then
+    echo "ERROR: created subject $subjectUuid but could not grant the global-admin role:" >&2
+    printf '%s\n' "$grantResponse" >&2
+    exit 1
+fi
+
+echo "created API_KEY subject $subjectUuid ('$subjectName') and granted it the global-admin role." >&2
+echo "clear-text API-key (shown only once) follows on stdout:" >&2
+printf '%s\n' "$apiKey"

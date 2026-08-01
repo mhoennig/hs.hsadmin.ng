@@ -10,6 +10,8 @@ RUN apt-get update && \
         postgresql-client \
         bind9-utils \
         docker.io \
+        jq \
+        python3 \
         pandoc \
         pandoc-plantuml-filter \
         texlive-latex-base \

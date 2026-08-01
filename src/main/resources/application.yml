@@ -72,7 +72,7 @@ hsadminng:
     postgres:
         leakproof:
     cors:
-        allowed-origin: ${ALLOWED_ORIGINS} # for compatibility with env-based CORS-configuration
+        allowed-origins: ${ALLOWED_ORIGINS:*} # for compatibility with env-based CORS-configuration
     security:
         # SHA-256 hash (hex) of the API-key for provisioning the global-admin API_KEY subject,
         # e.g. generated via `printf '%s' "$apiKey" | sha256sum`, see ProvisioningApiKeyBootstrap

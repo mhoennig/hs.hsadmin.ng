@@ -3,7 +3,10 @@
 # Monitoring-check for the Keycloak-OIDC integration of a deployed hsadmin-NG backend.
 #
 # Performs an automated Keycloak login as a dedicated, unprivileged monitoring user
-# and verifies that the backend accepts the resulting JWT via GET /api/rbac/context.
+# and verifies that the backend accepts the resulting JWT via GET /api/rbac/context,
+# checking that the user stays unprivileged (no global-admin, roles, groups, or grants).
+# It additionally verifies, via the public GET /api/rbac/subjects/last-sync, that the
+# Keycloak subject-sync reported a run within the configured max age (default 5min).
 # The monitoring user only exists as a Keycloak user plus a matching rbac USER subject
 # (same name and UUID); it has neither an account nor any role grants, so its
 # credentials can be stored on an external monitoring host without a security risk.
@@ -24,20 +27,39 @@
 #   HSADMINNG_KEYCLOAK_ISSUER         default: https://login.ng.hostsharing.net/realms/hs
 #   HSADMINNG_KEYCLOAK_CLIENT_ID      default: hs-admin-web
 #   HSADMINNG_KEYCLOAK_REDIRECT_URI   default: https://testui.ng.hostsharing.net/
+#   HSADMINNG_LOGIN_MONITOR_SLOW_WARNING_SECONDS
+#                                     a successful but slower check raises a latency
+#                                     warning above this many seconds, default: 2
+#   HSADMINNG_LOGIN_MONITOR_SYNC_KEY_NAME
+#                                     API-key subject-name whose sync-runs are checked via
+#                                     GET /api/rbac/subjects/last-sync, default: hsadminng.keycloak.sync
+#   HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS
+#                                     fail if the last keycloak-sync run is older than this
+#                                     many seconds; 0 disables the sync check, default: 300
+#
+# Options:
+#   -v, --verbose           prints the used username and password to stderr;
+#                           for local debugging only, never in unattended runs
 #
 # Optional Matrix alerting:
-#   --matrix-webhook <url>  additionally posts any FAILED result to this webhook,
+#   --matrix-webhook <url>  additionally posts any non-OK result to this webhook,
 #                           e.g. a matrix-hookshot generic webhook URL
 #   --matrix-webhook        same, with the URL taken from HSADMINNG_MATRIX_WEBHOOK_URL;
 #                           prefer this on shared hosts to keep the secret webhook URL
 #                           out of the process list
 #
-#   While a failure persists, repeated alerts are throttled with a backoff:
-#   the first FAILED result is posted immediately, repetitions only after the
-#   intervals (in hours) listed in HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT
-#   (default 1,2,4,8,16,24), with the last interval repeating indefinitely.
-#   Once the check succeeds again, a RESOLVED message is posted.
-#   The active-alarm state is kept in HSADMINNG_LOGIN_MONITOR_STATE_FILE,
+#   Messages are colour-coded and icon-tagged by severity: ✅ green RESOLVED,
+#   ⚠️ amber SLOW (latency warning), 🚨 red FAILED (login, backend, or sync error), and
+#   🆘 dark-red CRITICAL with an @room ping if the monitoring user unexpectedly
+#   gained privileges (a security incident).
+#
+#   While a problem persists, repeated alerts are throttled with a backoff:
+#   the first result is posted immediately, repetitions only after the intervals
+#   (in hours) listed in HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT (default 1,2,4,8,16,24),
+#   with the last interval repeating indefinitely. Once the problem clears, a
+#   RESOLVED message is posted. Latency warnings and the sync-freshness alarm back off
+#   independently from the login/backend failure alarm. The active-alarm state is kept next to
+#   HSADMINNG_LOGIN_MONITOR_STATE_FILE,
 #   default: ~/.local/state/login-monitoring-check.state ($XDG_STATE_HOME is honored).
 
 set -o pipefail
@@ -46,10 +68,6 @@ function failed() {
     echo "FAILED: $*"
     exit 1
 }
-
-HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-https://backend.ng.hostsharing.net}
-[ -n "$HSADMINNG_JWT_USERNAME" ] || failed "HSADMINNG_JWT_USERNAME is not set"
-[ -n "$HSADMINNG_JWT_PASSWORD" ] || failed "HSADMINNG_JWT_PASSWORD is not set"
 
 KEYCLOAK_ISSUER="${HSADMINNG_KEYCLOAK_ISSUER:-https://login.ng.hostsharing.net/realms/hs}"
 CLIENT_ID="${HSADMINNG_KEYCLOAK_CLIENT_ID:-hs-admin-web}"
@@ -82,16 +100,38 @@ function jsonString() {
     fi
 }
 
-# posts $1 to the Matrix webhook; a no-op unless --matrix-webhook was given
+# escapes $1 for use inside a Matrix HTML formatted_body
+function htmlEscape() {
+    local s=${1//&/&amp;}
+    s=${s//</&lt;}
+    s=${s//>/&gt;}
+    printf '%s' "$s"
+}
+
+# posts $1 to the Matrix webhook, styled by the severity $2 (ok|warn|alert|critical,
+# default info); a no-op unless --matrix-webhook was given. Both a plain-text and an
+# HTML body are sent, so colour-capable clients (e.g. Element) show the severity colour
+# while others fall back. Critical prepends @room to notify the whole room.
 function sendMatrixMessage() {
     [ -n "$MATRIX_WEBHOOK_URL" ] || return 0
+    local body=$1 icon color mention=''
+    case "${2:-info}" in
+        ok)       icon='✅'; color='#2e7d32' ;;
+        warn)     icon='⚠️'; color='#f9a825' ;;
+        alert)    icon='🚨'; color='#c62828' ;;
+        critical) icon='🆘'; color='#7f0000'; mention='@room ' ;;
+        *)        icon='ℹ️'; color='#1f6feb' ;;
+    esac
+    local footer="backend: ${HSADMINNG_API_BASE_URL:-not configured yet}, checked from: ${USER:-$(id -un)}@${HOSTNAME:-$(hostname)}"
     # the two trailing spaces are Markdown hard line breaks, so that Matrix renders multiple lines
-    local text="$1"$'  \n'"backend: ${HSADMINNG_API_BASE_URL:-not configured yet}, checked from: ${USER:-$(id -un)}@${HOSTNAME:-$(hostname)}"
+    local text="${mention}"$'  \n'"$icon $body"$'  \n'"$footer"
+    local html="${mention}<br><font color=\"$color\">$icon $(htmlEscape "$body")</font><br>$(htmlEscape "$footer")"
+    html=${html//$'\n'/<br>}
     # The secret webhook URL is passed as a curl config via stdin (--config -)
     # to keep it out of curl's process-list entry, like the password in keycloakLogin.
     printf 'url = "%s"\n' "$MATRIX_WEBHOOK_URL" |
         "${CURL[@]}" --config - -X POST -H 'Content-Type: application/json' \
-            -d "{\"username\": \"login-monitoring-check\", \"text\": $(jsonString "$text")}" \
+            -d "{\"username\": \"login-monitoring-check\", \"text\": $(jsonString "$text"), \"html\": $(jsonString "$html")}" \
             >/dev/null || {
         echo "ERROR: could not send the message to the Matrix webhook" >&2
         return 1
@@ -103,15 +143,16 @@ function formatDuration() {
     printf '%dh%02dm' $(( $1 / 3600 )) $(( $1 % 3600 / 60 ))
 }
 
-# Posts the FAILED alert, throttled via the state file: the first failure alerts
-# immediately, repetitions only after the ALARM_REPEAT interval which applies to
-# the current alert count. If sending fails, the state is not updated, so the
-# next run retries.
-function sendMatrixAlert() {
+# Posts a $1-severity alert for the problem tracked in state file $2, with message $3,
+# throttled via that state file: the first occurrence alerts immediately, repetitions
+# only after the ALARM_REPEAT interval which applies to the current alert count. If
+# sending fails, the state is not updated, so the next run retries.
+function sendThrottledAlert() {
     [ -n "$MATRIX_WEBHOOK_URL" ] || return 0
+    local severity=$1 stateFile=$2 message=$3
     local now FIRST_FAILURE_TS='' LAST_ALERT_TS=0 ALERT_COUNT=0
     now=$(date +%s)
-    [ ! -f "$STATE_FILE" ] || source "$STATE_FILE"
+    [ ! -f "$stateFile" ] || source "$stateFile"
     if [ "$ALERT_COUNT" -gt 0 ]; then
         local gaps=()
         IFS=, read -ra gaps <<<"$ALARM_REPEAT"
@@ -121,32 +162,49 @@ function sendMatrixAlert() {
             echo "Matrix alert #$(( ALERT_COUNT + 1 )) suppressed by HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT until $(date -d "@$dueTs" '+%F %T')" >&2
             return 0
         fi
-        sendMatrixMessage "$1"$'  \n'"(alert #$(( ALERT_COUNT + 1 )), failing since $(date -d "@$FIRST_FAILURE_TS" '+%F %T') = $(formatDuration $(( now - FIRST_FAILURE_TS ))))" ||
+        sendMatrixMessage "$message"$'  \n'"(alert #$(( ALERT_COUNT + 1 )), ongoing since $(date -d "@$FIRST_FAILURE_TS" '+%F %T') = $(formatDuration $(( now - FIRST_FAILURE_TS ))))" "$severity" ||
             return 0
     else
         FIRST_FAILURE_TS=$now
-        sendMatrixMessage "$1" || return 0
+        sendMatrixMessage "$message" "$severity" || return 0
     fi
-    mkdir -p "$(dirname "$STATE_FILE")"
+    mkdir -p "$(dirname "$stateFile")"
     printf 'FIRST_FAILURE_TS=%s\nLAST_ALERT_TS=%s\nALERT_COUNT=%s\n' \
-            "$FIRST_FAILURE_TS" "$now" "$(( ALERT_COUNT + 1 ))" >"$STATE_FILE.tmp" &&
-        mv "$STATE_FILE.tmp" "$STATE_FILE"
+            "$FIRST_FAILURE_TS" "$now" "$(( ALERT_COUNT + 1 ))" >"$stateFile.tmp" &&
+        mv "$stateFile.tmp" "$stateFile"
 }
 
-# posts the all-clear if a FAILED alarm is active in the state file, and clears it;
-# if sending fails, the state is kept, so the next successful run retries
+# posts the all-clear $2 if an alarm is active in state file $1, and clears it;
+# if sending fails, the state is kept, so the next healthy run retries
 function sendMatrixResolved() {
-    [ -n "$MATRIX_WEBHOOK_URL" ] && [ -f "$STATE_FILE" ] || return 0
+    [ -n "$MATRIX_WEBHOOK_URL" ] && [ -f "$1" ] || return 0
+    local stateFile=$1 resolved=$2
     local now FIRST_FAILURE_TS='' LAST_ALERT_TS=0 ALERT_COUNT=0
     now=$(date +%s)
-    source "$STATE_FILE"
-    sendMatrixMessage "RESOLVED: $HSADMINNG_JWT_USERNAME can log in again, after $ALERT_COUNT alert(s) since $(date -d "@$FIRST_FAILURE_TS" '+%F %T') = $(formatDuration $(( now - FIRST_FAILURE_TS )))" &&
-        rm -f "$STATE_FILE"
+    source "$stateFile"
+    sendMatrixMessage "$resolved (after $ALERT_COUNT alert(s) since $(date -d "@$FIRST_FAILURE_TS" '+%F %T') = $(formatDuration $(( now - FIRST_FAILURE_TS ))))" ok &&
+        rm -f "$stateFile"
 }
 
 function failed() {
     echo "FAILED: $*"
-    sendMatrixAlert "FAILED: $*"
+    sendThrottledAlert alert "$STATE_FILE" "FAILED: $*"
+    exit 1
+}
+
+# like failed(), but a critical security alert (🆘, @room); shares the failure state
+# file, so repetitions follow the same ALARM_REPEAT backoff
+function critical() {
+    echo "CRITICAL: $*"
+    sendThrottledAlert critical "$STATE_FILE" "CRITICAL: $*"
+    exit 1
+}
+
+# like failed(), but for the independent keycloak-sync freshness check; its own state
+# file keeps its backoff separate from the login/backend failure alarm
+function syncFailed() {
+    echo "FAILED: $*"
+    sendThrottledAlert alert "$SYNC_STATE_FILE" "SYNC-FAILED: $*"
     exit 1
 }
 
@@ -157,10 +215,32 @@ if ! [[ "$ALARM_REPEAT" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
     ALARM_REPEAT=1,2,4,8,16,24
 fi
 STATE_FILE=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
+# a separate state file, so the latency-warning backoff never interferes with the
+# login/backend failure alarm
+WARN_STATE_FILE="${STATE_FILE%.state}.slow.state"
+# and another, so the sync-freshness backoff is likewise independent
+SYNC_STATE_FILE="${STATE_FILE%.state}.sync.state"
+# a successful but slower-than-this (seconds) check raises a latency warning
+SLOW_WARNING_SECONDS=${HSADMINNG_LOGIN_MONITOR_SLOW_WARNING_SECONDS:-2}
+if ! [[ "$SLOW_WARNING_SECONDS" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    echo "WARNING: ignoring invalid HSADMINNG_LOGIN_MONITOR_SLOW_WARNING_SECONDS '$SLOW_WARNING_SECONDS', using 2" >&2
+    SLOW_WARNING_SECONDS=2
+fi
+# the API-key subject-name whose sync-runs are monitored, and the max tolerated age (0 disables)
+SYNC_KEY_NAME=${HSADMINNG_LOGIN_MONITOR_SYNC_KEY_NAME:-hsadminng.keycloak.sync}
+SYNC_MAX_AGE_SECONDS=${HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS:-300}
+if ! [[ "$SYNC_MAX_AGE_SECONDS" =~ ^[0-9]+$ ]]; then
+    echo "WARNING: ignoring invalid HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS '$SYNC_MAX_AGE_SECONDS', using 300" >&2
+    SYNC_MAX_AGE_SECONDS=300
+fi
 
 MATRIX_WEBHOOK_URL=
+VERBOSE=
 while [ $# -gt 0 ]; do
     case $1 in
+        -v|--verbose)
+            VERBOSE=1
+            ;;
         --matrix-webhook=*)
             MATRIX_WEBHOOK_URL=${1#*=}
             ;;
@@ -175,7 +255,7 @@ while [ $# -gt 0 ]; do
                 failed "--matrix-webhook needs a URL argument or HSADMINNG_MATRIX_WEBHOOK_URL set"
             ;;
         *)
-            failed "unknown argument: $1 (usage: $0 [--matrix-webhook [<url>]])"
+            failed "unknown argument: $1 (usage: $0 [-v|--verbose] [--matrix-webhook [<url>]])"
             ;;
     esac
     shift
@@ -291,11 +371,27 @@ function keycloakLogin() (
   echo "$ACCESS_TOKEN"
 )
 
-echo "LOGIN $HSADMINNG_JWT_USERNAME at $KEYCLOAK_ISSUER" >&2
+# wall-clock timing helpers: startTimer just before a request, tookFor after its
+# response body was logged, so a SLOW check can be attributed to a single request.
+# tookFor's label omits query parameters and body, and it emits a trailing blank
+# line to visually separate the probed steps.
+function startTimer() { REQUEST_START=$(date +%s.%N); }
+function tookFor() {
+    echo "  took $(awk "BEGIN { printf \"%.3f\", $(date +%s.%N) - $REQUEST_START }")s for $1" >&2
+    echo >&2
+}
+
+checkStart=$(date +%s.%N)
+echo "probing: LOGIN $HSADMINNG_JWT_USERNAME at $KEYCLOAK_ISSUER" >&2
+[ -n "$VERBOSE" ] && echo "  username='$HSADMINNG_JWT_USERNAME' password='$HSADMINNG_JWT_PASSWORD'" >&2
+startTimer
 ACCESS_TOKEN=$(keycloakLogin) && [ -n "$ACCESS_TOKEN" ] ||
     failed "Keycloak login as $HSADMINNG_JWT_USERNAME"
+tookFor LOGIN
 
-echo "GET $HSADMINNG_API_BASE_URL/api/rbac/context" >&2
+contextRequest="GET $HSADMINNG_API_BASE_URL/api/rbac/context"
+echo "probing: $contextRequest" >&2
+startTimer
 response=$("${CURL[@]}" -H "Authorization: Bearer $ACCESS_TOKEN" \
         "$HSADMINNG_API_BASE_URL/api/rbac/context") || {
     # the error response body (captured via --fail-with-body) often explains the cause,
@@ -304,6 +400,20 @@ response=$("${CURL[@]}" -H "Authorization: Bearer $ACCESS_TOKEN" \
     failed "GET /api/rbac/context on $HSADMINNG_API_BASE_URL with the obtained JWT"
 }
 printf '%s\n' "$response" >&2
+tookFor "$contextRequest"
+
+# the context above only reflects *active* authority; a latent, assumable grant would
+# stay invisible there, so additionally fetch the raw grants of the current subject
+grantsRequest="GET $HSADMINNG_API_BASE_URL/api/rbac/grants"
+echo "probing: $grantsRequest" >&2
+startTimer
+grantsResponse=$("${CURL[@]}" -H "Authorization: Bearer $ACCESS_TOKEN" \
+        "$HSADMINNG_API_BASE_URL/api/rbac/grants") || {
+    [ -n "$grantsResponse" ] && printf '%s\n' "$grantsResponse" >&2
+    failed "GET /api/rbac/grants on $HSADMINNG_API_BASE_URL with the obtained JWT"
+}
+printf '%s\n' "$grantsResponse" >&2
+tookFor "$grantsRequest"
 
 # verify that the backend resolved the JWT to the expected subject
 if command -v jq >/dev/null 2>&1; then
@@ -328,14 +438,79 @@ function isEmptyArray() {
     fi
 }
 
-# the monitoring user must stay unprivileged; alert on any role, group, or admin right
+# the monitoring user must stay unprivileged; a gained role, group, or admin right is a
+# security incident, not a mere outage, so it escalates to a critical alert
 if grep -qE '"globalAdmin"[[:space:]]*:[[:space:]]*true' <<<"$response"; then
-    failed "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has global-admin rights"
+    critical "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has global-admin rights"
 fi
 isEmptyArray assumedRoles ||
-    failed "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has assumed roles in /api/rbac/context"
+    critical "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has assumed roles in /api/rbac/context"
 isEmptyArray effectiveGroups ||
-    failed "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has effective groups in /api/rbac/context"
+    critical "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has effective groups in /api/rbac/context"
 
-sendMatrixResolved
-echo "OK: $HSADMINNG_JWT_USERNAME logged in via Keycloak and was accepted by $HSADMINNG_API_BASE_URL"
+# the monitoring user must have zero role grants; any grant — even a latent, assumable one
+# that the context above cannot reveal — is a security incident
+if command -v jq >/dev/null 2>&1; then
+    grantCount=$(jq 'length' <<<"$grantsResponse")
+    grantedRoles=$(jq -r '[.[].grantedRoleIdName // "?"] | join(", ")' <<<"$grantsResponse")
+else
+    # fallback without jq: an empty array is just [] (optional whitespace); anything else
+    # (including an unparseable body) fails the check, so it errs towards alerting
+    grantCount=$([[ "$grantsResponse" =~ ^[[:space:]]*\[[[:space:]]*\][[:space:]]*$ ]] && echo 0 || echo unknown)
+    grantedRoles=$grantsResponse
+fi
+[ "$grantCount" = 0 ] ||
+    critical "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has $grantCount role grant(s): $grantedRoles"
+
+# the login/backend side is healthy -> clear any active failure or critical alarm
+sendMatrixResolved "$STATE_FILE" "RESOLVED: $HSADMINNG_JWT_USERNAME passes all monitoring checks again"
+
+# independently verify that the Keycloak subject-sync is alive: the syncer posts an
+# end-of-run report which the public GET /api/rbac/subjects/last-sync exposes as a bare
+# timestamp (no credentials needed, hence safe to poll from this unprivileged host)
+if [ "$SYNC_MAX_AGE_SECONDS" -eq 0 ]; then
+    syncSummary=" (sync-check disabled)"
+    echo "SYNC CHECK DISABLED (HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS=0)" >&2
+else
+    # query a window wider than the threshold, so the actual age can be reported even for a
+    # moderately stale sync; freshness is then decided locally against the threshold
+    syncQueryWindowSeconds=$(( SYNC_MAX_AGE_SECONDS * 4 ))
+    [ "$syncQueryWindowSeconds" -lt 3600 ] && syncQueryWindowSeconds=3600
+    echo "probing: GET $HSADMINNG_API_BASE_URL/api/rbac/subjects/last-sync?name=$SYNC_KEY_NAME&interval=PT${syncQueryWindowSeconds}S" >&2
+    startTimer
+    lastSyncResponse=$("${CURL[@]}" -G "$HSADMINNG_API_BASE_URL/api/rbac/subjects/last-sync" \
+            --data-urlencode "name=$SYNC_KEY_NAME" \
+            --data-urlencode "interval=PT${syncQueryWindowSeconds}S") || {
+        [ -n "$lastSyncResponse" ] && printf '%s\n' "$lastSyncResponse" >&2
+        syncFailed "GET /api/rbac/subjects/last-sync on $HSADMINNG_API_BASE_URL"
+    }
+    printf '%s\n' "$lastSyncResponse" >&2
+    tookFor "GET $HSADMINNG_API_BASE_URL/api/rbac/subjects/last-sync"
+    if command -v jq >/dev/null 2>&1; then
+        lastSyncAt=$(jq -r '.timestamp // empty' <<<"$lastSyncResponse")
+    else
+        # fallback without jq: "timestamp":"..."; a null or missing value yields empty
+        lastSyncAt=$(grep -o '"timestamp"[[:space:]]*:[[:space:]]*"[^"]*"' <<<"$lastSyncResponse" |
+            head -1 | sed -e 's/.*"\([^"]*\)"$/\1/')
+    fi
+    [ -n "$lastSyncAt" ] ||
+        syncFailed "no keycloak-sync ($SYNC_KEY_NAME) report within the last ${SYNC_MAX_AGE_SECONDS}s; the sync appears to be down"
+    lastSyncEpoch=$(date -d "$lastSyncAt" +%s 2>/dev/null) ||
+        syncFailed "could not parse lastSyncAt '$lastSyncAt' from /api/rbac/subjects/last-sync"
+    syncAgeSeconds=$(( $(date +%s) - lastSyncEpoch ))
+    [ "$syncAgeSeconds" -le "$SYNC_MAX_AGE_SECONDS" ] ||
+        syncFailed "last keycloak-sync ($SYNC_KEY_NAME) ran ${syncAgeSeconds}s ago, exceeding the ${SYNC_MAX_AGE_SECONDS}s threshold"
+    sendMatrixResolved "$SYNC_STATE_FILE" "RESOLVED: keycloak-sync ($SYNC_KEY_NAME) is running again (last report ${syncAgeSeconds}s ago)"
+    echo "SYNC OK: last keycloak-sync ($SYNC_KEY_NAME) report ${syncAgeSeconds}s ago (<= ${SYNC_MAX_AGE_SECONDS}s)" >&2
+    syncSummary=" and keycloak-sync ran ${syncAgeSeconds}s ago"
+fi
+
+echo >&2
+checkDuration=$(awk "BEGIN { printf \"%.3f\", $(date +%s.%N) - $checkStart }")
+if awk "BEGIN { exit !($checkDuration > $SLOW_WARNING_SECONDS) }"; then
+    sendThrottledAlert warn "$WARN_STATE_FILE" "SLOW: the complete check took ${checkDuration}s (warning above ${SLOW_WARNING_SECONDS}s)"
+    echo "OK (SLOW: ${checkDuration}s > ${SLOW_WARNING_SECONDS}s): $HSADMINNG_JWT_USERNAME logged in via Keycloak and was successfully accepted by $HSADMINNG_API_BASE_URL${syncSummary}"
+else
+    sendMatrixResolved "$WARN_STATE_FILE" "RESOLVED: check latency for $HSADMINNG_JWT_USERNAME is back to normal (${checkDuration}s)"
+    echo "OK: $HSADMINNG_JWT_USERNAME logged in via Keycloak and was successfully accepted by $HSADMINNG_API_BASE_URL (${checkDuration}s)${syncSummary}"
+fi

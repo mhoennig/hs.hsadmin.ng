@@ -111,9 +111,9 @@ def main():
     if command != "show" and not issuer:
         fail("the <issuer> (Keycloak environment) must not be empty")
     name = arguments[1] if len(arguments) > 1 else None
-    if name is not None and not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_-]*", name):
-        fail(f"API-key name '{name}' must only contain letters, digits, '-' and '_',"
-             " and must not start with '-'")
+    if name is not None and not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", name):
+        fail(f"API-key name '{name}' must only contain letters, digits, '.', '-' and '_',"
+             " and must not start with '-' or '.'")
 
     properties = read_properties()
     if os.path.exists(PLAIN_FILE):

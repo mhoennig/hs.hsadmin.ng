@@ -9,4 +9,10 @@ components:
             required: false
             schema:
                 type: string
-            description: Semicolon-separated list of roles to assume. The current subject needs to have the right to assume these roles.
+            description: |
+                Semicolon-separated list of roles to assume. The current subject needs to have the right to assume these roles.
+
+                A role is given as `<schema.table>#<object-id>:<ROLE>`, where the object-id part is either the object's idName
+                or its UUID, e.g. `hs_office.person#<uuid>:ADMIN`; the UUID form spares API-clients the idName lookup.
+                
+                WARNING: IdNames are not necessaryly unique, thus, with production data, the UUID form is recommended.

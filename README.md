@@ -85,6 +85,12 @@ Optionally, the following tools are suggested:
 > It's meant to test tool-requirements, not to offer all features for all tools. 
 > And of course, this needs `make` and a Docker-deamon as prerequisites.
 
+We also suggest to install [direnv](https://direnv.net), but it is optional.
+Each time you change into this directory, direnv reads the `.envrc` file
+(after a one-time `direnv allow`).
+This puts the `tools` directory on your `PATH` and sources `.aliases` automatically,
+so you can skip the manual `source .aliases` step below.
+
 If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
     cd your-hsadmin-ng-directory
@@ -170,8 +176,10 @@ Make sure you replace `8080` with the port you used to run the application.
     # visible for the admin of the customer yyy, by assuming that role for this request:
     HTTP GET /api/test/packages -H 'Hostsharing-Assumed-Roles: rbactest.customer#yyy:ADMIN'
     
-    # add a new customer (this is a test-area, not to confuse with a Hostsharing partner)
-    HTTP POST /api/test/customers -H 'Content-Type: application/json' --data-binary @- <<EOF
+    # add a new customer (this is a test-area, not to confuse with a Hostsharing partner);
+    # for POST/PUT/PATCH, HTTP defaults `-H 'Content-Type: application/json' --data-binary @-`,
+    # so a JSON body can just be piped in via a here-document:
+    HTTP POST /api/test/customers <<EOF
     { "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }
     EOF
 
@@ -184,9 +192,12 @@ JSON responses are pretty-printed automatically, if `jq` is installed.
 And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html.
 
 To quickly verify if this tooling (bootRun, fake-jwt, `LOGIN`, `HTTP`) works on your machine,
-run `tools/smoke-test`: it runs the application against a throw-away Docker-PostgreSQL
+run `tools/smoke-test` (also available as the Gradle task `smokeTest`):
+it runs the application against a throw-away Docker-PostgreSQL
 on separate ports (neither the normal local database nor a running local application
-instance is affected) and exercises the endpoints above; exit code 0 means all PASSED.
+instance is affected) and exercises the endpoints above as well as the tooling scripts
+`tools/create-accounts-from-csv` and `tools/create-api-key-for-keycloak-sync`;
+exit code 0 means all PASSED.
 
 ### HOWTO: Run the application with a real (OAuth2) JWT-authentication, e.g. Keycloak OIDC
 
@@ -241,7 +252,7 @@ subject `hsadminng.provisioning.key` with the global ADMIN  role on start.
 This is idempotent: an already stored API-key always takes precedence, thus
 further application starts never change it, not even if the configured hash differs.
 
-**On the deployed backend server, use `tools/remote provisioning-api-key`** — it performs all
+**On the deployed backend server, use `tools/remote backend provision-api-key`** — it performs all
 the steps at once: it generates the API-key locally, configures just its hash in the
 `EnvironmentFile` of the backend service, restarts the service, verifies the provisioning via
 the backend log, and finally prints the clear-text API-key for use as `HSADMINNG_API_KEY`
@@ -289,7 +300,7 @@ See also [HOWTO: Run the application with a real (OAuth2) JWT-authentication, e.
 Acting as global-admin (via JWT or an existing API-key), create an API_KEY subject; the
 response contains the generated clear-text API-key exactly once, only its hash gets stored:
 
-    HTTP POST /api/rbac/subjects -H 'Content-Type: application/json' --data-binary @- <<EOF
+    HTTP POST /api/rbac/subjects <<EOF
     { "name": "some.key", "type": "API_KEY" }
     EOF
 
@@ -305,8 +316,7 @@ subject, e.g. the global ADMIN role (mind `roleIdName`, `roleName` uses the obje
         | jq -r '.[] | select(.roleIdName == "rbac.global#global:ADMIN") | .uuid'
 
     HTTP POST /api/rbac/grants \
-        -H "Hostsharing-Assumed-Roles: rbac.global#global:ADMIN" \
-        -H "Content-Type: application/json" --data-binary @- <<EOF
+        -H "Hostsharing-Assumed-Roles: rbac.global#global:ADMIN" <<EOF
     {
         "assumed": true,
         "grantedRole.uuid": "<the role uuid from above>",
@@ -335,7 +345,7 @@ E.g. for a Keycloak subject synchronization that needs to read and upsert ALL su
 (thus the global ADMIN role, granted manually as shown above), but must not be able to
 use any other endpoint:
 
-    HTTP POST /api/rbac/subjects -H 'Content-Type: application/json' --data-binary @- <<EOF
+    HTTP POST /api/rbac/subjects <<EOF
     {
       "name": "subject.sync.key", "type": "API_KEY",
       "scopes": ["rbac.subjects:sync"]
@@ -344,7 +354,7 @@ use any other endpoint:
 
 And for an API-key for a global-admin but just with read-only access:
 
-    HTTP POST /api/rbac/subjects -H 'Content-Type: application/json' --data-binary @- <<EOF
+    HTTP POST /api/rbac/subjects <<EOF
     { "name": "readonly.key", "type": "API_KEY", "scopes": ["*:read"] }
     EOF
 

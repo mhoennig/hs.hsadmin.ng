@@ -5,7 +5,8 @@
 # Docker-PostgreSQL, then exercises the LOGIN, APIKEY and HTTP functions from `.aliases`
 # with some simple (ping, version) and some more complex (POST with RBAC grants) endpoints,
 # including the provisioning API-key bootstrap (HSADMINNG_PROVISIONING_API_KEY_SHA256) and creating
-# a further API-key with it.
+# a further API-key with it. It also exercises the tooling scripts
+# `tools/create-accounts-from-csv` and `tools/create-api-key-for-keycloak-sync`.
 #
 # The throw-away database container (hsadmin-ng-smoke-test-postgres, host port 15432) is
 # reset at the start and removed at the end; the normal `hsadmin-ng-postgres` container
@@ -61,6 +62,9 @@ cleanup() {
 trap cleanup EXIT
 
 command -v docker >/dev/null || { echo "SMOKE-TEST FAILED: docker is not available" >&2; exit 1; }
+# needed by tools/create-api-key-for-keycloak-sync resp. tools/create-accounts-from-csv
+command -v jq >/dev/null || { echo "SMOKE-TEST FAILED: jq is not available" >&2; exit 1; }
+command -v python3 >/dev/null || { echo "SMOKE-TEST FAILED: python3 is not available" >&2; exit 1; }
 
 portInUse() {
     (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
@@ -69,8 +73,9 @@ portInUse "$PG_PORT" && failed "host port $PG_PORT is already in use, override v
 portInUse "$APP_PORT" && failed "host port $APP_PORT is already in use, override via HSADMINNG_SMOKE_TEST_APP_PORT"
 portInUse "$((APP_PORT + 1))" && failed "host port $((APP_PORT + 1)) (management) is already in use, override via HSADMINNG_SMOKE_TEST_APP_PORT"
 
-# get the LOGIN/HTTP functions; .aliases also sources the personal `.environment`,
-# therefore all variables this test depends on are explicitly (re-)exported below
+# get the LOGIN/HTTP functions; this test exports its complete environment explicitly below,
+# so suppress the personal `.environment` here and in the child-process tools it exercises
+export HSADMINNG_SKIP_ENVIRONMENT_FILE=true
 source .aliases || failed "cannot source .aliases"
 source .unset-environment
 
@@ -102,7 +107,10 @@ unset HSADMINNG_JWT_BEARER HSADMINNG_API_KEY
 # role from just the SHA-256 hash; the clear-text key exists only in this shell,
 # like at a real client
 provisioningApiKey=$(tools/generate-api-key hsadminng.provisioning.key)
-export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(printf '%s' "$provisioningApiKey" | sha256sum | cut -d' ' -f1)
+export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(
+    printf '%s' "$provisioningApiKey" \
+    | sha256sum | cut -d' ' -f1
+)
 
 echo "resetting the throw-away database container $PG_CONTAINER (host port $PG_PORT)"
 docker rm -f "$PG_CONTAINER" >/dev/null 2>&1
@@ -190,6 +198,60 @@ APIKEY --transient <<<"$apiKey" || failed "APIKEY --transient (created API-key) 
 response=$(HTTP GET /api/rbac/context) || failed "GET /api/rbac/context with the created API-key failed"
 grep -q '"smoke.test.key"' <<<"$response" ||
     failed "GET /api/rbac/context does not reflect the API-key subject but: $response"
+passed
+
+# the tooling scripts below run as child processes and inherit the global-admin provisioning
+# API-key (APIKEY exports HSADMINNG_API_KEY) together with the smoke-test environment
+echo "APIKEY --transient switches the HTTP function back to the provisioning API-key"
+APIKEY --transient <<<"$provisioningApiKey" || failed "APIKEY --transient (provisioning API-key) failed"
+passed
+
+echo "tools/create-accounts-from-csv creates an account linking a new subject to an existing person"
+personUuid=$(
+    HTTP GET '/api/hs/office/persons?name=Drew' \
+    | jq -r '.[0].uuid // empty'
+)
+[ -n "$personUuid" ] || failed "cannot resolve the test-data person 'User Drew'"
+subjectUuid=$(python3 -c 'import uuid; print(uuid.uuid4())')
+csvFile=build/smoke-test/accounts.csv
+printf '"%s","%s","%s","%s","%s"\n' xyz-smoke.drew "$subjectUuid" Drew User "$personUuid" >"$csvFile"
+tools/create-accounts-from-csv "$csvFile" 80100 || failed "tools/create-accounts-from-csv failed"
+response=$(HTTP GET "/api/hs/accounts/accounts?personUuid=$personUuid") ||
+    failed "GET /api/hs/accounts/accounts?personUuid=... failed"
+grep -q '"xyz-smoke.drew"' <<<"$response" ||
+    failed "the created account 'xyz-smoke.drew' is missing in GET /api/hs/accounts/accounts"
+passed
+
+echo "tools/create-accounts-from-csv re-run skips the already existing account (repeatable syncs)"
+rerunOutput=$(tools/create-accounts-from-csv "$csvFile" 80100 2>&1) ||
+    failed "the tools/create-accounts-from-csv re-run failed: $rerunOutput"
+grep -q '1 already existed' <<<"$rerunOutput" ||
+    failed "the re-run did not report the account as already existing but: $rerunOutput"
+passed
+
+echo "tools/create-api-key-for-keycloak-sync creates a global-admin API-key scoped to the sync endpoints"
+syncApiKey=$(tools/create-api-key-for-keycloak-sync) || failed "tools/create-api-key-for-keycloak-sync failed"
+grep -q '^hsak_' <<<"$syncApiKey" ||
+    failed "tools/create-api-key-for-keycloak-sync did not print a clear-text API-key but: $syncApiKey"
+passed
+
+# the sync-key may list the subjects (in scope, authorized via its global-admin role) ...
+echo "APIKEY --transient switches the HTTP function to the sync API-key"
+APIKEY --transient <<<"$syncApiKey" || failed "APIKEY --transient (sync API-key) failed"
+response=$(HTTP GET /api/rbac/subjects) || failed "GET /api/rbac/subjects with the sync API-key failed"
+grep -q '"hsadminng.keycloak.sync"' <<<"$response" ||
+    failed "GET /api/rbac/subjects does not contain the sync subject but: $response"
+passed
+
+# ... and the openly accessible context endpoint reflects the sync endpoint-scope ...
+response=$(HTTP GET /api/rbac/context) || failed "GET /api/rbac/context with the sync API-key failed"
+grep -q '"rbac.subjects:sync"' <<<"$response" ||
+    failed "GET /api/rbac/context does not reflect the sync endpoint-scope but: $response"
+passed
+
+# ... which forbids all other endpoints (fail-closed), despite the global-admin role
+response=$(HTTP GET /api/rbac/roles 2>/dev/null) &&
+    failed "GET /api/rbac/roles with the sync API-key succeeded despite its endpoint-scope: $response"
 passed
 
 echo
