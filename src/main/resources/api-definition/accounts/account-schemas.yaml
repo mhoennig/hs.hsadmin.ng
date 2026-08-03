@@ -27,9 +27,9 @@ components:
                 subject:
                     $ref: '../rbac/rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
                 globalUid:
-                    type: number
+                    type: integer
                 globalGid:
-                    type: number
+                    type: integer
             required:
                 - uuid
                 - subject
@@ -93,14 +93,14 @@ components:
                 subject:
                     $ref: '#/components/schemas/AccountSubjectInsert'
                 globalUid:
-                    type: number
+                    type: integer
                     description: "
                         Optional. If omitted (together with `globalGid`), the lowest still unused
                         number in the range 100000-999999 is assigned automatically to both
                         `globalUid` and `globalGid` (kept equal).
                         "
                 globalGid:
-                    type: number
+                    type: integer
                     description: "
                         Optional, see `globalUid`.
                         "
