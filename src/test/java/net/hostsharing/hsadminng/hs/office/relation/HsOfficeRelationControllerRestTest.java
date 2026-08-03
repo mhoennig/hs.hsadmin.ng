@@ -7,8 +7,10 @@ import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -66,10 +68,18 @@ class HsOfficeRelationControllerRestTest {
     HsOfficeRelationRbacRepository relationRepo;
 
     @MockitoBean
-    HsOfficePersonRealRepository personRepo;
+    HsOfficePersonRbacRepository personRepo;
 
     @MockitoBean
-    HsOfficeContactRealRepository contactRepo;
+    @SuppressWarnings("unused") // bean needs to be present for HsOfficeRelationController
+    HsOfficePersonRealRepository realPersonRepo;
+
+    @MockitoBean
+    HsOfficeContactRbacRepository contactRepo;
+
+    @MockitoBean
+    @SuppressWarnings("unused") // bean needs to be present for HsOfficeRelationController
+    HsOfficeContactRealRepository realContactRepo;
 
     @BeforeEach
     void init() {
@@ -170,9 +180,9 @@ class HsOfficeRelationControllerRestTest {
         val contact = givenContact(UUID.randomUUID(), "holder contact");
         val savedRelationUuid = UUID.randomUUID();
 
-        when(personRepo.findByUuid(anchor.getUuid())).thenReturn(Optional.of(anchor));
-        when(personRepo.findByUuid(holder.getUuid())).thenReturn(Optional.of(holder));
-        when(contactRepo.findByUuid(contact.getUuid())).thenReturn(Optional.of(contact));
+        when(personRepo.findVisibleByUuid(anchor.getUuid())).thenReturn(Optional.of(anchor));
+        when(personRepo.findVisibleByUuid(holder.getUuid())).thenReturn(Optional.of(holder));
+        when(contactRepo.findVisibleByUuid(contact.getUuid())).thenReturn(Optional.of(contact));
         when(relationRepo.save(any(HsOfficeRelationRbacEntity.class))).thenAnswer(invocation -> {
             final HsOfficeRelationRbacEntity relation = invocation.getArgument(0);
             relation.setUuid(savedRelationUuid);
@@ -227,7 +237,7 @@ class HsOfficeRelationControllerRestTest {
         val newContact = givenContact(newContactUuid, "new contact");
 
         when(relationRepo.findByUuid(relationUuid)).thenReturn(Optional.of(current));
-        when(em.getReference(HsOfficeContactRealEntity.class, newContactUuid)).thenReturn(newContact);
+        when(contactRepo.findVisibleByUuid(newContactUuid)).thenReturn(Optional.of(newContact));
         when(relationRepo.save(any(HsOfficeRelationRbacEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when

@@ -774,6 +774,57 @@ begin
 end; $$;
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-base-INSERT-PERMISSION-CHECK runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+/*
+    Amends rbac.isPermissionGrantedToSubject and rbac.hasInsertPermission from the
+    non-repeatable rbac-base-GRANTS changeset.
+ */
+
+/*
+    Like rbac.isGranted, but restricted to grants which do not require assumeRoles,
+    so that INSERT is checked against the same reachability as SELECT/UPDATE/DELETE.
+ */
+create or replace function rbac.isPermissionGrantedToSubject(permissionId uuid, granteeIds uuid[])
+    returns bool
+    stable -- leakproof
+    language sql as $$
+with recursive grants as (
+    select g.ascendantUuid
+        from rbac.grant g
+        where g.assumed and g.descendantUuid = permissionId
+    union
+    select g.ascendantUuid
+        from rbac.grant g
+                 join grants on grants.ascendantUuid = g.descendantUuid
+        where g.assumed
+)
+select exists(
+    select true
+        from grants
+        where grants.ascendantUuid = any (granteeIds)
+);
+$$;
+
+-- drops the released pre-fix definition, which ignored the assumed flag; no caller remains
+drop function if exists rbac.isPermissionGrantedToSubject(uuid, uuid);
+
+create or replace function rbac.hasInsertPermission(objectUuid uuid, tableName text)
+    returns bool
+    stable -- leakproof
+    language plpgsql as $$
+declare
+    permissionUuid uuid;
+begin
+    permissionUuid = rbac.findPermissionId(objectUuid, 'INSERT'::rbac.RbacOp, tableName);
+    return permissionUuid is not null
+       and rbac.isPermissionGrantedToSubject(permissionUuid, rbac.currentSubjectOrAssumedRolesUuids());
+end; $$;
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------

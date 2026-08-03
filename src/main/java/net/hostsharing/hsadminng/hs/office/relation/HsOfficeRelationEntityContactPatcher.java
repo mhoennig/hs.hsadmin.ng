@@ -1,20 +1,22 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationContactPatchResource;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
-import jakarta.persistence.EntityManager;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 public class HsOfficeRelationEntityContactPatcher implements EntityPatcher<HsOfficeRelationContactPatchResource> {
 
-    private final EntityManager em;
+    private final HsOfficeContactRbacRepository rbacContactRepo;
     private final HsOfficeRelation entity;
 
-    public HsOfficeRelationEntityContactPatcher(final EntityManager em, final HsOfficeRelation entity) {
-        this.em = em;
+    public HsOfficeRelationEntityContactPatcher(
+            final HsOfficeContactRbacRepository rbacContactRepo,
+            final HsOfficeRelation entity) {
+        this.rbacContactRepo = rbacContactRepo;
         this.entity = entity;
     }
 
@@ -22,7 +24,9 @@ public class HsOfficeRelationEntityContactPatcher implements EntityPatcher<HsOff
     public void apply(final HsOfficeRelationContactPatchResource resource) {
         OptionalFromJson.of(resource.getContactUuid()).ifPresent(newValue -> {
             verifyNotNull(newValue, "contact");
-            entity.setContact(em.getReference(HsOfficeContactRealEntity.class, newValue));
+            entity.setContact(rbacContactRepo.findVisibleByUuid(newValue).orElseThrow(
+                    () -> new NoSuchElementException("cannot find Contact by contact.uuid: " + newValue)
+            ));
         });
     }
 

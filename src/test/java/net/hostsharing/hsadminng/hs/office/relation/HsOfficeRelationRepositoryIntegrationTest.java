@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
+import lombok.val;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
@@ -19,6 +20,7 @@ import org.springframework.orm.jpa.JpaSystemException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -188,6 +190,70 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office.contact#fourthcontact:ADMIN by system and assume }",
                     null)
             );
+        }
+
+        // verifies Fix for Security-Finding A-01
+        @Test
+        public void personOwner_canCreateNewRelationAnchoredToItsOwnPerson() {
+            // given
+            context("tst-person_smithpeter");
+            val givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Smith").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            val givenHolderPerson = personRepo.findPersonByOptionalNameLike("Winkler").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            val givenContact = contactRealRepo.findContactByOptionalCaptionLike("third contact").stream()
+                    .findFirst().orElseThrow();
+
+            // when
+            val result = attempt(
+                    em, () -> {
+                        val newRelation = HsOfficeRelationRbacEntity.builder()
+                                .anchor(givenAnchorPerson)
+                                .holder(givenHolderPerson)
+                                .type(HsOfficeRelationType.SUBSCRIBER)
+                                .mark("operations-announce")
+                                .contact(givenContact)
+                                .build();
+                        return toCleanup(relationRbacRepo.save(newRelation));
+                    });
+
+            // then
+            result.assertSuccessful();
+        }
+
+        // verifies Fix for Security-Finding A-01
+        @Test
+        public void personOwner_cannotCreateNewRelationAnchoredToForeignPerson() {
+            // given
+            context("tst-person_smithpeter");
+            val givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                    .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                    .findFirst().orElseThrow();
+            val givenHolderPerson = personRepo.findPersonByOptionalNameLike("Smith").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            val givenContact = contactRealRepo.findContactByOptionalCaptionLike("third contact").stream()
+                    .findFirst().orElseThrow();
+
+            // when
+            val result = attempt(
+                    em, () -> {
+                        val newRelation = HsOfficeRelationRbacEntity.builder()
+                                .anchor(givenAnchorPerson)
+                                .holder(givenHolderPerson)
+                                .type(HsOfficeRelationType.REPRESENTATIVE)
+                                .contact(givenContact)
+                                .build();
+                        return relationRbacRepo.save(newRelation);
+                    });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(
+                    PersistenceException.class,
+                    "ERROR: [403] insert into hs_office.relation ",
+                    "not allowed for current subjects {tst-person_smithpeter}");
         }
 
         private void assertThatRelationIsPersisted(final HsOfficeRelation saved) {

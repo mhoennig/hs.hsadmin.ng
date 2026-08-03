@@ -46,7 +46,11 @@ public class HsBookingItemRbacEntity extends HsBookingItem {
                 .withIdentityView(SQL.projection("caption"))
                 .withRestrictedViewOrderBy(SQL.expression("validity"))
                 .withUpdatableColumns("version", "caption", "validity", "resources")
-                .toRole(GLOBAL, ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
+                // the item-INSERT permission is granted to project:ADMIN/OWNER (see below), but the only
+                // grant-edge above project:OWNER (from debitorRel:AGENT) is unassumed, and the INSERT check
+                // follows only assumed edges; this grant generates a hasGlobalAdminRole() short-circuit into
+                // the check trigger, without which even global-admins (e.g. test-data import) could not insert
+                .toRole(GLOBAL, ADMIN).grantPermission(INSERT)
                 .toRole(GLOBAL, ADMIN).grantPermission(DELETE)
 
                 .importEntityAlias("project", HsBookingProjectRbacEntity.class, usingDefaultCase(),

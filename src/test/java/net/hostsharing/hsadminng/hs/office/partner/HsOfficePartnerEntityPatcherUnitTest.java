@@ -1,10 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerDetailsPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
@@ -17,6 +19,7 @@ import org.openapitools.jackson.nullable.JsonNullable;
 
 import jakarta.validation.ValidationException;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,6 +53,12 @@ class HsOfficePartnerEntityPatcherUnitTest {
     @Mock
     private EntityManagerWrapper emw;
 
+    @Mock
+    private HsOfficePersonRbacRepository rbacPersonRepo;
+
+    @Mock
+    private HsOfficeContactRbacRepository rbacContactRepo;
+
     private final StrictMapper mapper = new StrictMapper(emw);
     private final HsOfficePartnerPatchResource patchResource = newPatchResource();
     private final HsOfficePartnerRbacEntity entity = newInitialEntity();
@@ -60,6 +69,10 @@ class HsOfficePartnerEntityPatcherUnitTest {
                 HsOfficePersonRealEntity.builder().uuid(invocation.getArgument(1)).build());
         lenient().when(emw.getReference(eq(HsOfficeContactRealEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(rbacPersonRepo.findVisibleByUuid(any())).thenAnswer(invocation ->
+                Optional.of(HsOfficePersonRealEntity.builder().uuid(invocation.getArgument(0)).build()));
+        lenient().when(rbacContactRepo.findVisibleByUuid(any())).thenAnswer(invocation ->
+                Optional.of(HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(0)).build()));
     }
 
     @Test
@@ -198,6 +211,6 @@ class HsOfficePartnerEntityPatcherUnitTest {
     }
 
     protected HsOfficePartnerEntityPatcher createPatcher(final HsOfficePartnerRbacEntity partner) {
-        return new HsOfficePartnerEntityPatcher(mapper, emw, partner);
+        return new HsOfficePartnerEntityPatcher(mapper, emw, rbacPersonRepo, rbacContactRepo, partner);
     }
 }

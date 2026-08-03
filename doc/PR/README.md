@@ -17,7 +17,8 @@ but initially prefix its title with `WIP: ` to mark it as a work in progress unt
 ## Guidelines
 
 - Documentations must be written in Markdown format.
-- Use Englisch, it's a public open source project.
+- Write PR-documentation in German, the working language of the project;
+  external readers are rare and can use machine translation.
 - Use clear and concise language and keep it short.
 - Include relevant details and context, explain the "why".
 - Mark reference to Taiga or any other tool that is not public as "Hostsharing-internal".

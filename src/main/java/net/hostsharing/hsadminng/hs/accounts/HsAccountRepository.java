@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
 import io.micrometer.core.annotation.Timed;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
+import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -18,8 +18,24 @@ public interface HsAccountRepository extends Repository<HsAccountEntity, UUID> {
     @Timed("app.login.account.repo.findByUuid")
     Optional<HsAccountEntity> findByUuid(final UUID uuid);
 
-    @Timed("app.login.account.repo.findByPerson")
-    List<HsAccountEntity> findByPerson(final HsOfficePerson<?> personUuid);
+    // account.uuid equals subject.uuid, thus an account is visible exactly as far as its subject is
+    @Timed("app.login.account.repo.findVisibleByUuid")
+    @Query(nativeQuery = true, value = """
+            select account.*
+              from hs_accounts.account account
+              join rbac.subject s on s.uuid = account.uuid
+             where account.uuid = :uuid
+               and """ + RealSubjectRepository.VISIBLE_SUBJECT_CONDITION)
+    Optional<HsAccountEntity> findVisibleByUuid(final UUID uuid);
+
+    @Timed("app.login.account.repo.findVisibleByPersonUuid")
+    @Query(nativeQuery = true, value = """
+            select account.*
+              from hs_accounts.account account
+              join rbac.subject s on s.uuid = account.uuid
+             where account.person_uuid = :personUuid
+               and """ + RealSubjectRepository.VISIBLE_SUBJECT_CONDITION)
+    List<HsAccountEntity> findVisibleByPersonUuid(final UUID personUuid);
 
     @Timed("app.login.account.repo.findByCurrentSubject")
     @Query(nativeQuery = true, value = """

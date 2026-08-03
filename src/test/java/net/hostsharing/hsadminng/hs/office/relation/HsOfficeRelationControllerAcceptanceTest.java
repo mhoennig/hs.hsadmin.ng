@@ -2,9 +2,11 @@ package net.hostsharing.hsadminng.hs.office.relation;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationTypeResource;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -22,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -729,6 +732,123 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         assertThat(rel.getType()).isEqualTo(HsOfficeRelationType.REPRESENTATIVE);
                         return true;
                     });
+        }
+    }
+
+    /**
+     * Pins the A-02 fix: client-supplied contact-UUIDs must resolve through the restricted view,
+     * because attaching an invisible contact would grant contact_ADMIN on it via relation_AGENT.
+     */
+    @Nested
+    class ForeignContactReference {
+
+        // verifies Fix for Security-Finding A-02
+        @Test
+        void normalUser_canNotAddRelationReferencingInvisibleContact() {
+
+            context.define("hsh-alex_superuser");
+            val givenOwnPerson = personOwnedByAttacker();
+            val givenForeignContact = realContactRepo.findContactByOptionalCaptionLike("first contact").getFirst();
+            assertThatContactIsInvisibleFor("tst-person_smithpeter", givenForeignContact.getUuid());
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("tst-person_smithpeter"))
+                    .contentType(ContentType.JSON)
+                    .body("""
+                           {
+                               "type": "REPRESENTATIVE",
+                               "anchor.uuid": "%s",
+                               "holder": {
+                                  "personType": "NATURAL_PERSON",
+                                  "familyName": "Person",
+                                  "givenName": "Temp"
+                                },
+                               "contact.uuid": "%s"
+                             }
+                           """.formatted(givenOwnPerson.getUuid(), givenForeignContact.getUuid()))
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/relations")
+                .then().log().all().assertThat()
+                    .statusCode(404); // @formatter:on
+        }
+
+        // verifies Fix for Security-Finding A-02
+        @Test
+        void normalUser_canNotPatchOwnRelationToInvisibleContact() {
+
+            context.define("hsh-alex_superuser");
+            val givenOwnPerson = personOwnedByAttacker();
+            val givenForeignContact = realContactRepo.findContactByOptionalCaptionLike("first contact").getFirst();
+            assertThatContactIsInvisibleFor("tst-person_smithpeter", givenForeignContact.getUuid());
+
+            val location = RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("tst-person_smithpeter"))
+                    .contentType(ContentType.JSON)
+                    .body("""
+                           {
+                               "type": "REPRESENTATIVE",
+                               "anchor.uuid": "%s",
+                               "holder": {
+                                  "personType": "NATURAL_PERSON",
+                                  "familyName": "Person",
+                                  "givenName": "Temp"
+                                },
+                               "contact": {
+                                  "caption": "Temp Own Contact",
+                                  "emailAddresses": { "main": "temp@example.org" }
+                                }
+                             }
+                           """.formatted(givenOwnPerson.getUuid()))
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/relations")
+                .then().log().all().assertThat()
+                    .statusCode(201)
+                .extract().header("Location"); // @formatter:on
+            val givenRelationUuid = toCleanup(HsOfficeRelationRealEntity.class, UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1)));
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("tst-person_smithpeter"))
+                    .contentType(ContentType.JSON)
+                    .body("""
+                           {
+                              "contact.uuid": "%s"
+                           }
+                           """.formatted(givenForeignContact.getUuid()))
+                    .port(port)
+                .when()
+                    .patch("http://localhost/api/hs/office/relations/" + givenRelationUuid)
+                .then().log().all().assertThat()
+                    .statusCode(404); // @formatter:on
+
+            // then the relation still references its original contact
+            context.define("hsh-alex_superuser");
+            assertThat(realRelationRepo.findByUuid(givenRelationUuid)).isPresent().get()
+                    .extracting(rel -> rel.getContact().getCaption())
+                    .isEqualTo("Temp Own Contact");
+        }
+
+        /** The person created by, and thus owned by, the test-data subject `tst-person_smithpeter`. */
+        private HsOfficePersonRealEntity personOwnedByAttacker() {
+            return realPersonRepo.findPersonByOptionalNameLike("Smith").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+        }
+
+        private void assertThatContactIsInvisibleFor(final String subjectName, final UUID contactUuid) {
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer(subjectName))
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/contacts/" + contactUuid)
+                .then().assertThat()
+                    .statusCode(404); // @formatter:on
         }
     }
 

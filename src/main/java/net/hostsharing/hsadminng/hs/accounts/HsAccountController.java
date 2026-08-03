@@ -94,7 +94,7 @@ public class HsAccountController implements AccountApi {
 
         context.define(); // without assumed roles, otherwise we cannot access the real subject anymore
 
-        val accountEntity = accountRepo.findByUuid(accountUuid);
+        val accountEntity = accountRepo.findVisibleByUuid(accountUuid);
         if (accountEntity.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -170,9 +170,11 @@ public class HsAccountController implements AccountApi {
     @Transactional
     @Timed("app.accounts.account.deleteAccountByUuid")
     public ResponseEntity<Void> deleteAccountByUuid(final UUID accountUuid) {
-        context.define(); // without assumed roles, otherwise we cannot access the subject anymore
+        // TODO.spec Task#5637: narrow or widen once the spec exists; global-admin-only is the safe interim rule
+        // also defines the context without assumed roles, otherwise we cannot access the subject anymore
+        context.requireGlobalAdmin(
+                messageTranslator.translate("account.deleting-account-{0}-requires-global-admin", accountUuid));
         val accountEntity = em.getReference(HsAccountEntity.class, accountUuid);
-        validateOnDelete(accountEntity);
         em.flush();
         em.remove(accountEntity);
         em.remove(accountEntity.getSubject());
@@ -215,10 +217,6 @@ public class HsAccountController implements AccountApi {
         } else if (entity.getGlobalGid() == null) {
             entity.setGlobalGid(entity.getGlobalUid());
         }
-    }
-
-    private void validateOnDelete(final HsAccountEntity current) {
-        // TODO.spec Task#5637: still needed? can the own account even be removed, even the last one?
     }
 
     private void validateReferencedPersonToBeANaturalPerson(final HsAccountEntity accountEntity) {
@@ -273,13 +271,11 @@ public class HsAccountController implements AccountApi {
     }
 
     private List<HsAccountEntity> findByPersonUuid(final UUID personUuid) {
-        val person = realPersonRepo.findByUuid(personUuid).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", personUuid)
-                )
-
-        );
-        return accountRepo.findByPerson(person);
+        if (realPersonRepo.findByUuid(personUuid).isEmpty()) {
+            throw new EntityNotFoundException(
+                    messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", personUuid));
+        }
+        return accountRepo.findVisibleByPersonUuid(personUuid);
     }
 
 

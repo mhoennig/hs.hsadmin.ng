@@ -13,6 +13,13 @@ public interface HsOfficePersonRbacRepository extends Repository<HsOfficePersonR
     @Timed("app.office.persons.repo.findByUuid.rbac")
     Optional<HsOfficePersonRbacEntity> findByUuid(UUID personUuid);
 
+    // resolves client-supplied UUIDs in write-paths, where an invisible person must not become
+    // referencable; belongs here rather than into the real repository, because it reads the
+    // restricted view, and returns the real entity, because that is the type a reference holds
+    @Query(value = "select p.* from hs_office.person_rv p where p.uuid = :personUuid", nativeQuery = true)
+    @Timed("app.office.persons.repo.findVisibleByUuid.rbac")
+    Optional<HsOfficePersonRealEntity> findVisibleByUuid(UUID personUuid);
+
     @Query("""
             SELECT p FROM HsOfficePersonRbacEntity p
                 WHERE :name is null

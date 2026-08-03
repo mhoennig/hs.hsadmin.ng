@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.errors.ReferenceNotFoundException;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerInsertResource;
@@ -14,8 +15,10 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartne
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerRelInsertResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
@@ -58,7 +61,13 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     private HsOfficePartnerRbacRepository rbacPartnerRepo;
 
     @Autowired
-    private HsOfficeRelationRealRepository realRelationRepo;
+    private HsOfficeRelationRbacRepository rbacRelationRepo;
+
+    @Autowired
+    private HsOfficePersonRbacRepository rbacPersonRepo;
+
+    @Autowired
+    private HsOfficeContactRbacRepository rbacContactRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -171,7 +180,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         final var current = rbacPartnerRepo.findByUuid(partnerUuid).orElseThrow();
         final var previousPartnerPerson = current.getPartnerRel().getHolder();
 
-        new HsOfficePartnerEntityPatcher(mapper, em, current).apply(body);
+        new HsOfficePartnerEntityPatcher(mapper, em, rbacPersonRepo, rbacContactRepo, current).apply(body);
 
         final var saved = rbacPartnerRepo.save(current);
         optionallyCreateExPartnerRelation(saved, previousPartnerPerson);
@@ -185,11 +194,12 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var partnerPersonHasChanged = !saved.getPartnerRel().getHolder().getUuid().equals(previousPartnerPerson.getUuid());
         if (partnerPersonHasChanged) {
-            realRelationRepo.save(saved.getPartnerRel().toBuilder()
-                    .uuid(null)
+            rbacRelationRepo.save(HsOfficeRelationRbacEntity.builder()
                     .type(EX_PARTNER)
+                    .mark(saved.getPartnerRel().getMark())
                     .anchor(saved.getPartnerRel().getHolder())
                     .holder(previousPartnerPerson)
+                    .contact(saved.getPartnerRel().getContact())
                     .build());
         }
     }
@@ -199,7 +209,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         if (partnerPersonHasChanged) {
             // self-debitors of the old partner-person become self-debitors of the new partner person
             em.createNativeQuery("""
-                UPDATE hs_office.relation
+                UPDATE hs_office.relation_rv
                     SET holderUuid = :newPartnerPersonUuid
                     WHERE type = 'DEBITOR' AND
                           holderUuid = :oldPartnerPersonUuid AND anchorUuid = :oldPartnerPersonUuid
@@ -210,7 +220,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
             // re-anchor all relations from the old partner person to the new partner persion
             em.createNativeQuery("""
-                UPDATE hs_office.relation
+                UPDATE hs_office.relation_rv
                     SET anchorUuid = :newPartnerPersonUuid
                     WHERE anchorUuid = :oldPartnerPersonUuid
             """)

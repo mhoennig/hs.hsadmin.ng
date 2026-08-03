@@ -31,9 +31,11 @@ import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL_PERSON;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 
 @Tag("generalIntegrationTest")
 @Transactional
@@ -250,6 +252,82 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                             containsString("Nur natürliche Personen sind erlaubt, aber ${personUuid} ist LEGAL_PERSON"
                                     .replace("${personUuid}", firstGmbHPerson.getUuid().toString())));
             // @formatter:on
+        }
+    }
+
+    /**
+     * `hs_accounts.account` is not ReBAC-restricted, thus the controller has to apply the
+     * visibility condition itself; these tests pin that it actually does.
+     */
+    @Nested
+    class ForeignAccountAccess {
+
+        // verifies Fix for Security-Finding A-03
+        @Test
+        void normalUser_canNotGetForeignAccountByUuid() {
+            // given
+            val foreignPerson = givenLegalPerson("hsh-alex_superuser");
+            val foreignAccount = givenNewAccount("hsh-alex_superuser",
+                    "test-foreign-subject", foreignPerson, builder -> {
+            });
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/accounts/accounts/" + foreignAccount.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(404);
+            // @formatter:on
+        }
+
+        // verifies Fix for Security-Finding A-03
+        @Test
+        void normalUser_canNotListAccountsOfForeignPerson() {
+            // given
+            val foreignPerson = givenLegalPerson("hsh-alex_superuser");
+            givenNewAccount("hsh-alex_superuser",
+                    "test-foreign-subject-of-person", foreignPerson, builder -> {
+            });
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/accounts/accounts?personUuid=" + foreignPerson.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .body("size()", equalTo(0));
+            // @formatter:on
+        }
+
+        // verifies Fix for Security-Finding A-03
+        @Test
+        void normalUser_canNotDeleteForeignAccount() {
+            // given
+            val foreignPerson = givenLegalPerson("hsh-alex_superuser");
+            val foreignAccount = givenNewAccount("hsh-alex_superuser",
+                    "test-foreign-subject-to-delete", foreignPerson, builder -> {
+            });
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/hs/accounts/accounts/" + foreignAccount.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(403)
+                        // the endpoint itself has to refuse; today only the subject-delete trigger
+                        // happens to abort the transaction, which any change of the delete order removes
+                        .body("message", not(containsString("not allowed to delete subject")));
+            // @formatter:on
+
+            // then the foreign account still exists
+            context.define("hsh-alex_superuser");
+            assertThat(accountRepo.findByUuid(foreignAccount.getUuid())).isPresent();
         }
     }
 

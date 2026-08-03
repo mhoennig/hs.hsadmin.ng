@@ -5,10 +5,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeRelationsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -45,10 +45,13 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     private HsOfficePersonRealRepository realPersonRepo;
 
     @Autowired
+    private HsOfficePersonRbacRepository rbacPersonRepo;
+
+    @Autowired
     private HsOfficeContactRealRepository realContactRepo;
 
-    @PersistenceContext
-    private EntityManager em;
+    @Autowired
+    private HsOfficeContactRbacRepository rbacContactRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -95,13 +98,13 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
         entityToSave.setType(HsOfficeRelationType.valueOf(body.getType()));
         entityToSave.setMark(body.getMark());
 
-        entityToSave.setAnchor(realPersonRepo.findByUuid(body.getAnchorUuid()).orElseThrow(
+        entityToSave.setAnchor(rbacPersonRepo.findVisibleByUuid(body.getAnchorUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find Person by anchorUuid: " + body.getAnchorUuid())
         ));
 
-        Validate.validate("anchor, anchor.uuid").exactlyOne(body.getHolder(), body.getHolderUuid());
+        Validate.validate("holder, holder.uuid").exactlyOne(body.getHolder(), body.getHolderUuid());
         if ( body.getHolderUuid() != null) {
-            entityToSave.setHolder(realPersonRepo.findByUuid(body.getHolderUuid()).orElseThrow(
+            entityToSave.setHolder(rbacPersonRepo.findVisibleByUuid(body.getHolderUuid()).orElseThrow(
                     () -> new NoSuchElementException("cannot find Person by holderUuid: " + body.getHolderUuid())
             ));
         } else {
@@ -112,7 +115,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
         Validate.validate("contact, contact.uuid").exactlyOne(body.getContact(), body.getContactUuid());
         if ( body.getContactUuid() != null) {
-            entityToSave.setContact(realContactRepo.findByUuid(body.getContactUuid()).orElseThrow(
+            entityToSave.setContact(rbacContactRepo.findVisibleByUuid(body.getContactUuid()).orElseThrow(
                     () -> new NoSuchElementException("cannot find Contact by contactUuid: " + body.getContactUuid())
             ));
         } else {
@@ -177,7 +180,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
         final var current = rbacRelationRepo.findByUuid(relationUuid).orElseThrow();
 
-        new HsOfficeRelationEntityContactPatcher(em, current).apply(body);
+        new HsOfficeRelationEntityContactPatcher(rbacContactRepo, current).apply(body);
 
         final var saved = rbacRelationRepo.save(current);
         final var mapped = mapper.map(saved, HsOfficeRelationResource.class);

@@ -13,6 +13,13 @@ public interface HsOfficeContactRbacRepository extends Repository<HsOfficeContac
     @Timed("app.office.contacts.repo.findByUuid.rbac")
     Optional<HsOfficeContactRbacEntity> findByUuid(UUID id);
 
+    // resolves client-supplied UUIDs in write-paths, where an invisible contact must not become
+    // referencable; belongs here rather than into the real repository, because it reads the
+    // restricted view, and returns the real entity, because that is the type a reference holds
+    @Query(value = "select c.* from hs_office.contact_rv c where c.uuid = :uuid", nativeQuery = true)
+    @Timed("app.office.contacts.repo.findVisibleByUuid.rbac")
+    Optional<HsOfficeContactRealEntity> findVisibleByUuid(UUID uuid);
+
     @Query("""
             SELECT c FROM HsOfficeContactRbacEntity c
                 WHERE :caption is null

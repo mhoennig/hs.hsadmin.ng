@@ -8,9 +8,11 @@ import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
@@ -81,7 +83,13 @@ class HsOfficePartnerControllerRestTest {
     HsOfficePartnerRbacRepository partnerRepo;
 
     @MockitoBean
-    HsOfficeRelationRealRepository relationRepo;
+    HsOfficeRelationRbacRepository rbacRelationRepo;
+
+    @MockitoBean
+    HsOfficePersonRbacRepository rbacPersonRepo;
+
+    @MockitoBean
+    HsOfficeContactRbacRepository rbacContactRepo;
 
     @MockitoBean
     EntityManagerWrapper em;
@@ -334,12 +342,6 @@ class HsOfficePartnerControllerRestTest {
             final UUID givenPartnerUuid = UUID.randomUUID();
             when(partnerRepo.findByUuid(givenPartnerUuid)).thenReturn(Optional.of(partner));
             when(partnerRepo.deleteByUuid(givenPartnerUuid)).thenReturn(0);
-
-            final UUID givenRelationUuid = UUID.randomUUID();
-            partner.setPartnerRel(HsOfficeRelationRealEntity.builder()
-                    .uuid(givenRelationUuid)
-                    .build());
-            when(relationRepo.deleteByUuid(givenRelationUuid)).thenReturn(0);
 
             // when
             mockMvc.perform(MockMvcRequestBuilders

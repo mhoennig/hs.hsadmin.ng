@@ -40,6 +40,7 @@ import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATU
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -96,7 +97,7 @@ class HsAccountControllerRestTest {
         val givenAccountUuid = UUID.randomUUID();
         val givenPerson = givenNaturalPerson("Test", "Person");
         val givenAccount = givenAccount(givenAccountUuid, "abc-existing", givenPerson);
-        given(accountRepo.findByUuid(givenAccountUuid)).willReturn(Optional.of(givenAccount));
+        given(accountRepo.findVisibleByUuid(givenAccountUuid)).willReturn(Optional.of(givenAccount));
 
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
@@ -122,7 +123,7 @@ class HsAccountControllerRestTest {
     void getByUuidForUnknownAccountUuidReturnsNotFound() throws Exception {
         // given
         val givenAccountUuid = UUID.randomUUID();
-        given(accountRepo.findByUuid(givenAccountUuid)).willReturn(Optional.empty());
+        given(accountRepo.findVisibleByUuid(givenAccountUuid)).willReturn(Optional.empty());
 
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
@@ -193,7 +194,7 @@ class HsAccountControllerRestTest {
         val givenAccountAbc = givenAccount(UUID.randomUUID(), "abc-person", givenPerson);
         val givenAccountXyz = givenAccount(UUID.randomUUID(), "xyz-person", givenPerson);
         given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
-        given(accountRepo.findByPerson(givenPerson)).willReturn(java.util.List.of(givenAccountAbc, givenAccountXyz));
+        given(accountRepo.findVisibleByPersonUuid(givenPerson.getUuid())).willReturn(java.util.List.of(givenAccountAbc, givenAccountXyz));
 
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
@@ -1019,7 +1020,7 @@ class HsAccountControllerRestTest {
                         .header("Authorization", bearer("abc-delete")));
 
         // then
-        verify(contextMock).define();
+        verify(contextMock).requireGlobalAdmin(anyString());
         response.andExpect(status().isNoContent());
         verify(em).flush();
         verify(em).remove(givenAccount);

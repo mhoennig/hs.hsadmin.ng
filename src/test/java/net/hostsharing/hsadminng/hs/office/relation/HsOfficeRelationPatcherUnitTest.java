@@ -2,11 +2,13 @@ package net.hostsharing.hsadminng.hs.office.relation;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactFromResourceConverter;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonTypeResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
@@ -20,6 +22,7 @@ import org.openapitools.jackson.nullable.JsonNullable;
 
 import jakarta.validation.ValidationException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -83,6 +86,12 @@ class HsOfficeRelationPatcherUnitTest extends PatchUnitTestBase<
     @Mock
     private EntityManagerWrapper emw;
 
+    @Mock
+    private HsOfficePersonRbacRepository rbacPersonRepo;
+
+    @Mock
+    private HsOfficeContactRbacRepository rbacContactRepo;
+
     private StrictMapper mapper;
 
 
@@ -93,10 +102,10 @@ class HsOfficeRelationPatcherUnitTest extends PatchUnitTestBase<
                     new HsOfficeContactFromResourceConverter<>(),
                     HsOfficeContactInsertResource.class, HsOfficeContactRealEntity.class);
 
-        lenient().when(emw.getReference(HsOfficePersonRealEntity.class, PATCHED_HOLDER_UUID)).thenAnswer(
-                p -> PATCHED_HOLDER);
-        lenient().when(emw.getReference(HsOfficeContactRealEntity.class, PATCHED_CONTACT_UUID)).thenAnswer(
-                p -> PATCHED_CONTACT);
+        lenient().when(rbacPersonRepo.findVisibleByUuid(PATCHED_HOLDER_UUID)).thenAnswer(
+                p -> Optional.of(PATCHED_HOLDER));
+        lenient().when(rbacContactRepo.findVisibleByUuid(PATCHED_CONTACT_UUID)).thenAnswer(
+                p -> Optional.of(PATCHED_CONTACT));
     }
 
     @Override
@@ -129,7 +138,7 @@ class HsOfficeRelationPatcherUnitTest extends PatchUnitTestBase<
 
     @Override
     protected HsOfficeRelationPatcher createPatcher(final HsOfficeRelation relation) {
-        return new HsOfficeRelationPatcher(mapper, emw, relation);
+        return new HsOfficeRelationPatcher(mapper, emw, rbacPersonRepo, rbacContactRepo, relation);
     }
 
     @Override

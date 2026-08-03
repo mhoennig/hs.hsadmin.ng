@@ -1,6 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationPatcher;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -11,14 +13,20 @@ class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatch
 
     private final StrictMapper mapper;
     private final EntityManager em;
+    private final HsOfficePersonRbacRepository rbacPersonRepo;
+    private final HsOfficeContactRbacRepository rbacContactRepo;
     private final HsOfficePartnerRbacEntity entity;
 
     HsOfficePartnerEntityPatcher(
             final StrictMapper mapper,
             final EntityManager em,
+            final HsOfficePersonRbacRepository rbacPersonRepo,
+            final HsOfficeContactRbacRepository rbacContactRepo,
             final HsOfficePartnerRbacEntity entity) {
         this.mapper = mapper;
         this.em = em;
+        this.rbacPersonRepo = rbacPersonRepo;
+        this.rbacContactRepo = rbacContactRepo;
         this.entity = entity;
     }
 
@@ -32,7 +40,8 @@ class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatch
         ignoreUnchangedPropertyValue("partnerNumber", resource.getPartnerNumber(), entity.getPartnerNumber().toString());
 
         if (resource.getPartnerRel() != null) {
-            new HsOfficeRelationPatcher(mapper, em, entity.getPartnerRel()).apply(resource.getPartnerRel());
+            new HsOfficeRelationPatcher(mapper, em, rbacPersonRepo, rbacContactRepo, entity.getPartnerRel())
+                    .apply(resource.getPartnerRel());
         }
 
         if (resource.getDetails() != null) {
