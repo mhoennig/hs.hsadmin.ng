@@ -318,10 +318,10 @@ messages. Name validation now happens exclusively at the OpenAPI/controller leve
 
 ## Open Questions
 
-- **Validation of the organization value itself:** only non-emptiness is enforced
+- [ ] TODO.spec: **Validation of the organization value itself:** only non-emptiness is enforced
   (`minLength: 1`); no grammar is imposed on explicit organizations, matching the DB which stores
   it as plain `varchar(63)`. Should a stricter pattern be required?
-- **Changing the organization of an existing USER subject:** a repeated HTTP PUT updates the
+- [ ] TODO.spec: **Changing the organization of an existing USER subject:** a repeated HTTP PUT updates the
   organization along with the name; there is no immutability rule like for `type` (current behavior
   specified and verified by Scenario#239.08; GROUP organizations are bound to the name prefix
   anyway). Should the USER organization be immutable instead?

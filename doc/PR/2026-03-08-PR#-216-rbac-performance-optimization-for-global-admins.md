@@ -192,8 +192,9 @@ Therefore, both the width and the depth of the recursion are much smaller than f
 But for users who can see very many objects, e.g. the admin of a large client,
 there could still be a severe performance problem.
 
-There are ideas for optimizing the ReBAC-system, which are described in [RBAC Performance Analysis](rbac-performance-analysis.md#the-problematically-huge-join).
-But these need major changes in the RBAC system, for which we currently have no financial capacity.
+- [ ] TODO.perf: There are ideas for optimizing the ReBAC-system,
+  which are described in [RBAC Performance Analysis](rbac-performance-analysis.md#the-problematically-huge-join).
+  But these need major changes in the RBAC system, for which we currently have no financial capacity.
 
 
 ## Attachments

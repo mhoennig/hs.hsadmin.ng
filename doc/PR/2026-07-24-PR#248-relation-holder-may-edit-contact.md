@@ -147,7 +147,7 @@ The number of grants stays the same, only the wiring changes:
 
 ## Open Questions
 
-- TODO.spec: Relations of different partners can refer to the same contact row.
+- [ ] TODO.spec: Relations of different partners can refer to the same contact row.
   For example, one person owns two companies and uses the same contact for both relations.
   But each holder of such a relation can now change that contact data.
   A change for one partner therefore also applies to the other partner.

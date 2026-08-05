@@ -166,12 +166,12 @@ from Keycloak" would deactivate ALL keys, including its own and `hsadminng.provi
 
 ## Open Issues
 
-- The external Keycloak sync must switch to `PUT deactivated:true`, 
+- [ ] TODO.impl: The external Keycloak sync must switch to `PUT deactivated:true`, 
   `DELETE` must not be used by the Keycloak sync for this purpose anymore.
 
 ## Non-Goals / Follow-Ups
 
-- **Provisioning key rotation**:
+- [ ] TODO.impl: **Provisioning key rotation**:
   If you revoke `hsadminng.provisioning.key`, the revocation is permanent only if you also rotate
   or remove `HSADMINNG_PROVISIONING_API_KEY_SHA256`. Add a runbook and a clear bootstrap
   diagnostic message in a follow-up PR (RFC#0002, "Recovery des Provisioning-API-Keys").
@@ -184,13 +184,13 @@ from Keycloak" would deactivate ALL keys, including its own and `hsadminng.provi
 - **Additional endpoint scopes**:
   Add one `ApiKeyScope` constant and one OpenAPI enum value for each new endpoint scope.
 
-- **API-key creator**:
+- [ ] TODO.spec: **API-key creator**:
   At present, you can identify the creator only from the audit journal
   (`base.tx_journal_v`, `currentSubject` of the `rbac.subject` `INSERT`). It is still open whether
   to expose this information through an API endpoint or a `created_by` column. See RFC#0002,
   "Nicht-Ziele / Follow-Ups".
 
-- **Mandatory JWT audience (`aud`) validation**:
+- [ ] TODO.impl: **Mandatory JWT audience (`aud`) validation**:
   The system always validates `iss`, because `issuer-uri` is mandatory. The system validates `aud`
   only when `HSADMINNG_JWT_AUDIENCE` is set. Current HS Keycloak tokens do not contain an `aud`
   claim. In a follow-up task, add a Keycloak audience mapper and then set

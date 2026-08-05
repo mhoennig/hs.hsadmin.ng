@@ -165,4 +165,4 @@ export HSADMINNG_JWT_TOKEN_URL=FIXME
 ```
 <!-- enable:fixmes -->
 
-TODO.doc: Find out the proper values. This is subject for PR#235.
+- [ ] TODO.doc: Find out the proper values. This is subject for PR#235.

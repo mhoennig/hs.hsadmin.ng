@@ -418,9 +418,9 @@ Only the numbers per query are reliable, because they compare the same statement
 
 ## Follow-up PRs
 
-- Reuse of the Testcontainers PostgreSQL between the test tasks.
+- [ ] TODO.test: Reuse of the Testcontainers PostgreSQL between the test tasks.
   The appendix below holds the analysis; nobody did the work yet.
-- Unification of `HsOfficeCoopAssetsTransactionEntity` and `HsOfficeCoopAssetsTransactionRealEntity`
+- [ ] TODO.refa: Unification of `HsOfficeCoopAssetsTransactionEntity` and `HsOfficeCoopAssetsTransactionRealEntity`
   under a shared `@MappedSuperclass`, as `HsOfficeRelation` has one for its two twins.
   This removes the duplicated `Stringify` of step 7.
   It can also declare the four self-links with the type of the raw entity, which is what PR#247 assumes.

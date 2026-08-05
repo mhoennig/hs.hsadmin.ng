@@ -217,7 +217,7 @@ Cross-realm grants remain a separate topic and must not be permitted by name sim
 
 ## Open Requirements and Design Issues
 
-- How existing production subjects get migrated: a `RENAME-SEED-SUBJECTS` changeset in `1080-rbac-global.sql`
+- [ ] TODO.impl: How existing production subjects get migrated: a `RENAME-SEED-SUBJECTS` changeset in `1080-rbac-global.sql`
   renames all known seed subjects by name. A second changeset in `1085-rbac-user-subject-names.sql`
   renames all test-data subjects by pattern. For subjects beyond those (real production accounts),
   a separate migration step outside this PR is needed once Keycloak delivers the new names.

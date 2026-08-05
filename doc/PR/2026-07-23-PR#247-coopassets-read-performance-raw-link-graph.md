@@ -80,6 +80,6 @@ linked counterpart), consistent with the premise above.
 
 ## Open Questions
 
-- Confirm the cross-membership disclosure is intended (a limited subject now sees the linked
+- [ ] TODO.spec: Confirm the cross-membership disclosure is intended (a limited subject now sees the linked
   counterpart transaction and its member number). If so, a scenario test with a subject that
   sees only one side should be added to pin the behavior.

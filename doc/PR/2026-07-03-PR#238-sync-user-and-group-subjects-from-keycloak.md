@@ -126,17 +126,17 @@ introduced. Design rationale and the specific SQL changes are documented per fin
 ### Open Questions
 <a id="open-questions"></a>
 
-- **PUT on a deactivated UUID:** if the same UUID reappears in Keycloak, should `PUT` reactivate the
+- [ ] TODO.spec: **PUT on a deactivated UUID:** if the same UUID reappears in Keycloak, should `PUT` reactivate the
   subject, or is that a `404`/`409`? (Keycloak normally assigns a fresh UUID on re-create, so this is
   an edge case.) Proposed default: `PUT` reactivates and updates the name.
-- **Fate of `POST`:** `POST` is now restricted to global-admins (aligned with
+- [ ] TODO.spec: **Fate of `POST`:** `POST` is now restricted to global-admins (aligned with
   `PUT`/`DELETE`) and the unauthenticated self-registration path is dropped.
   Later we might need some sort of initial-global-admin registration to be able to start from scratch,
   where this might be useful, so we keep it for now.
-- **Purging deactivated subjects:** on-demand physical purge is now available via
+- [ ] TODO.impl: **Purging deactivated subjects:** on-demand physical purge is now available via
   `DELETE …?purge=true`. Only the automated purge *job* — deciding which
   long-deactivated subjects to purge and when — remains out of scope and is left to a follow-up.
-- **Dedicated sync role:** the sync program acts as a global-admin for now; a narrower,
+- [ ] TODO.rbac: **Dedicated sync role:** the sync program acts as a global-admin for now; a narrower,
   purpose-specific role may be introduced later.
 
 ## The Requirements
@@ -348,8 +348,8 @@ This PR deliberately does **not**:
 
 ## Follow-up PRs
 
-1. Synchronize user-accounts (subject plus associated person) from Keycloak.
-2. Synchronize group membership from Keycloak instead of deriving it from the JWT `groups` claim.
-3. Automated purge job for long-deactivated subjects (the on-demand `?purge=true` operation lands in
-   this PR; only the scheduling/selection policy remains).
-4. Design cross-realm grants and the required trust relationship between realms.
+- [ ] TODO.impl: Synchronize user-accounts (subject plus associated person) from Keycloak.
+- [ ] TODO.impl: Synchronize group membership from Keycloak instead of deriving it from the JWT `groups` claim.
+- [ ] TODO.impl: Automated purge job for long-deactivated subjects (the on-demand `?purge=true` operation lands in
+  this PR; only the scheduling/selection policy remains).
+- [ ] TODO.spec: Design cross-realm grants and the required trust relationship between realms.

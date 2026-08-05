@@ -20,7 +20,7 @@ and instead simply use well-scoped header-names.
 
 We choose `Hostsharing-Assumed-Roles` which now works additionally to the deprecated `assumed-roles`.
 During the migration period, clients can use either header.
-The deprecated header `assumed-roles` will be removed from the backend later.
+- [ ] TODO.impl: The deprecated header `assumed-roles` will be removed from the backend later.
 
 When both headers are sent, they must contain the same value.
 Requests with conflicting values are rejected with `400 Bad Request` to avoid ambiguous role selection.

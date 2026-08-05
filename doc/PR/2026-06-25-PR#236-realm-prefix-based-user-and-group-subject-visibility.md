@@ -285,4 +285,4 @@ This PR deliberately does **not**:
 ## Follow-up PRs
 
 1. Synchronize users and groups from Keycloak to HSAdmin NG using the subject-name pattern from PR#234.
-2. Design cross-realm grants and the required trust relationship between realms.
+- [ ] TODO.spec: Design cross-realm grants and the required trust relationship between realms.

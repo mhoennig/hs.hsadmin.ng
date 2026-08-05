@@ -77,14 +77,15 @@ The RFC is currently written in German, but it is the canonical design reference
    to something like "xyz-drew" to match our visibility pattern.
 2. Extend subject visibility so users can see all user and group subjects in their own realm.
 3. Synchronize users and groups from Keycloak to hsadmin-NG.
-4. Add a performance test or EXPLAIN-based check for the recursive grant CTE with multiple groups per user.
-5. Support cross-realm grants and the required trust relationship between realms.
+- [ ] TODO.test: Add a performance test or EXPLAIN-based check for the recursive grant CTE with multiple groups per user.
+- [ ] TODO.spec: Support cross-realm grants and the required trust relationship between realms.
 
 ## Open Requirements and Design Issues
 
-- Whether a login JWT may implicitly create an account is still undecided.
-- The source of the `hs_office.persons` UUID for synchronized user accounts is still undecided.
-- Cross-realm grants to groups remain a follow-up topic because visibility and trust between realms need a separate design.
+- [ ] TODO.spec: Whether a login JWT may implicitly create an account is still undecided.
+- [ ] TODO.spec: The source of the `hs_office.persons` UUID for synchronized user accounts is still undecided.
+- [ ] TODO.spec: Cross-realm grants to groups remain a follow-up topic
+  because visibility and trust between realms need a separate design.
 
 ## Findings
 
