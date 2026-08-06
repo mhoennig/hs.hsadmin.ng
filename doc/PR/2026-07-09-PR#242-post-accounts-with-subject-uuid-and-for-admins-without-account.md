@@ -205,3 +205,14 @@ The whole inner class was therefore removed and replaced by direct `context.isGl
   because the UUID is the stable identity shared with Keycloak and the name is mutable.
 - Account creation is still global-admin-only; automatic account creation upon Keycloak
   synchronization remains a follow-up (see PR#238 follow-ups).
+
+---
+
+## Release Note
+
+released: 2026-07-10
+
+### Accounts reference their subject as a nested object
+
+Since 2026-07-09, `POST /api/hs/accounts/accounts` references the subject through a nested `subject` object instead of the former `subjectUuid` and `subjectName` properties, and the account response embeds the full subject.
+Since then a global-admin without an own account can create accounts.

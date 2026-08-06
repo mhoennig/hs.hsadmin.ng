@@ -76,3 +76,14 @@ as there is no production data for booking+hosting yet, simply re-generate the w
 
 Now use the role-ID "hs_booking.project#<uuid-of-the-project>:OWNER" in the "assumed-roles" header.
 This header should probably get renamed to "X-assumed-roles" or "X-hsadmin-ng-rbac-assumed-roles".
+
+---
+
+## Release Note
+
+released: 2026-05-12
+
+### Debitors can list their booking projects without assuming a role
+
+Since 2026-05-04, a subject with a debitor role can list and read its booking projects without assuming the project role first.
+Access below a project still needs that role, which can now be assumed, because the project UUIDs are visible.

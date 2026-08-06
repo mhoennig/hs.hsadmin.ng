@@ -36,3 +36,14 @@ Focused tests cover deprecated-header fallback, same-value dual-header requests,
 ## Additional Changes
 
 One unrelated previous PR-doc was renamed to fix the date in its name.
+
+---
+
+## Release Note
+
+released: 2026-05-29
+
+### A new HTTP header selects the assumed roles
+
+Since 2026-05-28, roles are selected with the HTTP header `Hostsharing-Assumed-Roles`.
+The previous header `assumed-roles` still works, but it is deprecated and will be removed; sending both with different values is rejected with 400 Bad Request.

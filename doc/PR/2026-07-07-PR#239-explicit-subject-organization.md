@@ -329,3 +329,14 @@ messages. Name validation now happens exclusively at the OpenAPI/controller leve
 ## Prerequisite PRs
 
 - PR#238: Synchronize Keycloak users and groups as ReBAC subjects.
+
+---
+
+## Release Note
+
+released: 2026-07-17
+
+### Subjects carry an explicit organization
+
+Since 2026-07-07, a subject carries an explicit `organization`, which can be sent when a subject is created or synchronized and which every subject response contains.
+`GET /api/rbac/subjects` accepts it as a filter, combinable with `name` and `type`.

@@ -72,10 +72,10 @@ TODO            text
 *.tif           binary
 *.tiff          binary
 *.ico           binary
-# SVG treated as an asset (binary) by default. If you want to treat it as text,
-# comment-out the following line and uncomment the line after.
-*.svg           binary
-#*.svg          text
+# SVG treated as text, so that a hand-edited SVG like doc/.hostsharing-logo.svg
+# stays reviewable in a diff. It is currently the only SVG in this repository.
+#*.svg          binary
+*.svg           text
 *.eps           binary
 
 # These files are binary and should be left untouched

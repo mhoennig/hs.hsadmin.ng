@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source tools/lib/unindented.sh
+
+usage() {
+    unindented <<'HELP'
+        usage: tools/openapi-to-html <root-spec-yaml> <target-directory> <name> [<title>]
+
+        Bundles an OpenAPI root spec, whose $refs point to sibling files, into a single
+        <target-directory>/<name>.json and writes a <target-directory>/<name>.html which renders it
+        with Redoc.
+
+        The bundled spec is embedded into the page, so that the page also works when it is opened
+        from an unpacked jar - a fetch of the JSON file would fail under file:// due to CORS. Redoc
+        itself is loaded from redoc.standalone.js next to the page; place it there once with
+        `tools/openapi-to-html --install-redoc <target-directory>`, otherwise each page would carry
+        its own 1.1 MB copy.
+
+        The JSON file is kept beside the page, because Swagger UI needs the spec as a URL.
+
+        Requires: redocly and redoc (npm install -g @redocly/cli redoc).
+HELP
+}
+
+redoc_bundle_path() {
+    local candidate
+    for candidate in "node_modules" "$(npm root -g 2>/dev/null || true)"; do
+        if [[ -n "${candidate}" && -f "${candidate}/redoc/bundles/redoc.standalone.js" ]]; then
+            echo "${candidate}/redoc/bundles/redoc.standalone.js"
+            return 0
+        fi
+    done
+    return 1
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+if [[ "${1:-}" == "--install-redoc" ]]; then
+    target_dir=${2:-}
+    if [[ -z "${target_dir}" ]]; then
+        usage >&2
+        exit 2
+    fi
+    if ! bundle=$(redoc_bundle_path); then
+        echo "redoc.standalone.js not found. Install it with: npm install -g redoc" >&2
+        exit 1
+    fi
+    mkdir -p "${target_dir}"
+    cp "${bundle}" "${target_dir}/redoc.standalone.js"
+    echo "Installed ${target_dir}/redoc.standalone.js"
+    exit 0
+fi
+
+if [[ $# -lt 3 || $# -gt 4 ]]; then
+    usage >&2
+    exit 2
+fi
+
+root_spec=$1
+target_dir=$2
+name=$3
+title=${4:-$name}
+
+if [[ ! -f "${root_spec}" ]]; then
+    echo "OpenAPI root spec not found: ${root_spec}" >&2
+    exit 1
+fi
+
+if ! command -v redocly >/dev/null 2>&1; then
+    echo "redocly not found. Install it with: npm install -g @redocly/cli" >&2
+    exit 1
+fi
+
+mkdir -p "${target_dir}"
+target_dir=$(realpath "${target_dir}")
+spec_file=${target_dir}/${name}.json
+page_file=${target_dir}/${name}.html
+
+redocly bundle "$(realpath "${root_spec}")" -o "${spec_file}" >/dev/null
+
+# `</script>` inside a description would end the embedding element early
+escaped_spec=${spec_file}.escaped
+sed 's:</script:<\\/script:g' "${spec_file}" > "${escaped_spec}"
+
+{
+    cat <<HTML
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <style>body { margin: 0; }</style>
+</head>
+<body>
+<div id="redoc"></div>
+<script type="application/json" id="spec">
+HTML
+    cat "${escaped_spec}"
+    cat <<'HTML'
+</script>
+<script src="./redoc.standalone.js"></script>
+<script>
+  Redoc.init(JSON.parse(document.getElementById('spec').textContent), {}, document.getElementById('redoc'));
+</script>
+</body>
+</html>
+HTML
+} > "${page_file}"
+
+rm -f "${escaped_spec}"
+
+echo "Generated ${page_file}"

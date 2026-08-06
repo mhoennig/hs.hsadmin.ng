@@ -135,3 +135,14 @@ verified by `BaseWebSecurityConfigUnitTest`:
   audience validation stays disabled until an audience mapper (e.g. `hsadmin-ng-api`) is
   configured in Keycloak for the API-calling clients and the env-var is set accordingly;
 - the `fake-jwt`-profile decoder is intentionally unchanged.
+
+---
+
+## Release Note
+
+released: 2026-07-16
+
+### A public endpoint reports the build information
+
+Since 2026-07-04, the public `GET /api/version` endpoint returns the build information of the running application.
+A token with an unknown subject now answers 404 instead of 500, and `POST /api/hs/accounts/accounts` answers 409 instead of 400, if the account or the subject already exists.

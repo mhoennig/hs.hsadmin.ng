@@ -38,3 +38,14 @@ That is race-prone and burdensome, especially for mass imports.
 
 Independent of the other sub-PRs extracted from PR#246; mergeable at any time before PR#246.
 See the merge-order checklist in the [PR#246 doc](2026-07-22-PR%23246-remote-tooling-and-login-monitoring.md).
+
+---
+
+## Release Note
+
+released: 2026-07-31
+
+### Global UID and GID are assigned automatically
+
+Since 2026-07-30, the global UID and GID are optional when an account gets created.
+If both are left out, the backend assigns the lowest unused number between 100000 and 999999 to both; if only one is given, the other takes the same value.

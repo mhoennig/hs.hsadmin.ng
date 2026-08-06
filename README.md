@@ -935,6 +935,23 @@ gw bootJarWithBuildTime
 This wraps `bootJar` and sets the build-time flag automatically.
 
 
+### How to Build the Executable Jar With Documentation
+
+The jar can carry the project documentation, which the application then serves at `/doc/index.html`:
+selected business documentation, the generated RBAC diagrams, the scenario-test reports and the
+REST API per module, plus a ZIP of all of it for download.
+
+```shell
+gw bootJarWithDocumentation
+```
+
+Every plain `bootJar` already bundles the Markdown sources; this task additionally renders them to
+HTML and needs the tooling of the [Dockerfile](Jenkins/jenkins-agent/Dockerfile).
+
+See [doc/README.md](doc/README.md) for what it contains, how to add a document, and how the REST
+API documentation is served.
+
+
 ### How to Run the Application With Other Profiles, e.g. production:
 
 Add `--args='--spring.profiles.active=...` with the wanted profile selector:

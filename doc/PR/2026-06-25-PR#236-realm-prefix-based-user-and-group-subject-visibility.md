@@ -286,3 +286,14 @@ This PR deliberately does **not**:
 
 1. Synchronize users and groups from Keycloak to HSAdmin NG using the subject-name pattern from PR#234.
 - [ ] TODO.spec: Design cross-realm grants and the required trust relationship between realms.
+
+---
+
+## Release Note
+
+released: 2026-07-06
+
+### Subjects are visible by organization realm
+
+Since 2026-06-25, the subject endpoints return subjects by organization realm: a caller sees the users and groups of its own realm, plus the groups of other realms in which the same natural person holds an account.
+Assuming a non-global role returns no subjects, and `GET /api/rbac/context` reports group assignments as separate `claimedGroups` and `effectiveGroups`.

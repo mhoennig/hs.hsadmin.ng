@@ -4,12 +4,16 @@
 import argparse
 import re
 import subprocess
+from datetime import date
+import time
 import sys
 from pathlib import Path
 
 
 MAX_PR_DOC_LINES = 200
 MAX_SCOPE_SCORE = 35
+# Beyond this, a branch is stale rather than open work, and its conflicts are noise.
+CONFLICT_SCAN_DAYS = 30
 PR_DOC_BASE_LINES = 50
 PR_DOC_LINES_PER_FILE = 3
 CHANGE_LINES_PER_SCOPE_POINT = 100
@@ -22,6 +26,10 @@ PR_DOC_NAME = re.compile(
 SQL_DUMP_NAME = re.compile(r"^released-prod-schema-.*\.sql$")
 SCOPE_WAIVER_KEY = "max-scope-score"
 SCOPE_WAIVER = re.compile(r"pr-quick-check:max-scope-score=(\d+)`?\s*[:—–-]+\s*(\S.*)")
+RELEASE_NOTE_HEADING = "\n## Release Note\n"
+RELEASED_ON = re.compile(r"^released:\s*(\d{4}-\d{2}-\d{2})\s*$", re.MULTILINE)
+EXTRA_PR_DOCS_KEY = "extra-pr-docs"
+EXTRA_PR_DOCS = re.compile(r"pr-quick-check:extra-pr-docs=(\d+)`?\s*[:—–-]+\s*(\S.*)")
 ALLOWED_ENV_FILE_NAMES = {
     ".env.example",
     ".env.local",
@@ -158,13 +166,27 @@ def find_pr_doc(paths, explicit_pr_doc):
         and Path(path).suffix == ".md"
         and Path(path).name not in {"README.md", "TEMPLATE.md", "TEAMPLATE.md"}
     ]
-    if len(candidates) != 1:
-        names = ", ".join(str(path) for path in candidates) or "none"
+    if len(candidates) == 1:
+        return candidates[0]
+
+    # With several changed PR documents, the one carrying the exception is this PR's own;
+    # the others are the ones it declares.
+    declaring = [path for path in candidates if EXTRA_PR_DOCS.search(path.read_text(encoding="utf-8"))]
+    if len(declaring) == 1:
+        return declaring[0]
+    if len(declaring) > 1:
+        names = ", ".join(str(path) for path in declaring)
         raise RuntimeError(
-            f"expected exactly one changed PR document, found {len(candidates)}: {names}; "
-            "select it with --pr-doc"
+            f"{len(declaring)} changed PR documents declare a further-PR-documents "
+            f"exception: {names}; only this PR's own document may declare it"
         )
-    return candidates[0]
+
+    names = ", ".join(str(path) for path in candidates) or "none"
+    raise RuntimeError(
+        f"expected exactly one changed PR document, found {len(candidates)}: {names}; "
+        "select it with --pr-doc, or declare the exception in this PR's own document with "
+        "`pr-quick-check:extra-pr-docs=<count>`: <reason>"
+    )
 
 
 def logical_file_count(paths):
@@ -272,6 +294,123 @@ def parse_scope_waiver(pr_doc):
     return (waivers[0] if len(waivers) == 1 else None), failures
 
 
+def check_release_note_date(pr_doc):
+    """A PR document is started long before the PR is merged, thus its file name is no reliable
+    release date; the note names the day it goes live and has to be current at build time."""
+    text = pr_doc.read_text(encoding="utf-8")
+    if RELEASE_NOTE_HEADING not in text:
+        return []
+    appendix = text.split(RELEASE_NOTE_HEADING, 1)[1]
+    match = RELEASED_ON.search(appendix)
+    if not match:
+        return [
+            f"{pr_doc} has a release note without a release date; add a line "
+            "`released: <YYYY-MM-DD>` right below its heading"
+        ]
+    today = date.today().isoformat()
+    if match.group(1) != today:
+        return [
+            f"{pr_doc} declares the release note as released on {match.group(1)}, but today is "
+            f"{today}; a merged note keeps this date, thus set it to the day of the merge"
+        ]
+    print(f"PASSED: the release note is dated {today}")
+    return []
+
+
+def current_branch():
+    return subprocess.run(
+        ["git", "branch", "--show-current"], text=True, stdout=subprocess.PIPE,
+    ).stdout.strip()
+
+
+def conflicting_paths(ours, theirs):
+    """Merges in memory, without touching the working tree; a non-zero exit means conflicts."""
+    result = subprocess.run(
+        ["git", "merge-tree", "--write-tree", "--name-only", "--no-messages", ours, theirs],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    )
+    if result.returncode == 0:
+        return []
+    return [line for line in result.stdout.splitlines()[1:] if line.strip()]
+
+
+def open_origin_branches(base):
+    """Only branches with open work: not yet contained in the base, and touched recently.
+    A long-abandoned branch conflicts with almost anything, which would be noise."""
+    listed = subprocess.run(
+        ["git", "for-each-ref", "--format=%(refname:short) %(committerdate:unix)",
+         "refs/remotes/origin"],
+        text=True, stdout=subprocess.PIPE,
+    ).stdout.splitlines()
+    cutoff = time.time() - CONFLICT_SCAN_DAYS * 86400
+    current = current_branch()
+    branches = []
+    for line in listed:
+        name, _, timestamp = line.rpartition(" ")
+        if not name or name.endswith("/HEAD") or name == base or name == f"origin/{current}":
+            continue
+        if float(timestamp) < cutoff:
+            continue
+        contained = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", name, base],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        if contained.returncode != 0:
+            branches.append(name)
+    return sorted(branches)
+
+
+def report_conflicts(base):
+    """A conflict with the target branch blocks the merge; one with another open branch only
+    announces the work which whoever merges second will have to do.
+
+    The check against the base can only fail if it ever runs before ensure_branch_contains_base,
+    which already demands that the base is merged in — and then merging it again cannot conflict."""
+    failures = []
+    against_base = conflicting_paths("HEAD", base)
+    if against_base:
+        failures.append(
+            f"merging {base} conflicts in: {', '.join(against_base)}; merge or rebase it first"
+        )
+    else:
+        print(f"PASSED: no merge conflict with {base}")
+
+    conflicting = [
+        (branch, paths)
+        for branch in open_origin_branches(base)
+        if (paths := conflicting_paths("HEAD", branch))
+    ]
+    for branch, paths in conflicting:
+        shown = ", ".join(paths[:4]) + (", ..." if len(paths) > 4 else "")
+        print(f"WARNING: conflicts with {branch} in: {shown}", file=sys.stderr)
+    if not conflicting:
+        print(f"PASSED: no conflict with a branch on origin touched within "
+              f"{CONFLICT_SCAN_DAYS} days")
+    return failures
+
+
+def parse_extra_pr_docs(pr_doc):
+    """A PR which has to change further PR documents declares how many, so that the
+    exception and its reason are as visible to the reviewer as the change itself."""
+    declarations = []
+    failures = []
+    for line in pr_doc.read_text(encoding="utf-8").splitlines():
+        if EXTRA_PR_DOCS_KEY not in line:
+            continue
+        match = EXTRA_PR_DOCS.search(line)
+        if match:
+            declarations.append((int(match.group(1)), match.group(2).strip()))
+        else:
+            failures.append(
+                f"{pr_doc} contains a malformed further-PR-documents exception; expected "
+                "`pr-quick-check:extra-pr-docs=<count>`: <reason> — fill in a "
+                "numeric count or remove the template example line"
+            )
+    if len(declarations) > 1:
+        failures.append(f"{pr_doc} declares more than one further-PR-documents exception")
+    return (declarations[0] if len(declarations) == 1 else None), failures
+
+
 def oversized_files(paths):
     oversized = []
     for path_string in paths:
@@ -335,6 +474,22 @@ scope-budget exception:
   Having this in the PR-doc also makes the decision and reason obvious to the reviewer of the PR.
   An exception whose score is not needed (actual score within the default maximum) fails the check
   and must be removed.
+
+merge conflicts:
+  A conflict with the base fails the check; a conflict with another branch on origin only
+  warns, because whoever merges second has to resolve it either way.  Only branches which
+  the base does not contain yet and which were touched within the last 30 days are compared:
+  an abandoned branch conflicts with almost anything, which would drown the signal.
+
+further-PR-documents exception:
+  A PR normally changes exactly one PR document.  When it legitimately has to change
+  more, for example to back-fill release notes into merged PRs, its own PR document
+  declares how many further ones it changes:
+
+      `pr-quick-check:extra-pr-docs=<count>`: <reason>
+
+  The declaring document is taken as this PR's own.  The count has to match, and an
+  exception which is not needed fails the check and must be removed.
 
 examples:
   tools/pr-quick-check
@@ -443,6 +598,36 @@ def main():
         failures.append("the findings check reports open findings")
     else:
         print("PASSED: no open findings")
+
+    changed_pr_docs = [
+        Path(path)
+        for path in paths
+        if Path(path).parent == PR_DOC_DIR
+        and Path(path).suffix == ".md"
+        and Path(path).name not in {"README.md", "TEMPLATE.md", "TEAMPLATE.md"}
+    ]
+    extra_pr_docs, extra_failures = parse_extra_pr_docs(pr_doc)
+    failures.extend(extra_failures)
+    further = max(0, len(changed_pr_docs) - 1)
+    if extra_pr_docs and further == 0:
+        failures.append(
+            f"{pr_doc} declares a further-PR-documents exception, but no other PR document "
+            "changed; remove it"
+        )
+    elif extra_pr_docs and extra_pr_docs[0] != further:
+        failures.append(
+            f"{pr_doc} declares {extra_pr_docs[0]} further PR documents, but {further} "
+            "changed; correct the count"
+        )
+    elif extra_pr_docs:
+        print(
+            f"PASSED: {further} further PR documents changed "
+            f"(further-PR-documents exception: {extra_pr_docs[1]})"
+        )
+
+    failures.extend(report_conflicts(base))
+
+    failures.extend(check_release_note_date(pr_doc))
 
     waiver, waiver_failures = parse_scope_waiver(pr_doc)
     failures.extend(waiver_failures)

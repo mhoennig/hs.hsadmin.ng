@@ -57,3 +57,14 @@ or for a stalled Keycloak sync.
 - This PR and some predecessors, which actually got extracted from a former version of this PR,
   introduced some security issues that we found in a security audit.
   These issues will be addressed in the follow-up PR#254 and PR#260.
+
+---
+
+## Release Note
+
+released: 2026-08-01
+
+### The configured CORS allow-list takes effect
+
+Since 2026-07-22, the configured CORS allow-list takes effect.
+A misspelled property had made `ALLOWED_ORIGINS` ineffective before, so it never restricted a cross-origin request; where nothing is configured, any origin stays allowed.

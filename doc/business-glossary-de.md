@@ -1,4 +1,4 @@
-### hsadminNg fachliches Glossar
+### HSAdmin NG fachliches Glossar
 
 <!--
 Currently, this business glossary is only available in German because in many cases, 

@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source tools/lib/plantuml-normalize.sh
+source tools/lib/unindented.sh
+
+usage() {
+    unindented <<'HELP'
+        usage: tools/markdown-to-html <source-markdown-file> <target-html-file>
+                   [<stylesheet> [<header> [<footer>]]]
+
+        Renders Markdown with Mermaid and PlantUML diagram elements to a self-contained HTML page.
+        Diagrams, stylesheet and fonts are embedded as data-URIs, so the page needs no network
+        access - which is what makes it suitable for bundling into the application jar.
+
+        The browser page title is taken from a leading heading of the Markdown file, otherwise from
+        its file name. It is set as `pagetitle`, so that Pandoc does not repeat it as a title block
+        above the document's own heading.
+
+        The stylesheet defaults to doc/.documentation.css. The header and the footer are put in
+        front of and behind the document body. There is no default header, because a breadcrumb
+        only makes sense within a known document tree; the footer defaults to
+        doc/.documentation-footer.html. Each is left out if its file does not exist.
+
+        Requires: pandoc, mermaid-filter (npm install -g mermaid-filter),
+        pandoc-plantuml (apt-get install pandoc-plantuml-filter).
+HELP
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+if [[ $# -lt 2 || $# -gt 5 ]]; then
+    usage >&2
+    exit 2
+fi
+
+markdown_file=$1
+target_file=$2
+stylesheet=${3:-doc/.documentation.css}
+header=${4:-}
+footer=${5:-doc/.documentation-footer.html}
+
+if [[ ! -f "${markdown_file}" ]]; then
+    echo "Markdown file not found: ${markdown_file}" >&2
+    exit 1
+fi
+
+if [[ "${markdown_file}" != *.md ]]; then
+    echo "Expected a .md file: ${markdown_file}" >&2
+    exit 1
+fi
+
+if [[ "${target_file}" != *.html ]]; then
+    echo "Expected a .html target file: ${target_file}" >&2
+    exit 1
+fi
+
+if [[ ! -f "${stylesheet}" ]]; then
+    echo "Stylesheet not found: ${stylesheet}" >&2
+    exit 1
+fi
+
+if ! command -v pandoc >/dev/null 2>&1; then
+    echo "Pandoc not found. Install pandoc to render Markdown to HTML." >&2
+    exit 1
+fi
+
+if ! command -v mermaid-filter >/dev/null 2>&1; then
+    echo "mermaid-filter not found. Install it with: npm install -g mermaid-filter" >&2
+    exit 1
+fi
+
+if ! command -v pandoc-plantuml >/dev/null 2>&1; then
+    echo "pandoc-plantuml not found. Install it with: apt-get install pandoc-plantuml-filter" >&2
+    exit 1
+fi
+
+stylesheet=$(realpath "${stylesheet}")
+
+pandoc_frame_args=()
+if [[ -n "${header}" && -f "${header}" ]]; then
+    pandoc_frame_args+=(--include-before-body "$(realpath "${header}")")
+fi
+if [[ -f "${footer}" ]]; then
+    pandoc_frame_args+=(--include-after-body "$(realpath "${footer}")")
+fi
+
+target_dir=$(dirname "${target_file}")
+mkdir -p "${target_dir}"
+target_file=$(realpath "${target_dir}")/$(basename "${target_file}")
+
+# a leading heading is only the document title if nothing but the optional YAML frontmatter
+# precedes it; several documents start with prose and use their first heading for a section
+title=$(awk '
+    NR == 1 && /^---[[:space:]]*$/ { in_frontmatter = 1; next }
+    in_frontmatter { if (/^---[[:space:]]*$/) in_frontmatter = 0; next }
+    # emphasis and code markers would show up literally in the page title
+    NF { if ($0 ~ /^#/) { sub(/^#+[[:space:]]*/, ""); sub(/[[:space:]]*$/, ""); gsub(/[*`]/, ""); print } exit }
+' "${markdown_file}")
+title=${title:-$(basename "${markdown_file}" .md)}
+
+tmp_dir=$(mktemp -d)
+
+cleanup() {
+    rm -rf "${tmp_dir}"
+}
+trap cleanup EXIT
+
+source_file=${tmp_dir}/$(basename "${markdown_file}")
+normalize_plantuml_fences "$(realpath "${markdown_file}")" "${source_file}"
+
+puppeteer_config=${tmp_dir}/puppeteer-config.json
+
+cat > "${puppeteer_config}" <<JSON
+{
+  "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+}
+JSON
+
+# both diagram filters drop intermediate image files into their working directory,
+# which must stay out of the generated documentation tree
+(
+    cd "${tmp_dir}"
+
+    MERMAID_FILTER_FORMAT=svg \
+    MERMAID_FILTER_PUPPETEER_CONFIG="${puppeteer_config}" \
+    JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+${JAVA_TOOL_OPTIONS} }-Djava.awt.headless=true" \
+        pandoc \
+            --standalone \
+            --embed-resources \
+            --toc \
+            --css "${stylesheet}" \
+            --metadata "pagetitle=${title}" \
+            --filter mermaid-filter \
+            --filter pandoc-plantuml \
+            "${pandoc_frame_args[@]}" \
+            "${source_file}" -o "${target_file}"
+)
+
+echo "Generated ${target_file}"

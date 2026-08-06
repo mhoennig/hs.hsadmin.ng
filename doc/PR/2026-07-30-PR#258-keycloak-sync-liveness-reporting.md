@@ -93,3 +93,14 @@ So that an external monitor can alert when the sync stalls, without holding any 
 
 - PR#257 (`subject-organization-and-name-limits`): this branch builds on it,
   so this PR shows both change-sets until PR#257 is merged.
+
+---
+
+## Release Note
+
+released: 2026-07-30
+
+### Endpoints report the liveness of the Keycloak synchronization
+
+Since 2026-07-30, an authenticated endpoint accepts the statistics of a finished Keycloak synchronization run and answers 204 No Content.
+A public endpoint reports the timestamp and the aggregated statistics of the last run within a configurable interval, without naming the synchronized subjects.

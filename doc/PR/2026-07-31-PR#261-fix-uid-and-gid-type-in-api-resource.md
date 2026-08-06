@@ -26,3 +26,13 @@ because the conversion goes through `StrictMapper`.
 
 - [HsAccountControllerRestTest](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/HsAccountControllerRestTest.java)
 - [HsAccountControllerAcceptanceTest](../../src/test/java/net/hostsharing/hsadminng/hs/accounts/HsAccountControllerAcceptanceTest.java)
+
+---
+
+## Release Note
+
+released: 2026-08-03
+
+### Global UID and GID are integers
+
+Since 2026-07-31, the accounts API declares and returns the global UID and GID as integers, thus a response carries `80100` instead of `80100.0`.

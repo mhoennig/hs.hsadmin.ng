@@ -1,0 +1,345 @@
+/* Stylesheet for the HTML documentation bundled into the application jar,
+   inlined by `pandoc --embed-resources` so the pages stay self-contained.
+   The palette is the corporate identity of https://www.hostsharing.net. */
+
+:root {
+    --hs-blue: #005094;
+    --hs-blue-light: #4279bc;
+    --hs-orange: #dd4901;
+    --hs-magenta: #940050;
+    --hs-green: #1f6a00;
+    --hs-text: #212529;
+    --hs-muted: #57606a;
+    --hs-border: #dee2e6;
+    --hs-surface: #f8f9fa;
+}
+
+body {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    color: var(--hs-text);
+    background: #ffffff;
+}
+
+h1, h2, h3, h4 {
+    line-height: 1.25;
+    margin-top: 2rem;
+    color: var(--hs-blue);
+}
+
+h1 {
+    border-bottom: 3px solid var(--hs-orange);
+    padding-bottom: .3rem;
+}
+
+a {
+    color: var(--hs-blue);
+}
+
+a:hover {
+    color: var(--hs-blue-light);
+}
+
+code, pre {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: .875em;
+}
+
+pre {
+    padding: 1rem;
+    overflow: auto;
+    background: #f6f8fa;
+    border-radius: 6px;
+}
+
+code {
+    padding: .2em .4em;
+    background: #f6f8fa;
+    border-radius: 6px;
+}
+
+pre code {
+    padding: 0;
+    background: none;
+}
+
+table {
+    border-collapse: collapse;
+    display: block;
+    overflow: auto;
+    max-width: 100%;
+}
+
+th, td {
+    border: 1px solid var(--hs-border);
+    padding: .4rem .8rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: var(--hs-blue);
+    color: #ffffff;
+    border-color: var(--hs-blue);
+}
+
+tr:nth-child(2n) {
+    background: var(--hs-surface);
+}
+
+img, svg {
+    max-width: 100%;
+}
+
+#TOC {
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    background: var(--hs-surface);
+    border: 1px solid var(--hs-border);
+    border-left: 3px solid var(--hs-blue);
+    border-radius: 6px;
+}
+
+#TOC ul {
+    margin: 0;
+}
+
+/* --- the overview and per-section pages ---------------------------------- */
+
+.doc-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px solid var(--hs-orange);
+}
+
+.doc-logo-image {
+    width: 12rem;
+    height: auto;
+}
+
+.doc-header-title {
+    margin: 0;
+    border: none;
+    padding: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--hs-blue);
+}
+
+.doc-eyebrow {
+    margin: .2rem 0 0;
+    font-size: .8rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--hs-muted);
+}
+
+.doc-warning {
+    padding: .8rem 1.2rem;
+    margin: 2rem 0 0;
+    border-left: 4px solid var(--hs-orange);
+    background: var(--hs-surface);
+    font-size: .9rem;
+}
+
+.doc-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 1.25rem;
+    margin: 2.5rem 0;
+}
+
+.doc-card {
+    display: block;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--hs-border);
+    border-top: 4px solid var(--hs-blue);
+    border-radius: 6px;
+    color: inherit;
+    text-decoration: none;
+    transition: box-shadow .15s, transform .15s;
+}
+
+/* cycling, so that the colours keep alternating however many cards there are */
+.doc-card:nth-child(4n+2) { border-top-color: var(--hs-orange); }
+.doc-card:nth-child(4n+3) { border-top-color: var(--hs-green); }
+.doc-card:nth-child(4n+4) { border-top-color: var(--hs-magenta); }
+
+.doc-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .4rem 1rem rgba(0, 80, 148, .15);
+}
+
+.doc-card h2 {
+    margin: .4rem 0 .2rem;
+    font-size: 1.15rem;
+}
+
+.doc-card-icon {
+    font-size: 1.6rem;
+}
+
+.doc-card-count {
+    margin: 0;
+    font-weight: 600;
+    color: var(--hs-muted);
+}
+
+.doc-card-origin {
+    margin: .5rem 0 0;
+    font-size: .85rem;
+    color: var(--hs-muted);
+}
+
+.doc-pagenav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem 1.5rem;
+    margin: 2rem 0 2.5rem;
+    padding-bottom: .8rem;
+    border-bottom: 3px solid var(--hs-orange);
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.doc-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .4rem 1.2rem;
+    margin-top: 4rem;
+    padding-top: .8rem;
+    border-top: 1px solid var(--hs-border);
+    font-size: .85rem;
+    color: var(--hs-muted);
+}
+
+.doc-crumbs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.doc-crumb-separator {
+    color: var(--hs-muted);
+}
+
+.doc-prevnext {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-weight: 400;
+}
+
+.doc-prevnext > * {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+}
+
+.doc-prevnext-placeholder {
+    color: var(--hs-border);
+}
+
+.doc-nav-icon {
+    width: .9em;
+    height: .9em;
+    flex: none;
+}
+
+.doc-to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: var(--hs-blue);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 .2rem .6rem rgba(0, 0, 0, .25);
+}
+
+/* the author-level `display` would otherwise beat the browser's rule for the hidden attribute */
+.doc-to-top[hidden] {
+    display: none;
+}
+
+.doc-to-top:hover {
+    background: var(--hs-blue-light);
+}
+
+.doc-to-top svg {
+    width: 1.4rem;
+    height: 1.4rem;
+}
+
+.doc-list {
+    padding-left: 1.2rem;
+}
+
+.doc-list li {
+    margin: .35rem 0;
+}
+
+.doc-download {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .55rem 1.1rem;
+    border-radius: 6px;
+    background: var(--hs-blue);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.doc-download:hover {
+    background: var(--hs-blue-light);
+    color: #ffffff;
+}
+
+.doc-download-icon {
+    width: 1.1em;
+    height: 1.1em;
+    flex: none;
+}
+
+.doc-legend {
+    margin: 0 0 2rem;
+    font-size: .85rem;
+    color: var(--hs-muted);
+}
+
+.doc-newtab-icon {
+    width: .95em;
+    height: .95em;
+    vertical-align: -.12em;
+}
+
+.doc-newtab {
+    display: inline-block;
+    color: var(--hs-muted);
+    cursor: help;
+    text-decoration: none;
+}
+
+.doc-hint {
+    font-size: .85em;
+    color: var(--hs-muted);
+}

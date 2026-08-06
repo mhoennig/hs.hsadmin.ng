@@ -62,3 +62,14 @@ A new HOWTO was also added.
 * Improvements to the README.md:
   * export DOCKER_HOST
   * MacOS builds are no longer officially supported.
+
+---
+
+## Release Note
+
+released: 2026-05-20
+
+### Booking projects can be listed without a debitor
+
+Since 2026-05-15, listing booking projects no longer requires a debitor:
+without the `debitorUuid` parameter the endpoint returns all booking projects which are visible to the current subject or its assumed roles.

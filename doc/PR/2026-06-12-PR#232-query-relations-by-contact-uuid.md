@@ -41,4 +41,13 @@ This allows filtering relations by a specific contact and or person.
 - Fix descriptions of `personUuid` and `relationType` in `hs-office-relations.yaml`.
 - Added `.junie` to `.gitignore`, temporary AI agent memory should not get commited to git.
 
+---
 
+## Release Note
+
+released: 2026-06-15
+
+### Relations can be filtered by contact and by person
+
+Since 2026-06-12, the office relations list can also be filtered by `contactUuid`, `anchorPersonUuid` and `holderPersonUuid`, in addition to the existing `personUuid`.
+All supplied filters are combined with AND.

@@ -36,3 +36,14 @@ the rbac OpenAPI and the DB name-validation functions permitted 3-12 chars.
 
 PR#258 builds on this branch.
 See the merge-order checklist in the [PR#246 doc](2026-07-22-PR%23246-remote-tooling-and-login-monitoring.md).
+
+---
+
+## Release Note
+
+released: 2026-07-30
+
+### Unified length limits for subject-name realm prefixes
+
+Since 2026-07-30, a subject-name realm prefix is accepted with 3 to 16 characters at every endpoint, instead of the differing limits before.
+An API-key subject can be created with an explicit organization; without one it takes the part of its name before the first dot.

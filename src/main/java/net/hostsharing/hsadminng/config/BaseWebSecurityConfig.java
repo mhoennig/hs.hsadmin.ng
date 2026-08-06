@@ -70,8 +70,9 @@ public abstract class BaseWebSecurityConfig {
                                 // only list endpoints implemented in libraries here
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/actuator/**",
-                                "/fake-jwt/**"
+                                "/actuator/**", // reachable via management port
+                                "/fake-jwt/**",
+                                "/doc/**" // bundled documentation, all of it is in public repository anyway
                                 // otherwise use @PreAuthorize annotation at the controller class / endpoint method level
                         ).permitAll()
                         .requestMatchers("/api/**").permitAll() // controlled at method level

@@ -231,3 +231,14 @@ Cross-realm grants remain a separate topic and must not be permitted by name sim
 
 1. Extend subject visibility so users can see only user and group subjects within their own realm (enabled by the realm-prefix derivation above).
 2. Synchronize users and groups from Keycloak to HSAdmin NG using the new subject-name pattern.
+
+---
+
+## Release Note
+
+released: 2026-07-01
+
+### Subject names follow a realm-prefixed pattern
+
+Since 2026-06-22, user subject names follow the realm-prefixed pattern `<realm-prefix>-<local-part>` instead of looking like email addresses, and group subject names start with a slash.
+A name which does not match the pattern of its subject type is rejected with 400 Bad Request.

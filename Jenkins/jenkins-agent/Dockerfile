@@ -23,7 +23,7 @@ RUN apt-get update && \
         nodejs \
         npm && \
     mkdir -p /tmp/docker-home && \
-    HOME=/tmp/docker-home npm install -g mermaid-filter && \
+    HOME=/tmp/docker-home npm install -g mermaid-filter @redocly/cli redoc && \
     chmod -R a+rwX /tmp/docker-home && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

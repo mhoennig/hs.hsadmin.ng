@@ -8,7 +8,9 @@ pdf-mermaid-width: 1200
 pdf-mermaid-scale: 2
 ---
 
-# Beispiel: juristische Person (GmbH) 
+# HS Office Data Structure
+
+## Beispiel: juristische Person (GmbH)
 
 ```mermaid
 classDiagram

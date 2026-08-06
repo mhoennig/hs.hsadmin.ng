@@ -64,4 +64,13 @@ For conveinience, an alias `api` which points to the new tool `tools/api` was ad
 It locates REST the OpenAPI spec and the Spring-controller endpoints by HTTP verb and path fragment.
 Usage documentation was added in `README.md`.
 
+---
 
+## Release Note
+
+released: 2026-07-03
+
+### Contact fields accept only plain string values
+
+Since 2026-07-02, the contact fields for postal address, email addresses and phone numbers accept only key/value pairs with plain string values; nested objects or arrays are rejected.
+Such rejections come back as localized, human-readable messages which name the offending property path.

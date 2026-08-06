@@ -201,3 +201,14 @@ from Keycloak" would deactivate ALL keys, including its own and `hsadminng.provi
 - **Other non-goals**:
   API-key rotation endpoints, realm-scoped keys, and subject-name uniqueness per
   `(type, name)` are out of scope. See RFC#0002, "Nicht-Ziele / Follow-Ups".
+
+---
+
+## Release Note
+
+released: 2026-07-20
+
+### Clients can authenticate with an API key
+
+Since 2026-07-12, a client can authenticate with a long-lived API key in the `Hostsharing-Api-Key` header instead of a Keycloak token; sending both is rejected with 401.
+An API key is created as an `API_KEY` subject, which returns the clear-text key exactly once, and it can be limited to the endpoint scopes which `GET /api/rbac/scopes` lists.

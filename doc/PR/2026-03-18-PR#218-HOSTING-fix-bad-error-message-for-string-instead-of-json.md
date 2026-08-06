@@ -61,3 +61,14 @@ responses with this unclear error message:
 Fortunately, in this case, it's a union (anyIf) at the API level (OpenAPI specification).
 Thus, it cannot be parsed by the Spring Framework, but we parse it ourselves,
 and I was able to simply pass the related property name and improve the error message.
+
+---
+
+## Release Note
+
+released: 2026-03-19
+
+### A clearer error when an object arrives as a plain string
+
+Since 2026-03-18, sending a plain string where an object is expected, for example in `resources`, `config` or `hostingAsset` of a booking item, yields an error message which names the offending property
+instead of the unspecific "Map expected, but got: string".

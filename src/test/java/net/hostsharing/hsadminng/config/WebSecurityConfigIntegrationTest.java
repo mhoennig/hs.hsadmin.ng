@@ -85,6 +85,35 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
+    void accessToBundledDocumentationShouldBePermitted() {
+        val result = this.restTemplate.getForEntity(serverUrl("/doc/index.html"), String.class);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).contains("RBAC Diagrams");
+    }
+
+    @Test
+    void accessToDocumentationDirectoryShouldServeItsIndex() {
+        val result = this.restTemplate.getForEntity(serverUrl("/doc/"), String.class);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).contains("RBAC Diagrams");
+    }
+
+    // Swagger UI resolves the $refs between the API definitions by fetching them itself,
+    // so every file of the tree has to be reachable, not just the module's root spec.
+    @Test
+    void accessToApiDefinitionsShouldBePermitted() {
+        val rootSpec = this.restTemplate.getForEntity(
+                serverUrl("/doc/api/spec/hs-office/hs-office.yaml"), String.class);
+        assertThat(rootSpec.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(rootSpec.getBody()).contains("hs-office-partners.yaml");
+
+        val referencedSpec = this.restTemplate.getForEntity(
+                serverUrl("/doc/api/spec/hs-office/hs-office-partners.yaml"), String.class);
+        assertThat(referencedSpec.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(referencedSpec.getBody()).contains("Returns a list of (optionally filtered) business partners.");
+    }
+
+    @Test
     void accessToApiDocsEndpointShouldBePermitted() {
         val result = this.restTemplate.getForEntity(serverUrl("/v3/api-docs/swagger-config"), String.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);

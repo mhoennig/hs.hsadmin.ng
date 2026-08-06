@@ -432,6 +432,14 @@ tasks.register<GradleBuild>("bootJarWithBuildTime") {
     startParameter.projectProperties = startParameter.projectProperties + ("includeBuildTime" to "true")
 }
 
+tasks.register<GradleBuild>("bootJarWithDocumentation") {
+    group = "build"
+    description = "Builds bootJar with the documentation rendered to HTML; needs pandoc, mermaid-filter and pandoc-plantuml."
+
+    tasks = listOf("scenarioTest", "bootJar")
+    startParameter.projectProperties = startParameter.projectProperties + ("includeRenderedDocumentation" to "true")
+}
+
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     // Enable debug when the debug property is set

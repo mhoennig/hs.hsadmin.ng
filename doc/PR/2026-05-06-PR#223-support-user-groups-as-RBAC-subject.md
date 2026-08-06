@@ -126,3 +126,14 @@ Unfortunately, to change that naming all the way down to the database, it would 
 ## Attachments
 
 - [RFC: Gruppen als Subject-Typ im ReBAC-System](../rfc/2026-05-06-RFC%230001-rbac-subject-groups.md)
+
+---
+
+## Release Note
+
+released: 2026-06-24
+
+### Subjects have a type, and roles can be granted to groups
+
+Since 2026-05-06, RBAC subjects have a `type` of `USER` or `GROUP`, roles can be granted to groups, and a caller receives permissions through the groups in its token.
+`GET /api/rbac/subjects` accepts a `type` filter, and `roleName` is returned in its UUID-based form, while the former symbolic value stays available as `roleIdName`.

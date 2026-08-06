@@ -40,4 +40,36 @@ The main (`##`) sections have to appear in exactly this order, omitting sections
 8. Follow-up PRs (optional)
 9. Attachments (optional)
 
+Below these sections, separated by a `---` line, an optional appendix holds the release note.
+
 For details, see [template](TEAMPLATE.md)
+
+## Release Notes
+
+Below the sections above, separated by a `---` line, a PR may append a release note.
+The build collects these notes into the news page of the documentation which the application
+serves at `/doc/`.
+That documentation addresses whoever uses the REST API, thus a note only belongs into a PR which
+changes something observable through the API.
+
+Write the appendix in English, even in a German PR document, because the news page is public.
+Its `###` heading becomes the headline of the news entry, so that the entry does not have to
+borrow the PR title, which is written for a different audience.
+
+A `released: <YYYY-MM-DD>` line right below the heading names the day the PR is merged, which the
+news page sorts and shows by.
+The file name is no reliable release date, because a PR document is started long before its merge —
+PR#212 was started in December and merged in March.
+`tools/pr-quick-check` therefore insists that this date is the current one.
+
+Write each note as a dated statement about a change, not as a description of the current state.
+The news page keeps a note after later changes, thus a note about the current state would silently
+become wrong, whereas a dated note about a change stays true.
+
+## Changing Further PR Documents
+
+A PR normally changes exactly one PR document, and `tools/pr-quick-check` enforces that.
+When a PR legitimately has to change more, for example to back-fill release notes into merged
+PRs, its own PR document declares how many further ones it changes:
+
+    `pr-quick-check:extra-pr-docs=<count>`: <reason>

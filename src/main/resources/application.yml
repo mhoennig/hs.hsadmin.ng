@@ -68,6 +68,27 @@ spring:
                   hmac-secret: ${HSADMINNG_JWT_HMAC_SECRET:}
                   audiences: ${HSADMINNG_JWT_AUDIENCE:}
 
+# The hand-written API definitions carry the summaries and descriptions which get lost on the way
+# through the generated controller interfaces, so Swagger UI reads them instead of /v3/api-docs;
+# see DocumentationWebConfig for how they are served.
+springdoc:
+    swagger-ui:
+        urls:
+            - name: HS Office API
+              url: /doc/api/spec/hs-office/hs-office.yaml
+            - name: RBAC API
+              url: /doc/api/spec/rbac/rbac.yaml
+            - name: HS Booking API
+              url: /doc/api/spec/hs-booking/hs-booking.yaml
+            - name: HS Hosting API
+              url: /doc/api/spec/hs-hosting/hs-hosting.yaml
+            - name: HS Accounts API
+              url: /doc/api/spec/accounts/api-paths.yaml
+            - name: Root API
+              url: /doc/api/spec/api-definition.yaml
+            - name: as implemented (generated from controllers)
+              url: /v3/api-docs
+
 hsadminng:
     postgres:
         leakproof:

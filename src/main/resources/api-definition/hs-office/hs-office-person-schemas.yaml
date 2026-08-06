@@ -21,7 +21,7 @@ components:
                     type: string
                     format: uuid
                 personType:
-                    $ref: '#/components/schemas/HsOfficePersonType'
+                    $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonType'
                 tradeName:
                     type: string
                 salutation:
@@ -37,7 +37,7 @@ components:
             type: object
             properties:
                 personType:
-                    $ref: '#/components/schemas/HsOfficePersonType'
+                    $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonType'
                 tradeName:
                     type: string
                 salutation:
@@ -56,7 +56,7 @@ components:
             type: object
             properties:
                 personType:
-                    $ref: '#/components/schemas/HsOfficePersonType'
+                    $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePersonType'
                 tradeName:
                     type: string
                     nullable: true

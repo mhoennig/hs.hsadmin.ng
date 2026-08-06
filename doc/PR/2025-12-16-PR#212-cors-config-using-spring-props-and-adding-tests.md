@@ -28,3 +28,16 @@ In total, with this PR we want the CORS configuration to work properly and to be
 ## Attachments
 
 None.
+
+---
+
+## Release Note
+
+released: 2026-03-21
+
+### Cross-origin requests are restricted to configured origins
+
+Since 2025-12-16, heading towards a public API for a webapp frontende,
+cross-origin browser requests to `/api/**` are only accepted from configured origins,
+while `GET /api/ping` stays open to any origin.
+Since then `/api/pong` also accepts `POST` for CORS testing.

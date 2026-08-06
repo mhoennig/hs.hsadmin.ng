@@ -353,3 +353,14 @@ This PR deliberately does **not**:
 - [ ] TODO.impl: Automated purge job for long-deactivated subjects (the on-demand `?purge=true` operation lands in
   this PR; only the scheduling/selection policy remains).
 - [ ] TODO.spec: Design cross-realm grants and the required trust relationship between realms.
+
+---
+
+## Release Note
+
+released: 2026-07-07
+
+### Subjects can be created or renamed under their own UUID
+
+Since 2026-07-03, `PUT /api/rbac/subjects/{subjectUuid}` creates or renames a subject idempotently, answering 201 on creation and 200 on update.
+Creating and deleting subjects requires global-admin rights, and deletion deactivates a subject instead of removing it, unless `purge=true` is passed.

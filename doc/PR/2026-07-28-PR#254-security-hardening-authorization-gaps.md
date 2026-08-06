@@ -193,3 +193,14 @@ die Findings, die eine Entscheidung brauchen, stehen unter Offene Fragen und A-0
 - PR#260 schließt die Findings der zweiten Audit-Runde; sein Branch baut auf diesem Branch auf.
 - [ ] TODO.spec: den Anchor der `EX_PARTNER`-Relation entscheiden, oder die Aufzeichnung anders schützen (siehe oben).
 - Spezifizieren, wer einen Account löschen darf, und die Interims-Global-Admin-Regel ersetzen (Checkbox bei Offene Fragen).
+
+---
+
+## Release Note
+
+released: 2026-08-03
+
+### Permissions only count when the granting role is assumed
+
+Since 2026-07-28, a permission only counts when the granting role is actually assumed, thus some write requests which succeeded before are now rejected.
+A reference to a person or a contact which the caller cannot see answers 404 instead of granting access, reading, listing and deleting accounts is limited to the accounts the caller may see, and deleting an account requires global-admin rights.

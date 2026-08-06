@@ -85,3 +85,29 @@ Here you list work which is intentionally deferred to later PRs.
 Here you can add any longer sections that would interrupt the reading flow in the previous sections.
 Put each attachment on a level-3 heading ('### ...').
 ö
+
+---
+
+## Release Note
+
+released: <YYYY-MM-DD>
+
+Only for changes which whoever uses the REST API can observe, otherwise leave this appendix out.
+The build collects these notes into the news page of the documentation at `/doc/`.
+
+Write this appendix in English, even in a German PR document, because the news page is public.
+Keep the `---` on its own line with an empty line before it, otherwise Markdown turns the line
+above it into a heading.
+
+`released: <YYYY-MM-DD>` names the day this PR is merged, because a PR document is started long
+before that and its file name is therefore no reliable release date.
+`tools/pr-quick-check` insists that this date is the current one, so that it is right at merge time.
+
+### A headline for the news page
+
+Write the note as a dated statement about a change, not as a description of the current state:
+"Since 2026-05-15, booking projects can be fetched without a debitor UUID."
+The news page keeps the note after later changes, thus a note about the current state would
+silently become wrong, whereas a dated note about a change stays true.
+
+Keep it to one or two sentences and leave out implementation detail.

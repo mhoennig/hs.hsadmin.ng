@@ -1,5 +1,4 @@
-## HSAdmin-NG
-### Project/BookingItems/HostingEntities
+# Projects, Booking-Items and Hosting-Entities
 
 __ATTENTION__: The notation uses UML clas diagram elements, but partly with different meanings. See Agenda.
 
