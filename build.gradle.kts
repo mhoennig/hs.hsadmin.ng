@@ -3,7 +3,9 @@ import info.solidsoft.gradle.pitest.PitestPluginExtension
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.GradleBuild
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import java.io.ByteArrayOutputStream
 import java.net.InetAddress
+import org.apache.tools.ant.util.TeeOutputStream
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
@@ -363,13 +365,64 @@ tasks.register("compile") {
     dependsOn("compileJava", "compileTestJava")
 }
 
-tasks.register<Exec>("smokeTest") {
+fun registerReportingExec(
+    name: String,
+    taskDescription: String,
+    command: List<String>,
+    runsAfter: List<String>,
+) = tasks.register<Exec>(name) {
     group = "verification"
-    description = "Runs tools/smoke-test: bootRun against a throw-away Docker-PostgreSQL plus dev-tooling checks."
+    description = taskDescription
     // .gitTally appends this task last; keep it last even if the task graph runs in parallel
-    mustRunAfter("jacocoTestReport", "check", "generateDocumentation")
-    commandLine("tools/smoke-test")
+    mustRunAfter(*runsAfter.toTypedArray())
+    commandLine(command)
+    // let the report be written before the build fails on a non-zero exit
+    isIgnoreExitValue = true
+    val reportDir = layout.buildDirectory.dir("reports/$name")
+    val captured = ByteArrayOutputStream()
+    standardOutput = TeeOutputStream(System.out, captured)
+    errorOutput = TeeOutputStream(System.err, captured)
+    doFirst {
+        reportDir.get().asFile.mkdirs()
+    }
+    doLast {
+        val dir = reportDir.get().asFile
+        val output = captured.toString(Charsets.UTF_8)
+        val exitValue = executionResult.get().exitValue
+        val passed = exitValue == 0
+        dir.resolve("output.log").writeText(output)
+        val escaped = output.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        val statusColor = if (passed) "#4b930c" else "#b60808"
+        val statusText = if (passed) "PASSED" else "FAILED"
+        dir.resolve("index.html").writeText(
+            "<!DOCTYPE html>\n" +
+                "<html lang=\"en\">\n" +
+                "<head><meta charset=\"utf-8\"><title>$name report</title></head>\n" +
+                "<body>\n" +
+                "<h1>$name — <span style=\"color:$statusColor\">$statusText</span> (exit $exitValue)</h1>\n" +
+                "<pre style=\"white-space:pre-wrap\">$escaped</pre>\n" +
+                "</body>\n" +
+                "</html>\n"
+        )
+        if (!passed) {
+            throw GradleException("$name failed with exit code $exitValue; see ${dir.resolve("index.html")}")
+        }
+    }
 }
+
+registerReportingExec(
+    "smokeTest",
+    "Runs tools/smoke-test: bootRun against a throw-away Docker-PostgreSQL plus dev-tooling checks.",
+    listOf("tools/smoke-test"),
+    listOf("jacocoTestReport", "check", "generateDocumentation"),
+)
+
+registerReportingExec(
+    "prQuickCheck",
+    "Runs tools/pr-quick-check: inexpensive PR quality gate against the target branch.",
+    listOf("tools/pr-quick-check"),
+    listOf("jacocoTestReport", "check", "generateDocumentation", "smokeTest"),
+)
 
 tasks.register<GradleBuild>("bootJarWithBuildTime") {
     group = "build"

@@ -10,9 +10,12 @@ tasks.register("convertMarkdownToHtml") {
     val templateFile = project.file("doc/scenarios/.template.html")
     inputs.file(templateFile).withPathSensitivity(PathSensitivity.NONE)
 
-    // Define input+output directory using layout property
-    val inputDir = layout.buildDirectory.dir("doc/scenarios")
-    outputs.dir(inputDir) // Output HTMLs will be in the same directory
+    // The scenario tests write the markdown reports outside any registered output directory,
+    // otherwise Gradle's stale-output cleanup could delete them before this task runs.
+    val inputDir = layout.buildDirectory.dir("scenario-reports")
+    val outputDir = layout.buildDirectory.dir("reports/scenarios")
+    inputs.files(fileTree(inputDir) { include("*.md") }).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(outputDir)
 
     onlyIf {
         val dir = inputDir.get().asFile
@@ -43,12 +46,12 @@ tasks.register("convertMarkdownToHtml") {
     }
 
     doLast {
+        outputDir.get().asFile.mkdirs()
         // Gather all Markdown files in the input directory
         project.fileTree(inputDir) {
             include("*.md")
         }.forEach { file ->
-            // Create the output file path in the same directory
-            val outputFile = File(file.parentFile, file.name.replace(".md", ".html"))
+            val outputFile = File(outputDir.get().asFile, file.name.replace(".md", ".html"))
 
             // Execute pandoc for each markdown file
             project.exec {
@@ -66,7 +69,8 @@ tasks.register("convertMarkdownToHtml") {
     dependsOn(tasks.named("scenarioTest"))
 }
 
-val scenarioReportDir = layout.buildDirectory.dir("doc/scenarios")
+// under build/reports the CI build-overview page links the report index directly, like the JUnit reports
+val scenarioReportDir = layout.buildDirectory.dir("reports/scenarios")
 val scenarioReportIndexFile = scenarioReportDir.map { it.file("index.html") }
 
 tasks.register("generateScenarioTestIndex") {

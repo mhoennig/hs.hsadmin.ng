@@ -15,7 +15,7 @@
 # It prefixes $HSADMINNG_API_BASE_URL to the given path and implicitly adds
 # the Authorization header from $HSADMINNG_JWT_BEARER.
 # A full http(s)://... URL and an explicit Authorization header (e.g. in a command
-# copy+pasted from a scenario-report under build/doc/scenarios) are used as given
+# copy+pasted from a scenario-report under build/reports/scenarios) are used as given
 # instead of the implicit ones.
 # The HTTP command itself is always printed first (to stderr), so that it's clear
 # which request an output or error belongs to. It is printed in its unexpanded form:

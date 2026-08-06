@@ -9,6 +9,7 @@ RUN apt-get update && \
     apt-get install -y \
         postgresql-client \
         bind9-utils \
+        git \
         docker.io \
         jq \
         python3 \
@@ -26,6 +27,10 @@ RUN apt-get update && \
     chmod -R a+rwX /tmp/docker-home && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# the workspace is bind-mounted from the host and keeps its foreign owner, so trust it
+# system-wide: system config is read regardless of the build user's uid or missing $HOME
+RUN git config --system --add safe.directory '*'
 
 # continue with the same uid as the user 'jenkins' from the Jenkins Dockerfile
 USER 1000

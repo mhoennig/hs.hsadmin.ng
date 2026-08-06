@@ -1,0 +1,480 @@
+#!/usr/bin/env python3
+"""Run the inexpensive checks which should pass before a pull request is reviewed."""
+
+import argparse
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+MAX_PR_DOC_LINES = 200
+MAX_SCOPE_SCORE = 35
+PR_DOC_BASE_LINES = 50
+PR_DOC_LINES_PER_FILE = 3
+CHANGE_LINES_PER_SCOPE_POINT = 100
+CHANGE_LINES_PER_PR_DOC_LINE = 10
+MAX_FILE_SIZE = 142_994
+PR_DOC_DIR = Path("doc/PR")
+PR_DOC_NAME = re.compile(
+    r"^\d{4}-\d{2}-\d{2}-PR#\d+-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\.md$"
+)
+SQL_DUMP_NAME = re.compile(r"^released-prod-schema-.*\.sql$")
+SCOPE_WAIVER_KEY = "max-scope-score"
+SCOPE_WAIVER = re.compile(r"pr-quick-check:max-scope-score=(\d+)`?\s*[:—–-]+\s*(\S.*)")
+ALLOWED_ENV_FILE_NAMES = {
+    ".env.example",
+    ".env.local",
+    ".env.template",
+    ".environment.example",
+    ".environment.local",
+    ".environment.template",
+    ".envrc",
+}
+PR_DOC_SECTIONS = [
+    (("Related Links", "Verwandte Links"), False),
+    (("The Problem", "Das Problem"), True),
+    (("Non-Goals", "Nicht-Ziele"), True),
+    (("The Scenarios", "Die Szenarien"), False),
+    (("The Solution", "Die Lösung"), True),
+    (("Open Questions", "Offene Fragen", "Offene Punkte"), False),
+    (("Additional Changes", "Zusätzliche Änderungen"), False),
+    (("Prerequisite PRs", "Voraussetzungs-PRs"), False),
+    (("Follow-up PRs", "Folge-PRs"), False),
+    (("Attachments", "Anhänge"), False),
+]
+
+
+def git(*args):
+    result = subprocess.run(
+        ["git", *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    if result.returncode:
+        message = result.stderr.strip() or "git command failed"
+        raise RuntimeError(message)
+    return result.stdout
+
+
+def default_base():
+    for candidate in ("origin/master", "master"):
+        if subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", candidate],
+            stdout=subprocess.DEVNULL,
+        ).returncode == 0:
+            return candidate
+    raise RuntimeError("neither origin/master nor master exists")
+
+
+def try_ref_commit(ref):
+    result = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", ref],
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def ensure_base_refs_match(base):
+    """Both refs of a base branch must agree, so the diff is taken against the true target;
+    for a SHA/tag base or a checkout lacking one of the refs there is nothing to compare."""
+    name = base.removeprefix("origin/")
+    local = try_ref_commit(f"refs/heads/{name}")
+    remote = try_ref_commit(f"refs/remotes/origin/{name}")
+    if local and remote and local != remote:
+        raise RuntimeError(
+            f"local {name} differs from origin/{name}; update the remote-tracking ref and "
+            f"local branch first, for example with: git fetch origin {name}:{name}"
+        )
+
+
+def authoritative_base_ref(base):
+    name = base.removeprefix("origin/")
+    if try_ref_commit(f"refs/remotes/origin/{name}"):
+        return f"origin/{name}"
+    return base
+
+
+def ensure_branch_contains_base(base):
+    ref = authoritative_base_ref(base)
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ref, "HEAD"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if result.returncode:
+        raise RuntimeError(
+            f"the current branch does not contain {ref}; rebase it with: git rebase {ref}"
+        )
+
+
+def changed_files(base, untracked):
+    merge_base = git("merge-base", "HEAD", base).strip()
+    paths = set(git("diff", "--name-only", "-z", merge_base).split("\0"))
+    paths.update(untracked)
+    paths.discard("")
+    return merge_base, sorted(paths)
+
+
+def untracked_files():
+    return sorted(
+        path
+        for path in git("ls-files", "--others", "--exclude-standard", "-z").split("\0")
+        if path
+    )
+
+
+def is_secret_env_path(path):
+    name = Path(path).name
+    return name.startswith(".env") and name not in ALLOWED_ENV_FILE_NAMES
+
+
+def tracked_secret_env_files(paths):
+    tracked = set(git("ls-files", "-z").split("\0"))
+    return [
+        path
+        for path in paths
+        if path in tracked and is_secret_env_path(path)
+    ]
+
+
+def find_pr_doc(paths, explicit_pr_doc):
+    if explicit_pr_doc:
+        path = Path(explicit_pr_doc)
+        if not path.is_file():
+            raise RuntimeError(f"PR document does not exist: {path}")
+        return path
+
+    candidates = [
+        Path(path)
+        for path in paths
+        if Path(path).parent == PR_DOC_DIR
+        and Path(path).suffix == ".md"
+        and Path(path).name not in {"README.md", "TEMPLATE.md", "TEAMPLATE.md"}
+    ]
+    if len(candidates) != 1:
+        names = ", ".join(str(path) for path in candidates) or "none"
+        raise RuntimeError(
+            f"expected exactly one changed PR document, found {len(candidates)}: {names}; "
+            "select it with --pr-doc"
+        )
+    return candidates[0]
+
+
+def logical_file_count(paths):
+    regular = 0
+    rbac_sql = False
+    rbac_md = False
+    for path in paths:
+        if path.endswith("-rbac.sql"):
+            rbac_sql = True
+        elif path.endswith("-rbac.md"):
+            rbac_md = True
+        else:
+            regular += 1
+    return regular + int(rbac_sql) + int(rbac_md)
+
+
+def is_substantive(path, pr_doc):
+    if Path(path) == pr_doc:
+        return False
+    if path.endswith(("-rbac.sql", "-rbac.md")):
+        return False
+    candidate = Path(path)
+    return not (
+        candidate.parent == Path("src/test/resources/db")
+        and SQL_DUMP_NAME.fullmatch(candidate.name)
+    )
+
+
+def tracked_change_lines(merge_base, pr_doc):
+    fields = git("diff", "--numstat", "-z", merge_base).split("\0")
+    change_lines = 0
+    index = 0
+    while index < len(fields):
+        field = fields[index]
+        index += 1
+        if not field:
+            continue
+        added, deleted, path = field.split("\t", 2)
+        if not path:
+            index += 1  # old path of a rename
+            path = fields[index]  # new path of a rename
+            index += 1
+        if is_substantive(path, pr_doc) and added != "-" and deleted != "-":
+            change_lines += int(added) + int(deleted)
+    return change_lines
+
+
+def untracked_change_lines(paths, pr_doc):
+    change_lines = 0
+    for path_string in paths:
+        if not is_substantive(path_string, pr_doc):
+            continue
+        raw = Path(path_string).read_bytes()
+        if b"\0" not in raw:
+            change_lines += len(raw.splitlines())
+    return change_lines
+
+
+def validate_pr_doc(pr_doc):
+    failures = []
+    if not PR_DOC_NAME.fullmatch(pr_doc.name):
+        failures.append(
+            f"PR document name does not match YYYY-MM-DD-PR#<number>-<description>.md: {pr_doc}"
+        )
+
+    headings = [
+        line.removeprefix("## ").strip()
+        for line in pr_doc.read_text(encoding="utf-8").splitlines()
+        if line.startswith("## ")
+    ]
+    positions = []
+    for names, required in PR_DOC_SECTIONS:
+        matches = [index for index, heading in enumerate(headings) if heading in names]
+        if required and not matches:
+            failures.append(f"{pr_doc} lacks required section '{names[0]}'")
+        if matches:
+            positions.append((matches[0], names[0]))
+    for previous, current in zip(positions, positions[1:]):
+        if previous[0] >= current[0]:
+            failures.append(
+                f"{pr_doc} section '{current[1]}' appears before '{previous[1]}'"
+            )
+    return failures
+
+
+def parse_scope_waiver(pr_doc):
+    """A PR may declare a scope-budget exception in its PR document; the declared score
+    becomes this PR's approved ceiling and may leave room for further changes."""
+    waivers = []
+    failures = []
+    for line in pr_doc.read_text(encoding="utf-8").splitlines():
+        if SCOPE_WAIVER_KEY not in line:
+            continue
+        match = SCOPE_WAIVER.search(line)
+        if match:
+            waivers.append((int(match.group(1)), match.group(2).strip()))
+        else:
+            failures.append(
+                f"{pr_doc} contains a malformed scope-budget exception; expected "
+                "`pr-quick-check:max-scope-score=<score>`: <reason> — fill in a "
+                "numeric score or remove the template example line"
+            )
+    if len(waivers) > 1:
+        failures.append(f"{pr_doc} declares more than one scope-budget exception")
+    return (waivers[0] if len(waivers) == 1 else None), failures
+
+
+def oversized_files(paths):
+    oversized = []
+    for path_string in paths:
+        path = Path(path_string)
+        if not path.is_file():
+            continue
+        if path.parent == Path(
+            "src/test/resources/db"
+        ) and SQL_DUMP_NAME.fullmatch(path.name):
+            continue
+        size = path.stat().st_size
+        if size > MAX_FILE_SIZE:
+            oversized.append((path, size))
+    return oversized
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog="tools/pr-quick-check",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Run the inexpensive local quality gate before requesting a PR review.",
+        epilog="""
+checks:
+  - if the base branch exists both locally and on origin, both point to the
+    same commit
+  - the current branch contains the base, preferring its origin ref
+  - git diff --check succeeds
+  - exactly one changed PR document follows the filename and section conventions
+  - the PR document stays within its dynamic line budget
+  - tools/fixmes reports no open findings
+  - no secret environment files named .env* are tracked; .envrc and exact
+    .env/.environment example, local and template filenames are exempt
+  - the change stays within its dynamic scope budget
+  - changed non-dump files have at most 142994 bytes
+  - no generated files below build/ are tracked
+  - all non-ignored, untracked files are explicitly allowed
+
+size budgets:
+  scope score = logical files + ceil(substantive changed lines / 100)
+  maximum scope score = 35
+
+  PR-document lines =
+      min(200, 50 + 3 * logical files + ceil(substantive changed lines / 10))
+
+  All changed *-rbac.sql files count as one logical file, and all changed
+  *-rbac.md files count as one.  The selected PR document, generated RBAC
+  files and released-prod-schema-*.sql dumps do not contribute substantive
+  changed lines.
+
+scope-budget exception:
+  When a PR legitimately has to exceed the scope budget, its PR document
+  declares the exception, preferably in the Non-Goals section:
+
+      `pr-quick-check:max-scope-score=<score>`: <reason>
+
+  The declared score becomes this PR's approved ceiling.
+  It's purpose is to intentionally exceed the current score for specific PRs,
+  for example for large automatic refactorings or mass-data generators.
+  Having this in the PR-doc also makes the decision and reason obvious to the reviewer of the PR.
+  An exception whose score is not needed (actual score within the default maximum) fails the check
+  and must be removed.
+
+examples:
+  tools/pr-quick-check
+  tools/pr-quick-check master --pr-doc doc/PR/2026-08-03-PR#264-example.md
+  tools/pr-quick-check --allow-untracked tools/new-tool
+""",
+    )
+    parser.add_argument(
+        "base",
+        nargs="?",
+        help="target branch or revision (default: origin/master, then master)",
+    )
+    parser.add_argument(
+        "--pr-doc",
+        metavar="PATH",
+        help="PR document to check when the diff contains zero or multiple PR documents",
+    )
+    parser.add_argument(
+        "--allow-untracked",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="declare an untracked file as intentional; may be repeated",
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    failures = []
+    try:
+        base = args.base or default_base()
+        ensure_base_refs_match(base)
+        ensure_branch_contains_base(base)
+        untracked = untracked_files()
+        unexpected_untracked = sorted(set(untracked) - set(args.allow_untracked))
+        merge_base, paths = changed_files(base, untracked)
+        pr_doc = find_pr_doc(paths, args.pr_doc)
+    except RuntimeError as error:
+        print(f"FAILED: {error}", file=sys.stderr)
+        return 1
+
+    secret_env_files = tracked_secret_env_files(paths)
+    if secret_env_files:
+        print(
+            "CRITICAL: possible secret environment files are tracked: "
+            + ", ".join(secret_env_files),
+            file=sys.stderr,
+        )
+        print(
+            "Remove them from Git immediately and rotate every secret they contained.",
+            file=sys.stderr,
+        )
+        return 1
+
+    if unexpected_untracked:
+        failures.append(
+            "untracked files must be added or explicitly allowed with --allow-untracked: "
+            + ", ".join(unexpected_untracked)
+        )
+
+    diff_check = subprocess.run(["git", "diff", "--check", merge_base])
+    if diff_check.returncode:
+        failures.append("git diff --check reports whitespace errors or conflict markers")
+    else:
+        print("PASSED: git diff --check")
+
+    file_count = logical_file_count(paths)
+    change_lines = tracked_change_lines(merge_base, pr_doc) + untracked_change_lines(
+        untracked, pr_doc
+    )
+    scope_score = file_count + (
+        change_lines + CHANGE_LINES_PER_SCOPE_POINT - 1
+    ) // CHANGE_LINES_PER_SCOPE_POINT
+    pr_doc_limit = min(
+        MAX_PR_DOC_LINES,
+        PR_DOC_BASE_LINES
+        + PR_DOC_LINES_PER_FILE * file_count
+        + (change_lines + CHANGE_LINES_PER_PR_DOC_LINE - 1)
+        // CHANGE_LINES_PER_PR_DOC_LINE,
+    )
+
+    line_count = len(pr_doc.read_bytes().splitlines())
+    if line_count > pr_doc_limit:
+        failures.append(
+            f"{pr_doc} has {line_count} lines, dynamic maximum is {pr_doc_limit} "
+            f"({file_count} logical files, {change_lines} substantive changed lines)"
+        )
+    else:
+        print(
+            f"PASSED: {pr_doc} has {line_count}/{pr_doc_limit} lines "
+            f"({file_count} logical files, {change_lines} substantive changed lines)"
+        )
+
+    pr_doc_failures = validate_pr_doc(pr_doc)
+    failures.extend(pr_doc_failures)
+    if not pr_doc_failures:
+        print("PASSED: PR-document name and section structure")
+
+    fixmes = subprocess.run(["tools/fixmes"])
+    if fixmes.returncode:
+        failures.append("the findings check reports open findings")
+    else:
+        print("PASSED: no open findings")
+
+    waiver, waiver_failures = parse_scope_waiver(pr_doc)
+    failures.extend(waiver_failures)
+    if waiver and scope_score <= MAX_SCOPE_SCORE:
+        failures.append(
+            f"{pr_doc} declares a scope-budget exception, but the scope score "
+            f"{scope_score} is within the default maximum {MAX_SCOPE_SCORE}; remove it"
+        )
+    scope_limit = waiver[0] if waiver else MAX_SCOPE_SCORE
+    if scope_score > scope_limit:
+        limit_source = "declared exception" if waiver else "maximum"
+        failures.append(
+            f"diff against {base} has scope score {scope_score}, {limit_source} is "
+            f"{scope_limit} ({file_count} logical files + ceil({change_lines}/"
+            f"{CHANGE_LINES_PER_SCOPE_POINT}) substantive change points)"
+        )
+    else:
+        exception_note = f" (scope-budget exception: {waiver[1]})" if waiver else ""
+        print(
+            f"PASSED: diff against {base} has scope score "
+            f"{scope_score}/{scope_limit}{exception_note}"
+        )
+
+    large_files = oversized_files(paths)
+    for path, size in large_files:
+        failures.append(
+            f"{path} has {size} bytes, maximum is {MAX_FILE_SIZE} bytes"
+        )
+    if not large_files:
+        print(f"PASSED: changed files are at most {MAX_FILE_SIZE} bytes")
+
+    tracked_build_files = [
+        path for path in git("ls-files", "-z", "--", "build").split("\0") if path
+    ]
+    if tracked_build_files:
+        failures.append(
+            "generated build files are tracked: " + ", ".join(tracked_build_files)
+        )
+    else:
+        print("PASSED: no generated files under build/ are tracked")
+
+    for failure in failures:
+        print(f"FAILED: {failure}", file=sys.stderr)
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

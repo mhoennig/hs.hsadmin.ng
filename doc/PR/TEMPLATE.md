@@ -9,6 +9,13 @@ Keep it short!
 What this PR deliberately does not do, to delimit the scope.
 Usually a terse bullet-list.
 
+If this PR legitimately has to exceed the scope budget of `tools/pr-quick-check`,
+declare an approved ceiling for the scope-budget exception here (see
+`pr-quick-check --help`). The ceiling may leave room for further related changes,
+for example:
+
+- `pr-quick-check:max-scope-score=<n>`: reason why splitting this PR would not be sensible
+
 ## The Scenarios
 
 A schematized specification of the requirements, preferably using [Gherkin](https://cucumber.io/docs/gherkin/reference/) vocabulary.

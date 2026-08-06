@@ -137,7 +137,7 @@ pipeline {
             // archive scenario-test reports in HTML format
             sh './gradlew convertMarkdownToHtml'
             archiveArtifacts artifacts:
-                    'build/doc/scenarios/*.html, ' +
+                    'build/reports/scenarios/*.html, ' +
                     'build/reports/dependency-license/dependencies-without-allowed-license.json',
                 allowEmptyArchive: true
 

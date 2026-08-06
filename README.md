@@ -15,6 +15,7 @@ For architecture consider the files in the `doc` and `adr` folder.
     - [IDE Specific Settings](#ide-specific-settings)
         - [IntelliJ IDEA](#intellij-idea)
     - [Other Tools](#other-tools)
+        - [Quick PR Quality Check](#quick-pr-quality-check)
 - [Running the SQL files](#running-the-sql-files)
     - [For RBAC](#for-rbac)
     - [For Historization](#for-historization)
@@ -75,7 +76,8 @@ Optionally, the following tools are suggested:
   (see instructions below to install and run in Docker)
 - An IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)*) and a GUI frontend for *PostgreSQL* like *Postbird*.
   - IntelliJ IDEA Ultimate contains a great SQL GUI frontend, and for its Community edition, there is a community plugin.
-- Python 3 on your `PATH` if you want to run the Python tools such as `howto` and `fixmes` (see `tools/howto` and `tools/fixmes`)
+- Python 3 on your `PATH` if you want to run the Python tools such as `howto`, `fixmes` and `pr-quick-check`
+  (see `tools/howto`, `tools/fixmes` and `tools/pr-quick-check`)
 - GnuPG (`gpg`) in your `PATH` to store encrypted API-keys with the `APIKEY` tool.
 
 > **Tip:** A minimal, reproducible build environment containing exactly these prerequisites is defined under
@@ -366,8 +368,9 @@ The available scopes and the endpoints they allow can be listed via `GET /api/rb
 Every API-key can inspect its own properties (subject, endpoint-scopes, and expiry
 timestamp) via `GET /api/rbac/context`, which is always allowed, even for scoped API-keys.
 
-The scenario-test reports in order range 96xx (generated into `build/doc/scenarios` by
-`gw scenarioTest`) document these workflows with concrete requests and responses.
+The scenario-test reports in order range 96xx (generated into `build/scenario-reports` by
+`gw scenarioTest`, converted to HTML under `build/reports/scenarios`) document these workflows
+with concrete requests and responses.
 
 ### PostgreSQL Server
 
@@ -558,6 +561,24 @@ and will show false errors (missing identifiers).
 
 **jq**: a JSON formatter. 
 On _Debian_'oid systems you can install it with `sudo apt-get install jq`.
+
+#### Quick PR Quality Check
+
+`pr-quick-check` runs inexpensive local quality checks before a pull request is reviewed.
+With `.envrc` loaded by `direnv`, the tool is available on `PATH`.
+Run the quick check from the repository root:
+
+```shell
+pr-quick-check
+```
+
+For more details and options, run:
+
+```shell
+pr-quick-check --help
+```
+
+The same check runs at the end of the CI build via the Gradle task `prQuickCheck`, which `.gitTally` appends as the last task of the build command; a failing check fails the build.
 
 ## Running the SQL files
 

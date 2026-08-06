@@ -255,5 +255,5 @@ if [ -z "${HSADMINNG_SKIP_ENVIRONMENT_FILE:-}" ]; then
     source .environment
 fi
 
-alias scenario-reports-upload='./gradlew scenarioTest convertMarkdownToHtml && ssh hsh03-hsngdev@hsh03.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/doc/scenarios/*.html hsh03-hsngdev@hsh03.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
+alias scenario-reports-upload='./gradlew scenarioTest convertMarkdownToHtml && ssh hsh03-hsngdev@hsh03.hostsharing.net "rm -f doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office/*.html" && scp build/reports/scenarios/*.html hsh03-hsngdev@hsh03.hostsharing.net:doms/hsngdev.hs-example.de/htdocs-ssl/scenarios/office'
 alias scenario-reports-open='open https://hsngdev.hs-example.de/scenarios/office'

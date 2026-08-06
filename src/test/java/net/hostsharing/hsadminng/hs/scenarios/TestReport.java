@@ -29,10 +29,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestReport {
 
-    public static final File BUILD_DOC_SCENARIOS = new File("build/doc/scenarios");
+    // deliberately outside any registered Gradle output directory,
+    // otherwise Gradle's stale-output cleanup can delete the reports mid-build
+    public static final File SCENARIO_REPORTS_MARKDOWN = new File("build/scenario-reports");
     public static final SimpleDateFormat YYYY_MM_DD_HH_MM_SS = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
-    private static final File markdownLogFile = new File(BUILD_DOC_SCENARIOS, ".last-debug-log.md");
+    private static final File markdownLogFile = new File(SCENARIO_REPORTS_MARKDOWN, ".last-debug-log.md");
     private static final ObjectMapper objectMapper = JsonObjectMapperConfiguration.build();
     private static final Set<String> LOWERCASE_TITLE_WORDS = Set.of(
             "a", "an", "the",
@@ -49,8 +51,8 @@ public class TestReport {
     private boolean withinCodeBlock = false;
 
     static {
-        assertThat(BUILD_DOC_SCENARIOS.isDirectory() || BUILD_DOC_SCENARIOS.mkdirs())
-                .as("mkdir " + BUILD_DOC_SCENARIOS).isTrue();
+        assertThat(SCENARIO_REPORTS_MARKDOWN.isDirectory() || SCENARIO_REPORTS_MARKDOWN.mkdirs())
+                .as("mkdir " + SCENARIO_REPORTS_MARKDOWN).isTrue();
     }
 
     @SneakyThrows
@@ -60,7 +62,7 @@ public class TestReport {
     }
 
     public void createTestLogMarkdownFile(final TestInfo testInfo) throws IOException {
-        markdownReportFile = new File(BUILD_DOC_SCENARIOS, reportFileName(testInfo.getTestMethod().orElseThrow()));
+        markdownReportFile = new File(SCENARIO_REPORTS_MARKDOWN, reportFileName(testInfo.getTestMethod().orElseThrow()));
         markdownReport = new PrintWriter(new FileWriter(markdownReportFile));
         previousMarkdownLineWasBlank = true;
         withinCodeBlock = false;
