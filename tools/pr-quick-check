@@ -56,13 +56,20 @@ def git(*args):
 
 
 def default_base():
-    for candidate in ("origin/master", "master"):
+    origin_head = subprocess.run(
+        ["git", "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"],
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+    if origin_head.returncode == 0:
+        return origin_head.stdout.strip()
+    for candidate in ("origin/master", "master", "origin/main", "main"):
         if subprocess.run(
             ["git", "rev-parse", "--verify", "--quiet", candidate],
             stdout=subprocess.DEVNULL,
         ).returncode == 0:
             return candidate
-    raise RuntimeError("neither origin/master nor master exists")
+    raise RuntimeError("cannot determine a default base branch, pass it explicitly")
 
 
 def try_ref_commit(ref):
@@ -291,6 +298,8 @@ checks:
   - if the base branch exists both locally and on origin, both point to the
     same commit
   - the current branch contains the base, preferring its origin ref
+  - without any changes against the base, as on the base branch itself,
+    the check passes trivially
   - git diff --check succeeds
   - exactly one changed PR document follows the filename and section conventions
   - the PR document stays within its dynamic line budget
@@ -363,6 +372,10 @@ def main():
         untracked = untracked_files()
         unexpected_untracked = sorted(set(untracked) - set(args.allow_untracked))
         merge_base, paths = changed_files(base, untracked)
+        if not paths:
+            # base branches like master or a future prod have no PR content to check
+            print(f"PASSED: no changes against {base}; nothing to quick-check")
+            return 0
         pr_doc = find_pr_doc(paths, args.pr_doc)
     except RuntimeError as error:
         print(f"FAILED: {error}", file=sys.stderr)
