@@ -62,6 +62,20 @@ EXECUTE FUNCTION set_next_sequential_txid();
 
 
 -- ============================================================================
+--changeset michael.hoennig:audit-TX-CONTEXT-TABLE-INDEX-SEQUENTIAL-TX-ID endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Without this index, the MAX(seqTxId) of the trigger above is a sequential scan over the whole
+    table, executed for every write transaction and under an exclusive lock. The cost of each write
+    thus grows with the number of rows already written.
+ */
+
+create index if not exists tx_context_seq_tx_id_idx
+    on base.tx_context (seqTxId);
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:audit-TX-JOURNAL-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
