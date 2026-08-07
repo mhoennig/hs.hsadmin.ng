@@ -45,6 +45,24 @@ paths:
                             schema:
                                 type: string
 
+    /api/auth-config:
+        get:
+            tags:
+                - auth-config
+            summary: Reports the authentication configuration of this backend.
+            description: |
+                Public and CORS-open, callable before any login (there is no token yet).
+                The reported values are derived from the backend configuration and never contain
+                secrets, e.g. `authority` is the same issuer the backend validates tokens against.
+            operationId: getAuthConfig
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        'application/json':
+                            schema:
+                                $ref: '#/components/schemas/AuthConfig'
+
     /api/version:
         get:
             tags:
@@ -87,3 +105,27 @@ paths:
                                         type: boolean
                                         nullable: true
                                         description: true if built from a working tree with uncommitted changes; null when the build had no git information
+
+components:
+    schemas:
+        AuthConfig:
+            type: object
+            description: |
+                Which authentication method this backend expects and which parameters a login for
+                that method needs. Clients branch on `method`, treat the other fields as
+                method-specific, and have to ignore unknown additional fields, so that a future
+                third method does not break existing clients.
+            required:
+                - method
+            properties:
+                method:
+                    type: string
+                    description: '`oidc` (Keycloak) or `fake-jwt` (local development)'
+                authority:
+                    type: string
+                    nullable: true
+                    description: only for `oidc`; the issuer this backend validates tokens against
+                tokenUrl:
+                    type: string
+                    nullable: true
+                    description: only for `fake-jwt`; its password-grant accepts any credentials

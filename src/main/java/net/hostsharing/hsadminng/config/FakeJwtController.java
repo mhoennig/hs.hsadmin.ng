@@ -24,7 +24,9 @@ import static net.hostsharing.hsadminng.config.JwtFakeBearer.REFRESH_TOKEN_EXPIR
 @Slf4j
 public class FakeJwtController {
 
-    @PostMapping(value = "/fake-jwt/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public static final String TOKEN_PATH = "/fake-jwt/token";
+
+    @PostMapping(value = TOKEN_PATH, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @Timed("app.config.jwt.token")
     public ResponseEntity<Map<String, Object>> token(
             HttpServletRequest request,

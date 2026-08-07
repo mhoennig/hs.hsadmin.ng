@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -250,6 +251,21 @@ public abstract class UseCase<T extends UseCase<?>> {
         return httpGet(loginUser, uriPathWithPlaceholder, requestBuilder -> requestBuilder);
     }
 
+    /** Sends an OPTIONS request, e.g. a CORS-preflight with `Origin` and `Access-Control-Request-Method` headers. */
+    @SneakyThrows
+    public final HttpResponse httpOptions(
+            final FakeLoginUser loginUser,
+            final String uriPathWithPlaceholder,
+            final Function<HttpRequest.Builder, HttpRequest.Builder> requestCustomizer) {
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholder, DROP_COMMENTS);
+        final var requestBuilder = loginUser.addAuthHeadersTo(HttpRequest.newBuilder()
+                .method(HttpMethod.OPTIONS.name(), BodyPublishers.noBody())
+                .uri(new URI("http://localhost:" + testSuite.port + uriPath)));
+        final var request = requestCustomizer.apply(requestBuilder).build();
+        final var response = client.send(request, BodyHandlers.ofString());
+        return new HttpResponse(HttpMethod.OPTIONS, uriPath, null, response);
+    }
+
     @SneakyThrows
     public final HttpResponse httpPost(
             final FakeLoginUser loginUser, final String uriPathWithPlaceholders,
@@ -447,14 +463,20 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     private static final String BEARER_JWT_PREFIX = "Bearer JWT ";
 
-    @SneakyThrows
     static String requestBodyArgument(final String requestBody) {
-        final var json = REPORT_OBJECT_MAPPER.readTree(requestBody);
-        final var prettyJson = REPORT_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(json);
         // just the here-document; the HTTP shell-function defaults --data-binary @- to read it from stdin
         return "<<" + HERE_DOCUMENT_DELIMITER + "\n"
-                + escapedForHereDocument(prettyJson) + "\n"
+                + escapedForHereDocument(prettyPrintedIfJson(requestBody)) + "\n"
                 + HERE_DOCUMENT_DELIMITER;
+    }
+
+    private static String prettyPrintedIfJson(final String requestBody) {
+        try {
+            final var json = REPORT_OBJECT_MAPPER.readTree(requestBody);
+            return REPORT_OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+        } catch (final JacksonException exc) {
+            return requestBody; // e.g. form-urlencoded token requests
+        }
     }
 
     static String escapedForHereDocument(final String text) {

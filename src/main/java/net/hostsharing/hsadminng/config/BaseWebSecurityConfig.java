@@ -170,6 +170,9 @@ public abstract class BaseWebSecurityConfig {
                         .allowedMethods("GET");
                 registry.addMapping("/api/**").allowedOrigins(allowedOrigins)
                         .allowedMethods("GET", "PUT", "POST", "PATCH", "DELETE");
+                // browser-frontends log in at the fake-jwt token endpoint directly, without a dev-server-proxy
+                registry.addMapping("/fake-jwt/**").allowedOrigins(allowedOrigins)
+                        .allowedMethods("POST");
             }
         };
     }

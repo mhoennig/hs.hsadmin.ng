@@ -34,6 +34,11 @@ public class FakeLoginUser {
         this.apiKey = apiKey;
     }
 
+    /** No authentication at all, e.g. for public endpoints called before any login. */
+    public static FakeLoginUser asAnonymous() {
+        return new FakeLoginUser(null, null, null);
+    }
+
     public static FakeLoginUser asSubject(final String name) {
         val resolvedName = ScenarioTest.resolve( name, DROP_COMMENTS);
         return new FakeLoginUser(resolvedName, null, null);
@@ -64,6 +69,9 @@ public class FakeLoginUser {
     }
 
     HttpRequest.Builder addAuthHeadersTo(final HttpRequest.Builder requestBuilder) {
+        if (name == null && apiKey == null) {
+            return requestBuilder;
+        }
         if (apiKey != null) {
             // the real API-key must not leak into the reports, the fake header gets rendered instead
             return requestBuilder
