@@ -159,6 +159,10 @@ class HsadminTestTasksPlugin : Plugin<Project> {
             if (name != "unitTest") {
                 mustRunAfter(project.tasks.named("unitTest"))
             }
+
+            // -D on the Gradle command line only reaches the daemon, so demo-data settings are forwarded explicitly
+            project.providers.systemPropertiesPrefixedBy("hsadminng.demodata.").get()
+                .forEach { (key, value) -> systemProperty(key, value) }
         }
     }
 }

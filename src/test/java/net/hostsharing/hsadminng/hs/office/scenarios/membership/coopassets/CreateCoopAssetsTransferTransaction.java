@@ -20,8 +20,7 @@ public class CreateCoopAssetsTransferTransaction extends CreateCoopAssetsTransac
         );
 
         requires("Membership: %{adoptingMemberNumber} - New AG", alias -> new CreateMembership(testSuite)
-                .given("memberNumber", toPartnerNumber("%{adoptingMemberNumber}"))
-                .given("partnerName", "New AG")
+                .given("partnerNumber", toPartnerNumber("%{adoptingMemberNumber}"))
                 .given("validFrom", "2024-11-15")
                 .given("newStatus", "ACTIVE")
                 .given("membershipFeeBillable", "true")

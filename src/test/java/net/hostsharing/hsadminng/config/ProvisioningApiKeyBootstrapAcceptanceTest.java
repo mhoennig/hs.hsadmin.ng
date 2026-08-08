@@ -90,6 +90,36 @@ class ProvisioningApiKeyBootstrapAcceptanceTest {
     }
 
     @Test
+    void aRestoreWithoutApiKeyDataProvisionsTheConfiguredApiKeyForTheExistingSubject() {
+        // given a database restored from a dump taken without the rbac.api_key data,
+        // thus with the subject and its global ADMIN role, but without any stored API-key
+        jdbcTemplate.update("""
+                delete from rbac.api_key ak
+                    using rbac.subject s
+                    where s.uuid = ak.uuid and s.name = ?
+                """, HSADMINNG_PROVISIONING_API_KEY_SUBJECT_NAME);
+        assertThat(storedKeyHashes()).isEmpty();
+
+        // when the application starts against that database
+        bootstrap.run(null);
+
+        // then the configured API-key is provisioned for the very same subject ...
+        assertThat(storedKeyHashes()).containsExactly(CONFIGURED_PROVISIONING_API_KEY_SHA256);
+
+        // ... and authenticates as global-admin
+        // @formatter:off
+        RestAssured
+                .given()
+                    .header("Hostsharing-Api-Key", CONFIGURED_PROVISIONING_API_KEY)
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/accounts/current")
+                .then().assertThat()
+                    .statusCode(200);
+        // @formatter:on
+    }
+
+    @Test
     void aMissingConfiguredApiKeyHashIsIgnored() {
         new ProvisioningApiKeyBootstrap(jdbcTemplate, " ").run(null);
 

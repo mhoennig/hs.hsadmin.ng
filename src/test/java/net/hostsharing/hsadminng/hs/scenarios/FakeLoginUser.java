@@ -9,12 +9,17 @@ import java.net.http.HttpRequest;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
 
 public class FakeLoginUser {
     final static String GLOBAL_AGENT = "hsh-alex_superuser"; // TODO.test: use global:AGENT when implemented
+
+    private static final Supplier<FakeLoginUser> DEFAULT_GLOBAL_AGENT =
+            () -> new FakeLoginUser(GLOBAL_AGENT, List.of(), null);
+    private static Supplier<FakeLoginUser> globalAgent = DEFAULT_GLOBAL_AGENT;
 
     private static final ObjectMapper REPORT_OBJECT_MAPPER = new ObjectMapper();
 
@@ -49,7 +54,19 @@ public class FakeLoginUser {
     }
 
     public static FakeLoginUser asGlobalAgent() {
-        return new FakeLoginUser(GLOBAL_AGENT, List.of(), null);
+        return globalAgent.get();
+    }
+
+    /**
+     * Switches the identity behind asGlobalAgent() for scenarios which run without the test-data changesets,
+     * where the subject hsh-alex_superuser does not exist; call resetGlobalAgent() afterwards.
+     */
+    public static void useAsGlobalAgent(final Supplier<FakeLoginUser> login) {
+        globalAgent = login;
+    }
+
+    public static void resetGlobalAgent() {
+        globalAgent = DEFAULT_GLOBAL_AGENT;
     }
 
     /** A login via a clear-text API-key (a real one, not fake) in the "Hostsharing-Api-Key" header, without any JWT. */

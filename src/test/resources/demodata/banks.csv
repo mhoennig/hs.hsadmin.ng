@@ -1,0 +1,11 @@
+# bank code (BLZ), BIC, bank name, weight
+# The bank codes start with 9, which the Bundesbank cannot assign: its Merkblatt Bankleitzahlendatei
+#  numbers the clearing areas in position 1 from 1 to 8, and no record of the directory (13806 entries,
+#  valid 2026-06-08 to 2026-09-06) starts with 9. A generated IBAN can therefore never name a real account.
+# The BICs follow ISO 9362: a '0' in position 8 marks a test BIC, which cannot be routed.
+99010000,DEMSDEH0,Demostadt Sparkasse,100
+99020000,DEMVDEH0,Volksbank Demoland eG,80
+99030000,DEMRDEF0,Regionalbank Musterhausen,50
+99040000,DEMDDEB0,Direktbank Beispiel,45
+99050000,DEMGDEM0,Genossenschaftsbank Süd,30
+99060000,DEMPDED0,Privatbank Probstheide,15

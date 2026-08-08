@@ -1,0 +1,55 @@
+# section:value
+# German surnames compose well, which multiplies the pool far beyond the curated list:
+# Schwarz + müller, Weiß + baum, Klein + schmidt and so on.
+# The curated family-names.csv stays the frequent majority; these are the long tail.
+prefix:Alt
+prefix:Berg
+prefix:Birk
+prefix:Breit
+prefix:Buch
+prefix:Eich
+prefix:Erl
+prefix:Grau
+prefix:Groß
+prefix:Grün
+prefix:Hoch
+prefix:Klein
+prefix:Kron
+prefix:Kurz
+prefix:Lang
+prefix:Lind
+prefix:Neu
+prefix:Rein
+prefix:Rot
+prefix:Sand
+prefix:Schwarz
+prefix:Stein
+prefix:Tann
+prefix:Wald
+prefix:Weiß
+prefix:Wies
+stem:bach
+stem:bauer
+stem:baum
+stem:beck
+stem:berg
+stem:brand
+stem:busch
+stem:dorf
+stem:feld
+stem:hagen
+stem:hardt
+stem:haus
+stem:hof
+stem:horst
+stem:kamp
+stem:mann
+stem:mayer
+stem:meier
+stem:müller
+stem:schmidt
+stem:schulte
+stem:stein
+stem:thal
+stem:wald
+stem:weber

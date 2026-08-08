@@ -156,6 +156,11 @@ public abstract class UseCase<T extends UseCase<?>> {
     protected void verify(final HttpResponse response) {
     }
 
+    /** For bulk operations, where a report of every single request would grow unusably large. */
+    protected final void silently(final Runnable code) {
+        testReport.silent(code);
+    }
+
     public UseCase<T> introduction(final String introduction) {
         this.introduction = introduction;
         return this;
@@ -209,6 +214,13 @@ public abstract class UseCase<T extends UseCase<?>> {
             Arrays.stream(extraInfo).forEach(testReport::printPara);
             return response;
         });
+    }
+
+    /** Reuses what an earlier use case kept under the same alias, instead of creating a duplicate. */
+    public final void obtainOnce(final String alias, final Supplier<HttpResponse> httpCall) {
+        if (!ScenarioTest.containsAlias(ScenarioTest.resolve(alias, DROP_COMMENTS))) {
+            obtain(alias, httpCall);
+        }
     }
 
     public HttpResponse withTitle(final String resolvableTitle, final Supplier<HttpResponse> httpCall, final String... extraInfo) {

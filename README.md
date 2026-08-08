@@ -47,6 +47,7 @@ For architecture consider the files in the `doc` and `adr` folder.
     - [How to Run the Tests Against a Remote Podman or Docker Daemon?](#how-to-run-the-tests-against-a-remote-podman-or-docker-daemon?)
     - [How to Run the Application on a Different Port?](#how-to-run-the-application-on-a-different-port?)
     - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
+    - [How to Generate Demo Data?](#how-to-generate-demo-data?)
     - [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
     - [How to Re-Generate Spring-Controller-Interfaces from OpenAPI specs?](#how-to-re-generate-spring-controller-interfaces-from-openapi-specs?)
     - [How to Generate Database Table Diagrams?](#how-to-generate-database-table-diagrams?)
@@ -1161,6 +1162,18 @@ If the persistent database and the temporary database show different results, on
    e.g. from a previous run of tests or manually applied.
    It's best to run `pg-sql-reset && gw bootRun` before each test run, to have a clean database.
   
+### How to Generate Demo Data?
+
+Every CI build generates five customers in a Testcontainers-scoped PostgreSQL database, while running the tests.
+Therefore, demo-data generation gets tested with each build.
+
+A larger dataset needs a persistent database, because the Testcontainers database of a test run
+disappears with it. How to set one up, generate a dataset, run the application against it,
+and hand it over as a dump, is described in
+[Generating and Working With Demo Datasets](doc/demo-datasets.md).
+The concept and the reasons behind it are in
+[RFC#0005](doc/rfc/2026-08-06-RFC%230005-generated-demo-and-test-data-for-hs-office.md).
+
 ### How to Amend Liquibase SQL Changesets?
 
 Liquibase changesets are meant to be immutable and based on each other.
