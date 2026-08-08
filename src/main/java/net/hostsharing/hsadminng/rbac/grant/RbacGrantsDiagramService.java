@@ -82,6 +82,7 @@ public class RbacGrantsDiagramService {
         return toMermaidFlowchart(graph, includes);
     }
 
+    @SuppressWarnings("PMD.CognitiveComplexity") // TODO.refa: cognitive complexity 17, extract the include filters
     private void traverseGrantsTo(final Set<RawRbacGrantEntity> graph, final UUID refUuid, final EnumSet<Include> includes) {
         final var grants = rawGrantRepo.findByAscendingUuid(refUuid);
         grants.forEach(g -> {

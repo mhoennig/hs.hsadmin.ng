@@ -180,6 +180,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
             this.referencedEntityTypeGetter = e -> null;
         }
 
+        @SuppressWarnings("PMD.CognitiveComplexity") // TODO.refa: cognitive complexity 21, split per policy branch
         List<String> validate(final HsHostingAsset assetEntity, final String referenceFieldName) {
 
             final var referencedEntity = referencedEntityGetter.apply(assetEntity);

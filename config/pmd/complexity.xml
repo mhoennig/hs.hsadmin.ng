@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="complexity-main"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Complexity ratchet for src/main. CognitiveComplexity is the rule we actually steer by and
+        is therefore set to a strict value with named exceptions; the others are merely pinned to
+        today's worst value, so that they only report a change for the worse.
+        Lower a threshold whenever its worst offender named below has been refactored.
+        src/test carries its own, looser thresholds in complexity-test.xml.
+    </description>
+
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <!-- HostingAssetEntityValidator.validate = 16 -->
+            <property name="methodReportLevel" value="17"/>
+            <!-- no class in src/main reaches the PMD default, so it stays -->
+            <property name="classReportLevel" value="80"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/CognitiveComplexity">
+        <properties>
+            <!-- set below the 13..14 gap in the distribution, which is why it costs no more
+                 exceptions than the PMD default of 15 would; grep TODO.refa at the
+                 @SuppressWarnings("PMD.CognitiveComplexity") to find them -->
+            <property name="reportLevel" value="13"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/NPathComplexity">
+        <properties>
+            <!-- HsDomainDnsSetupHostingAssetValidator.toZonefileString = 2048 -->
+            <property name="reportLevel" value="2049"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <!-- RbacSpec = 45; the rule reports above this count, not at it -->
+            <property name="maxmethods" value="45"/>
+        </properties>
+    </rule>
+
+</ruleset>

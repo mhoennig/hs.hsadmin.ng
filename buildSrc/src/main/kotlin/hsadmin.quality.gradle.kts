@@ -4,6 +4,8 @@ import com.github.jk1.license.filter.DependencyFilter
 import com.github.jk1.license.filter.LicenseBundleNormalizer
 import com.github.jk1.license.render.InventoryHtmlReportRenderer
 import com.github.jk1.license.render.ReportRenderer
+import org.gradle.api.plugins.quality.Pmd
+import org.gradle.api.plugins.quality.PmdExtension
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
@@ -15,6 +17,7 @@ plugins {
     id("org.owasp.dependencycheck")
     id("com.diffplug.spotless")
     jacoco
+    pmd
 }
 
 // Spotless Code Formatting
@@ -45,6 +48,30 @@ tasks.named("spotlessJava") {
         tasks.named("processResources"),
         tasks.named("processTestResources")
     )
+}
+
+
+// PMD Complexity Ratchet
+configure<PmdExtension> {
+    toolVersion = "7.13.0"
+    ruleSets = emptyList() // otherwise PMD would additionally apply its default rule set
+    ruleSetFiles = files("$rootDir/config/pmd/complexity.xml")
+}
+
+// the RBAC SQL generators live in src/test, thus pmdTest guards production-relevant code as well
+tasks.named<Pmd>("pmdTest") {
+    ruleSetFiles = files("$rootDir/config/pmd/complexity-test.xml")
+}
+
+tasks.withType<Pmd>().configureEach {
+    exclude("**/generated/**")
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    doFirst { // Why not doLast? See README.md!
+        println("HTML PMD Report: file://${reports.html.outputLocation.get().asFile}")
+    }
 }
 
 

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="complexity-test"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Complexity ratchet for src/test, which matters because the RBAC SQL generators and the
+        scenario-test framework live there. CognitiveComplexity holds the same strict value as in
+        complexity.xml; the other thresholds are pinned to today's worst value and are looser than
+        their src/main counterparts, because the legacy import and the table-driven unit tests
+        dominate them.
+        Lower a threshold whenever its worst offender named below has been refactored.
+    </description>
+
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <!-- EntityManagerWrapperUnitTest.getDefaultValue = 13 -->
+            <property name="methodReportLevel" value="14"/>
+            <!-- ImportHostingAssets = 162 -->
+            <property name="classReportLevel" value="163"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/CognitiveComplexity">
+        <properties>
+            <!-- same strict value as in complexity.xml; grep TODO.refa at the
+                 @SuppressWarnings("PMD.CognitiveComplexity") to find the exceptions -->
+            <property name="reportLevel" value="13"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/NPathComplexity">
+        <properties>
+            <!-- EntityManagerWrapperUnitTest.getDefaultValue = 4096 -->
+            <property name="reportLevel" value="4097"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <!-- ImportHostingAssets = 110; the rule reports above this count, not at it -->
+            <property name="maxmethods" value="110"/>
+        </properties>
+    </rule>
+
+</ruleset>

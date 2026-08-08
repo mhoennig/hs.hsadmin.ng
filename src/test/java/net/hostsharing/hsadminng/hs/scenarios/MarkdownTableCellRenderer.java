@@ -26,6 +26,7 @@ public class MarkdownTableCellRenderer {
         return out.toString();
     }
 
+    @SuppressWarnings("PMD.CognitiveComplexity") // TODO.refa: cognitive complexity 15, split off the indent scanning
     private String escapeWithIndent(final String line) {
         int i = 0;
         while (i < line.length()) {
