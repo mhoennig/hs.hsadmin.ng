@@ -446,6 +446,47 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         }
 
         @Test
+        void normalUser_canNotAddRelationWithNewMark() {
+
+            context.define("tst-person_tuckerjack");
+            val givenOwnPerson = realPersonRepo.findPersonByOptionalNameLike("Tucker").getFirst();
+            val givenContact = realContactRepo.findContactByOptionalCaptionLike("third contact").getFirst();
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-person_tuckerjack"))
+                        .contentType(ContentType.JSON)
+                        .body("""
+                               {
+                                   "type": "%s",
+                                   "mark": "%s",
+                                   "anchor.uuid": "%s",
+                                   "holder.uuid": "%s",
+                                   "contact.uuid": "%s"
+                                 }
+                            """.formatted(
+                                HsOfficeRelationTypeResource.SUBSCRIBER,
+                                "brand-new-list",
+                                givenOwnPerson.getUuid(),
+                                givenOwnPerson.getUuid(),
+                                givenContact.getUuid()))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/office/relations")
+                    .then().log().all().assertThat()
+                        .statusCode(403)
+                        .contentType(ContentType.JSON)
+                        .body("message", is(
+                            "ERROR: [403] new mark \"brand-new-list\" for relation-type SUBSCRIBER may only be introduced by a global admin")); // @formatter:on
+
+            // finally, the new mark did not come into existence
+            context.define("hsh-alex_superuser");
+            assertThat(realRelationRepo.findDistinctMarks("SUBSCRIBER"))
+                    .extracting(HsOfficeRelationMark::mark)
+                    .doesNotContain("brand-new-list");
+        }
+
+        @Test
         void globalAdmin_withoutAssumedRole_canAddRelationWithHolderAndContactData() {
 
             context.define("hsh-alex_superuser");

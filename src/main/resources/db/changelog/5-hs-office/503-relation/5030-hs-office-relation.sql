@@ -81,6 +81,43 @@ create trigger relation_enforce_debitor_anchor_partner_tg before insert
 --//
 
 -- ============================================================================
+--changeset michael.hoennig:hs-office-relation-new-mark-CONSTRAINT-BY-TRIGGER runOnChange:true endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    A relation with a not-yet-existing mark for its type establishes a new object,
+    e.g. a new mailing-list, thus only global admins may introduce new mark values.
+ */
+create or replace function hs_office.relation_enforce_new_mark_by_global_admin()
+    returns trigger
+    language plpgsql as $$
+begin
+    if NEW.mark is null then
+        return NEW;
+    end if;
+    if TG_OP = 'UPDATE' then
+        if NEW.type = OLD.type and NEW.mark = OLD.mark then
+            return NEW;
+        end if;
+    end if;
+    if exists (
+        select 1 from hs_office.relation as r
+            where r.type = NEW.type and r.mark = NEW.mark
+        ) then
+        return NEW;
+    end if;
+    if rbac.hasGlobalAdminRole() then
+        return NEW;
+    end if;
+    raise exception '[403] new mark "%" for relation-type % may only be introduced by a global admin', NEW.mark, NEW.type;
+end; $$;
+
+drop trigger if exists relation_enforce_new_mark_by_global_admin_tg on hs_office.relation;
+create trigger relation_enforce_new_mark_by_global_admin_tg
+    before insert or update on hs_office.relation
+    for each row execute function hs_office.relation_enforce_new_mark_by_global_admin();
+--//
+
+-- ============================================================================
 --changeset michael.hoennig:hs-office-relation-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 

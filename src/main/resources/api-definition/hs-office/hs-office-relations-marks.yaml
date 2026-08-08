@@ -1,0 +1,28 @@
+get:
+    summary: Returns the distinct marks of all relations, optionally filtered by relation-type.
+    description:
+        Returns the alphabetically sorted, distinct (relationType, mark) pairs of all relations,
+        e.g. the names of the existing mailing-lists for the relation-type SUBSCRIBER.
+        If relationType is given, only marks of that relation-type are returned.
+        The result is independent of ReBAC row visibility and thus the same for all authenticated users.
+    tags:
+        - hs-office-relations
+    operationId: getListOfRelationMarks
+    parameters:
+        - name: relationType
+          in: query
+          required: false
+          schema:
+              $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationType'
+          description: If given, restricts the result to marks of this relation-type.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationMark'
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'

@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.AddPhoneNumberToContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.AmendContactData;
+import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelationMarks;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelations;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFromContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
@@ -54,6 +55,8 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asSubject;
 
 class HsOfficeScenarioTests extends ScenarioTest {
 
@@ -628,7 +631,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("subscriberFamilyName", "Miller")
                     .given("subscriberGivenName", "Michael")
                     .given("subscriberEMailAddress", "michael.miller@example.org")
-                    .given("mailingList", "operations-announce").thenExpect(HttpStatus.OK)
+                    .given("mailingList", "operations-announce")
+                    .thenExpect(HttpStatus.CREATED)
                     .keep();
         }
 
@@ -642,7 +646,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("subscriberFamilyName", "Miller")
                     .given("subscriberGivenName", "Michael")
                     .given("subscriberEMailAddress", "michael.miller@example.org")
-                    .given("mailingList", "operations-discussion").thenExpect(HttpStatus.OK)
+                    .given("mailingList", "operations-discussion")
+                    .thenExpect(HttpStatus.CREATED)
                     .keep();
         }
 
@@ -653,6 +658,56 @@ class HsOfficeScenarioTests extends ScenarioTest {
             new UnsubscribeFromMailinglist(scenarioTest)
                     .given("mailingList", "operations-announce")
                     .given("subscriberEMailAddress", "michael.miller@example.org").thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(5003)
+        @Requires("Subscription: Michael Miller to operations-discussion")
+        void shouldListAvailableMailinglists() {
+            new QueryRelationMarks(scenarioTest, asSubject("tst-person_firbysusan"))
+                    .given("relationType", "SUBSCRIBER")
+                    .expected("marks", "members-announce, operations-discussion")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(5004)
+        void shouldRejectNewMailinglistCreatedByNormalUser() {
+            new SubscribeExistingPersonAndContactToMailinglist(scenarioTest, asSubject("tst-person_firbysusan"))
+                    .given("partnerPersonTradeName", "First GmbH")
+                    .given("subscriberFamilyName", "Firby")
+                    .given("subscriberGivenName", "Susan")
+                    .given("subscriberEMailAddress", "contact-admin@firstcontact.example.com")
+                    .given("mailingList", "first-gmbh-internal")
+                    .thenExpect(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @Order(5005)
+        @Requires("Subscription: Michael Miller to operations-discussion")
+        @Produces("Mailinglist: first-gmbh-internal")
+        void shouldCreateNewMailinglistAsGlobalAdmin() {
+            new SubscribeExistingPersonAndContactToMailinglist(scenarioTest)
+                    .given("partnerPersonTradeName", "First GmbH")
+                    .given("subscriberFamilyName", "Miller")
+                    .given("subscriberGivenName", "Michael")
+                    .given("subscriberEMailAddress", "michael.miller@example.org")
+                    .given("mailingList", "first-gmbh-internal")
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
+        }
+
+        @Test
+        @Order(5006)
+        @Requires("Mailinglist: first-gmbh-internal")
+        void shouldSubscribeAnotherPersonToExistingMailinglistAsNormalUser() {
+            new SubscribeNewPersonAndContactToMailinglist(scenarioTest, asSubject("tst-person_firbysusan"))
+                    .given("partnerPersonTradeName", "First GmbH")
+                    .given("subscriberFamilyName", "Miller")
+                    .given("subscriberGivenName", "Frida")
+                    .given("subscriberEMailAddress", "frida.miller@example.org")
+                    .given("mailingList", "first-gmbh-internal")
+                    .thenExpect(HttpStatus.CREATED);
         }
     }
 
@@ -680,6 +735,15 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("relationType", "SUBSCRIBER")
                     .thenExpect(HttpStatus.OK)
                     .expectArrayElements(1);
+        }
+
+        @Test
+        @Order(5102)
+        void shouldQueryRelationMarksOfRelationTypeWithoutAnyMarks() {
+            new QueryRelationMarks(scenarioTest, asSubject("tst-person_firbysusan"))
+                    .given("relationType", "OPERATIONS_ALERT")
+                    .expected("marks", "")
+                    .thenExpect(HttpStatus.OK);
         }
     }
 

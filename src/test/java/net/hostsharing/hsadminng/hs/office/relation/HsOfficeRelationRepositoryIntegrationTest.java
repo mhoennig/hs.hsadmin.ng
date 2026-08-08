@@ -23,6 +23,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.UNINCORPORATED_FIRM;
@@ -213,7 +214,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                                 .anchor(givenAnchorPerson)
                                 .holder(givenHolderPerson)
                                 .type(HsOfficeRelationType.SUBSCRIBER)
-                                .mark("operations-announce")
+                                .mark("members-announce") // an existing mark, new marks are tested in CreateRelationWithMark
                                 .contact(givenContact)
                                 .build();
                         return toCleanup(relationRbacRepo.save(newRelation));
@@ -259,6 +260,69 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         private void assertThatRelationIsPersisted(final HsOfficeRelation saved) {
             final var found = relationRbacRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
+        }
+    }
+
+    @Nested
+    class CreateRelationWithMark {
+
+        @Test
+        public void normalUser_canCreateRelationWithExistingMark() {
+            // given
+            context("tst-person_smithpeter");
+
+            // when
+            val result = attempt(em, () -> toCleanup(relationRbacRepo.save(
+                    subscriberRelationAnchoredToOwnPerson("members-announce"))));
+
+            // then
+            result.assertSuccessful();
+        }
+
+        @Test
+        public void normalUser_cannotCreateRelationWithNewMark() {
+            // given
+            context("tst-person_smithpeter");
+
+            // when
+            val result = attempt(em, () -> relationRbacRepo.save(
+                    subscriberRelationAnchoredToOwnPerson("brand-new-list")));
+
+            // then
+            result.assertExceptionWithRootCauseMessage(
+                    PersistenceException.class,
+                    "ERROR: [403] new mark \"brand-new-list\" for relation-type SUBSCRIBER may only be introduced by a global admin");
+        }
+
+        @Test
+        public void globalAdmin_canCreateRelationWithNewMark() {
+            // given
+            context("hsh-alex_superuser");
+
+            // when
+            val result = attempt(em, () -> toCleanup(relationRbacRepo.save(
+                    subscriberRelationAnchoredToOwnPerson("brand-new-list"))));
+
+            // then
+            result.assertSuccessful();
+        }
+
+        private HsOfficeRelationRbacEntity subscriberRelationAnchoredToOwnPerson(final String mark) {
+            val givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Smith").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            val givenHolderPerson = personRepo.findPersonByOptionalNameLike("Winkler").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            val givenContact = contactRealRepo.findContactByOptionalCaptionLike("third contact").stream()
+                    .findFirst().orElseThrow();
+            return HsOfficeRelationRbacEntity.builder()
+                    .anchor(givenAnchorPerson)
+                    .holder(givenHolderPerson)
+                    .type(HsOfficeRelationType.SUBSCRIBER)
+                    .mark(mark)
+                    .contact(givenContact)
+                    .build();
         }
     }
 
@@ -364,6 +428,98 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     result,
                     "rel(anchor='LP Hostsharing eG', type=PARTNER, holder='LP First GmbH', contact='first contact')",
                     "rel(anchor='LP First GmbH', type=DEBITOR, holder='LP First GmbH', contact='first contact')");
+        }
+    }
+
+    @Nested
+    class FindDistinctMarks {
+
+        @Test
+        public void normalUser_canFindMarksOfRelationsInvisibleToThem() {
+            // given: a user who cannot see the test-data SUBSCRIBER relation via ReBAC
+            context("tst-person_foulerellie");
+
+            // when
+            val result = relationRealRepo.findDistinctMarks(HsOfficeRelationType.SUBSCRIBER.name());
+
+            // then
+            assertThat(result).containsExactly(
+                    new HsOfficeRelationMark(HsOfficeRelationType.SUBSCRIBER, "members-announce"));
+        }
+
+        @Test
+        public void findsMarksOfGivenTypeDistinctAndSorted() {
+            // given: two more SUBSCRIBER relations, one with a duplicate and one with another mark
+            context("hsh-alex_superuser");
+            val givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                    .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                    .findFirst().orElseThrow();
+            val givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
+                    .findFirst().orElseThrow();
+            for (val holderAndMark : Map.of("Paul", "operations-announce", "Bert", "members-announce").entrySet()) {
+                val givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderAndMark.getKey()).stream()
+                        .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                        .findFirst().orElseThrow();
+                toCleanup(relationRbacRepo.save(HsOfficeRelationRbacEntity.builder()
+                        .anchor(givenAnchorPerson)
+                        .holder(givenHolderPerson)
+                        .type(HsOfficeRelationType.SUBSCRIBER)
+                        .mark(holderAndMark.getValue())
+                        .contact(givenContact)
+                        .build()));
+            }
+            // the marks query below targets the real table, thus no auto-flush of the pending _rv inserts
+            em.flush();
+
+            // when
+            val result = relationRealRepo.findDistinctMarks(HsOfficeRelationType.SUBSCRIBER.name());
+
+            // then
+            assertThat(result).containsExactly(
+                    new HsOfficeRelationMark(HsOfficeRelationType.SUBSCRIBER, "members-announce"),
+                    new HsOfficeRelationMark(HsOfficeRelationType.SUBSCRIBER, "operations-announce"));
+        }
+
+        @Test
+        public void returnsEmptyListForRelationTypeWithoutAnyMarks() {
+            // given
+            context("hsh-alex_superuser");
+
+            // when
+            val result = relationRealRepo.findDistinctMarks(HsOfficeRelationType.REPRESENTATIVE.name());
+
+            // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        public void findsMarksOfAllTypesSortedByTypeThenMarkWhenRelationTypeOmitted() {
+            // given: an OPERATIONS_ALERT relation with a mark, in addition to the SUBSCRIBER test-data
+            context("hsh-alex_superuser");
+            val givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                    .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                    .findFirst().orElseThrow();
+            val givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            val givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
+                    .findFirst().orElseThrow();
+            toCleanup(relationRbacRepo.save(HsOfficeRelationRbacEntity.builder()
+                    .anchor(givenAnchorPerson)
+                    .holder(givenHolderPerson)
+                    .type(HsOfficeRelationType.OPERATIONS_ALERT)
+                    .mark("planned-downtime")
+                    .contact(givenContact)
+                    .build()));
+            em.flush();
+
+            // when
+            val result = relationRealRepo.findDistinctMarks(null);
+
+            // then
+            assertThat(result).containsExactly(
+                    new HsOfficeRelationMark(HsOfficeRelationType.OPERATIONS_ALERT, "planned-downtime"),
+                    new HsOfficeRelationMark(HsOfficeRelationType.SUBSCRIBER, "members-announce"));
         }
     }
 

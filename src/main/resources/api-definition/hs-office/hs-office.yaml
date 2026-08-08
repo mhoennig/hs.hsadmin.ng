@@ -43,6 +43,9 @@ paths:
   /api/hs/office/relations:
     $ref: "hs-office-relations.yaml"
 
+  /api/hs/office/relations/marks:
+    $ref: "hs-office-relations-marks.yaml"
+
   /api/hs/office/relations/{relationUUID}:
     $ref: "hs-office-relations-with-uuid.yaml"
 

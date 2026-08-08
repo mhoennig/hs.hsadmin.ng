@@ -45,6 +45,18 @@ public interface HsOfficeRelationRealRepository extends Repository<HsOfficeRelat
     @Timed("app.office.relations.repo.findRelation.real")
     List<HsOfficeRelationRealEntity> findRelations(@Param("criteria") HsOfficeRelationSearchCriteria criteria);
 
+    // deliberately on the real entity: the available marks (e.g. mailing-list names)
+    // are meant to be discoverable by all authenticated users, independent of ReBAC row visibility
+    @Query(value = """
+            SELECT DISTINCT new net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationMark(rel.type, rel.mark)
+                FROM HsOfficeRelationRealEntity AS rel
+                WHERE ( :relationTypeName IS NULL OR CAST(rel.type AS String) = :relationTypeName )
+                    AND rel.mark IS NOT NULL
+                ORDER BY rel.type, rel.mark
+            """)
+    @Timed("app.office.relations.repo.findDistinctMarks.real")
+    List<HsOfficeRelationMark> findDistinctMarks(String relationTypeName);
+
     @Timed("app.repo.relations.save.real")
     HsOfficeRelationRealEntity save(final HsOfficeRelationRealEntity entity);
 

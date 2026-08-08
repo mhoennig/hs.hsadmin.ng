@@ -68,6 +68,9 @@ class HsOfficeRelationControllerRestTest {
     HsOfficeRelationRbacRepository relationRepo;
 
     @MockitoBean
+    HsOfficeRelationRealRepository realRelationRepo;
+
+    @MockitoBean
     HsOfficePersonRbacRepository personRepo;
 
     @MockitoBean
@@ -131,6 +134,67 @@ class HsOfficeRelationControllerRestTest {
                     .andExpect(jsonPath("$", hasSize(1)))
                     .andExpect(jsonPath("$[0].type", is("REPRESENTATIVE")))
                     .andExpect(jsonPath("$[0].mark", is("billing")));
+        }
+    }
+
+    @Nested
+    class GetListOfRelationMarks {
+
+        @Test
+        void returnsDistinctMarksFilteredByRelationType() throws Exception {
+            // given
+            when(realRelationRepo.findDistinctMarks("SUBSCRIBER"))
+                    .thenReturn(List.of(
+                            new HsOfficeRelationMark(HsOfficeRelationType.SUBSCRIBER, "members-announce"),
+                            new HsOfficeRelationMark(HsOfficeRelationType.SUBSCRIBER, "operations-discussion")));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/relations/marks")
+                            .queryParam("relationType", "SUBSCRIBER")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(2)))
+                    .andExpect(jsonPath("$[0].relationType", is("SUBSCRIBER")))
+                    .andExpect(jsonPath("$[0].mark", is("members-announce")))
+                    .andExpect(jsonPath("$[1].relationType", is("SUBSCRIBER")))
+                    .andExpect(jsonPath("$[1].mark", is("operations-discussion")));
+        }
+
+        @Test
+        void returnsDistinctMarksOfAllRelationTypesWhenRelationTypeOmitted() throws Exception {
+            // given
+            when(realRelationRepo.findDistinctMarks(null))
+                    .thenReturn(List.of(
+                            new HsOfficeRelationMark(HsOfficeRelationType.OPERATIONS_ALERT, "planned-downtime"),
+                            new HsOfficeRelationMark(HsOfficeRelationType.SUBSCRIBER, "members-announce")));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/relations/marks")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(2)))
+                    .andExpect(jsonPath("$[0].relationType", is("OPERATIONS_ALERT")))
+                    .andExpect(jsonPath("$[0].mark", is("planned-downtime")))
+                    .andExpect(jsonPath("$[1].relationType", is("SUBSCRIBER")))
+                    .andExpect(jsonPath("$[1].mark", is("members-announce")));
+        }
+
+        @Test
+        void rejectsInvalidRelationType() throws Exception {
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/relations/marks")
+                            .queryParam("relationType", "NO_SUCH_TYPE")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest());
         }
     }
 

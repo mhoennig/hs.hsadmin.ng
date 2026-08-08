@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.relation;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
@@ -40,6 +41,9 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
     @Autowired
     private HsOfficeRelationRbacRepository rbacRelationRepo;
+
+    @Autowired
+    private HsOfficeRelationRealRepository realRelationRepo;
 
     @Autowired
     private HsOfficePersonRealRepository realPersonRepo;
@@ -83,6 +87,25 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
         final var resources = mapper.mapList(entities, HsOfficeRelationResource.class,
                 RELATION_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Timed("app.office.relations.api.getListOfRelationMarks")
+    public ResponseEntity<List<HsOfficeRelationMarkResource>> getListOfRelationMarks(
+            final HsOfficeRelationTypeResource relationType) {
+        val relationTypeName = relationType == null ? null : HsOfficeRelationType.valueOf(relationType.name()).name();
+        val marks = realRelationRepo.findDistinctMarks(relationTypeName).stream()
+                .map(HsOfficeRelationController::toRelationMarkResource)
+                .toList();
+        return ResponseEntity.ok(marks);
+    }
+
+    private static HsOfficeRelationMarkResource toRelationMarkResource(final HsOfficeRelationMark mark) {
+        val resource = new HsOfficeRelationMarkResource();
+        resource.setRelationType(HsOfficeRelationTypeResource.valueOf(mark.relationType().name()));
+        resource.setMark(mark.mark());
+        return resource;
     }
 
     @Override

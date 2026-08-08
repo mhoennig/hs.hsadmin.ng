@@ -35,6 +35,14 @@ components:
                 contact:
                     $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
 
+        HsOfficeRelationMark:
+            type: object
+            properties:
+                relationType:
+                    $ref: '#/components/schemas/HsOfficeRelationType'
+                mark:
+                    type: string
+
         HsOfficeRelationContactPatch:
             type: object
             properties:
