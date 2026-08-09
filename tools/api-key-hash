@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
+    source tools/lib/unindented.sh
+    unindented <<'HELP'
+        usage: tools/api-key-hash [<api-key>]
+
+        Prints the SHA-256 hex hash of the given clear-text API-key, i.e. the value stored in
+        rbac.api_key and configured in HSADMINNG_*_API_KEY_SHA256 variables. Without an argument,
+        the key is read from stdin (trailing newlines are stripped).
+
+        Use this instead of an ad-hoc `... | sha256sum` pipe: an accidental `echo` instead of
+        `printf '%s'` would hash a trailing newline and the resulting key would silently
+        never authenticate.
+          export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(tools/api-key-hash "$apiKey")
+HELP
+    exit 0
+fi
+
+if [[ $# -gt 0 ]]; then
+    apiKey="$1"
+else
+    apiKey=$(cat)
+fi
+printf '%s' "$apiKey" | sha256sum | cut -d' ' -f1

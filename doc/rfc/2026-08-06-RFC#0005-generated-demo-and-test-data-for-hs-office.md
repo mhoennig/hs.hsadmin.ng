@@ -545,9 +545,8 @@ Als Teil eines Skalierungsmodus, der Realismus gegen Menge tauscht, bleibt die I
 
 Geprüft wird beim Erzeugen, nicht beim Einspielen:
 das Einspielen liegt beim Betrieb, das Erzeugen des Artefakts liegt hier.
-Der Ablauf in [doc/demo-datasets.md](../demo-datasets.md) endet deshalb mit einer Zeile,
-die die Inhaltsliste des Dumps nach `rbac.api_key` durchsucht
-und nichts ausgeben darf.
+Der Dump-Schritt von `tools/demo-data` durchsucht deshalb die Inhaltsliste des Dumps
+nach `rbac.api_key` und bricht bei einem Treffer ab.
 
 Für Produktionssicherungen gilt das Gegenteil: dort gehören die API-Keys in den Dump.
 Wandert eine solche Sicherung auf eine andere Stage, lassen sie sich beim Zurückspielen ausschließen,

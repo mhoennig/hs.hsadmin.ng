@@ -181,6 +181,7 @@ alias howto=tools/howto
 alias fixmes=tools/fixmes
 alias api=tools/api
 alias remote=tools/remote
+alias demo-data=tools/demo-data
 
 # LOGIN: fetch a JWT for the HTTP function; run `LOGIN --help` for usage.
 # Defined as a function (not an alias), so scripts sourcing `.aliases` can use it as well.

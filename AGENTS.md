@@ -92,8 +92,9 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
   (strips only tabs, which `.editorconfig`'s `indent_style = space` reformats away, silently
   breaking the delimiter). Keep the delimiter quoted so example `$(...)`/`$var` stay literal.
 - Tools run from the repo root and call sibling tools with repo-root-relative paths.
-- Generate a clear-text API-key with `tools/generate-api-key [subject-name]`
-  (format `hsak_<subject-name>.<64 hex>`) instead of an ad-hoc `openssl` call.
+- Generate a clear-text API-key with `tools/api-key-generate <subject-name>`
+  (format `hsak_<subject-name>.<64 hex>`) instead of an ad-hoc `openssl` call,
+  and hash it with `tools/api-key-hash` instead of an ad-hoc `sha256sum` pipe.
 
 ## Testing Guidance
 

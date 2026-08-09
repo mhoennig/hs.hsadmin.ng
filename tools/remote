@@ -4,8 +4,12 @@
 # Usage: remote <target> <action> [ARGS]
 #
 # Backend service (systemd user unit: backend):
-#   remote backend deploy             build & deploy the local working-tree jar, restart the service,
-#                                     stream the startup log until the application reports it has started
+#   remote backend deploy [--with-documentation]
+#                                     build & deploy the local working-tree jar, restart the service,
+#                                     stream the startup log until the application reports it has started;
+#                                     --with-documentation renders the documentation into the jar instead
+#                                     of the /doc/ placeholder page (needs pandoc, mermaid-filter,
+#                                     pandoc-plantuml and the Testcontainers database for scenarioTest)
 #   remote backend start              start the backend service
 #   remote backend stop               stop the backend service
 #   remote backend restart            restart the backend service
@@ -13,6 +17,9 @@
 #   remote backend enable             enable and start the backend service (--now)
 #   remote backend disable            disable and stop the backend service (--now)
 #   remote backend log [ARGS]         tail the backend log (extra ARGS go to tail)
+#   remote backend setup              install (or refresh) the backend systemd user unit, a jar runner
+#                                     after the hsh11 model; expects ~/backend/.environment (chmod 600,
+#                                     incl. SPRING_PROFILES_ACTIVE) and a JDK 21 under ~/opt/jdk-21
 #   remote backend provision-api-key  generate an API-key locally and provision just its hash on the server
 #   remote backend sql [SQL]          run SQL on the backend database with its own datasource credentials;
 #                                     with SQL runs that statement, otherwise opens psql or reads SQL from stdin
@@ -33,6 +40,8 @@
 #
 # Host:
 #   remote ssh [CMD]                  open a shell or run CMD on the server
+#   remote upload <file> <directory>  copy a local file into <directory> of the server's home,
+#                                     renamed into place only after a complete transfer
 #
 # Notes: `login-monitor deploy` reads its secrets and the optional interval
 # from ~/.environment on the server; see doc/environment-variables.md.
@@ -41,10 +50,20 @@
 # regular releases go via the CI/CD pipeline.
 set -euo pipefail
 
-HSADMINNG_DEPLOY_HOST=${HSADMINNG_DEPLOY_HOST:-'hsh11-backend@hsh11.hostsharing.net'}
+# deliberately no default host: a deploy tool must never guess its target stage
+HSADMINNG_DEPLOY_HOST=${HSADMINNG_DEPLOY_HOST:-}
 JAR_NAME='hsadmin-ng-0.0.1-SNAPSHOT.jar'
 STARTUP_LOG_TIMEOUT_SECONDS=300
 STARTUP_SETTLE_SECONDS=2 # systemd needs a moment until is-active reflects a just-failed startup
+
+requireDeployHost() {
+    [ -n "$HSADMINNG_DEPLOY_HOST" ] || {
+        echo "ERROR: HSADMINNG_DEPLOY_HOST is not set, and there is deliberately no default;" >&2
+        echo "       export HSADMINNG_DEPLOY_HOST=<user@host> for the intended stage first," >&2
+        echo "       e.g. hshNN-stage@hshNN.hostsharing.net" >&2
+        exit 1
+    }
+}
 
 # prints the whole header comment (all # lines up to `set -euo pipefail`)
 usage() {
@@ -93,8 +112,10 @@ cmdLog() {
     exec ssh -t "$HSADMINNG_DEPLOY_HOST" tail -f "$@" "$logfile"
 }
 
+# a tty only where there is one, so a scripted caller does not get ssh's warning about it
 cmdSsh() {
-    exec ssh -t "$HSADMINNG_DEPLOY_HOST" "$@"
+    local ttyOpt=-t; [ -t 0 ] || ttyOpt=
+    exec ssh $ttyOpt "$HSADMINNG_DEPLOY_HOST" "$@"
 }
 
 # Builds the application from the local working tree and deploys the jar to the
@@ -106,6 +127,27 @@ cmdSsh() {
 # Prints one line per step; full command output is only shown if a step fails.
 cmdBackendDeploy() {
     cd "$(dirname "$0")/.." # the local build needs to run in the repo root
+
+    local withDocumentation=
+    if [ "${1:-}" = "--with-documentation" ]; then
+        withDocumentation=1
+        shift
+    fi
+    if [ $# -gt 0 ]; then
+        echo "ERROR: unknown argument for 'backend deploy': $1" >&2
+        usage >&2
+        exit 1
+    fi
+    if [ -n "$withDocumentation" ]; then
+        # fail before the build, a missing render tool would otherwise only fail deep inside pandoc
+        local renderTool
+        for renderTool in pandoc mermaid-filter pandoc-plantuml; do
+            command -v "$renderTool" >/dev/null || {
+                echo "ERROR: '$renderTool' is required to render the documentation into the jar" >&2
+                exit 1
+            }
+        done
+    fi
 
     local branch
     branch=$(git rev-parse --abbrev-ref HEAD)
@@ -146,7 +188,17 @@ cmdBackendDeploy() {
 
     # remove old jars to make sure we never deploy a stale build
     step "removing previously built jars" bash -c 'rm -f build/libs/hsadmin-ng-*.jar'
-    step "building the application locally" ./gradlew build -x dependencyCheckAnalyze -x compileTestJava -x test -x jacocoTestReport -x jacocoTestCoverageVerification -x spotlessJavaCheck -PincludeBuildTime=true
+    if [ -n "$withDocumentation" ]; then
+        # scenarioTest renders the bundled reports and needs the Testcontainers database;
+        # a dataset HSADMINNG_POSTGRES_JDBC_URL from the calling shell must not leak in,
+        # the scenarios would end up in that dataset (same subshell idiom as tools/demo-data)
+        step "building the application locally, documentation included" bash -c '
+            unset HSADMINNG_POSTGRES_JDBC_URL
+            source .tc-environment
+            ./gradlew scenarioTest bootJar -PincludeRenderedDocumentation=true -PincludeBuildTime=true'
+    else
+        step "building the application locally" ./gradlew build -x dependencyCheckAnalyze -x compileTestJava -x test -x jacocoTestReport -x jacocoTestCoverageVerification -x spotlessJavaCheck -PincludeBuildTime=true
+    fi
 
     # without git.properties (e.g. built in a git worktree), the deployed version
     # would not be identifiable via /actuator/info
@@ -206,6 +258,100 @@ cmdBackendDeploy() {
     fi
 }
 
+# Copies a local file into a directory of the server's home, for callers which know what they
+# are transferring; this command only knows the host. The upload goes to a temporary name and is
+# renamed once it is complete, so an interrupted transfer leaves no half file under the real name.
+cmdUpload() {
+    local file=${1:-} directory=${2:-}
+    if [ -z "$file" ] || [ -z "$directory" ]; then
+        echo "ERROR: 'upload' needs a local file and a target directory" >&2
+        usage >&2
+        exit 1
+    fi
+    if [ ! -f "$file" ]; then
+        echo "ERROR: $file does not exist" >&2
+        exit 1
+    fi
+
+    # ssh, scp and mv re-parse the remote path in the remote shell, so instead of
+    # quoting for each of them, only accept characters which pass through unchanged
+    local component
+    for component in "$directory" "$(basename "$file")"; do
+        case "$component" in
+            /*|-*|..|*/..|../*|*/../*|*[!A-Za-z0-9._/-]*)
+                echo "ERROR: remote path '$component' must be relative, without '..'," >&2
+                echo "       and contain only letters, digits and one of '._/-'" >&2
+                exit 1 ;;
+        esac
+    done
+
+    local target="$directory/$(basename "$file")"
+    step "creating ~/$directory on $HSADMINNG_DEPLOY_HOST" \
+        ssh "$HSADMINNG_DEPLOY_HOST" mkdir -p "$directory"
+    step "uploading $file ($(du -h "$file" | cut -f1)) to $HSADMINNG_DEPLOY_HOST" \
+        scp -q "$file" "$HSADMINNG_DEPLOY_HOST:$target.upload"
+    step "renaming it into place" \
+        ssh "$HSADMINNG_DEPLOY_HOST" mv "$target.upload" "$target"
+    echo "uploaded to ~/$target on $HSADMINNG_DEPLOY_HOST"
+}
+
+# Installs (or refreshes) the backend systemd user unit on the server: the hsh11-style jar
+# runner, so a new stage comes up reproducibly instead of by hand-crafted unit files.
+# The prerequisites stay on the server and are only checked here: ~/backend/.environment
+# carries the stage secrets, and the JDK lives under ~/opt/jdk-21 by convention.
+cmdBackendSetup() {
+    ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
+set -euo pipefail
+
+[ -x "$HOME/opt/jdk-21/bin/java" ] || {
+    echo "ERROR: no JDK under ~/opt/jdk-21 on the server; install e.g. Temurin 21 with:" >&2
+    echo "       mkdir -p ~/opt/jdk-21 && curl -sSfL 'https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse' | tar -xz --strip-components=1 -C ~/opt/jdk-21" >&2
+    exit 1
+}
+[ -f "$HOME/backend/.environment" ] || {
+    echo "ERROR: ~/backend/.environment not found on the server;" >&2
+    echo "       create it (chmod 600, systemd EnvironmentFile format) with the datasource," >&2
+    echo "       server port and JWT settings; see doc/environment-variables.md" >&2
+    exit 1
+}
+# the stage decides its profiles (e.g. fake-jwt vs. a real issuer), so they live in the
+# stage's environment file, not in the unit
+grep -q '^SPRING_PROFILES_ACTIVE=' "$HOME/backend/.environment" || {
+    echo "ERROR: ~/backend/.environment on the server must contain a plain 'SPRING_PROFILES_ACTIVE=...' line," >&2
+    echo "       e.g. SPRING_PROFILES_ACTIVE=complete,external-db,without-test-data" >&2
+    exit 1
+}
+chmod 600 "$HOME/backend/.environment"
+mkdir -p ~/var ~/.config/systemd/user
+
+cat > ~/.config/systemd/user/backend.service <<'UNIT'
+[Unit]
+Description=HSAdminNG Service
+
+[Service]
+WorkingDirectory=%h/backend
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="JAVA_HOME=%h/opt/jdk-21"
+Environment="HOME=%h"
+Environment="LANG=de_DE.UTF-8"
+EnvironmentFile=%h/backend/.environment
+ExecStart=%h/opt/jdk-21/bin/java -Xms512M -Xmx512M -jar %h/backend/hsadmin-ng-0.0.1-SNAPSHOT.jar
+StandardOutput=append:%h/var/backend.log
+StandardError=inherit
+Restart=always
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
+UNIT
+
+systemctl --user daemon-reload
+systemctl --user enable backend.service
+echo "backend.service installed and enabled; bring a jar with: remote backend deploy"
+REMOTE_SCRIPT
+}
+
 # Generates a new API-key locally and provisions just its SHA-256 hash on the server
 # (see ProvisioningApiKeyBootstrap.java and "Bootstrapping the provisioning API-key" in README.md):
 # the hash is appended to the EnvironmentFile of the backend service, the service is
@@ -213,8 +359,8 @@ cmdBackendDeploy() {
 # The clear-text API-key is printed at the very end; it only ever exists at the client.
 cmdProvisioningApiKey() {
     local apiKey keyHash
-    apiKey=$(tools/generate-api-key hsadminng.provisioning.key)
-    keyHash=$(printf '%s' "$apiKey" | sha256sum | cut -d' ' -f1)
+    apiKey=$(tools/api-key-generate hsadminng.provisioning.key)
+    keyHash=$(tools/api-key-hash "$apiKey")
 
     local rc=0
     ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$keyHash" <<'REMOTE_SCRIPT' || rc=$?
@@ -295,7 +441,9 @@ REMOTE_SCRIPT
 # currentSchema) are stripped, so address objects schema-qualified (e.g. rbac.grant).
 cmdBackendSql() {
     if [ "$#" -gt 0 ]; then
-        ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$*" <<'REMOTE_SCRIPT'
+        # ssh flattens its arguments into one remote command line which the remote shell
+        # re-parses, so %q-quote the SQL to let parentheses and quotes survive that round trip
+        ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$(printf '%q' "$*")" <<'REMOTE_SCRIPT'
 set -uo pipefail
 sql=$1
 set -a; . "$HOME/backend/.environment"; set +a
@@ -546,11 +694,16 @@ badAction() { # $1=target  $2=action
 target=${1:-}
 shift || true
 case "$target" in
+    ""|-h|-\?|--help) ;; # help works without a target host
+    *) requireDeployHost ;;
+esac
+case "$target" in
     backend)
         action=${1:-}; shift || true
         case "$action" in
             deploy)                                    cmdBackendDeploy "$@" ;;
             log)                                       cmdLog var/backend.log "$@" ;;
+            setup)                                     cmdBackendSetup ;;
             provision-api-key)                         cmdProvisioningApiKey "$@" ;;
             sql)                                       cmdBackendSql "$@" ;;
             sql-tunnel)                                cmdBackendSqlTunnel "$@" ;;
@@ -569,6 +722,7 @@ case "$target" in
             *)                                  badAction login-monitor "$action" ;;
         esac ;;
     ssh)          cmdSsh "$@" ;;
+    upload)       cmdUpload "$@" ;;
     ''|-h|--help) usage ;;
     *)            echo "ERROR: unknown target '$target'" >&2; usage >&2; exit 1 ;;
 esac

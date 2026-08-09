@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
+    source tools/lib/unindented.sh
+    unindented <<'HELP'
+        usage: tools/api-key-generate <subject-name>
+
+        Generates a clear-text hsadmin-ng API-key.
+
+        Format: hsak_<subject-name>.<64 hex chars> (32 random bytes = 256 bit of entropy), matching
+        net.hostsharing.hsadminng.config.ApiKey. The embedded subject name is informational
+        (self-describing, like the preferred_username in a JWT); only the SHA-256 hash of the whole
+        key is ever stored server-side.
+
+        The clear-text key goes to stdout, its SHA-256 hash goes to stderr; an interactive user
+        sees both, while command substitution captures just the key. Typical use for the bootstrap:
+          apiKey=$(tools/api-key-generate hsadminng.provisioning.key)
+          export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(tools/api-key-hash "$apiKey")
+HELP
+    exit 0
+fi
+
+if [[ $# -ne 1 || -z "$1" ]]; then
+    echo "ERROR: expected exactly one argument <subject-name>, see --help" >&2
+    exit 1
+fi
+
+apiKey="hsak_$1.$(openssl rand -hex 32)"
+printf '%s\n' "$apiKey"
+printf 'SHA-256: %s\n' "$(tools/api-key-hash "$apiKey")" >&2

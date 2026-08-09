@@ -166,8 +166,11 @@ def search_keywords_in_files(keywords):
                                     # Link mit Zeilennummer
                                     print_howto_link(filepath, line_number)
                                     break
+            # nicht jede Binärdatei hat ein Nullbyte in den ersten 1024 Bytes, z.B. .apikeys.gpg
+            except UnicodeDecodeError:
+                continue
             except Exception as e:
-                print(f"Fehler beim Lesen der Datei {filepath}: {e}")
+                print(f"Fehler beim Lesen der Datei {filepath}: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

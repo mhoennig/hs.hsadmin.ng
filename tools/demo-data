@@ -1,0 +1,458 @@
+#!/usr/bin/env bash
+# Generates, dumps, restores and serves the demo datasets described in doc/demo-datasets.md.
+#
+# Usage: demo-data [<options>] <verb> [<values>]
+#
+# Options, always before the verb:
+#   --pg-version=<major>   major version of the PostgreSQL container: 15, 16 or 17 (default 17)
+#   --pg-image=<image>     container image, overrides the one derived from --pg-version=
+#   --pg-container=<name>  container name
+#   --pg-port=<port>       host port of the container
+#   --app-port=<port>      application port, 8080 for `run` and 8090 for `verify`
+#   --with-documentation   build the jar with the rendered documentation, which runs the
+#                          scenario tests producing the reports; slow, needs pandoc
+#   --dry-run              print the commands instead of running them
+#   --yes                  answer every confirmation with yes, for calls from scripts
+#   -h, -?, --help         this text
+#
+# Verbs:
+#   generate <customers> [<persons-csv>]  generate demodata<customers> and dump it
+#   dump     <dataset>                    write a dump of an existing dataset
+#   upload   <dataset> [<dump-file>]      copy a dump to ~/backup/ of the deploy host
+#   restore  <dataset> [<dump-file>]      restore into <dataset>_restored
+#   run      <dataset>                    start the application against the dataset
+#   verify   <dataset>                    restore, start, log in, query, exit code
+#   list                                  the datasets in the container, with their size
+#   drop     <dataset>                    remove a dataset
+#
+# <dataset> also takes the bare number, thus `dump 500` means `demodata500`.
+#
+# Without <persons-csv> the dataset gets no fixed persons, just like omitting
+# -Dhsadminng.demodata.personsCsv. The generator writes the file back with the person UUIDs
+# filled in; those come from the database and not from the seed, thus that copy belongs to
+# this dump and has to be handed over with it.
+#
+# A dump restores only into its own server version or a newer one, therefore --pg-version=16 or
+# --pg-version=15 (Debian Bookworm) for a target which does not run PostgreSQL 17 yet. Each
+# version gets a container of its own, so the datasets of the others stay untouched.
+#
+# `upload` hands the dump to `tools/remote upload`, which knows the host (HSADMINNG_DEPLOY_HOST),
+# and picks the version the pg_restore of that host can read. The dump is only copied there,
+# never restored: replacing the database of a running backend stays a deliberate manual step.
+#
+# The dump excludes the data of rbac.api_key, rbac.api_key_scope and base.tx_journal and proves
+# that inside the container, where the pg_restore version matches the one which wrote the dump.
+#
+# The dataset is served with the profiles `fake-jwt,without-test-data`. `without-test-data` is
+# not optional: without it the start writes test partners and test subjects into the dataset for
+# good. `hsh-demo_admin` is the only login in every dataset, and `fake-jwt` accepts any password.
+#
+# The image, container, port and app-port options can also come from the environment as
+# HSADMINNG_DEMO_<OPTION> with dashes as underscores, e.g. HSADMINNG_DEMO_PG_CONTAINER;
+# a given option wins over the variable.
+set -euo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+JAR=build/libs/hsadmin-ng-0.0.1-SNAPSHOT.jar # as in tools/remote
+PROFILES=fake-jwt,without-test-data
+SUPERUSER=hsh-demo_admin
+STARTUP_TIMEOUT=300
+
+usage() {
+    awk 'NR > 1 && !/^#/ { exit } NR > 1 { sub(/^# ?/, ""); print }' "$0"
+}
+
+fail() {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+pgVersion=17
+pgVersionGiven=
+pgImageOpt=
+pgContainerOpt=
+pgPortOpt=
+appPortOpt=
+withDocumentation=
+dryRun=
+assumeYes=
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --pg-version=*)       pgVersion=${1#*=}; pgVersionGiven=yes; shift ;;
+        --pg-image=*)         pgImageOpt=${1#*=}; shift ;;
+        --pg-container=*)     pgContainerOpt=${1#*=}; shift ;;
+        --pg-port=*)          pgPortOpt=${1#*=}; shift ;;
+        --app-port=*)         appPortOpt=${1#*=}; shift ;;
+        --pg-version|--pg-image|--pg-container|--pg-port|--app-port)
+                              fail "use $1=<value>" ;;
+        --with-documentation) withDocumentation=yes; shift ;;
+        --dry-run)            dryRun=yes; shift ;;
+        --yes)                assumeYes=yes; shift ;;
+        -h|-\?|--help)        usage; exit 0 ;;
+        -*)                   usage >&2; fail "unknown option '$1'" ;;
+        *)                    break ;;
+    esac
+done
+
+case "$pgVersion" in
+    17) container=hsadmin-demo;   port=55433; image=postgres:17.7-trixie ;;
+    16) container=hsadmin-demo16; port=55434; image=postgres:16-trixie ;;
+    15) container=hsadmin-demo15; port=55435; image=postgres:15-bookworm ;;
+    *)  fail "--pg-version= must be 15, 16 or 17, but was '$pgVersion'" ;;
+esac
+container=${pgContainerOpt:-${HSADMINNG_DEMO_PG_CONTAINER:-$container}}
+port=${pgPortOpt:-${HSADMINNG_DEMO_PG_PORT:-$port}}
+image=${pgImageOpt:-${HSADMINNG_DEMO_PG_IMAGE:-$image}}
+
+# quoted so that a printed command can be pasted into a shell unchanged
+quoted() {
+    local arg line=
+    for arg in "$@"; do
+        if [[ $arg =~ ^[A-Za-z0-9_@%+=:,./-]+$ ]]; then
+            line+=" $arg"
+        else
+            line+=" '${arg//\'/\'\\\'\'}'"
+        fi
+    done
+    echo "${line# }"
+}
+
+run() {
+    if [ -n "$dryRun" ]; then
+        quoted "$@"
+    else
+        "$@"
+    fi
+}
+
+containerIsRunning() {
+    # a dry run must not touch Docker, thus it pretends a fresh start
+    [ -z "$dryRun" ] || return 1
+    [ -n "$(docker ps --quiet --filter "name=^$container\$")" ]
+}
+
+query() {
+    docker exec "$container" psql -U postgres -X -A -t "$@"
+}
+
+databaseExists() {
+    if ! containerIsRunning; then
+        return 1
+    fi
+    [ "$(query -c "select 1 from pg_database where datname = '$1'")" == 1 ]
+}
+
+databaseHoldsData() {
+    local tables
+    tables=$(query -d "$1" -c "select count(*) from information_schema.tables
+                                   where table_schema not in ('pg_catalog', 'information_schema')")
+    [ "$tables" -gt 0 ]
+}
+
+# only asks where something would really be lost, thus never on a first or an interrupted run
+confirmOverwriting() {
+    local database=$1 size answer
+    if ! databaseExists "$database" || ! databaseHoldsData "$database"; then
+        return 0
+    fi
+    if [ -n "$assumeYes" ] || [ -n "$dryRun" ]; then
+        return 0
+    fi
+    if [ ! -t 0 ]; then
+        fail "the database $database exists and holds data; pass --yes to overwrite it"
+    fi
+    size=$(query -c "select pg_size_pretty(pg_database_size('$database'))")
+    read -r -p "the database $database exists and holds data ($size); overwrite it? [y/N] " answer
+    case "$answer" in
+        [yY]|[yY][eE][sS]) ;;
+        *) fail "aborted" ;;
+    esac
+}
+
+requireDataset() {
+    if [ -z "${1:-}" ]; then
+        usage >&2
+        fail "no dataset given"
+    fi
+    if [[ $1 =~ ^[0-9]+$ ]]; then
+        dataset=demodata$1
+    elif [[ $1 =~ ^[a-z_][a-z0-9_]*$ ]]; then
+        dataset=$1
+    else
+        # the name ends up unquoted in SQL, so only a plain lowercase identifier may pass
+        fail "the dataset name '$1' is not a customer count or a plain lowercase identifier"
+    fi
+}
+
+dumpFileOf() {
+    echo ".private/demo-dataset-$1-pg$pgVersion-$(date +%F).dump"
+}
+
+reportGenerated() {
+    local file
+    echo "generated:"
+    for file in "$@"; do
+        echo " - $file"
+    done
+}
+
+startContainer() {
+    if containerIsRunning; then
+        return 0
+    fi
+    if [ -n "$dryRun" ]; then
+        echo "docker run --name $container -e POSTGRES_PASSWORD=password -p 127.0.0.1:$port:5432 -d $image"
+        return 0
+    fi
+    docker start "$container" >/dev/null 2>&1 ||
+        docker run --name "$container" -e POSTGRES_PASSWORD=password \
+            -p "127.0.0.1:$port:5432" -d "$image" >/dev/null ||
+        fail "cannot start the container $container"
+    for i in $(seq 1 30); do
+        # -h localhost forces TCP, so PostgreSQL's socket-only init phase does not count as ready
+        if docker exec "$container" pg_isready -q -h localhost -U postgres 2>/dev/null; then
+            return 0
+        fi
+        [ "$i" == 30 ] && fail "PostgreSQL in $container did not become ready"
+        sleep 1
+    done
+}
+
+recreateDatabase() {
+    confirmOverwriting "$1"
+    run docker exec "$container" psql -U postgres \
+        -c "drop database if exists $1" \
+        -c "create database $1"
+}
+
+# a defined environment, independent of whatever the calling shell has sourced
+exportDatasetEnvironment() {
+    source .unset-environment
+    export HSADMINNG_POSTGRES_JDBC_URL=jdbc:postgresql://localhost:$port/$1
+    export HSADMINNG_POSTGRES_ADMIN_USERNAME=postgres
+    export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
+    export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
+    export HSADMINNG_SUPERUSER=$SUPERUSER
+}
+
+buildJar() {
+    if [ -z "$withDocumentation" ]; then
+        run ./gradlew bootJar
+        return 0
+    fi
+    # scenarioTest produces the bundled reports and would otherwise write them into the dataset,
+    # because it uses HSADMINNG_POSTGRES_JDBC_URL when that is set
+    if [ -n "$dryRun" ]; then
+        echo "(unset HSADMINNG_POSTGRES_JDBC_URL; source .tc-environment;" \
+            "./gradlew scenarioTest bootJar -PincludeRenderedDocumentation=true)"
+        return 0
+    fi
+    (
+        unset HSADMINNG_POSTGRES_JDBC_URL
+        source .tc-environment
+        ./gradlew scenarioTest bootJar -PincludeRenderedDocumentation=true
+    )
+}
+
+generateDataset() {
+    local customers=${1:-} personsCsv=${2:-} dataset datasetCsv
+    if [[ ! $customers =~ ^[0-9]+$ ]]; then
+        usage >&2
+        fail "<customers> must be a number, but was '$customers'"
+    fi
+    dataset=demodata$customers
+
+    local gradleArgs=(scenarioTest --tests '*DemoDataScenarioTest'
+        -Dhsadminng.demodata.customerCount="$customers")
+    if [ -n "$personsCsv" ]; then
+        # checked before anything is dropped, a run of a quarter of an hour must not fail on a typo
+        [ -f "$personsCsv" ] || fail "$personsCsv does not exist"
+        # its own copy, because the generator names the written back file after the input
+        datasetCsv=.private/keycloak-users-$dataset-pg$pgVersion.csv
+        gradleArgs+=(-Dhsadminng.demodata.personsCsv="$datasetCsv")
+    fi
+
+    startContainer
+    recreateDatabase "$dataset"
+    if [ -n "$personsCsv" ]; then
+        run cp "$personsCsv" "$datasetCsv"
+    fi
+
+    if [ -n "$dryRun" ]; then
+        echo "(source .tc-environment; <dataset environment>; ./gradlew $(quoted "${gradleArgs[@]}"))"
+    else
+        (
+            # the exports have to follow .tc-environment, which would otherwise overwrite them
+            source .tc-environment
+            exportDatasetEnvironment "$dataset"
+            ./gradlew "${gradleArgs[@]}"
+        )
+    fi
+
+    dumpDataset "$dataset"
+    if [ -n "$personsCsv" ]; then
+        reportGenerated "${datasetCsv%.csv}-with-person-uuids.csv" "$dumpFile"
+    else
+        reportGenerated "$dumpFile"
+    fi
+}
+
+# sets dumpFile for the caller, which reports it together with the other generated files
+dumpDataset() {
+    local dataset=$1
+    dumpFile=$(dumpFileOf "$dataset")
+    databaseExists "$dataset" || [ -n "$dryRun" ] || fail "the database $dataset does not exist"
+
+    run docker exec "$container" pg_dump -U postgres --format=custom --file="/tmp/$dataset.dump" \
+        --exclude-table-data=rbac.api_key --exclude-table-data=rbac.api_key_scope \
+        --exclude-table-data=base.tx_journal \
+        "$dataset"
+
+    # inside the container, where the pg_restore version matches the one which wrote the dump
+    if [ -z "$dryRun" ]; then
+        if docker exec "$container" pg_restore --list "/tmp/$dataset.dump" |
+                grep -qE 'TABLE DATA (rbac api_key|base tx_journal )'; then
+            fail "the dump carries credentials or the audit journal"
+        fi
+    fi
+
+    run docker cp "$container:/tmp/$dataset.dump" "$dumpFile"
+}
+
+# sets dumpFile to the given dump or, without one, to the newest of the dataset for this version
+resolveDumpFile() {
+    dumpFile=${2:-}
+    if [ -z "$dumpFile" ]; then
+        dumpFile=$(ls -t ".private/demo-dataset-$1-pg$pgVersion-"*.dump 2>/dev/null | head -1 || true)
+        [ -n "$dumpFile" ] || fail "no dump of $1 for PostgreSQL $pgVersion in .private/"
+    fi
+    [ -f "$dumpFile" ] || fail "$dumpFile does not exist"
+}
+
+restoreDataset() {
+    local restored=${1}_restored
+    resolveDumpFile "$@"
+
+    startContainer
+    recreateDatabase "$restored"
+    run docker cp "$dumpFile" "$container:/tmp/restore.dump"
+    run docker exec "$container" pg_restore -U postgres --dbname="$restored" /tmp/restore.dump
+    echo "restored $dumpFile into $restored"
+}
+
+# The dump has to match the pg_restore of the deploy host, which cannot read an archive written
+# by a newer PostgreSQL, so that host decides the version instead of --pg-version=.
+uploadDataset() {
+    local dataset=$1 givenDumpFile=${2:-} hostInfo hostPgVersion freeKb= sizeKb
+    if [ -n "$dryRun" ]; then
+        # the host would decide the version; a dry run has to make do with --pg-version=
+        echo "tools/remote ssh 'pg_restore --version; df -Pk \"\$HOME\" | tail -1'"
+    else
+        hostInfo=$(tools/remote ssh 'pg_restore --version; df -Pk "$HOME" | tail -1') ||
+            fail "cannot reach the deploy host, see 'tools/remote --help'"
+        hostPgVersion=$(sed -n 's/^pg_restore (PostgreSQL) \([0-9][0-9]*\).*/\1/p' <<<"$hostInfo")
+        [ -n "$hostPgVersion" ] || fail "the deploy host has no pg_restore, a dump would be useless there"
+        if [ -n "$pgVersionGiven" ] && [ "$pgVersion" != "$hostPgVersion" ]; then
+            fail "the deploy host runs PostgreSQL $hostPgVersion and cannot restore a pg$pgVersion dump"
+        fi
+        pgVersion=$hostPgVersion
+        freeKb=$(awk 'END { print $4 }' <<<"$hostInfo")
+    fi
+
+    resolveDumpFile "$dataset" "$givenDumpFile"
+    # an explicitly given dump may stem from a newer PostgreSQL, which the host cannot read
+    if [[ $dumpFile =~ -pg([0-9]+)- ]] && [ "${BASH_REMATCH[1]}" -gt "$pgVersion" ]; then
+        fail "$dumpFile was written by PostgreSQL ${BASH_REMATCH[1]}," \
+            "which the deploy host with pg_restore $pgVersion cannot read"
+    fi
+    sizeKb=$(du -k "$dumpFile" | cut -f1)
+    if [ -n "$freeKb" ] && [ "$freeKb" -le $((sizeKb + sizeKb / 10)) ]; then
+        fail "$dumpFile needs $((sizeKb / 1024)) MB, but only $((freeKb / 1024)) MB are free on the deploy host"
+    fi
+
+    run tools/remote upload "$dumpFile" backup
+}
+
+runApplication() {
+    local dataset=$1 appPort=${appPortOpt:-${HSADMINNG_DEMO_APP_PORT:-8080}}
+    databaseExists "$dataset" || [ -n "$dryRun" ] || fail "the database $dataset does not exist"
+    buildJar
+    if [ -n "$dryRun" ]; then
+        echo "java -jar $JAR --spring.profiles.active=$PROFILES --server.port=$appPort"
+        return 0
+    fi
+    exportDatasetEnvironment "$dataset"
+    echo "starting $JAR against $HSADMINNG_POSTGRES_JDBC_URL on port $appPort"
+    exec java -jar "$JAR" --spring.profiles.active="$PROFILES" --server.port="$appPort"
+}
+
+verifyDataset() {
+    local dataset=$1 restored=${1}_restored appPort=${appPortOpt:-${HSADMINNG_DEMO_APP_PORT:-8090}} response
+    restoreDataset "$dataset"
+    buildJar
+    if [ -n "$dryRun" ]; then
+        echo "java -jar $JAR --spring.profiles.active=$PROFILES --server.port=$appPort"
+        echo "LOGIN $SUPERUSER; HTTP GET /api/hs/office/partners"
+        return 0
+    fi
+
+    source .aliases
+    exportDatasetEnvironment "$restored"
+    export HSADMINNG_API_BASE_URL=http://localhost:$appPort
+    export HSADMINNG_JWT_TOKEN_URL=$HSADMINNG_API_BASE_URL/fake-jwt/token
+
+    java -jar "$JAR" --spring.profiles.active="$PROFILES" --server.port="$appPort" \
+        >build/demo-data-verify.log 2>&1 &
+    # deliberately not local: the EXIT trap expands the PID only after this function has returned
+    appPid=$!
+    trap 'kill "$appPid" 2>/dev/null || true' EXIT
+
+    echo "waiting for the application on port $appPort (up to ${STARTUP_TIMEOUT}s) ..."
+    for i in $(seq 1 "$STARTUP_TIMEOUT"); do
+        kill -0 "$appPid" 2>/dev/null || fail "the application terminated, see build/demo-data-verify.log"
+        curl -sf "$HSADMINNG_API_BASE_URL/api/version" >/dev/null 2>&1 && break
+        [ "$i" == "$STARTUP_TIMEOUT" ] && fail "the application did not answer within ${STARTUP_TIMEOUT}s"
+        sleep 1
+    done
+
+    LOGIN "$SUPERUSER" || fail "LOGIN as $SUPERUSER failed"
+    response=$(HTTP GET /api/hs/office/partners) || fail "GET /api/hs/office/partners failed"
+    echo "$response" | grep -q partnerNumber || fail "the restored dataset holds no partners"
+    echo "verified $restored: the dump restores, the application starts, $SUPERUSER sees partners"
+}
+
+listDatasets() {
+    startContainer
+    run docker exec "$container" psql -U postgres -c \
+        "select datname, pg_size_pretty(pg_database_size(datname)) as size
+             from pg_database where datname not in ('template0', 'template1', 'postgres')
+             order by datname"
+}
+
+dropDataset() {
+    local dataset=$1
+    databaseExists "$dataset" || [ -n "$dryRun" ] || fail "the database $dataset does not exist"
+    confirmOverwriting "$dataset"
+    run docker exec "$container" psql -U postgres -c "drop database $dataset"
+}
+
+verb=${1:-}
+if [ $# -gt 0 ]; then
+    shift
+fi
+dataset=
+dumpFile=
+case "$verb" in
+    generate)  generateDataset "${1:-}" "${2:-}" ;;
+    dump)      requireDataset "${1:-}"; dumpDataset "$dataset"; reportGenerated "$dumpFile" ;;
+    upload)    requireDataset "${1:-}"; uploadDataset "$dataset" "${2:-}" ;;
+    restore)   requireDataset "${1:-}"; restoreDataset "$dataset" "${2:-}" ;;
+    run)       requireDataset "${1:-}"; runApplication "$dataset" ;;
+    verify)    requireDataset "${1:-}"; verifyDataset "$dataset" ;;
+    list)      listDatasets ;;
+    drop)      requireDataset "${1:-}"; dropDataset "$dataset" ;;
+    '')        usage >&2; fail "no verb given" ;;
+    *)         usage >&2; fail "unknown verb '$verb'" ;;
+esac

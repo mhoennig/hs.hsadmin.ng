@@ -95,10 +95,10 @@ at least `HSADMINNG_LOGIN_MONITOR_PASSWORD` and `HSADMINNG_MATRIX_WEBHOOK_URL`.
 
 `tools/remote` targets a test stage to try out unmerged changes; regular releases go via CI/CD.
 
-| Variable                                | Purpose                                                                                                                        | Default/Example                       |
-|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| `HSADMINNG_DEPLOY_HOST`                 | SSH `user@host` of the backend server used by all `remote` commands                                                            | `hsh11-backend@hsh11.hostsharing.net` |
-| `HSADMINNG_PROVISIONING_API_KEY_SHA256` | provisioned server-side by `remote backend provision-api-key` into the `EnvironmentFile` of the backend service (see backend table) | empty                                 |
+| Variable                                | Purpose                                                                                                                             | Default/Example        |
+|-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| `HSADMINNG_DEPLOY_HOST`                 | SSH `user@host` of the backend server used by all `remote` commands; no default, to avoid using unintended stage                    | must be set explicitly |
+| `HSADMINNG_PROVISIONING_API_KEY_SHA256` | provisioned server-side by `remote backend provision-api-key` into the `EnvironmentFile` of the backend service (see backend table) | empty                  |
 
 ## Tests and Build
 

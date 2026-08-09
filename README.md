@@ -265,10 +265,10 @@ the backend log, and finally prints the clear-text API-key for use as `HSADMINNG
 hash in the environment, then start the application:
 
     # generate an API-key embedding the subject name; keep it secret, it exists only at the client:
-    apiKey=$(tools/generate-api-key hsadminng.provisioning.key); echo "$apiKey"
+    apiKey=$(tools/api-key-generate hsadminng.provisioning.key); echo "$apiKey"
 
     # configure just its hash in the environment, then start the application:
-    export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(printf '%s' "$apiKey" | sha256sum | cut -d' ' -f1)
+    export HSADMINNG_PROVISIONING_API_KEY_SHA256=$(tools/api-key-hash "$apiKey")
 
 #### Using an API-key
 
