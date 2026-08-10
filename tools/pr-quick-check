@@ -5,11 +5,14 @@ import argparse
 import re
 import subprocess
 from datetime import date
+from itertools import chain
 import time
 import sys
 from pathlib import Path
 
 
+# spelled apart, or this tool's own messages would be findings of the very check they report
+MARKER_WORD = "FIX" + "ME"
 MAX_PR_DOC_LINES = 200
 MAX_SCOPE_SCORE = 35
 # Beyond this, a branch is stale rather than open work, and its conflicts are noise.
@@ -20,6 +23,21 @@ CHANGE_LINES_PER_SCOPE_POINT = 100
 CHANGE_LINES_PER_PR_DOC_LINE = 10
 MAX_FILE_SIZE = 142_994
 PR_DOC_DIR = Path("doc/PR")
+# exempt like the PR document itself, so unburdening it into an RFC/ADR does not raise the score
+EXEMPT_DOC_DIRS = {Path("doc/rfc"), Path("doc/adr")}
+# a fixed qualifier vocabulary, so it does not grow wild; only added lines are checked,
+# thus legacy qualifiers stay until the line holding them is touched anyway
+ALLOWED_MARKER_QUALIFIERS = {
+    "TODO": {"doc", "feat", "impl", "legacy", "perf", "rbac", "refa", "spec", "test", "tool"},
+    MARKER_WORD: {"review"},
+}
+QUALIFIED_MARKER = re.compile(r"\b(TODO|" + MARKER_WORD + r")\.([A-Za-z0-9_-]+)")
+# same rule as in tools/fixmes: in Markdown a backtick span quotes a marker instead of using it
+CODE_SPAN = re.compile(r"`[^`]+`")
+HUNK_START = re.compile(r"^@@ -\S+ \+(\d+)")
+RFC_DIR = Path("doc/rfc")
+RFC_NUMBER = re.compile(r"RFC#(\d+)")
+NON_PR_DOC_NAMES = {"README.md", "TEMPLATE.md", "TEMPLATE-de.md", "TEAMPLATE.md", "IDEAS.md"}
 PR_DOC_NAME = re.compile(
     r"^\d{4}-\d{2}-\d{2}-PR#\d+-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\.md$"
 )
@@ -30,6 +48,8 @@ RELEASE_NOTE_HEADING = "\n## Release Note\n"
 RELEASED_ON = re.compile(r"^released:\s*(\d{4}-\d{2}-\d{2})\s*$", re.MULTILINE)
 EXTRA_PR_DOCS_KEY = "extra-pr-docs"
 EXTRA_PR_DOCS = re.compile(r"pr-quick-check:extra-pr-docs=(\d+)`?\s*[:—–-]+\s*(\S.*)")
+# no <> in the ref, so that a document explaining the syntax does not declare `<ref>` as its base
+DECLARED_BASE = re.compile(r"pr-quick-check:base=([^\s`<>]+)")
 ALLOWED_ENV_FILE_NAMES = {
     ".env.example",
     ".env.local",
@@ -152,6 +172,56 @@ def tracked_secret_env_files(paths):
     ]
 
 
+def pr_doc_candidates(paths):
+    return [
+        Path(path)
+        for path in paths
+        if Path(path).parent == PR_DOC_DIR
+        and Path(path).suffix == ".md"
+        and Path(path).name not in NON_PR_DOC_NAMES
+    ]
+
+
+def declared_base(paths):
+    """The target branch of a PR which builds on another one instead of the default base;
+    in a deeper stack the prerequisite documents in the diff also carry their declarations,
+    but only this PR's own document is absent from every declared base ref."""
+    declaring = [
+        (path, match.group(1))
+        for path in pr_doc_candidates(paths)
+        if path.is_file() and (match := DECLARED_BASE.search(path.read_text(encoding="utf-8")))
+    ]
+    own = [
+        (path, ref)
+        for path, ref in declaring
+        if not any(
+            other_path != path
+            and try_ref_commit(f"{authoritative_base_ref(other_ref)}:{path}")
+            for other_path, other_ref in declaring
+        )
+    ]
+    if len(own) > 1:
+        names = ", ".join(str(path) for path, _ in own)
+        raise RuntimeError(
+            f"{len(own)} changed PR documents declare a base: {names}; "
+            "only this PR's own document may declare it"
+        )
+    return own[0][1] if own else None
+
+
+def declared_base_applies(declared, base):
+    """A declared base counts only until it is merged: afterwards the default base contains it
+    and gives the same diff, so the declaration may stay in the document once it is history."""
+    ref = authoritative_base_ref(declared)
+    if not try_ref_commit(ref):
+        return False
+    return subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ref, base],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode != 0
+
+
 def find_pr_doc(paths, explicit_pr_doc):
     if explicit_pr_doc:
         path = Path(explicit_pr_doc)
@@ -159,13 +229,7 @@ def find_pr_doc(paths, explicit_pr_doc):
             raise RuntimeError(f"PR document does not exist: {path}")
         return path
 
-    candidates = [
-        Path(path)
-        for path in paths
-        if Path(path).parent == PR_DOC_DIR
-        and Path(path).suffix == ".md"
-        and Path(path).name not in {"README.md", "TEMPLATE.md", "TEAMPLATE.md"}
-    ]
+    candidates = pr_doc_candidates(paths)
     if len(candidates) == 1:
         return candidates[0]
 
@@ -184,8 +248,9 @@ def find_pr_doc(paths, explicit_pr_doc):
     names = ", ".join(str(path) for path in candidates) or "none"
     raise RuntimeError(
         f"expected exactly one changed PR document, found {len(candidates)}: {names}; "
-        "select it with --pr-doc, or declare the exception in this PR's own document with "
-        "`pr-quick-check:extra-pr-docs=<count>`: <reason>"
+        "for a PR built on another one name its target branch in this PR's own document with "
+        "`pr-quick-check:base=<ref>`, otherwise select the document with --pr-doc, or declare "
+        "the exception in it with `pr-quick-check:extra-pr-docs=<count>`: <reason>"
     )
 
 
@@ -204,11 +269,11 @@ def logical_file_count(paths):
 
 
 def is_substantive(path, pr_doc):
-    if Path(path) == pr_doc:
+    candidate = Path(path)
+    if candidate == pr_doc or candidate.parent in EXEMPT_DOC_DIRS:
         return False
     if path.endswith(("-rbac.sql", "-rbac.md")):
         return False
-    candidate = Path(path)
     return not (
         candidate.parent == Path("src/test/resources/db")
         and SQL_DUMP_NAME.fullmatch(candidate.name)
@@ -317,6 +382,73 @@ def check_release_note_date(pr_doc):
     return []
 
 
+def added_diff_lines(merge_base):
+    """(path, line number, text) of every line the diff adds."""
+    path = None
+    line_number = 0
+    for line in git("diff", "--unified=0", merge_base).splitlines():
+        if line.startswith("+++ b/"):
+            path = line.removeprefix("+++ b/")
+        elif line.startswith("+++"):
+            path = None
+        elif match := HUNK_START.match(line):
+            line_number = int(match.group(1))
+        elif path and line.startswith("+"):
+            yield path, line_number, line[1:]
+            line_number += 1
+
+
+def untracked_lines(paths):
+    for path_string in paths:
+        raw = Path(path_string).read_bytes()
+        if b"\0" in raw:
+            continue
+        text = raw.decode("utf-8", errors="replace")
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            yield path_string, line_number, line
+
+
+def report_undefined_qualifiers(merge_base, untracked):
+    findings = []
+    for path, line_number, text in chain(added_diff_lines(merge_base), untracked_lines(untracked)):
+        code_spans = [match.span() for match in CODE_SPAN.finditer(text)] if path.endswith(".md") else []
+        for match in QUALIFIED_MARKER.finditer(text):
+            if any(start <= match.start() < end for start, end in code_spans):
+                continue
+            if match.group(2) not in ALLOWED_MARKER_QUALIFIERS[match.group(1)]:
+                findings.append(f"  {path}:{line_number}: {match.group(0)}")
+    if findings:
+        defined = ", ".join(
+            f"{marker}.{{{','.join(sorted(qualifiers))}}}"
+            for marker, qualifiers in ALLOWED_MARKER_QUALIFIERS.items()
+        )
+        listed = "\n".join(findings)
+        return [
+            f"added lines use undefined TODO/{MARKER_WORD} qualifiers:\n{listed}\n"
+            f"  defined are: {defined}"
+        ]
+    print(f"PASSED: added lines only use defined TODO/{MARKER_WORD} qualifiers")
+    return []
+
+
+def report_open_fixmes():
+    """Quotes the markers into the failure message, because tools/fixmes writes them straight
+    to the terminal, whereas the failures are collected and printed screens further down."""
+    result = subprocess.run(["tools/fixmes"], text=True, stdout=subprocess.PIPE)
+    if result.returncode == 0:
+        print(f"PASSED: no open {MARKER_WORD}s")
+        return []
+    listed = result.stdout.rstrip("\n").splitlines()
+    count = sum(1 for line in listed if line and not line.startswith(" "))
+    quoted = "\n".join(f"  {line}" for line in listed)
+    return [
+        f"{count} open {MARKER_WORD}{'' if count == 1 else 's'}:\n{quoted}\n"
+        f"  resolve {'it' if count == 1 else 'them'}; a mere mention belongs in backticks "
+        "(Markdown), an intentional open one inside "
+        "<!-- disable:fixme --> … <!-- enable:fixme -->"
+    ]
+
+
 def current_branch():
     return subprocess.run(
         ["git", "branch", "--show-current"], text=True, stdout=subprocess.PIPE,
@@ -360,9 +492,13 @@ def open_origin_branches(base):
     return sorted(branches)
 
 
-def report_conflicts(base):
+def report_conflicts(base, open_branches, own_paths):
     """A conflict with the target branch blocks the merge; one with another open branch only
     announces the work which whoever merges second will have to do.
+
+    Cross-branch conflicts only count in files this branch changes itself: in any other file
+    they stem from the other branch lagging behind the base, so they are that branch's news
+    and show up when it runs this check.
 
     The check against the base can only fail if it ever runs before ensure_branch_contains_base,
     which already demands that the base is merged in — and then merging it again cannot conflict."""
@@ -375,10 +511,11 @@ def report_conflicts(base):
     else:
         print(f"PASSED: no merge conflict with {base}")
 
+    own = set(own_paths)
     conflicting = [
         (branch, paths)
-        for branch in open_origin_branches(base)
-        if (paths := conflicting_paths("HEAD", branch))
+        for branch in open_branches
+        if (paths := sorted(own.intersection(conflicting_paths("HEAD", branch))))
     ]
     for branch, paths in conflicting:
         shown = ", ".join(paths[:4]) + (", ..." if len(paths) > 4 else "")
@@ -386,6 +523,62 @@ def report_conflicts(base):
     if not conflicting:
         print(f"PASSED: no conflict with a branch on origin touched within "
               f"{CONFLICT_SCAN_DAYS} days")
+    return failures
+
+
+def rfc_numbers_at(ref):
+    """RFC number -> document names under doc/rfc at that ref."""
+    listing = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", ref, "--", str(RFC_DIR)],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    ).stdout.splitlines()
+    return rfc_numbers_of(Path(path).name for path in listing)
+
+
+def rfc_numbers_of(names):
+    numbers = {}
+    for name in names:
+        if match := RFC_NUMBER.search(name):
+            numbers.setdefault(int(match.group(1)), set()).add(name)
+    return numbers
+
+
+def report_duplicate_rfc_numbers(merge_base, open_branches):
+    """An RFC number names exactly one document. The working tree counts, not HEAD, because a
+    new RFC starts out untracked; a clash with an open origin branch only warns, like a merge
+    conflict, because whoever merges second has to renumber either way. Documents already at
+    the merge base are settled and claim nothing — otherwise every branch would be blamed for
+    a clash between the base and some other branch."""
+    ours = rfc_numbers_of(
+        path.name for path in RFC_DIR.iterdir() if path.is_file()
+    ) if RFC_DIR.is_dir() else {}
+
+    failures = [
+        f"RFC number {number} is used by {len(names)} documents: {', '.join(sorted(names))}"
+        for number, names in sorted(ours.items())
+        if len(names) > 1
+    ]
+
+    settled = rfc_numbers_at(merge_base)
+    claimed = {
+        number: fresh
+        for number, names in ours.items()
+        if (fresh := names - settled.get(number, set()))
+    }
+    clashing = [
+        (branch, number, sorted(other))
+        for branch in open_branches
+        for number, names in sorted(rfc_numbers_at(branch).items())
+        if number in claimed
+        and (other := names - settled.get(number, set()) - claimed[number])
+    ]
+    for branch, number, names in clashing:
+        print(
+            f"WARNING: RFC number {number} is also claimed on {branch} by: {', '.join(names)}",
+            file=sys.stderr,
+        )
+    if not failures:
+        print("PASSED: every RFC number names exactly one document on this branch")
     return failures
 
 
@@ -432,7 +625,7 @@ def parse_args():
         prog="tools/pr-quick-check",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="Run the inexpensive local quality gate before requesting a PR review.",
-        epilog="""
+        epilog=f"""
 checks:
   - if the base branch exists both locally and on origin, both point to the
     same commit
@@ -442,7 +635,10 @@ checks:
   - git diff --check succeeds
   - exactly one changed PR document follows the filename and section conventions
   - the PR document stays within its dynamic line budget
-  - tools/fixmes reports no open findings
+  - tools/fixmes reports no open {MARKER_WORD} markers
+  - added lines only use the defined TODO/{MARKER_WORD} qualifiers
+  - every RFC number under doc/rfc/ names exactly one document; the same
+    number claimed differently on an open origin branch only warns
   - no secret environment files named .env* are tracked; .envrc and exact
     .env/.environment example, local and template filenames are exempt
   - the change stays within its dynamic scope budget
@@ -458,9 +654,9 @@ size budgets:
       min(200, 50 + 3 * logical files + ceil(substantive changed lines / 10))
 
   All changed *-rbac.sql files count as one logical file, and all changed
-  *-rbac.md files count as one.  The selected PR document, generated RBAC
-  files and released-prod-schema-*.sql dumps do not contribute substantive
-  changed lines.
+  *-rbac.md files count as one.  The selected PR document, documents under
+  doc/rfc/ and doc/adr/, generated RBAC files and released-prod-schema-*.sql
+  dumps do not contribute substantive changed lines.
 
 scope-budget exception:
   When a PR legitimately has to exceed the scope budget, its PR document
@@ -475,11 +671,26 @@ scope-budget exception:
   An exception whose score is not needed (actual score within the default maximum) fails the check
   and must be removed.
 
+base branch of a stacked PR:
+  Only the pull-request platform knows that a PR targets another PR's branch instead of
+  the default base, so its own PR document names the target, preferably in the
+  Prerequisite-PRs section:
+
+      `pr-quick-check:base=<ref>`
+
+  It counts until the named ref is merged into the default base or disappears; from then
+  on the default base gives the same diff and the declaration may stay as history.
+  In a deeper stack the prerequisite documents keep their own declarations: a document
+  already contained in another declared base belongs to a prerequisite, not to this PR.
+  An explicitly passed base wins over the declaration.
+
 merge conflicts:
   A conflict with the base fails the check; a conflict with another branch on origin only
   warns, because whoever merges second has to resolve it either way.  Only branches which
   the base does not contain yet and which were touched within the last 30 days are compared:
   an abandoned branch conflicts with almost anything, which would drown the signal.
+  Cross-branch conflicts are also limited to files this branch changes itself; conflicts
+  the other branch has with the base in unrelated files are reported there, not here.
 
 further-PR-documents exception:
   A PR normally changes exactly one PR document.  When it legitimately has to change
@@ -531,6 +742,15 @@ def main():
             # base branches like master or a future prod have no PR content to check
             print(f"PASSED: no changes against {base}; nothing to quick-check")
             return 0
+        # the declaration lives in a PR document, which is why the diff has to be taken once
+        # against the default base before the real one is known
+        declared = None if args.base else declared_base(paths)
+        if declared and declared_base_applies(declared, base):
+            print(f"using the base {declared} declared in the PR document")
+            base = declared
+            ensure_base_refs_match(base)
+            ensure_branch_contains_base(base)
+            merge_base, paths = changed_files(base, untracked)
         pr_doc = find_pr_doc(paths, args.pr_doc)
     except RuntimeError as error:
         print(f"FAILED: {error}", file=sys.stderr)
@@ -593,19 +813,11 @@ def main():
     if not pr_doc_failures:
         print("PASSED: PR-document name and section structure")
 
-    fixmes = subprocess.run(["tools/fixmes"])
-    if fixmes.returncode:
-        failures.append("the findings check reports open findings")
-    else:
-        print("PASSED: no open findings")
+    failures.extend(report_open_fixmes())
 
-    changed_pr_docs = [
-        Path(path)
-        for path in paths
-        if Path(path).parent == PR_DOC_DIR
-        and Path(path).suffix == ".md"
-        and Path(path).name not in {"README.md", "TEMPLATE.md", "TEAMPLATE.md"}
-    ]
+    failures.extend(report_undefined_qualifiers(merge_base, untracked))
+
+    changed_pr_docs = pr_doc_candidates(paths)
     extra_pr_docs, extra_failures = parse_extra_pr_docs(pr_doc)
     failures.extend(extra_failures)
     further = max(0, len(changed_pr_docs) - 1)
@@ -625,7 +837,10 @@ def main():
             f"(further-PR-documents exception: {extra_pr_docs[1]})"
         )
 
-    failures.extend(report_conflicts(base))
+    open_branches = open_origin_branches(base)
+    failures.extend(report_conflicts(base, open_branches, paths))
+
+    failures.extend(report_duplicate_rfc_numbers(merge_base, open_branches))
 
     failures.extend(check_release_note_date(pr_doc))
 

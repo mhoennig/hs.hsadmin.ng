@@ -1,10 +1,20 @@
 
+## Related Links (Hostsharing-internal)
+
+This section is optional.
+
+A bullet-list with links to the GitEA-PR, the Taiga ticket and other related resources.
+
 ## The Problem
+
+This section is required.
 
 A prosa description of the problem, which this PR is supposed to solve.
 Keep it short!
 
 ## Non-Goals
+
+This section is required.
 
 What this PR deliberately does not do, to delimit the scope.
 Usually a terse bullet-list.
@@ -17,6 +27,8 @@ for example:
 - `pr-quick-check:max-scope-score=<n>`: reason why splitting this PR would not be sensible
 
 ## The Scenarios
+
+This section is optional for maintenance or bug-fixing PRs, but required for features.
 
 A schematized specification of the requirements, preferably using [Gherkin](https://cucumber.io/docs/gherkin/reference/) vocabulary.
 But Gherkin does not make sense for all kinds of PRs.
@@ -59,32 +71,48 @@ Such feature descriptions are also very helpful in deriving tests and can lead a
 
 ## The Solution
 
+This section is required.
+
 Here you describe the changes you made and why you made them.
 
 If necessary, you can link to an ADR (Architecture Decision Record).
 
 ## Open Questions
 
+This section is optional.
+
 A bullet-list, listing decisions which are deliberately left open for the reviewer or a follow-up.
 
 ## Additional Changes
+
+This section is optional.
 
 Here you list any additional changes you made, e.g. "fixed formatting in ..." or "fixed some naming issues".
 Keep it short!
 
 ## Prerequisite PRs
 
+This section is optional.
+
 Here you list PRs this PR builds upon.
 
+If this PR targets the branch of one of them instead of the default base,
+name that branch here, so that `tools/pr-quick-check` measures the right diff:
+
+- `pr-quick-check:base=<ref>`
+
 ## Follow-up PRs
+
+This section is optional.
 
 Here you list work which is intentionally deferred to later PRs.
 
 ## Attachments
 
+This section is optional.
+
 Here you can add any longer sections that would interrupt the reading flow in the previous sections.
 Put each attachment on a level-3 heading ('### ...').
-ö
 
 ---
 
@@ -92,22 +120,12 @@ Put each attachment on a level-3 heading ('### ...').
 
 released: <YYYY-MM-DD>
 
-Only for changes which whoever uses the REST API can observe, otherwise leave this appendix out.
-The build collects these notes into the news page of the documentation at `/doc/`.
+Only for changes which users of the REST API can observe, otherwise leave this appendix out.
+The build collects these notes into the public news page at `/doc/`,
+thus write English even in a German PR document.
+`released:` names the merge day; `tools/pr-quick-check` insists that it is the current date.
+Write a dated statement about the change, not a description of the current state, for example:
 
-Write this appendix in English, even in a German PR document, because the news page is public.
-Keep the `---` on its own line with an empty line before it, otherwise Markdown turns the line
-above it into a heading.
+### Booking projects no longer require a debitor UUID
 
-`released: <YYYY-MM-DD>` names the day this PR is merged, because a PR document is started long
-before that and its file name is therefore no reliable release date.
-`tools/pr-quick-check` insists that this date is the current one, so that it is right at merge time.
-
-### A headline for the news page
-
-Write the note as a dated statement about a change, not as a description of the current state:
-"Since 2026-05-15, booking projects can be fetched without a debitor UUID."
-The news page keeps the note after later changes, thus a note about the current state would
-silently become wrong, whereas a dated note about a change stays true.
-
-Keep it to one or two sentences and leave out implementation detail.
+Since 2026-05-15, booking projects can be fetched without a debitor UUID.

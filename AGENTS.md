@@ -156,13 +156,11 @@ Use this procedure when asked to "review" or "code-review" a branch or PR.
 - The PR-document must exist, otherwise create it and make a review-comment that it was missing.
 - Separate signal from noise: focus on the substantive core (logic, SQL, constraints, migrations, API contracts); do not get lost in mechanical churn such as bulk renames.
 - Flag any comment longer than one line that does not give a reason, or that narrates the implementation instead of the rationale; propose deleting or shortening it.
-<!-- disable:fixmes -->
 - Mark every finding with a terse in-code comment using a `FIXME:` marker on the first line of your review-comment, at the exact finding location: 
   - Java: `// FIXME.review: <terse note>`
   - SQL: `-- FIXME.review: <terse note>`
   - YAML: `# FIXME.review: <terse note>`
   - Markdown: `<!-- FIXME.review: <terse note> -->`
-<!-- enable:fixmes --> 
 - During a review, add ONLY such comments. Do not modify implementation, tests, or documentation unless the user explicitly asks.
 - In order not to break any tests with these review-comments, respect the Liquibase Changeset Rules when commenting inside changelogs: only add comments to new changesets or to repeatable ones (`runOnChange:true` or `--validCheckSum: ANY`).
 

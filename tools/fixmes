@@ -8,6 +8,9 @@ from urllib.parse import quote, urljoin
 FIXME_PATTERN = "F[I]XME"
 DISABLE_MARKERS = ["<!-- disable:fixme -->", "<!-- disable:fixmes -->"]
 ENABLE_MARKERS = ["<!-- enable:fixme -->", "<!-- enable:fixmes -->"]
+# in Markdown a backtick span quotes the marker word instead of using it,
+# so mentions need no disable/enable bracketing there
+CODE_SPAN = re.compile(r"`[^`]+`")
 
 EXCLUDED_DIR_NAMES = {".git", "build"}
 EXCLUDED_FILES = {os.path.join("tools", "fixmes")}
@@ -82,26 +85,37 @@ def iter_matches(file_path, pattern):
 def main():
     marker_patterns = [re.escape(marker) for marker in [*DISABLE_MARKERS, *ENABLE_MARKERS]]
     pattern = re.compile("|".join([FIXME_PATTERN, *marker_patterns]))
+    fixme_pattern = re.compile(FIXME_PATTERN)
+    marker_pattern = re.compile("|".join(marker_patterns))
 
     roots = sys.argv[1:] or ["."]
 
-    disabled = {}
     found_fixme = False
     for file_path in iter_files(roots):
+        disabled = False
+        quoting = file_path.endswith(".md")
         for line_number, text in iter_matches(file_path, pattern):
-            if any(marker in text for marker in DISABLE_MARKERS):
-                disabled[file_path] = True
-                continue
-            if any(marker in text for marker in ENABLE_MARKERS):
-                disabled[file_path] = False
-                continue
+            code_spans = [match.span() for match in CODE_SPAN.finditer(text)] if quoting else []
 
-            if disabled.get(file_path):
-                continue
+            def quoted(position):
+                return any(start <= position < end for start, end in code_spans)
 
-            print(path_to_file_uri(file_path, line_number))
-            print(f"    {strip_leading_whitespace(text)}")
-            found_fixme = True
+            # markers and findings interleave within one line, so honor their order of position
+            events = sorted(
+                [(match.start(), "marker", match.group() in DISABLE_MARKERS)
+                 for match in marker_pattern.finditer(text) if not quoted(match.start())]
+                + [(match.start(), "fixme", None)
+                   for match in fixme_pattern.finditer(text) if not quoted(match.start())]
+            )
+            reported = False
+            for _, kind, disables in events:
+                if kind == "marker":
+                    disabled = disables
+                elif not disabled and not reported:
+                    print(path_to_file_uri(file_path, line_number))
+                    print(f"    {strip_leading_whitespace(text)}")
+                    reported = True
+                    found_fixme = True
 
     return 1 if found_fixme else 0
 

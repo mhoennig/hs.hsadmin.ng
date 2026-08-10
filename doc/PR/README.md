@@ -17,8 +17,12 @@ but initially prefix its title with `WIP: ` to mark it as a work in progress unt
 ## Guidelines
 
 - Documentations must be written in Markdown format.
-- Write PR-documentation in German, the working language of the project;
-  external readers are rare and can use machine translation.
+- Write PR-documentation either in English or in German, but do not mix languages within one document;
+  except for identifiers, file names, technical terms and the like, which stay in their original language.
+- Section headings (`##`, `###`, ...) follow the language of the document;
+  the German headings are defined in the [German template](TEMPLATE-de.md).
+  Gherkin structure keywords stay in English in either language:
+  `Feature:`, `Background`, `Scenario#...`, `Given`/`When`/`Then`, `Verified by`.
 - Use clear and concise language and keep it short.
 - Include relevant details and context, explain the "why".
 - Mark reference to Taiga or any other tool that is not public as "Hostsharing-internal".
@@ -27,22 +31,13 @@ but initially prefix its title with `WIP: ` to mark it as a work in progress unt
 
 ## Structure
 
-The main (`##`) sections have to appear in exactly this order, omitting sections which do not apply:
+The main (`##`) sections, their headings and which of them are required or optional
+are defined in the [English template](TEMPLATE.md) and the [German template](TEMPLATE-de.md).
 
-0. Related Links (optional)
-1. The Problem (required)
-2. Non-Goals (required)
-3. The Scenarios (optional for maintenance or bug fixing PRs, required for features)
-4. The Solution (required)
-5. Open Questions (optional)
-6. Additional Changes (optional)
-7. Prerequisite PRs (optional)
-8. Follow-up PRs (optional)
-9. Attachments (optional)
+IMPORTANT: The sections have to appear in exactly the order given in the template;
+omit optional sections which do not apply, but never reorder them.
 
 Below these sections, separated by a `---` line, an optional appendix holds the release note.
-
-For details, see [template](TEAMPLATE.md)
 
 ## Release Notes
 
@@ -73,3 +68,23 @@ When a PR legitimately has to change more, for example to back-fill release note
 PRs, its own PR document declares how many further ones it changes:
 
     `pr-quick-check:extra-pr-docs=<count>`: <reason>
+
+## A PR Built on Another PR
+
+A PR can target the branch of another, not yet merged PR.
+Only the pull-request platform (e.g. GitEA) knows this target,
+thus `tools/pr-quick-check` measures against the default base and reports the changes of both PRs together.
+The PR document therefore names its target branch, preferably in the Prerequisite-PRs section:
+
+    `pr-quick-check:base=<ref>`
+
+The declaration counts until the named branch is merged or deleted.
+From then on the default base gives the same result, and the line can stay as history.
+
+## Ideas And Free-Floating TODOs
+
+Ideas and TODOs which hang on no specific code location and belong to no open PR yet
+are collected in [IDEAS.md](IDEAS.md).
+Several related entries can grow into a PR of their own,
+and a single entry may join a thematically fitting PR as an additional change.
+`tools/pr-quick-check` does not treat that file as a PR document.
