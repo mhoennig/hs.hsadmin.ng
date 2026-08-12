@@ -212,23 +212,14 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
         withNonNull(
                 resource.getAdoptionAssetTx(), adoptionAssetTxResource -> {
-                    adoptionAssetTxResource.setMembershipUuid(entity.getAdoptionAssetTx().getMembership().getUuid());
                     adoptionAssetTxResource.setMembershipMemberNumber(entity.getAdoptionAssetTx().getTaggedMemberNumber());
                     adoptionAssetTxResource.setTransferAssetTxUuid(entity.getUuid());
-                    withNonNull(
-                            entity.getAdoptionAssetTx().getReversalAssetTx(), reversalAssetTx ->
-                                    adoptionAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
                 });
 
         withNonNull(
                 resource.getTransferAssetTx(), transferAssetTxResource -> {
-                    resource.getTransferAssetTx().setMembershipUuid(entity.getTransferAssetTx().getMembership().getUuid());
-                    resource.getTransferAssetTx()
-                            .setMembershipMemberNumber(entity.getTransferAssetTx().getTaggedMemberNumber());
-                    resource.getTransferAssetTx().setAdoptionAssetTxUuid(entity.getUuid());
-                    withNonNull(
-                            entity.getTransferAssetTx().getReversalAssetTx(), reversalAssetTx ->
-                                    transferAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
+                    transferAssetTxResource.setMembershipMemberNumber(entity.getTransferAssetTx().getTaggedMemberNumber());
+                    transferAssetTxResource.setAdoptionAssetTxUuid(entity.getUuid());
                 });
     };
 
@@ -265,23 +256,14 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
         withNonNull(
                 resource.getAdoptionAssetTx(), adoptionAssetTxResource -> {
-                    adoptionAssetTxResource.setMembershipUuid(entity.getAdoptionAssetTx().getMembership().getUuid());
                     adoptionAssetTxResource.setMembershipMemberNumber(entity.getAdoptionAssetTx().getTaggedMemberNumber());
                     adoptionAssetTxResource.setTransferAssetTxUuid(entity.getUuid());
-                    withNonNull(
-                            entity.getAdoptionAssetTx().getReversalAssetTx(), reversalAssetTx ->
-                                    adoptionAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
                 });
 
         withNonNull(
                 resource.getTransferAssetTx(), transferAssetTxResource -> {
-                    resource.getTransferAssetTx().setMembershipUuid(entity.getTransferAssetTx().getMembership().getUuid());
-                    resource.getTransferAssetTx()
-                            .setMembershipMemberNumber(entity.getTransferAssetTx().getTaggedMemberNumber());
-                    resource.getTransferAssetTx().setAdoptionAssetTxUuid(entity.getUuid());
-                    withNonNull(
-                            entity.getTransferAssetTx().getReversalAssetTx(), reversalAssetTx ->
-                                    transferAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
+                    transferAssetTxResource.setMembershipMemberNumber(entity.getTransferAssetTx().getTaggedMemberNumber());
+                    transferAssetTxResource.setAdoptionAssetTxUuid(entity.getUuid());
                 });
     };
 

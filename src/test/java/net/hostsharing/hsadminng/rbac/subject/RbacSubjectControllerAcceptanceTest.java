@@ -263,6 +263,37 @@ class RbacSubjectControllerAcceptanceTest {
     }
 
     @Nested
+    class SubjectSyncReport {
+
+        // verifies Fix for Security-Finding B-01
+        @Test
+        void normalUser_canNotPostSyncReport() {
+            // given the subject-uuid of a normal user, used as the JWT subject just like the syncing API-key does
+            context.define("hsh-alex_superuser");
+            val normalUserUuid = rbacSubjectRepository.findByName("tst-drew_selfregistered").getUuid();
+
+            // a report from an ordinary subject must be rejected instead of poisoning the monitoring
+            // and deleting every reporter's history
+            // @formatter:off
+            RestAssured
+                    .given()
+                        .header("Authorization", bearer(normalUserUuid.toString()))
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "userCount": 1
+                              }
+                              """)
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/rbac/subjects/sync-report")
+                    .then().log().all().assertThat()
+                        .statusCode(403);
+            // @formatter:on
+        }
+    }
+
+    @Nested
     class AuditLogOfMutatingRequests {
 
         @Test

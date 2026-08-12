@@ -14,6 +14,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -77,6 +78,9 @@ class HsOfficeDebitorControllerRestTest {
 
     @MockitoBean
     HsOfficeRelationRealRepository realRelRepo;
+
+    @MockitoBean
+    HsOfficeRelationRbacRepository rbacRelRepo;
 
     @MockitoBean
     HsOfficePersonRealRepository realPersonRepo;

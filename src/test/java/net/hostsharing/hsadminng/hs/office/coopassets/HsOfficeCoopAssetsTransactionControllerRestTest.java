@@ -227,18 +227,13 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                  "reference": "some transfer",
                  "comment": "some transfer to get reverted",
                  "adoptionAssetTx": {
-                   "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-                   "membership.uuid": "22222222-2222-2222-2222-222222222222",
                    "membership.memberNumber": "M-1234500",
                    "transactionType": "ADOPTION",
                    "assetValue": 1024,
                    "valueDate": "2024-11-10",
                    "reference": "related adoption",
                    "comment": "some reversal of a transfer asset tx",
-                   "adoptionAssetTx.uuid": null,
-                   "transferAssetTx.uuid": "99999999-9999-9999-9999-999999999999",
-                   "revertedAssetTx.uuid": null,
-                   "reversalAssetTx.uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                   "transferAssetTx.uuid": "99999999-9999-9999-9999-999999999999"
                 }
             }
             """;
@@ -270,18 +265,13 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                  "reference": "some transfer asset tx ref",
                  "comment": "some transfer asset tx comment",
                  "adoptionAssetTx": {
-                   "uuid": "55555555-5555-5555-5555-555555555555",
-                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
                    "membership.memberNumber": "M-1111100",
                    "transactionType": "TRANSFER",
                    "assetValue": 256,
                    "valueDate": "2024-10-15",
                    "reference": "some adoption asset tx ref",
                    "comment": "some adoption asset tx comment",
-                   "adoptionAssetTx.uuid": null,
-                   "transferAssetTx.uuid": "44444444-4444-4444-4444-444444444444",
-                   "revertedAssetTx.uuid": null,
-                   "reversalAssetTx.uuid": null
+                   "transferAssetTx.uuid": "44444444-4444-4444-4444-444444444444"
                  },
                  "transferAssetTx": null,
                  "revertedAssetTx": null,
@@ -298,18 +288,13 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                  "comment": "some adoption asset tx comment",
                  "adoptionAssetTx": null,
                  "transferAssetTx": {
-                   "uuid": "44444444-4444-4444-4444-444444444444",
-                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
                    "membership.memberNumber": "M-1111100",
                    "transactionType": "TRANSFER",
                    "assetValue": -256,
                    "valueDate": "2024-10-15",
                    "reference": "some transfer asset tx ref",
                    "comment": "some transfer asset tx comment",
-                   "adoptionAssetTx.uuid": "55555555-5555-5555-5555-555555555555",
-                   "transferAssetTx.uuid": null,
-                   "revertedAssetTx.uuid": null,
-                   "reversalAssetTx.uuid": null
+                   "adoptionAssetTx.uuid": "55555555-5555-5555-5555-555555555555"
                  },
                  "revertedAssetTx": null,
                  "reversalAssetTx": null
@@ -378,18 +363,13 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                  "reference": "some transfer",
                  "comment": "some transfer to get reverted",
                  "adoptionAssetTx": {
-                   "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-                   "membership.uuid": "22222222-2222-2222-2222-222222222222",
                    "membership.memberNumber": "M-1234500",
                    "transactionType": "ADOPTION",
                    "assetValue": 1024,
                    "valueDate": "2024-11-10",
                    "reference": "related adoption",
                    "comment": "some reversal of a transfer asset tx",
-                   "adoptionAssetTx.uuid": null,
-                   "transferAssetTx.uuid": "99999999-9999-9999-9999-999999999999",
-                   "revertedAssetTx.uuid": null,
-                   "reversalAssetTx.uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                   "transferAssetTx.uuid": "99999999-9999-9999-9999-999999999999"
                  },
                  "transferAssetTx": null,
                  "revertedAssetTx": null,
@@ -419,18 +399,13 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                  "comment": "some reversal of a transfer asset tx",
                  "adoptionAssetTx": null,
                  "transferAssetTx": {
-                   "uuid": "77777777-7777-7777-7777-777777777777",
-                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
                    "membership.memberNumber": "M-1111100",
                    "transactionType": "DISBURSAL",
                    "assetValue": -128.0,
                    "valueDate": "2024-10-15",
                    "reference": "some disbursal",
                    "comment": "some disbursal to get reverted",
-                   "adoptionAssetTx.uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-                   "transferAssetTx.uuid": null,
-                   "revertedAssetTx.uuid": null,
-                   "reversalAssetTx.uuid": "88888888-8888-8888-8888-888888888888"
+                   "adoptionAssetTx.uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
                  },
                  "revertedAssetTx": null,
                  "reversalAssetTx": {
@@ -780,7 +755,6 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                         "transactionType": "TRANSFER",
                         "assetValue": -64.00,
                         "adoptionAssetTx": {
-                            "membership.uuid": "%{AVAILABLE_MEMBERSHIP_UUID}",
                             "membership.memberNumber": "%{AVAILABLE_TARGET_MEMBER_NUMBER}",
                             "transactionType": "ADOPTION",
                             "assetValue": 64.00,

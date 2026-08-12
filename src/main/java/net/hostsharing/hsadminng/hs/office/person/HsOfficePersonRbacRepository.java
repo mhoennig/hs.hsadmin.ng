@@ -30,16 +30,17 @@ public interface HsOfficePersonRbacRepository extends Repository<HsOfficePersonR
     @Timed("app.office.persons.repo.findPersonByOptionalNameLike.rbac")
     List<HsOfficePersonRbacEntity> findPersonByOptionalNameLike(String name);
 
+    // the _rv views keep the result restricted to what the current subject may see
     @Query(value = """
             WITH RECURSIVE
                 represented_persons AS (
                     SELECT relation.anchorUuid person_uuid
-                    FROM hs_office.relation relation
+                    FROM hs_office.relation_rv relation
                     WHERE relation.type = 'REPRESENTATIVE'
                       AND relation.holderUuid = :personUuid
                 )
             SELECT person.*
-                FROM hs_office.person person
+                FROM hs_office.person_rv person
                 WHERE person.uuid IN (SELECT person_uuid FROM represented_persons)
                         OR person.uuid = :personUuid
             """, nativeQuery = true)

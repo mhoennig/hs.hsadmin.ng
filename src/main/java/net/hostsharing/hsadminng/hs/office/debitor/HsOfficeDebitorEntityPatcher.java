@@ -2,22 +2,26 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacRepository;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
 import jakarta.persistence.EntityManager;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 class HsOfficeDebitorEntityPatcher implements EntityPatcher<HsOfficeDebitorPatchResource> {
 
     private final EntityManager em;
+    private final HsOfficeRelationRbacRepository rbacRelationRepo;
     private final HsOfficeDebitorEntity entity;
 
     HsOfficeDebitorEntityPatcher(
             final EntityManager em,
+            final HsOfficeRelationRbacRepository rbacRelationRepo,
             final HsOfficeDebitorEntity entity) {
         this.em = em;
+        this.rbacRelationRepo = rbacRelationRepo;
         this.entity = entity;
     }
 
@@ -25,7 +29,8 @@ class HsOfficeDebitorEntityPatcher implements EntityPatcher<HsOfficeDebitorPatch
     public void apply(final HsOfficeDebitorPatchResource resource) {
         OptionalFromJson.of(resource.getDebitorRelUuid()).ifPresent(newValue -> {
             verifyNotNull(newValue, "debitorRel");
-            entity.setDebitorRel(em.getReference(HsOfficeRelationRealEntity.class, newValue));
+            entity.setDebitorRel(rbacRelationRepo.findVisibleByUuid(newValue).orElseThrow(
+                    () -> new NoSuchElementException("cannot find Relation by debitorRel.uuid: " + newValue)));
         });
         Optional.ofNullable(resource.getBillable()).ifPresent(entity::setBillable);
         OptionalFromJson.of(resource.getVatId()).ifPresent(entity::setVatId);

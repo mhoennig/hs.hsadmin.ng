@@ -15,6 +15,7 @@ import net.hostsharing.hsadminng.errors.ConflictException;
 import net.hostsharing.hsadminng.errors.Validate;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePerson;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -65,6 +66,9 @@ public class HsAccountController implements AccountApi {
 
     @Autowired
     private HsOfficePersonRealRepository realPersonRepo;
+
+    @Autowired
+    private HsOfficePersonRbacRepository rbacPersonRepo;
 
     @Autowired
     private HsAccountRepository accountRepo;
@@ -118,7 +122,7 @@ public class HsAccountController implements AccountApi {
         } else if (context.hasGlobalAdminRole()) {
             accounts = accountRepo.findAll();
         } else {
-            accounts = accountRepo.findByCurrentSubject();
+            accounts = accountRepo.findAllVisible();
         }
         val result = mapper.mapList(
                 accounts, AccountResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
@@ -271,11 +275,14 @@ public class HsAccountController implements AccountApi {
     }
 
     private List<HsAccountEntity> findByPersonUuid(final UUID personUuid) {
-        if (realPersonRepo.findByUuid(personUuid).isEmpty()) {
+        val accounts = accountRepo.findVisibleByPersonUuid(personUuid);
+        // an invisible and an unknown person have to be rejected alike, otherwise the empty result
+        // would tell the caller that the person exists; a visible person may legitimately have none
+        if (accounts.isEmpty() && rbacPersonRepo.findVisibleByUuid(personUuid).isEmpty()) {
             throw new EntityNotFoundException(
                     messageTranslator.translate("general.{0}-{1}-not-found-or-not-accessible", "personUuid", personUuid));
         }
-        return accountRepo.findVisibleByPersonUuid(personUuid);
+        return accounts;
     }
 
 

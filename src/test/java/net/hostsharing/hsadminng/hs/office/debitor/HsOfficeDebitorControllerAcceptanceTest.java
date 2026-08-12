@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
@@ -46,7 +47,8 @@ import static org.hamcrest.Matchers.startsWith;
 @Transactional
 class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
-    private static final int LOWEST_TEMP_DEBITOR_SUFFIX = 90;
+    // the suffix must stay two-digit, so the temp range has to be wide enough for all tests of this class
+    private static final int LOWEST_TEMP_DEBITOR_SUFFIX = 80;
     private static byte nextDebitorSuffix = LOWEST_TEMP_DEBITOR_SUFFIX;
 
     @LocalServerPort
@@ -720,6 +722,53 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("message", containsString("ERROR: [403] Subject"))
                     .body("message", containsString("is not allowed to update hs_office.debitor uuid "));
 
+        }
+
+        // verifies Fix for Security-Finding A-02
+        @Test
+        void debitorRelationAdmin_canNotPatchDebitorRelToInvisibleForeignRelation() {
+
+            context.define("hsh-alex_superuser");
+            val givenDebitor = givenSomeTemporaryDebitor();
+            val debitorRelAdmin = givenDebitor.getDebitorRel().roleId(ADMIN);
+            val foreignRelationUuid = debitorRepo.findDebitorsByOptionalNameLike("First")
+                    .getFirst().getDebitorRel().getUuid();
+
+            // the foreign relation is invisible to the debitor-relation admin
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .header("Hostsharing-Assumed-Roles", debitorRelAdmin)
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/relations/" + foreignRelationUuid)
+                .then().assertThat()
+                    .statusCode(404); // @formatter:on
+
+            // yet re-anchoring the debitor to it must be refused, not silently wired through em.getReference
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .header("Hostsharing-Assumed-Roles", debitorRelAdmin)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                           {
+                               "debitorRel.uuid": "%s"
+                           }
+                        """.formatted(foreignRelationUuid))
+                    .port(port)
+                .when()
+                    .patch("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
+                .then().log().all().assertThat()
+                    .statusCode(404); // @formatter:on
+
+            // and the debitor still references its original relation
+            jpaAttempt.transacted(() -> {
+                context.define("hsh-alex_superuser");
+                assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent().get()
+                        .extracting(d -> d.getDebitorRel().getUuid())
+                        .isNotEqualTo(foreignRelationUuid);
+            }).assertSuccessful();
         }
     }
 

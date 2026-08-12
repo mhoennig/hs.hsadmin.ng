@@ -42,10 +42,10 @@ components:
                     type: string
                 adoptionAssetTx:
                     # a TRANSFER tx must refer to the related ADOPTION tx
-                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransaction'
+                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsAdoptionTransaction'
                 transferAssetTx:
                     # an ADOPTION tx must refer to the related TRANSFER tx
-                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransaction'
+                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransferTransaction'
                 revertedAssetTx:
                     # a REVERSAL tx must refer to the related tx, which can be of any type but REVERSAL
                     $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransaction'
@@ -96,6 +96,54 @@ components:
                     description: a reverted tx, which can be any but REVERSAL, must refer to the related REVERSAL tx
                     type: string
                     format: uuid
+
+        HsOfficeRelatedForeignCoopAssetsTransaction:
+            description: |
+                Shared shape of an ADOPTION/TRANSFER counterpart on another membership;
+                no UUIDs of that other membership are exposed, not even indirectly.
+            type: object
+            properties:
+                membership.memberNumber:
+                    type: string
+                    pattern: 'M-[0-9]{7}'
+                transactionType:
+                    $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
+                assetValue:
+                    type: number
+                    format: currency
+                valueDate:
+                    type: string
+                    format: date
+                reference:
+                    type: string
+                comment:
+                    type: string
+
+        HsOfficeRelatedCoopAssetsAdoptionTransaction:
+            description: |
+                The ADOPTION counterpart of a TRANSFER. It always belongs to another membership,
+                therefore no UUIDs of that other membership are exposed, not even indirectly.
+            allOf:
+                - $ref: '#/components/schemas/HsOfficeRelatedForeignCoopAssetsTransaction'
+                - type: object
+                  properties:
+                    transferAssetTx.uuid:
+                        description: the own-side TRANSFER tx this foreign ADOPTION tx belongs to
+                        type: string
+                        format: uuid
+
+        HsOfficeRelatedCoopAssetsTransferTransaction:
+            description: |
+                The TRANSFER counterpart of an ADOPTION. It always belongs to another membership,
+                therefore no UUIDs of that other membership are exposed, not even indirectly.
+            allOf:
+                - $ref: '#/components/schemas/HsOfficeRelatedForeignCoopAssetsTransaction'
+                - type: object
+                  properties:
+                    adoptionAssetTx.uuid:
+                        description: the own-side ADOPTION tx this foreign TRANSFER tx belongs to
+                        type: string
+                        format: uuid
 
         HsOfficeCoopAssetsTransactionInsert:
             type: object

@@ -170,6 +170,8 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         resource.getPartner().setPartnerNumber(entity.getPartner().getTaggedPartnerNumber()); // TODO.refa: use partner mapper?
     };
 
+    // this lookup reads the base table, which only stays harmless while INSERT is granted
+    // to GLOBAL:ADMIN alone; widening that grant requires a findVisibleByUuid on the partner side
     final BiConsumer<HsOfficeMembershipInsertResource, HsOfficeMembershipEntity> SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.setPartner(partnerRepo.findByUuid(resource.getPartnerUuid())
                 .orElseThrow(() -> new EntityNotFoundException(

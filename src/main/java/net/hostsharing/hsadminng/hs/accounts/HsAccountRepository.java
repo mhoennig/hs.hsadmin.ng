@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.accounts;
 
 import io.micrometer.core.annotation.Timed;
-import net.hostsharing.hsadminng.rbac.subject.RealSubjectRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -11,6 +10,42 @@ import java.util.UUID;
 
 public interface HsAccountRepository extends Repository<HsAccountEntity, UUID> {
 
+    /**
+     * The single visibility rule of all account lookups, so that every access path exposes exactly
+     * the same accounts.
+     *
+     * <p>Deliberately without an organization branch: an account is no RBAC object, and the
+     * organization-wide *subject* visibility exists for granting roles to colleagues, which needs
+     * the subject but not its account with person-link and global uid/gid. Sharing a subject-name
+     * prefix is thus no reason to expose a foreign person's account.</p>
+     */
+    // deactivated (soft-deleted) subjects are visible to nobody, not even global admins (see PR#260 doc)
+    String VISIBLE_ACCOUNT_CONDITION = """
+            (
+                account.uuid in (select activeSubject.uuid
+                                   from rbac.subject activeSubject
+                                  where activeSubject.deactivated_at is null)
+                and (
+                    rbac.hasGlobalAdminRole()
+                    or account.person_uuid in (
+                        select ownAccount.person_uuid
+                          from hs_accounts.account ownAccount
+                         where ownAccount.uuid = rbac.currentSubjectUuid())
+                    or account.person_uuid in (
+                        -- the base table is safe here, because the filter cannot reach beyond the own person
+                        select representation.anchorUuid
+                          from hs_office.relation representation
+                         where representation.type = 'REPRESENTATIVE'
+                           and representation.holderUuid in (
+                               select ownAccount.person_uuid
+                                 from hs_accounts.account ownAccount
+                                where ownAccount.uuid = rbac.currentSubjectUuid()))
+                    or (    account.uuid in (select visibleSubject.uuid from rbac.subject_rv visibleSubject)
+                        and account.person_uuid in (select visiblePerson.uuid from hs_office.person_rv visiblePerson))
+                )
+            )
+            """;
+
     // hs_accounts.account is not RBAC-restricted, thus only to be called for global admins
     @Timed("app.login.account.repo.findAll")
     List<HsAccountEntity> findAll();
@@ -18,45 +53,28 @@ public interface HsAccountRepository extends Repository<HsAccountEntity, UUID> {
     @Timed("app.login.account.repo.findByUuid")
     Optional<HsAccountEntity> findByUuid(final UUID uuid);
 
-    // account.uuid equals subject.uuid, thus an account is visible exactly as far as its subject is
     @Timed("app.login.account.repo.findVisibleByUuid")
     @Query(nativeQuery = true, value = """
             select account.*
               from hs_accounts.account account
-              join rbac.subject s on s.uuid = account.uuid
              where account.uuid = :uuid
-               and """ + RealSubjectRepository.VISIBLE_SUBJECT_CONDITION)
+               and """ + VISIBLE_ACCOUNT_CONDITION)
     Optional<HsAccountEntity> findVisibleByUuid(final UUID uuid);
 
     @Timed("app.login.account.repo.findVisibleByPersonUuid")
     @Query(nativeQuery = true, value = """
             select account.*
               from hs_accounts.account account
-              join rbac.subject s on s.uuid = account.uuid
              where account.person_uuid = :personUuid
-               and """ + RealSubjectRepository.VISIBLE_SUBJECT_CONDITION)
+               and """ + VISIBLE_ACCOUNT_CONDITION)
     List<HsAccountEntity> findVisibleByPersonUuid(final UUID personUuid);
 
-    @Timed("app.login.account.repo.findByCurrentSubject")
+    @Timed("app.login.account.repo.findAllVisible")
     @Query(nativeQuery = true, value = """
-             WITH RECURSIVE
-                same_person AS (
-                    SELECT own_account.person_uuid
-                    FROM hs_accounts.account own_account
-                    WHERE own_account.uuid = rbac.currentSubjectUuid()
-                ),
-                represented_persons AS (
-                    SELECT relation.anchorUuid person_uuid
-                    FROM hs_office.relation relation
-                    WHERE relation.type = 'REPRESENTATIVE'
-                      AND relation.holderUuid IN (SELECT person_uuid FROM same_person)
-                )
-            SELECT DISTINCT account.*
-            FROM hs_accounts.account account
-            WHERE account.person_uuid IN (SELECT person_uuid FROM same_person)
-               OR account.person_uuid IN (SELECT person_uuid FROM represented_persons)
-            """)
-    List<HsAccountEntity> findByCurrentSubject();
+            select account.*
+              from hs_accounts.account account
+             where """ + VISIBLE_ACCOUNT_CONDITION)
+    List<HsAccountEntity> findAllVisible();
 
     @Timed("app.login.account.repo.save")
     HsAccountEntity save(final HsAccountEntity entity);

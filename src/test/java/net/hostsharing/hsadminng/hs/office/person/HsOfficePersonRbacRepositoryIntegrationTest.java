@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
@@ -265,6 +266,24 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
                 "person(personType=NP, familyName='Fouler', givenName='Ellie')",
                 "person(personType=LP, tradeName='Fourth eG')"
         );
+    }
+
+    // verifies Fix for Security-Finding A-05
+    @Test
+    public void unprivilegedSubject_canNotQueryRepresentativesOfInvisibleForeignPerson() {
+
+        // given a person with representatives, created by and visible only within Hostsharing
+        context("hsh-alex_superuser");
+        val foreignPersonUuid = personRbacRepo.findPersonByOptionalNameLike("Fouler").getFirst().getUuid();
+
+        // when an unprivileged subject, who cannot see that person, queries its representatives
+        context("tst-drew_selfregistered");
+        assertThat(personRbacRepo.findByUuid(foreignPersonUuid)).isEmpty(); // the foreign person is indeed invisible
+        @SuppressWarnings("unchecked")
+        val representedPersons = personRbacRepo.findPersonsRepresentedByPersonWithUuid(foreignPersonUuid);
+
+        // then the ReBAC filtering hides the foreign person and its representatives
+        assertThat(representedPersons).isEmpty();
     }
 
     @Test

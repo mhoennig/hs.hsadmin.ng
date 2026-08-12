@@ -291,16 +291,7 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
                     "test-foreign-subject-of-person", foreignPerson, builder -> {
             });
 
-            RestAssured // @formatter:off
-                    .given()
-                        .header("Authorization", bearer("tst-drew_selfregistered"))
-                        .port(port)
-                    .when()
-                        .get("http://localhost/api/hs/accounts/accounts?personUuid=" + foreignPerson.getUuid())
-                    .then().log().all().assertThat()
-                        .statusCode(200)
-                        .body("size()", equalTo(0));
-            // @formatter:on
+            assertThatAccountFilterRejectsPersonUuid(foreignPerson.getUuid());
         }
 
         // verifies Fix for Security-Finding A-03
@@ -328,6 +319,83 @@ class HsAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
             // then the foreign account still exists
             context.define("hsh-alex_superuser");
             assertThat(accountRepo.findByUuid(foreignAccount.getUuid())).isPresent();
+        }
+
+        // verifies Fix for Security-Finding A-03
+        @Test
+        void normalUser_canNotProbeExistenceOfInvisibleForeignPersonViaAccountFilter() {
+            // given an existing person that is invisible to the attacker
+            val foreignPerson = givenLegalPerson("hsh-alex_superuser");
+
+            // the personUuid filter must not distinguish an invisible-but-existing person from a
+            // non-existing one, so both have to be rejected the very same way
+            assertThatAccountFilterRejectsPersonUuid(foreignPerson.getUuid());
+            assertThatAccountFilterRejectsPersonUuid(UUID.randomUUID());
+        }
+
+        // verifies Fix for Security-Finding A-03
+        @Test
+        void normalUser_canListAccountsFilteredByItsOwnPerson() {
+            // given the own person-uuid, exactly as the unfiltered account-list hands it out
+            val ownPersonUuid = RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/accounts/accounts")
+                    .then().assertThat()
+                        .statusCode(200)
+                    .extract().path("[0].person.uuid").toString(); // @formatter:on
+
+            // filtering by that very person must yield the same account, not a rejection
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/accounts/accounts?personUuid=" + ownPersonUuid)
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .body("size()", equalTo(1))
+                        .body("[0].subject.name", equalTo("tst-drew_selfregistered"));
+            // @formatter:on
+        }
+
+        // verifies Fix for Security-Finding A-03
+        @Test
+        void normalUser_canNotAccessAccountOfForeignPersonInSameOrganization() {
+            // given an account of a foreign person, but of a subject in the attacker's own organization
+            val foreignPerson = givenLegalPerson("hsh-alex_superuser");
+            val foreignAccount = givenNewAccount("hsh-alex_superuser",
+                    "tst-foreign_sameorganization", foreignPerson, builder -> {
+            });
+
+            // sharing an organization is no reason to see a foreign person's account
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/accounts/accounts/" + foreignAccount.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(404);
+            // @formatter:on
+
+            assertThatAccountFilterRejectsPersonUuid(foreignPerson.getUuid());
+        }
+
+        private void assertThatAccountFilterRejectsPersonUuid(final UUID personUuid) {
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("tst-drew_selfregistered"))
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/accounts/accounts?personUuid=" + personUuid)
+                    .then().log().all().assertThat()
+                        .statusCode(400)
+                        .body("message", containsString(
+                                "personUuid \"%s\" not found or not accessible".formatted(personUuid)));
+            // @formatter:on
         }
     }
 

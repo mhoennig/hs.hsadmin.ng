@@ -11,6 +11,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebito
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import org.apache.commons.lang3.Validate;
@@ -49,6 +50,9 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Autowired
     private HsOfficeRelationRealRepository realRelRepo;
+
+    @Autowired
+    private HsOfficeRelationRbacRepository rbacRelRepo;
 
     @Autowired
     private HsOfficePersonRealRepository realPersonRepo;
@@ -174,7 +178,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
         final var current = debitorRepo.findByUuid(debitorUuid).orElseThrow().reload(em);
 
-        new HsOfficeDebitorEntityPatcher(em, current).apply(body);
+        new HsOfficeDebitorEntityPatcher(em, rbacRelRepo, current).apply(body);
 
         final var saved = debitorRepo.save(current);
         Hibernate.initialize(saved);
@@ -182,6 +186,8 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         return ResponseEntity.ok(mapped);
     }
 
+    // these lookups read the base tables, which only stays harmless while INSERT is granted
+    // to GLOBAL:ADMIN alone; widening that grant requires findVisibleByUuid here, as in patchDebitor
     final BiConsumer<HsOfficeDebitorInsertResource, HsOfficeDebitorEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         if (resource.getDebitorRel() != null) {
             final var debitorRel = realRelRepo.save(HsOfficeRelationRealEntity.builder()

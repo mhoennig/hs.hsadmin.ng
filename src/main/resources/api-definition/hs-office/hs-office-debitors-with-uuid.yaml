@@ -54,6 +54,8 @@ patch:
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: 'error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: 'error-responses.yaml#/components/responses/NotFound'
 
 delete:
     tags:

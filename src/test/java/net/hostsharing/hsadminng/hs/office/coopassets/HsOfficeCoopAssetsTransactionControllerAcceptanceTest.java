@@ -2,7 +2,9 @@ package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -23,13 +25,19 @@ import jakarta.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.ADOPTION;
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DEPOSIT;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.REVERSAL;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.TRANSFER;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 @Tag("officeIntegrationTest")
@@ -326,8 +334,121 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                     {
                          "transactionType": "DEPOSIT",
                          "assetValue": 320
-                     }
+                    }
                     """)); // @formatter:on
+        }
+
+        // verifies Fix for Security-Finding C-09
+        @Test
+        void partnerPersonUser_canSeeForeignAdoptionTransactionWithoutItsInternalUuids() {
+            val ownTransfer = jpaAttempt.transacted(() -> {
+                context.define("hsh-alex_superuser");
+                val ownMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
+                val foreignMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
+                val foreignAdoption = saveTx(foreignMembership, ADOPTION, "42.00", "temp foreign adoption",
+                        b -> b.comment("visible counterpart details"));
+                return saveTx(ownMembership, TRANSFER, "-42.00", "temp own transfer",
+                        b -> b.adoptionAssetTx(foreignAdoption));
+            }).assertSuccessful().returnedValue();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("tst-person_firstgmbh"))
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopassetstransactions/" + ownTransfer.getUuid())
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("adoptionAssetTx.transactionType", is("ADOPTION"))
+                    .body("adoptionAssetTx.assetValue", is(42.0f))
+                    .body("adoptionAssetTx.valueDate", is("2024-01-01"))
+                    .body("adoptionAssetTx.reference", is("temp foreign adoption"))
+                    .body("adoptionAssetTx.comment", is("visible counterpart details"))
+                    .body("adoptionAssetTx.uuid", nullValue())
+                    .body("adoptionAssetTx.'membership.uuid'", nullValue()); // @formatter:on
+        }
+
+        // verifies Fix for Security-Finding C-09
+        @Test
+        void partnerPersonUser_canNotSeeUuidOfReversalOfForeignAdoptionTransaction() {
+            val ownTransfer = jpaAttempt.transacted(() -> {
+                context.define("hsh-alex_superuser");
+                val ownMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
+                val foreignMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
+                val foreignAdoption = saveTx(foreignMembership, ADOPTION, "42.00", "temp foreign adoption");
+                saveTx(foreignMembership, REVERSAL, "-42.00", "temp foreign adoption reversal",
+                        b -> b.valueDate(LocalDate.of(2024, 1, 2)).revertedAssetTx(foreignAdoption));
+                return saveTx(ownMembership, TRANSFER, "-42.00", "temp own transfer",
+                        b -> b.adoptionAssetTx(foreignAdoption));
+            }).assertSuccessful().returnedValue();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("tst-person_firstgmbh"))
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopassetstransactions/" + ownTransfer.getUuid())
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("adoptionAssetTx.transactionType", is("ADOPTION"))
+                    .body("adoptionAssetTx.'reversalAssetTx.uuid'", nullValue()); // @formatter:on
+        }
+
+        // verifies Fix for Security-Finding C-09
+        @Test
+        void partnerPersonUser_canSeeForeignTransferTransactionWithoutItsInternalUuids() {
+            val ownAdoption = jpaAttempt.transacted(() -> {
+                context.define("hsh-alex_superuser");
+                val ownMembership = membershipRepo.findMembershipByMemberNumber(1000101).orElseThrow();
+                val foreignMembership = membershipRepo.findMembershipByMemberNumber(1000202).orElseThrow();
+                val adoption = saveTx(ownMembership, ADOPTION, "42.00", "temp own adoption");
+                saveTx(foreignMembership, TRANSFER, "-42.00", "temp foreign transfer",
+                        b -> b.adoptionAssetTx(adoption).comment("visible counterpart details"));
+                return adoption;
+            }).assertSuccessful().returnedValue();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("tst-person_firstgmbh"))
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopassetstransactions/" + ownAdoption.getUuid())
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("transferAssetTx.transactionType", is("TRANSFER"))
+                    .body("transferAssetTx.'membership.memberNumber'", is("M-1000202"))
+                    .body("transferAssetTx.assetValue", is(-42.0f))
+                    .body("transferAssetTx.reference", is("temp foreign transfer"))
+                    .body("transferAssetTx.comment", is("visible counterpart details"))
+                    .body("transferAssetTx.uuid", nullValue())
+                    .body("transferAssetTx.'membership.uuid'", nullValue()); // @formatter:on
+        }
+
+        private HsOfficeCoopAssetsTransactionEntity saveTx(
+                final HsOfficeMembershipEntity membership,
+                final HsOfficeCoopAssetsTransactionType type,
+                final String assetValue,
+                final String reference) {
+            return saveTx(membership, type, assetValue, reference, UnaryOperator.identity());
+        }
+
+        private HsOfficeCoopAssetsTransactionEntity saveTx(
+                final HsOfficeMembershipEntity membership,
+                final HsOfficeCoopAssetsTransactionType type,
+                final String assetValue,
+                final String reference,
+                final UnaryOperator<HsOfficeCoopAssetsTransactionEntity.HsOfficeCoopAssetsTransactionEntityBuilder> customize) {
+            return coopAssetsTransactionRepo.save(customize.apply(
+                            HsOfficeCoopAssetsTransactionEntity.builder()
+                                    .membership(membership)
+                                    .transactionType(type)
+                                    .valueDate(LocalDate.of(2024, 1, 1))
+                                    .assetValue(new BigDecimal(assetValue))
+                                    .reference(reference))
+                    .build());
         }
     }
 
@@ -338,6 +459,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
             context.define("hsh-alex_superuser", null);
             // HsOfficeCoopAssetsTransactionEntity respectively hs_office.coopassettx_rv
             // cannot be deleted at all, but the underlying table record can be deleted.
+            // the C-09 tests only link temp rows among each other, thus this delete cannot orphan seed data
             em.createNativeQuery("delete from hs_office.coopassettx where reference like 'temp %'")
                     .executeUpdate();
         }).assertSuccessful();

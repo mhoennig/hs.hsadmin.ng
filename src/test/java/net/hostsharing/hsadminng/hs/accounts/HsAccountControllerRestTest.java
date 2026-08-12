@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
@@ -69,6 +70,9 @@ class HsAccountControllerRestTest {
 
     @MockitoBean
     HsOfficePersonRealRepository realPersonRepo;
+
+    @MockitoBean
+    HsOfficePersonRbacRepository rbacPersonRepo;
 
     @MockitoBean
     HsAccountRepository accountRepo;
@@ -143,7 +147,7 @@ class HsAccountControllerRestTest {
         val givenAccount = givenAccount(UUID.randomUUID(), "abc-current", givenPerson);
         val givenSamePersonAccount = givenAccount(UUID.randomUUID(), "abc-other", givenPerson);
         given(contextMock.hasGlobalAdminRole()).willReturn(false);
-        given(accountRepo.findByCurrentSubject()).willReturn(java.util.List.of(givenAccount, givenSamePersonAccount));
+        given(accountRepo.findAllVisible()).willReturn(java.util.List.of(givenAccount, givenSamePersonAccount));
 
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders
@@ -180,7 +184,7 @@ class HsAccountControllerRestTest {
 
         // then
         verify(contextMock).assumeRoles(null);
-        verify(accountRepo, never()).findByCurrentSubject();
+        verify(accountRepo, never()).findAllVisible();
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].subject.name").value("abc-user"))
@@ -193,7 +197,7 @@ class HsAccountControllerRestTest {
         val givenPerson = givenNaturalPerson("Test", "Person");
         val givenAccountAbc = givenAccount(UUID.randomUUID(), "abc-person", givenPerson);
         val givenAccountXyz = givenAccount(UUID.randomUUID(), "xyz-person", givenPerson);
-        given(realPersonRepo.findByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
+        given(rbacPersonRepo.findVisibleByUuid(givenPerson.getUuid())).willReturn(Optional.of(givenPerson));
         given(accountRepo.findVisibleByPersonUuid(givenPerson.getUuid())).willReturn(java.util.List.of(givenAccountAbc, givenAccountXyz));
 
         // when
@@ -219,7 +223,7 @@ class HsAccountControllerRestTest {
     void getListOfAccountsForInaccessiblePersonUuidReturnsErrorMessage() throws Exception {
         // given
         val givenPersonUuid = UUID.randomUUID();
-        given(realPersonRepo.findByUuid(givenPersonUuid)).willReturn(Optional.empty());
+        given(rbacPersonRepo.findVisibleByUuid(givenPersonUuid)).willReturn(Optional.empty());
 
         // when
         val response = mockMvc.perform(MockMvcRequestBuilders

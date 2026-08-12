@@ -15,6 +15,11 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
     @Timed("app.office.relations.repo.findByUuid.rbac")
     Optional<HsOfficeRelationRbacEntity> findByUuid(UUID id);
 
+    // write-path lookup via the restricted view, returning the real entity a reference field holds
+    @Query(value = "select r.* from hs_office.relation_rv r where r.uuid = :uuid", nativeQuery = true)
+    @Timed("app.office.relations.repo.findVisibleByUuid.rbac")
+    Optional<HsOfficeRelationRealEntity> findVisibleByUuid(UUID uuid);
+
     @Query(value = """
             SELECT p.* FROM hs_office.relation_rv AS p
                 WHERE p.anchorUuid = :personUuid OR p.holderUuid = :personUuid

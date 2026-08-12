@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacRepository;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -11,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import jakarta.persistence.EntityManager;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -52,10 +54,13 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDeb
     @Mock
     private EntityManager em;
 
+    @Mock
+    private HsOfficeRelationRbacRepository rbacRelationRepo;
+
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsOfficeRelationRealEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeRelationRealEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(rbacRelationRepo.findVisibleByUuid(any())).thenAnswer(invocation ->
+                Optional.of(HsOfficeRelationRealEntity.builder().uuid(invocation.getArgument(0)).build()));
         lenient().when(em.getReference(eq(HsOfficeBankAccountEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeBankAccountEntity.builder().uuid(invocation.getArgument(1)).build());
     }
@@ -82,7 +87,7 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDeb
 
     @Override
     protected HsOfficeDebitorEntityPatcher createPatcher(final HsOfficeDebitorEntity debitor) {
-        return new HsOfficeDebitorEntityPatcher(em, debitor);
+        return new HsOfficeDebitorEntityPatcher(em, rbacRelationRepo, debitor);
     }
 
     @Override

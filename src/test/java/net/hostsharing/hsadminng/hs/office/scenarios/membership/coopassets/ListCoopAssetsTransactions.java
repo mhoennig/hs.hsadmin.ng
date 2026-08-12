@@ -14,8 +14,9 @@ public class ListCoopAssetsTransactions extends UseCase<ListCoopAssetsTransactio
 
         introduction("""
                 Whoever may see a coop-assets-transaction may also see the transactions it links to.
-                Thus the listing resolves the reversal/transfer/adoption links of each visible transaction,
-                even if a linked counterpart belongs to another membership.
+                Thus the listing resolves the reversal/transfer/adoption links of each visible transaction.
+                A linked counterpart belonging to another membership shows its booking data
+                and member-number, but none of the other membership's UUIDs.
                 """);
     }
 
@@ -45,6 +46,8 @@ public class ListCoopAssetsTransactions extends UseCase<ListCoopAssetsTransactio
         path("$[0].adoptionAssetTx.assetValue").contains("%{transferredValue}").accept(response);
         path("$[0].adoptionAssetTx.['membership.memberNumber']").contains("%{adoptingMemberNumber}").accept(response);
         response.extractValue("$[0].uuid", "transferAssetTxUuid");
+        // the foreign ADOPTION counterpart links back via the own-side TRANSFER tx, not via its own UUID
+        path("$[0].adoptionAssetTx.['transferAssetTx.uuid']").contains("%{transferAssetTxUuid}").accept(response);
 
         obtain("#{Find }adoptingMembershipUuid", () ->
                 httpGet(asGlobalAgent(), "/api/hs/office/memberships/%{adoptingMemberNumber}")
@@ -52,7 +55,7 @@ public class ListCoopAssetsTransactions extends UseCase<ListCoopAssetsTransactio
                 membershipResponse -> membershipResponse.getFromBody("uuid")
         );
 
-        verify("Verify the Adopting Member's Listing Links Back to the TRANSFER-Transaction",
+        verify("Verify the Adopting Member's Listing Shows the TRANSFER-Counterpart Without Its Internal UUIDs",
                 () -> httpGet(asGlobalAgent(),
                         "/api/hs/office/coopassetstransactions?membershipUuid=%{adoptingMembershipUuid}"
                                 + "&fromValueDate=%{fromValueDate}&toValueDate=%{toValueDate}")
@@ -60,7 +63,8 @@ public class ListCoopAssetsTransactions extends UseCase<ListCoopAssetsTransactio
                         .expectArrayElements(1),
                 path("$[0].transactionType").contains("ADOPTION"),
                 path("$[0].assetValue").contains("%{transferredValue}"),
-                path("$[0].transferAssetTx.uuid").contains("%{transferAssetTxUuid}"),
+                path("$[0].transferAssetTx.transactionType").contains("TRANSFER"),
+                path("$[0].transferAssetTx.assetValue").contains("-%{transferredValue}"),
                 path("$[0].transferAssetTx.['membership.memberNumber']").contains("%{memberNumber}")
         );
     }

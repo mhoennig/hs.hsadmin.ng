@@ -13,7 +13,8 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
     /**
      * The complete organization-(realm-)based subject-visibility policy, shared by the queries below:
      * <ul>
-     *     <li>deactivated (soft-deleted) subjects are visible to nobody, not even global admins,</li>
+     *     <li>deactivated (soft-deleted) subjects are visible to nobody here, not even global admins
+     *         (the accounts module deliberately still lists them for global admins via its unrestricted findAll),</li>
      *     <li>a global admin (directly or via an assumed global admin role) sees all other subjects,</li>
      *     <li>assuming any other role drops all subject-derived visibility,</li>
      *     <li>otherwise all subjects of the current subject's own organization are visible,

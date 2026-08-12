@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.REPRESENTATIVE;
 import static net.hostsharing.hsadminng.rbac.subject.SubjectType.GROUP;
@@ -94,7 +95,7 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     }
 
     @Test
-    void representativeShouldFindOwnAndRepresentedAccountByCurrentSubject() {
+    void representativeShouldFindOwnAndRepresentedAccountAmongTheVisibleOnes() {
         // given
         final var firstGmbHPerson = givenPerson("First GmbH");
         givenRelation(REPRESENTATIVE)
@@ -111,7 +112,7 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
         final var foundAccount = attempt(
                 em, () -> {
                     context(USER_DREW_SUBJECT_NAME);
-                    return accountRepository.findByCurrentSubject();
+                    return accountRepository.findAllVisible();
                 })
                 .assertNotNull().returnedValue();
 
@@ -125,20 +126,93 @@ class HsAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
     }
 
     @Test
-    void globalAdminShouldFindOnlyOwnAccountByCurrentSubject() {
+    void globalAdminShouldFindAllAccounts() {
 
         // when
         final var foundAccount = attempt(
                 em, () -> {
                     context(SUPERUSER_FRAN_SUBJECT_NAME);
-                    return accountRepository.findByCurrentSubject();
+                    return accountRepository.findAllVisible();
                 })
                 .assertNotNull().returnedValue();
 
         // then
-        assertThat(foundAccount).hasSize(1)
+        assertThat(foundAccount)
                 .map(e -> e.getSubject().getName())
-                .containsExactlyInAnyOrder(SUPERUSER_FRAN_SUBJECT_NAME);
+                .contains(SUPERUSER_FRAN_SUBJECT_NAME, SUPERUSER_ALEX_SUBJECT_NAME, USER_DREW_SUBJECT_NAME);
+    }
+
+    @Test
+    void normalUserShouldNotFindAccountOfForeignPersonInSameOrganization() {
+        // given an account of a foreign person, held by a subject of the same organization
+        val foreignPerson = givenPerson("Fouler");
+        givenAccount()
+                .forSubject("tst-foreign_repotest")
+                .forPerson(foreignPerson)
+                .inDatabase();
+
+        // when
+        val foundAccounts = attempt(
+                em, () -> {
+                    context(USER_DREW_SUBJECT_NAME);
+                    return accountRepository.findAllVisible();
+                })
+                .assertNotNull().returnedValue();
+
+        // then sharing an organization is no reason to see a foreign person's account
+        assertThat(foundAccounts)
+                .map(e -> e.getSubject().getName())
+                .doesNotContain("tst-foreign_repotest");
+    }
+
+    // verifies the deactivated-account finding (PR#260 doc, Offene Punkte): a deactivated subject stays invisible to nobody
+    @Test
+    void representativeCanNotSeeDeactivatedAccountOfRepresentedPerson() {
+        // given an active representative (Drew) of First GmbH
+        val firstGmbHPerson = givenPerson("First GmbH");
+        givenRelation(REPRESENTATIVE)
+                .withAnchorPersonLike(firstGmbHPerson)
+                .withHolder(drewPerson)
+                .withContact("some test contact")
+                .inDatabase();
+        // and an offboarded (deactivated) account of that same person
+        val offboardedAccount = givenAccount()
+                .forSubject("first-gmbh_offboarded")
+                .forPerson(firstGmbHPerson)
+                .inDatabase();
+        deactivateSubject(offboardedAccount.getUuid());
+
+        // when the representative queries the represented person's accounts
+        val byPerson = attempt(
+                em, () -> {
+                    context(USER_DREW_SUBJECT_NAME);
+                    return accountRepository.findVisibleByPersonUuid(firstGmbHPerson.getUuid());
+                })
+                .assertNotNull().returnedValue();
+        val byUuid = attempt(
+                em, () -> {
+                    context(USER_DREW_SUBJECT_NAME);
+                    return accountRepository.findVisibleByUuid(offboardedAccount.getUuid());
+                })
+                .assertNotNull().returnedValue();
+
+        // then the deactivated account stays invisible on every access path
+        assertThat(byPerson)
+                .as("the person-filter must not list a deactivated subject's account")
+                .map(e -> e.getSubject().getName())
+                .doesNotContain("first-gmbh_offboarded");
+        assertThat(byUuid)
+                .as("a deactivated subject's account must not be retrievable by uuid")
+                .isEmpty();
+    }
+
+    private void deactivateSubject(final UUID subjectUuid) {
+        val subject = em.find(RealSubjectEntity.class, subjectUuid);
+        context(SUPERUSER_ALEX_SUBJECT_NAME); // global admin offboards the subject
+        rbacSubjectRepo.upsert(
+                subject.getUuid(), subject.getName(), subject.getOrganization(),
+                subject.getType().name(), true);
+        em.flush();
     }
 
     @Test
