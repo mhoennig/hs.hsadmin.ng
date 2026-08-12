@@ -76,6 +76,43 @@ create index if not exists tx_context_seq_tx_id_idx
 
 
 -- ============================================================================
+--changeset michael.hoennig:audit-TX-CONTEXT-TABLE-SEQUENCE-SEQUENTIAL-TX-ID endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    The trigger above already handed out numbers, thus the sequence which replaces it in the next
+    changeset has to continue above them. Do not raise the cache of this sequence: a cache gives
+    every pooled connection its own block of numbers, which scrambles the order across connections.
+ */
+
+create sequence if not exists base.tx_context_seq_tx_id_seq as bigint;
+
+select setval('base.tx_context_seq_tx_id_seq',
+              coalesce((select max(seqTxId) from base.tx_context), 0) + 1, false);
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:audit-TX-CONTEXT-TABLE-DEFAULT-SEQUENTIAL-TX-ID endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    The trigger above took an exclusive table lock, which serialized all writing transactions and
+    deadlocked against the ROW EXCLUSIVE lock of the very insert that fired it. A sequence needs no
+    lock at all; in exchange seqTxId follows the order in which the transactions write instead of
+    the order in which they commit, and it may have gaps. A consumer must therefore read only
+    transactions which can no longer be superseded, see doc/PR/2026-08-07-PR#275-*.md.
+ */
+
+alter table base.tx_context
+    alter column seqTxId set default nextval('base.tx_context_seq_tx_id_seq');
+
+drop trigger if exists set_commit_order_trigger on base.tx_context;
+
+-- the changeset above created the function unqualified, which put it into public and not into base
+drop function if exists public.set_next_sequential_txid();
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:audit-TX-JOURNAL-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
