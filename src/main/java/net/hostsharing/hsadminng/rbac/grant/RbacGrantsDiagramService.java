@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.grant;
 
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -82,26 +83,28 @@ public class RbacGrantsDiagramService {
         return toMermaidFlowchart(graph, includes);
     }
 
-    @SuppressWarnings("PMD.CognitiveComplexity") // TODO.refa: cognitive complexity 17, extract the include filters
     private void traverseGrantsTo(final Set<RawRbacGrantEntity> graph, final UUID refUuid, final EnumSet<Include> includes) {
-        final var grants = rawGrantRepo.findByAscendingUuid(refUuid);
+        val grants = rawGrantRepo.findByAscendingUuid(refUuid);
         grants.forEach(g -> {
-            if (!includes.contains(PERMISSIONS) && g.getDescendantIdName().startsWith("perm:")) {
+            if (!isToBeIncluded(g, includes)) {
                 return;
-            }
-            if (!g.getDescendantIdName().startsWith("role:rbac.global")) {
-                if (!includes.contains(TEST_ENTITIES) && g.getDescendantIdName().contains(":rbactest.")) {
-                    return;
-                }
-                if (!includes.contains(NON_TEST_ENTITIES) && !g.getDescendantIdName().contains(":rbactest.")) {
-                    return;
-                }
             }
             graph.add(g);
             if (includes.contains(NOT_ASSUMED) || g.isAssumed()) {
                 traverseGrantsTo(graph, g.getDescendantUuid(), includes);
             }
         });
+    }
+
+    private static boolean isToBeIncluded(final RawRbacGrantEntity grant, final EnumSet<Include> includes) {
+        val descendantIdName = grant.getDescendantIdName();
+        if (!includes.contains(PERMISSIONS) && descendantIdName.startsWith("perm:")) {
+            return false;
+        }
+        if (descendantIdName.startsWith("role:rbac.global")) {
+            return true;
+        }
+        return includes.contains(descendantIdName.contains(":rbactest.") ? TEST_ENTITIES : NON_TEST_ENTITIES);
     }
 
     public String allGrantsFrom(final UUID targetObject, final String op, final EnumSet<Include> includes) {

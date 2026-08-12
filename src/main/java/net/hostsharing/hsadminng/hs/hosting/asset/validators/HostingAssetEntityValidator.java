@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
+import lombok.val;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
@@ -180,43 +181,58 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
             this.referencedEntityTypeGetter = e -> null;
         }
 
-        @SuppressWarnings("PMD.CognitiveComplexity") // TODO.refa: cognitive complexity 21, split per policy branch
         List<String> validate(final HsHostingAsset assetEntity, final String referenceFieldName) {
 
-            final var referencedEntity = referencedEntityGetter.apply(assetEntity);
-            final var referencedEntityType = referencedEntity != null ? referencedEntityTypeGetter.apply(referencedEntity) : null;
+            val referencedEntity = referencedEntityGetter.apply(assetEntity);
+            val referencedEntityType = referencedEntity != null ? referencedEntityTypeGetter.apply(referencedEntity) : null;
 
-            switch (policy) {
-            case REQUIRED:
-                if (!referencedEntityTypes.contains(referencedEntityType)) {
-                    return List.of(referencedEntityType == null
-                            ? referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is null"
-                            : referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is of type " + referencedEntityType);
-                }
-                break;
-            case TERMINATORY:
-                if (assetEntity.getParentAsset() != null && assetEntity.getBookingItem() != null) {
-                    return List.of(referenceFieldName + "' or parentItem must be null but is of type " + referencedEntityType);
-                }
-                if (assetEntity.getParentAsset() == null && !referencedEntityTypes.contains(referencedEntityType)) {
-                    return List.of(referencedEntityType == null
-                            ? referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is null"
-                            : referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is of type " + referencedEntityType);
-                }
-                break;
-            case OPTIONAL:
-                if (referencedEntityType != null && !referencedEntityTypes.contains(referencedEntityType)) {
-                    return List.of(referenceFieldName + "' must be null or of type " + toDisplay(referencedEntityTypes) + " but is of type "
-                            + referencedEntityType);
-                }
-                break;
-            case FORBIDDEN:
-                if (referencedEntityType != null) {
-                    return List.of(referenceFieldName + "' must be null but is of type " + referencedEntityType);
-                }
-                break;
+            return switch (policy) {
+                case REQUIRED -> validateRequired(referenceFieldName, referencedEntityType);
+                case TERMINATORY -> validateTerminatory(assetEntity, referenceFieldName, referencedEntityType);
+                case OPTIONAL -> validateOptional(referenceFieldName, referencedEntityType);
+                case FORBIDDEN -> validateForbidden(referenceFieldName, referencedEntityType);
+            };
+        }
+
+        private List<String> validateRequired(final String referenceFieldName, final T referencedEntityType) {
+            if (!referencedEntityTypes.contains(referencedEntityType)) {
+                return List.of(mustBeOfTypeMessage(referenceFieldName, referencedEntityType));
             }
             return emptyList();
+        }
+
+        private List<String> validateTerminatory(
+                final HsHostingAsset assetEntity,
+                final String referenceFieldName,
+                final T referencedEntityType) {
+            if (assetEntity.getParentAsset() != null && assetEntity.getBookingItem() != null) {
+                return List.of(referenceFieldName + "' or parentItem must be null but is of type " + referencedEntityType);
+            }
+            if (assetEntity.getParentAsset() == null && !referencedEntityTypes.contains(referencedEntityType)) {
+                return List.of(mustBeOfTypeMessage(referenceFieldName, referencedEntityType));
+            }
+            return emptyList();
+        }
+
+        private List<String> validateOptional(final String referenceFieldName, final T referencedEntityType) {
+            if (referencedEntityType != null && !referencedEntityTypes.contains(referencedEntityType)) {
+                return List.of(referenceFieldName + "' must be null or of type " + toDisplay(referencedEntityTypes) + " but is of type "
+                        + referencedEntityType);
+            }
+            return emptyList();
+        }
+
+        private List<String> validateForbidden(final String referenceFieldName, final T referencedEntityType) {
+            if (referencedEntityType != null) {
+                return List.of(referenceFieldName + "' must be null but is of type " + referencedEntityType);
+            }
+            return emptyList();
+        }
+
+        private String mustBeOfTypeMessage(final String referenceFieldName, final T referencedEntityType) {
+            return referencedEntityType == null
+                    ? referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is null"
+                    : referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is of type " + referencedEntityType;
         }
 
         private String toDisplay(final Set<T> referencedEntityTypes) {

@@ -14,8 +14,8 @@
 
     <rule ref="category/java/design.xml/CyclomaticComplexity">
         <properties>
-            <!-- HostingAssetEntityValidator.validate = 16 -->
-            <property name="methodReportLevel" value="17"/>
+            <!-- HsDomainDnsSetupHostingAssetValidator.toZonefileString = 12 -->
+            <property name="methodReportLevel" value="13"/>
             <!-- no class in src/main reaches the PMD default, so it stays -->
             <property name="classReportLevel" value="80"/>
         </properties>
@@ -23,9 +23,9 @@
 
     <rule ref="category/java/design.xml/CognitiveComplexity">
         <properties>
-            <!-- set below the 13..14 gap in the distribution, which is why it costs no more
-                 exceptions than the PMD default of 15 would; grep TODO.refa at the
-                 @SuppressWarnings("PMD.CognitiveComplexity") to find them -->
+            <!-- set below the 13..14 gap in the distribution; the initial exceptions,
+                 marked with @SuppressWarnings("PMD.CognitiveComplexity"), have been
+                 refactored, so any new one needs its own justification -->
             <property name="reportLevel" value="13"/>
         </properties>
     </rule>

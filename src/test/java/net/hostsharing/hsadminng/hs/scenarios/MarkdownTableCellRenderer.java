@@ -26,39 +26,39 @@ public class MarkdownTableCellRenderer {
         return out.toString();
     }
 
-    @SuppressWarnings("PMD.CognitiveComplexity") // TODO.refa: cognitive complexity 15, split off the indent scanning
     private String escapeWithIndent(final String line) {
-        int i = 0;
-        while (i < line.length()) {
-            final char c = line.charAt(i);
-            if (c == ' ' || c == '\t') {
-                i++;
-            } else {
-                break;
-            }
-        }
-
+        val indentEnd = indentEnd(line);
         val out = new StringBuilder(line.length() + 16);
-        for (int j = 0; j < i; j++) {
+        appendIndentAsNbsp(out, line, indentEnd);
+        appendEscaped(out, line, indentEnd);
+        return out.toString();
+    }
+
+    private int indentEnd(final String line) {
+        int i = 0;
+        while (i < line.length() && (line.charAt(i) == ' ' || line.charAt(i) == '\t')) {
+            i++;
+        }
+        return i;
+    }
+
+    private void appendIndentAsNbsp(final StringBuilder out, final String line, final int indentEnd) {
+        for (int j = 0; j < indentEnd; j++) {
             out.append(line.charAt(j) == '\t' ? "&nbsp;&nbsp;" : "&nbsp;");
         }
+    }
 
-        for (int j = i; j < line.length(); j++) {
+    private void appendEscaped(final StringBuilder out, final String line, final int fromIndex) {
+        for (int j = fromIndex; j < line.length(); j++) {
             final char c = line.charAt(j);
-            if (c == '&') {
-                out.append("&amp;");
-            } else if (c == '<') {
-                out.append("&lt;");
-            } else if (c == '>') {
-                out.append("&gt;");
-            } else if (c == '|') {
-                out.append("&#124;");
-            } else {
-                out.append(c);
+            switch (c) {
+                case '&' -> out.append("&amp;");
+                case '<' -> out.append("&lt;");
+                case '>' -> out.append("&gt;");
+                case '|' -> out.append("&#124;");
+                default -> out.append(c);
             }
         }
-
-        return out.toString();
     }
 
 }

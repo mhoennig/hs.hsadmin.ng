@@ -24,8 +24,8 @@
 
     <rule ref="category/java/design.xml/CognitiveComplexity">
         <properties>
-            <!-- same strict value as in complexity.xml; grep TODO.refa at the
-                 @SuppressWarnings("PMD.CognitiveComplexity") to find the exceptions -->
+            <!-- same strict value as in complexity.xml; all initial exceptions
+                 have been refactored, so any new one needs its own justification -->
             <property name="reportLevel" value="13"/>
         </properties>
     </rule>
