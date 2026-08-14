@@ -9,9 +9,12 @@
 # get the same value, starting at <starting-uid-gid> for the first line and increasing
 # by one per line (line N gets <starting-uid-gid> + N - 1).
 #
-# Rows with an invalid subjectUuid/personUuid (e.g. not resolved yet) are reported and
-# skipped; a header line gets skipped that way as well. Subjects which already have an
-# account (HTTP 409) are reported and skipped, thus the script can be re-run for repeated
+# A subject which the Keycloak-sync already created gets linked to its new account,
+# only where no such subject exists (e.g. an installation without Keycloak) it is
+# created along with the account. Rows with an invalid subjectUuid/personUuid or an
+# existing subject whose name does not match the CSV are reported and skipped; a
+# header line gets skipped that way as well. Subjects which already have an account
+# (HTTP 409) are reported and skipped, thus the script can be re-run for repeated
 # syncs. Since uid/gid follow the line position, keep the line order stable between runs.
 #
 # Authenticates via an API-key: establish it with `APIKEY <name>` (which exports
@@ -34,7 +37,12 @@ if ! [[ "$startUidGid" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
+# explicitly exported values (e.g. via APIKEY <name> or an export in the calling shell)
+# win over the personal .environment defaults, which `source .aliases` re-applies
+externalApiBaseUrl=${HSADMINNG_API_BASE_URL:-} externalApiKey=${HSADMINNG_API_KEY:-}
 source .aliases
+[ -n "$externalApiBaseUrl" ] && export HSADMINNG_API_BASE_URL=$externalApiBaseUrl
+[ -n "$externalApiKey" ] && export HSADMINNG_API_KEY=$externalApiKey
 require HSADMINNG_API_KEY
 
 export HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-'https://backend.ng.hostsharing.net'}
@@ -52,6 +60,66 @@ function skipInvalid() {
     ((++invalid))
 }
 
+# Sets subjectExists=yes|no for $subjectUuid; an existing subject must bear the CSV
+# subjectName, otherwise the account would get linked to a subject the row does not mean.
+# Reports the row and returns non-zero on a name mismatch or an unexpected error.
+function fetchSubject() {
+    local response httpStatus subjectResponse existingName
+    # a missing subject answers 404 with an empty body (and old curl suppresses error
+    # bodies anyway), thus the status is taken from a curl write-out below the body
+    response=$(HTTP GET "/api/rbac/subjects/$subjectUuid" -w $'\n%{http_code}') || true
+    httpStatus=$(tail -n1 <<<"$response")
+    subjectResponse=$(head -n -1 <<<"$response")
+    if [ "$httpStatus" == 200 ]; then
+        subjectExists=yes
+        existingName=$(sed -n 's/.*"name" *: *"\([^"]*\)".*/\1/p' <<<"$subjectResponse" | head -n1)
+        if [ "$existingName" != "$subjectName" ]; then
+            skipInvalid "existing subject $subjectUuid is named '$existingName', not '$subjectName'"
+            return 1
+        fi
+    elif [ "$httpStatus" == 404 ]; then
+        subjectExists=no
+    else
+        [ -n "$subjectResponse" ] && printf '%s\n' "$subjectResponse"
+        echo "FAILED line $lineNo ($subjectName): HTTP GET subject answered status $httpStatus" >&2
+        ((++failed))
+        return 1
+    fi
+}
+
+# Sets response+httpExitCode from POSTing the account: "linked" references the existing
+# subject, "withNewSubject" creates the subject along with the account.
+function postAccount() {
+    httpExitCode=0
+    if [ "$1" == linked ]; then
+        response=$(
+            HTTP POST "/api/hs/accounts/accounts" <<EOF
+            {
+              "person.uuid" : "$personUuid",
+              "subject.uuid" : "$subjectUuid",
+              "globalUid" : $uidGid,
+              "globalGid" : $uidGid
+            }
+EOF
+        ) || httpExitCode=$?
+    else
+        response=$(
+            HTTP POST "/api/hs/accounts/accounts" <<EOF
+            {
+              "person.uuid" : "$personUuid",
+              "subject" : {
+                  "uuid": "$subjectUuid",
+                  "name": "$subjectName"
+              },
+              "globalUid" : $uidGid,
+              "globalGid" : $uidGid
+            }
+EOF
+        ) || httpExitCode=$?
+    fi
+    [ -n "$response" ] && printf '%s\n' "$response"
+}
+
 # proper CSV-parsing (quoting, embedded commas) via Python, one TAB-separated line per row
 while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid _rest; do
     ((++lineNo))
@@ -66,21 +134,25 @@ while IFS=$'\t' read -r subjectName subjectUuid givenName familyName personUuid 
 
     uidGid=$(( startUidGid + lineNo - 1 ))
     echo "creating account '$subjectName' ($givenName $familyName) with uid/gid $uidGid ..." >&2
-    httpExitCode=0
-    response=$(
-        HTTP POST "/api/hs/accounts/accounts" <<EOF
-        {
-          "person.uuid" : "$personUuid",
-          "subject" : {
-              "uuid": "$subjectUuid",
-              "name": "$subjectName"
-          },
-          "globalUid" : $uidGid,
-          "globalGid" : $uidGid
-        }
-EOF
-    ) || httpExitCode=$?
-    [ -n "$response" ] && printf '%s\n' "$response"
+
+    # the Keycloak-sync owns subject creation where it runs, thus link to an existing
+    # subject and only create one along with the account where none exists
+    fetchSubject || continue
+    if [ "$subjectExists" == yes ]; then
+        postAccount linked
+    else
+        postAccount withNewSubject
+        if [ $httpExitCode -ne 0 ] && grep -Eq '"statusCode" *: *409' <<<"$response"; then
+            # the Keycloak-sync created the subject in between, thus link to it instead
+            fetchSubject || continue
+            if [ "$subjectExists" == yes ]; then
+                postAccount linked
+            else
+                echo "FAILED line $lineNo ($subjectName): subject conflict but no subject found, re-run to retry" >&2
+                ((++failed)); continue
+            fi
+        fi
+    fi
 
     if [ $httpExitCode -eq 0 ]; then
         ((++created))
