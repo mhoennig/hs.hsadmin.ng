@@ -73,6 +73,9 @@ spring:
 # see DocumentationWebConfig for how they are served.
 springdoc:
     swagger-ui:
+        # must match the swagger-ui webjar pinned in build.gradle.kts, a mismatch yields 404;
+        # enforced by the Gradle task verifySwaggerUiVersionPin (part of `check`)
+        version: 5.32.11
         urls:
             - name: HS Office API
               url: /doc/api/spec/hs-office/hs-office.yaml

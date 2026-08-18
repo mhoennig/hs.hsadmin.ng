@@ -78,6 +78,7 @@ if [ "$hasDataOption" == no ] && [ ! -t 0 ]; then
         POST|PUT|PATCH) defaultArgs+=(--data-binary @-) ;;
     esac
 fi
+# deliberately forces JSON onto form posts — with -F/--data-urlencode as we only support JSON request bodies
 if [ "$hasContentType" == no ] && { [ "$hasDataOption" == yes ] || [ ${#defaultArgs[@]} -gt 0 ]; }; then
     defaultArgs=(-H 'Content-Type: application/json' "${defaultArgs[@]}")
 fi

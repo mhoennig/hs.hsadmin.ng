@@ -50,6 +50,11 @@
 # regular releases go via the CI/CD pipeline.
 set -euo pipefail
 
+# strips the indentation off the remote scripts below; an absolute path, because unlike the
+# other tools this one is meant to be called from anywhere (see .envrc)
+# shellcheck source=lib/unindented.sh
+source "$(dirname "$0")/lib/unindented.sh"
+
 # deliberately no default host: a deploy tool must never guess its target stage
 HSADMINNG_DEPLOY_HOST=${HSADMINNG_DEPLOY_HOST:-}
 JAR_NAME='hsadmin-ng-0.0.1-SNAPSHOT.jar'
@@ -363,53 +368,54 @@ cmdProvisioningApiKey() {
     keyHash=$(tools/api-key-hash "$apiKey")
 
     local rc=0
-    ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$keyHash" <<'REMOTE_SCRIPT' || rc=$?
-set -euo pipefail
-keyHash=$1
-envFile="$HOME/backend/.environment"
-logFile="$HOME/var/backend.log"
+    ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$keyHash" < <(unindented <<'REMOTE_SCRIPT'
+        set -euo pipefail
+        keyHash=$1
+        envFile="$HOME/backend/.environment"
+        logFile="$HOME/var/backend.log"
 
-if grep -q '^HSADMINNG_PROVISIONING_API_KEY_SHA256=' "$envFile"; then
-    echo "ERROR: HSADMINNG_PROVISIONING_API_KEY_SHA256 is already configured in $envFile," >&2
-    echo "       remove that line first if you really want to reconfigure it" >&2
-    exit 3
-fi
+        if grep -q '^HSADMINNG_PROVISIONING_API_KEY_SHA256=' "$envFile"; then
+            echo "ERROR: HSADMINNG_PROVISIONING_API_KEY_SHA256 is already configured in $envFile," >&2
+            echo "       remove that line first if you really want to reconfigure it" >&2
+            exit 3
+        fi
 
-logOffset=$(stat -c%s "$logFile" 2>/dev/null || echo 0)
+        logOffset=$(stat -c%s "$logFile" 2>/dev/null || echo 0)
 
-echo "appending HSADMINNG_PROVISIONING_API_KEY_SHA256 to $envFile"
-echo "HSADMINNG_PROVISIONING_API_KEY_SHA256=$keyHash" >>"$envFile"
-chmod 600 "$envFile"
+        echo "appending HSADMINNG_PROVISIONING_API_KEY_SHA256 to $envFile"
+        echo "HSADMINNG_PROVISIONING_API_KEY_SHA256=$keyHash" >>"$envFile"
+        chmod 600 "$envFile"
 
-echo "restarting the backend service ..."
-systemctl --user restart backend
+        echo "restarting the backend service ..."
+        systemctl --user restart backend
 
-echo -n "waiting for the bootstrap message in the backend log "
-for _ in $(seq 60); do
-    sleep 2
-    if ! systemctl --user --quiet is-active backend; then
+        echo -n "waiting for the bootstrap message in the backend log "
+        for _ in $(seq 60); do
+            sleep 2
+            if ! systemctl --user --quiet is-active backend; then
+                echo
+                echo "backend service FAILED to start:"
+                systemctl --user --no-pager --lines=25 status backend || true
+                exit 1
+            fi
+            newLog=$(tail -c "+$((logOffset+1))" "$logFile" 2>/dev/null || true)
+            if grep -qE "already provisioned|provisioning API-key hash differs" <<<"$newLog"; then
+                echo
+                grep -E "already provisioned|provisioning API-key hash differs" <<<"$newLog"
+                exit 2
+            fi
+            if grep -q "provisioned the provisioning API-key subject" <<<"$newLog"; then
+                echo
+                grep "provisioned the provisioning API-key subject" <<<"$newLog"
+                exit 0
+            fi
+            echo -n .
+        done
         echo
-        echo "backend service FAILED to start:"
-        systemctl --user --no-pager --lines=25 status backend || true
-        exit 1
-    fi
-    newLog=$(tail -c "+$((logOffset+1))" "$logFile" 2>/dev/null || true)
-    if grep -qE "already provisioned|provisioning API-key hash differs" <<<"$newLog"; then
-        echo
-        grep -E "already provisioned|provisioning API-key hash differs" <<<"$newLog"
-        exit 2
-    fi
-    if grep -q "provisioned the provisioning API-key subject" <<<"$newLog"; then
-        echo
-        grep "provisioned the provisioning API-key subject" <<<"$newLog"
-        exit 0
-    fi
-    echo -n .
-done
-echo
-echo "WARNING: no provisioning API-key bootstrap message found in the backend log within 120s" >&2
-exit 4
+        echo "WARNING: no provisioning API-key bootstrap message found in the backend log within 120s" >&2
+        exit 4
 REMOTE_SCRIPT
+    ) || rc=$?
 
     case "$rc" in
         0)  echo
@@ -441,22 +447,24 @@ REMOTE_SCRIPT
 # currentSchema) are stripped, so address objects schema-qualified (e.g. rbac.grant).
 cmdBackendSql() {
     if [ "$#" -gt 0 ]; then
-        # ssh flattens its arguments into one remote command line which the remote shell
-        # re-parses, so %q-quote the SQL to let parentheses and quotes survive that round trip
-        ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$(printf '%q' "$*")" <<'REMOTE_SCRIPT'
-set -uo pipefail
-sql=$1
-set -a; . "$HOME/backend/.environment"; set +a
-url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
-url=${url#jdbc:}; url=${url%%\?*}
-psql --version >&2 || { echo "no working psql on $(hostname)" >&2; exit 127; }
-# -X ignores any server-side ~/.psqlrc; -A gives unaligned output (no border/separator lines)
-PGPASSWORD=${SPRING_DATASOURCE_PASSWORD:-password} \
-    psql "$url" -U "${SPRING_DATASOURCE_USERNAME:-postgres}" -X -A -P pager=off -v ON_ERROR_STOP=1 -c "$sql"
-rc=$?
-[ "$rc" -ne 0 ] && echo "psql exited with code $rc" >&2
-exit "$rc"
+        # ssh joins its command arguments into one string which the remote login-shell parses
+        # again, so the SQL has to survive that second parsing round: unquoted, `select * from x`
+        # would reach psql as just `select`, with the `*` expanded against the remote home
+        ssh "$HSADMINNG_DEPLOY_HOST" "bash -s -- $(printf '%q' "$*")" < <(unindented <<'REMOTE_SCRIPT'
+            set -uo pipefail
+            sql=$1
+            set -a; . "$HOME/backend/.environment"; set +a
+            url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
+            url=${url#jdbc:}; url=${url%%\?*}
+            psql --version >&2 || { echo "no working psql on $(hostname)" >&2; exit 127; }
+            # -X ignores any server-side ~/.psqlrc; -A gives unaligned output (no border/separator lines)
+            PGPASSWORD=${SPRING_DATASOURCE_PASSWORD:-password} \
+                psql "$url" -U "${SPRING_DATASOURCE_USERNAME:-postgres}" -X -A -P pager=off -v ON_ERROR_STOP=1 -c "$sql"
+            rc=$?
+            [ "$rc" -ne 0 ] && echo "psql exited with code $rc" >&2
+            exit "$rc"
 REMOTE_SCRIPT
+        )
         return
     fi
 
@@ -483,19 +491,19 @@ cmdBackendSqlTunnel() {
 
     # one round trip to resolve the datasource host/port/name/user/password
     local params
-    params=$(ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
-set -euo pipefail
-set -a; . "$HOME/backend/.environment"; set +a
-url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
-u=${url#jdbc:postgresql://}; hostport=${u%%/*}; rest=${u#*/}
-printf '%s\n' \
-    "${hostport%%:*}" \
-    "$([ "$hostport" = "${hostport##*:}" ] && echo 5432 || echo "${hostport##*:}")" \
-    "${rest%%\?*}" \
-    "${SPRING_DATASOURCE_USERNAME:-postgres}" \
-    "${SPRING_DATASOURCE_PASSWORD:-password}"
+    params=$(ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
+        set -euo pipefail
+        set -a; . "$HOME/backend/.environment"; set +a
+        url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
+        u=${url#jdbc:postgresql://}; hostport=${u%%/*}; rest=${u#*/}
+        printf '%s\n' \
+            "${hostport%%:*}" \
+            "$([ "$hostport" = "${hostport##*:}" ] && echo 5432 || echo "${hostport##*:}")" \
+            "${rest%%\?*}" \
+            "${SPRING_DATASOURCE_USERNAME:-postgres}" \
+            "${SPRING_DATASOURCE_PASSWORD:-password}"
 REMOTE_SCRIPT
-    )
+    ))
     local dbHost dbPort dbName dbUser dbPass
     { read -r dbHost; read -r dbPort; read -r dbName; read -r dbUser; read -r dbPass; } <<<"$params"
 
@@ -529,84 +537,85 @@ cmdMonitorDeploy() {
 
     echo "installing the login-monitoring-check timer on $HSADMINNG_DEPLOY_HOST ..."
 
-    ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
-set -euo pipefail
+    ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
+        set -euo pipefail
 
-# same helper as in the local part of the script, keep both in sync
-step() {
-    local message=$1; shift
-    echo -n "$message: $* ... "
-    local output rc=0
-    output=$("$@" </dev/null 2>&1) || rc=$?
-    if [ "$rc" -eq 0 ]; then
-        echo "done"
-    else
-        echo "FAILED (exit code $rc)"
-        printf '%s\n' "$output"
-        exit "$rc"
-    fi
-}
+        # same helper as in the local part of the script, keep both in sync
+        step() {
+            local message=$1; shift
+            echo -n "$message: $* ... "
+            local output rc=0
+            output=$("$@" </dev/null 2>&1) || rc=$?
+            if [ "$rc" -eq 0 ]; then
+                echo "done"
+            else
+                echo "FAILED (exit code $rc)"
+                printf '%s\n' "$output"
+                exit "$rc"
+            fi
+        }
 
-if [ ! -f .environment ]; then
-    echo "ERROR: ~/.environment not found on the server;" >&2
-    echo "       create it (chmod 600) with at least HSADMINNG_LOGIN_MONITOR_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL" >&2
-    exit 1
-fi
-for var in HSADMINNG_LOGIN_MONITOR_PASSWORD HSADMINNG_MATRIX_WEBHOOK_URL; do
-    grep -qE "^$var=" .environment || {
-        echo "ERROR: ~/.environment on the server must contain a plain '$var=...' line" >&2
-        echo "       (systemd EnvironmentFile format: no 'export', no shell expansions)" >&2
-        exit 1
-    }
-done
-interval=$(sed -n 's/^HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES=//p' .environment | tail -1)
-interval=${interval:-5}
-if ! [[ "$interval" =~ ^[0-9]+$ ]] || [ "$interval" -lt 1 ] || [ "$interval" -gt 59 ]; then
-    echo "ERROR: HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES in ~/.environment must be an integer from 1 to 59, got '$interval'" >&2
-    exit 1
-fi
+        if [ ! -f .environment ]; then
+            echo "ERROR: ~/.environment not found on the server;" >&2
+            echo "       create it (chmod 600) with at least HSADMINNG_LOGIN_MONITOR_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL" >&2
+            exit 1
+        fi
+        for var in HSADMINNG_LOGIN_MONITOR_PASSWORD HSADMINNG_MATRIX_WEBHOOK_URL; do
+            grep -qE "^$var=" .environment || {
+                echo "ERROR: ~/.environment on the server must contain a plain '$var=...' line" >&2
+                echo "       (systemd EnvironmentFile format: no 'export', no shell expansions)" >&2
+                exit 1
+            }
+        done
+        interval=$(sed -n 's/^HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES=//p' .environment | tail -1)
+        interval=${interval:-5}
+        if ! [[ "$interval" =~ ^[0-9]+$ ]] || [ "$interval" -lt 1 ] || [ "$interval" -gt 59 ]; then
+            echo "ERROR: HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES in ~/.environment must be an integer from 1 to 59, got '$interval'" >&2
+            exit 1
+        fi
 
-chmod 600 .environment
-chmod 700 monitoring/login-monitoring-check
-mkdir -p var .config/systemd/user
+        chmod 600 .environment
+        chmod 700 monitoring/login-monitoring-check
+        mkdir -p var .config/systemd/user
 
-cat >.config/systemd/user/login-monitoring-check.service <<'UNIT'
-[Unit]
-Description=hsadmin-NG login-monitoring-check
+        cat >.config/systemd/user/login-monitoring-check.service <<'UNIT'
+        [Unit]
+        Description=hsadmin-NG login-monitoring-check
 
-[Service]
-Type=oneshot
-TimeoutStartSec=120
-EnvironmentFile=%h/.environment
-ExecStart=%h/monitoring/login-monitoring-check --matrix-webhook
-StandardOutput=append:%h/var/login-monitoring.log
-StandardError=inherit
-UNIT
+        [Service]
+        Type=oneshot
+        TimeoutStartSec=120
+        EnvironmentFile=%h/.environment
+        ExecStart=%h/monitoring/login-monitoring-check --matrix-webhook
+        StandardOutput=append:%h/var/login-monitoring.log
+        StandardError=inherit
+        UNIT
 
-cat >.config/systemd/user/login-monitoring-check.timer <<UNIT
-[Unit]
-Description=hsadmin-NG login-monitoring-check every $interval minutes
+        cat >.config/systemd/user/login-monitoring-check.timer <<UNIT
+        [Unit]
+        Description=hsadmin-NG login-monitoring-check every $interval minutes
 
-[Timer]
-OnCalendar=*:0/$interval
+        [Timer]
+        OnCalendar=*:0/$interval
 
-[Install]
-WantedBy=timers.target
-UNIT
+        [Install]
+        WantedBy=timers.target
+        UNIT
 
-step "reloading the systemd user daemon" systemctl --user daemon-reload
-step "enabling and starting the timer" systemctl --user enable --now login-monitoring-check.timer
+        step "reloading the systemd user daemon" systemctl --user daemon-reload
+        step "enabling and starting the timer" systemctl --user enable --now login-monitoring-check.timer
 
-echo -n "running the first check now ... "
-if systemctl --user start login-monitoring-check.service </dev/null; then
-    echo "done: $(tail -1 var/login-monitoring.log)"
-else
-    echo "FAILED:"
-    tail -25 var/login-monitoring.log
-    exit 1
-fi
-systemctl --user list-timers login-monitoring-check.timer --no-pager
+        echo -n "running the first check now ... "
+        if systemctl --user start login-monitoring-check.service </dev/null; then
+            echo "done: $(tail -1 var/login-monitoring.log)"
+        else
+            echo "FAILED:"
+            tail -25 var/login-monitoring.log
+            exit 1
+        fi
+        systemctl --user list-timers login-monitoring-check.timer --no-pager
 REMOTE_SCRIPT
+    )
 }
 
 # Runs the monitoring check once now (the oneshot .service, not the timer) and
@@ -626,59 +635,65 @@ cmdMonitorRun() {
 # the checker uses and reports each active one with since/count/next-due. The state-file path
 # and backoff are resolved from ~/.environment just as the checker's defaults do.
 cmdMonitorAlerts() {
-    ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
-set -uo pipefail
-[ -f .environment ] && { set -a; . ./.environment; set +a; }
+    ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
+        set -uo pipefail
+        [ -f .environment ] && { set -a; . ./.environment; set +a; }
 
-stateFile=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
-alarmRepeat=${HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT:-1,2,4,8,16,24}
-now=$(date +%s)
-found=0
+        stateFile=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
+        alarmRepeat=${HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT:-1,2,4,8,16,24}
+        # mirror the checker's fallback, so an invalid value cannot crash the arithmetic below
+        [[ "$alarmRepeat" =~ ^[0-9]+(,[0-9]+)*$ ]] || alarmRepeat=1,2,4,8,16,24
+        now=$(date +%s)
+        found=0
 
-fmtAgo() { # $1=seconds
-    local s=$1
-    if   [ "$s" -ge 86400 ]; then printf '%dd%dh' $((s/86400)) $((s%86400/3600))
-    elif [ "$s" -ge 3600 ];  then printf '%dh%dm' $((s/3600)) $((s%3600/60))
-    elif [ "$s" -ge 60 ];    then printf '%dm%ds' $((s/60)) $((s%60))
-    else printf '%ds' "$s"; fi
-}
+        fmtAgo() { # $1=seconds
+            local s=$1
+            if   [ "$s" -ge 86400 ]; then printf '%dd%dh' $((s/86400)) $((s%86400/3600))
+            elif [ "$s" -ge 3600 ];  then printf '%dh%dm' $((s/3600)) $((s%3600/60))
+            elif [ "$s" -ge 60 ];    then printf '%dm%ds' $((s/60)) $((s%60))
+            else printf '%ds' "$s"; fi
+        }
 
-report() { # $1=label  $2=stateFile
-    local label=$1 file=$2
-    [ -f "$file" ] || return 0
-    found=1
-    local FIRST_FAILURE_TS='' LAST_ALERT_TS=0 ALERT_COUNT=0
-    . "$file"
-    local gaps; IFS=, read -ra gaps <<<"$alarmRepeat"
-    local idx=$(( ALERT_COUNT <= ${#gaps[@]} ? ALERT_COUNT - 1 : ${#gaps[@]} - 1 ))
-    [ "$idx" -lt 0 ] && idx=0
-    local dueTs=$(( LAST_ALERT_TS + gaps[idx] * 3600 ))
-    printf '%-14s active since %s (%s ago), %s alert(s), last %s, next due %s\n' \
-        "$label" \
-        "$(date -d "@$FIRST_FAILURE_TS" '+%F %T')" "$(fmtAgo $(( now - FIRST_FAILURE_TS )))" \
-        "$ALERT_COUNT" \
-        "$(date -d "@$LAST_ALERT_TS" '+%F %T')" \
-        "$(date -d "@$dueTs" '+%F %T')"
-}
+        report() { # $1=label  $2=stateFile
+            local label=$1 file=$2
+            [ -f "$file" ] || return 0
+            found=1
+            local FIRST_FAILURE_TS='' LAST_ALERT_TS=0 ALERT_COUNT=0
+            . "$file"
+            local gaps; IFS=, read -ra gaps <<<"$alarmRepeat"
+            local idx=$(( ALERT_COUNT <= ${#gaps[@]} ? ALERT_COUNT - 1 : ${#gaps[@]} - 1 ))
+            [ "$idx" -lt 0 ] && idx=0
+            local dueTs=$(( LAST_ALERT_TS + gaps[idx] * 3600 ))
+            printf '%-14s active since %s (%s ago), %s alert(s), last %s, next due %s\n' \
+                "$label" \
+                "$(date -d "@$FIRST_FAILURE_TS" '+%F %T')" "$(fmtAgo $(( now - FIRST_FAILURE_TS )))" \
+                "$ALERT_COUNT" \
+                "$(date -d "@$LAST_ALERT_TS" '+%F %T')" \
+                "$(date -d "@$dueTs" '+%F %T')"
+        }
 
-report "login/backend" "$stateFile"
-report "latency (SLOW)" "${stateFile%.state}.slow.state"
-report "keycloak-sync"  "${stateFile%.state}.sync.state"
+        report "login/backend" "$stateFile"
+        report "privileges" "${stateFile%.state}.critical.state"
+        report "latency (SLOW)" "${stateFile%.state}.slow.state"
+        report "keycloak-sync"  "${stateFile%.state}.sync.state"
 
-[ "$found" -eq 0 ] && echo "no active alerts"
-exit 0
+        [ "$found" -eq 0 ] && echo "no active alerts"
+        exit 0
 REMOTE_SCRIPT
+    )
 }
 
 # The bare timer status says little, so also show the schedule and the last check result.
 cmdMonitorStatus() {
-    exec ssh -t "$HSADMINNG_DEPLOY_HOST" bash -c '
+    # via stdin, because `bash -c <script>` would lose its argument to ssh's argument flattening
+    exec ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
         systemctl --user status login-monitoring-check.timer --no-pager || true
         echo
         systemctl --user list-timers login-monitoring-check.timer --no-pager || true
         echo "last check:"
         tail -1 var/login-monitoring.log 2>/dev/null || echo "  (no log yet)"
-    '
+REMOTE_SCRIPT
+    )
 }
 
 badAction() { # $1=target  $2=action

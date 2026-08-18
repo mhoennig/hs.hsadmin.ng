@@ -72,7 +72,8 @@ EOF
     if [ $httpExitCode -eq 0 ]; then
         echo "${0##*/}: granted global-admin to '$subjectName'" >&2
         ((++granted))
-    elif grep -Eq '"status" *: *409' <<<"$response"; then
+    # "statusCode" is the current CustomErrorResponse schema, plain "status" older error bodies
+    elif grep -Eq '"status(Code)?" *: *409' <<<"$response"; then
         echo "${0##*/}: '$subjectName' already holds global-admin (409 Conflict)" >&2
         ((++alreadyGranted))
     else

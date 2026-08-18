@@ -9,4 +9,32 @@
         <packageUrl regex="true">^pkg:maven/org\.pitest/pitest\-command\-line@.*$</packageUrl>
         <cpe>cpe:/a:line:line</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive: the advisory lists 6.5.0 through 6.5.10 as affected, our 6.5.11 already
+            contains the fix, but OSS-Index still flags it. Additionally, the vulnerable
+            SubjectDnX509PrincipalExtractor is X.509 client-certificate authentication,
+            which we do not use anywhere (JWT and API-key authentication only).
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring\-security\-web@6\.5\.11$</packageUrl>
+        <cve>CVE-2026-47838</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            Not applicable: decodeFromCompressedByteBuffer decodes attacker-supplied compressed
+            histograms, but micrometer only records and encodes histograms, it never decodes
+            external input. No fixed HdrHistogram release exists yet.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.hdrhistogram/HdrHistogram@.*$</packageUrl>
+        <cve>CVE-2026-14683</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            Not applicable: the flawed range check in DoubleHistogram.recordValue requires local
+            access and histogram values recorded by micrometer are timings, not external input.
+            No fixed HdrHistogram release exists yet.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.hdrhistogram/HdrHistogram@.*$</packageUrl>
+        <cve>CVE-2026-14686</cve>
+    </suppress>
 </suppressions>

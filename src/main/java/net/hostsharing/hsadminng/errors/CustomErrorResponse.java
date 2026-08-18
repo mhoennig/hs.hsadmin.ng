@@ -41,7 +41,7 @@ public class CustomErrorResponse {
 
     private final String message;
 
-    CustomErrorResponse(final String path, final HttpStatus status, final String rawMessage) {
+    public CustomErrorResponse(final String path, final HttpStatus status, final String rawMessage) {
         // HOWTO: debug serverside error response - set a breakpoint here
         this.timestamp = LocalDateTime.now();
         this.path = path;

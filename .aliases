@@ -246,7 +246,11 @@ alias gw-importHostingAssets-in-docker-compose='
         docker-compose -f etc/docker-compose.yml up -d && sleep 10 &&
         time gw-importHostingAssets'
 
-# TODO.env: this is a bit hacky, we need to find a more straight-forward way when to read the .environment file
+# TODO.tool: this is a bit hacky, we need to find a more straight-forward way when to read the .environment file.
+#   The same clean-up has to settle how the tools cooperate with the environment: each of them sources
+#   `.aliases` for the HTTP function and thereby lets `.environment` win over the calling shell, so an
+#   `APIKEY`/`LOGIN` or an exported HSADMINNG_API_BASE_URL there has no effect (see their --help).
+#   The outcome should be aligned with the frontend tooling.
 # HSADMINNG_SKIP_ENVIRONMENT_FILE protects a fully explicitly exported environment (e.g. of
 # tools/smoke-test) from being overridden by the personal `.environment`, also in child processes
 if [ -z "${HSADMINNG_SKIP_ENVIRONMENT_FILE:-}" ]; then

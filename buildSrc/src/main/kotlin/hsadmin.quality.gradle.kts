@@ -81,6 +81,18 @@ configure<DependencyCheckExtension> {
         apiKey = project.findProperty("OWASP_API_KEY")?.toString() // set it in ~/.gradle/gradle.properties
         delay = 16000 // Milliseconds
     }
+    analyzers {
+        ossIndex {
+            val ossIndexUsername = project.findProperty("OSSINDEX_USERNAME")?.toString() // set it in ~/.gradle/gradle.properties
+            val ossIndexApiToken = project.findProperty("OSSINDEX_API_TOKEN")?.toString()
+            // OSS-Index answers anonymous requests with HTTP 401, which always fails the analysis
+            enabled = ossIndexUsername != null && ossIndexApiToken != null
+            username = ossIndexUsername
+            password = ossIndexApiToken
+            // OSS-Index only augments the NVD, so its rate limits must not fail the whole analysis
+            warnOnlyOnRemoteErrors = true
+        }
+    }
     format = org.owasp.dependencycheck.reporting.ReportGenerator.Format.ALL.name
     suppressionFiles.add("etc/owasp-dependency-check-suppression.xml") // Use suppressionFiles collection
     failOnError = true

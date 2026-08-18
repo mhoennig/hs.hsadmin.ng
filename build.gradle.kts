@@ -19,7 +19,7 @@ import org.gradle.api.tasks.wrapper.Wrapper
 
 plugins {
     java
-    id("org.springframework.boot") version "3.5.5"
+    id("org.springframework.boot") version "3.5.16"
     id("io.spring.dependency-management") version "1.1.7"        // manages implicit dependencies
     id("com.gorylenko.gradle-git-properties") version "2.5.0"     // exposes git commit info via Actuator info endpoint
     id("io.openapiprocessor.openapi-processor") version "2023.2" // generates Controller-interface and resources from API-spec
@@ -84,6 +84,30 @@ java {
 // For special versions, use `extra` properties delegate for type safety
 val testcontainersVersion by extra("1.21.4")
 
+// Security patch-levels above what Spring Boot manages; drop each once the managed version catches up.
+extra["jackson-bom.version"] = "2.21.5"   // CVE-2026-54515 + CVE-2026-59889
+extra["logback.version"] = "1.5.38"       // CVE-2026-13006
+extra["log4j2.version"] = "2.25.5"        // CVE-2026-49844
+extra["postgresql.version"] = "42.7.13"   // CVE-2026-54291
+
+// springdoc resolves swagger-ui resources under the exact webjar version, a mismatch yields 404,
+// thus verifySwaggerUiVersionPin (part of `check`) enforces the mirrored application.yml pins
+val swaggerUiVersion = "5.32.11"
+val verifySwaggerUiVersionPin = tasks.register("verifySwaggerUiVersionPin") {
+    val ymlFiles = listOf("src/main/resources/application.yml", "src/test/resources/application.yml")
+    val expectedPin = "version: $swaggerUiVersion"
+    inputs.files(ymlFiles)
+    inputs.property("expectedPin", expectedPin)
+    doLast {
+        ymlFiles.forEach { path ->
+            check(File(path).readText().contains(expectedPin)) {
+                "$path must contain 'springdoc.swagger-ui.$expectedPin' to match the webjar pinned in build.gradle.kts"
+            }
+        }
+    }
+}
+tasks.named("check") { dependsOn(verifySwaggerUiVersionPin) }
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-rest")
@@ -93,7 +117,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
+    // springdoc bundles swagger-ui with DOMPurify 3.3.x, which has known sanitizer bypasses
+    implementation("org.webjars:swagger-ui:$swaggerUiVersion")
     implementation("com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.12.0")
     implementation("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")

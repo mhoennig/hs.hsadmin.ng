@@ -807,10 +807,12 @@ We'll see if this changes when the project progresses and more validations are a
 
 ### OWASP Security Vulnerability Check
 
-An OWASP security vulnerability is configured, but you need an API key.
-Fetch it from https://nvd.nist.gov/developers/request-an-api-key.
+An OWASP security vulnerability check is configured.
+It can use two vulnerability sources: the NVD and the Sonatype OSS-Index.
 
-Then add it to your `~/.gradle/gradle.properties` file:
+The NVD (National Vulnerability Database) is required.
+Fetch an API key from https://nvd.nist.gov/developers/request-an-api-key
+and add it to your `~/.gradle/gradle.properties` file:
 
 ```
 OWASP_API_KEY=........-....-....-....-............
@@ -824,7 +826,20 @@ gw dependencyCheckAnalyze
 ```
 
 This task is also included in `gw build` and `gw check`.
-It is configured in [build.gradle.kts](build.gradle.kts).
+It is configured in [hsadmin.quality.gradle.kts](buildSrc/src/main/kotlin/hsadmin.quality.gradle.kts).
+
+The Sonatype OSS-Index is an optional second source.
+It rejects anonymous requests with `HTTP 401 Unauthorized`, which fails the whole analysis.
+Therefore, the OSS-Index analyzer stays switched off until you configure credentials for it.
+
+To switch it on, register a free account at https://ossindex.sonatype.org/user/register,
+copy your API token from https://ossindex.sonatype.org/user/settings
+and add both values to your `~/.gradle/gradle.properties` file:
+
+```
+OSSINDEX_USERNAME=your-account@example.org
+OSSINDEX_API_TOKEN=................................
+```
 
 Often vulnerability reports don't apply to our use cases.
 Therefore, reports can be [suppressed](./etc/owasp-dependency-check-suppression.xml).

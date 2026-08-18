@@ -45,6 +45,12 @@ spring:
             "[HSADMINNG_POSTGRES_ADMIN_USERNAME]": ${HSADMINNG_POSTGRES_ADMIN_USERNAME:admin}
             "[HSADMINNG_POSTGRES_RESTRICTED_USERNAME]": ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME:restricted}
 
+# this file shadows src/main/resources/application.yml on the test classpath, thus the
+# swagger-ui version pin has to be repeated here; enforced by verifySwaggerUiVersionPin
+springdoc:
+    swagger-ui:
+        version: 5.32.11
+
 logging:
     level:
         liquibase: WARN

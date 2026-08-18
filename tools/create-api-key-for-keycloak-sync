@@ -13,8 +13,10 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
         call the subject-sync endpoints; the granted global-admin role authorizes those calls.
         Without an argument the subject-name defaults to 'hsadminng.keycloak.sync'.
 
-        Requires an authenticated global-admin session, established beforehand via
-        'APIKEY <name>' (API-key) or 'LOGIN' (JWT); see .aliases. Also honors HSADMINNG_API_BASE_URL.
+        Backend and credentials come from the personal '.environment' (the stage selection,
+        e.g. copied from '.environment-int-remote'), which this tool sources via '.aliases'.
+        They therefore win over anything exported in the calling shell, including an
+        'APIKEY <name>' or 'LOGIN' done there; without a key in '.environment', do that first.
 
         The clear-text API-key is a secret, returned only in this creation response and never
         retrievable again -- capture it, e.g.:
@@ -30,6 +32,7 @@ subjectName="${1:-hsadminng.keycloak.sync}"
 scope="rbac.subjects:sync"
 globalAdminRole="rbac.global#global:ADMIN"
 
+# brings in the HTTP function and, with it, the stage selected in the personal `.environment`
 # shellcheck source=/dev/null
 source .aliases
 
@@ -69,12 +72,15 @@ fi
 
 echo "resolving the '$globalAdminRole' role UUID ..." >&2
 globalAdminRoleUriEncoded="${globalAdminRole/\#/%23}"
+# the guard keeps `set -e` from killing the script before the diagnosis below, which has to
+# name the already created subject, or its rerun dead-ends in the 'already exists' branch
 roleUuid=$(
   HTTP GET "/api/rbac/roles?name=$globalAdminRoleUriEncoded" \
   | jq -r '.[0].uuid // empty'
-)
+) || roleUuid=
 if [ -z "$roleUuid" ]; then
-    echo "ERROR: could not resolve the '$globalAdminRole' role UUID" >&2
+    echo "ERROR: created subject $subjectUuid but could not resolve the '$globalAdminRole' role UUID;" >&2
+    echo "       delete that subject before retrying" >&2
     exit 1
 fi
 

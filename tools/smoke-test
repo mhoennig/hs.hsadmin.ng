@@ -6,7 +6,8 @@
 # with some simple (ping, version) and some more complex (POST with RBAC grants) endpoints,
 # including the provisioning API-key bootstrap (HSADMINNG_PROVISIONING_API_KEY_SHA256) and creating
 # a further API-key with it. It also exercises the tooling scripts
-# `tools/create-accounts-from-csv` and `tools/create-api-key-for-keycloak-sync`.
+# `tools/create-accounts-from-csv`, `tools/create-api-key-for-keycloak-sync` and, against a
+# stubbed ssh, `tools/remote backend sql`.
 #
 # The throw-away database container (hsadmin-ng-smoke-test-postgres, host port 15432) is
 # reset at the start and removed at the end; the normal `hsadmin-ng-postgres` container
@@ -65,6 +66,8 @@ command -v docker >/dev/null || { echo "SMOKE-TEST FAILED: docker is not availab
 # needed by tools/create-api-key-for-keycloak-sync resp. tools/create-accounts-from-csv
 command -v jq >/dev/null || { echo "SMOKE-TEST FAILED: jq is not available" >&2; exit 1; }
 command -v python3 >/dev/null || { echo "SMOKE-TEST FAILED: python3 is not available" >&2; exit 1; }
+# needed by tools/remote backend sql
+command -v psql >/dev/null || { echo "SMOKE-TEST FAILED: psql is not available" >&2; exit 1; }
 
 portInUse() {
     (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
@@ -249,6 +252,96 @@ passed
 # ... which forbids all other endpoints (fail-closed), despite the global-admin role
 response=$(HTTP GET /api/rbac/roles 2>/dev/null) &&
     failed "GET /api/rbac/roles with the sync API-key succeeded despite its endpoint-scope: $response"
+passed
+
+# There is no backend server to ssh into here, so a stubbed ssh runs the remote script locally
+# against the throw-away database. The stub reproduces ssh's argument flattening, which is
+# exactly what the SQL has to survive: unquoted it would reach psql as a mere `select`.
+echo "tools/remote backend sql runs a complete SQL statement through ssh's argument flattening"
+sshStubDir=build/smoke-test/ssh-stub
+fakeServerHome=build/smoke-test/fake-server-home
+mkdir -p "$sshStubDir" "$fakeServerHome/backend"
+cat >"$sshStubDir/ssh" <<'SSH_STUB'
+#!/bin/bash
+while [ $# -gt 0 ]; do case "$1" in -t|-T|-q) shift ;; *) break ;; esac; done
+shift # the user@host argument
+export HOME=$SMOKE_TEST_FAKE_SERVER_HOME
+exec bash -c "$*"
+SSH_STUB
+chmod +x "$sshStubDir/ssh"
+cat >"$fakeServerHome/backend/.environment" <<ENVIRONMENT_FILE
+SPRING_DATASOURCE_URL=$HSADMINNG_POSTGRES_JDBC_URL
+SPRING_DATASOURCE_USERNAME=$HSADMINNG_POSTGRES_ADMIN_USERNAME
+SPRING_DATASOURCE_PASSWORD=$HSADMINNG_POSTGRES_ADMIN_PASSWORD
+ENVIRONMENT_FILE
+# the statement carries a space, a star, parentheses and quotes, all of which a remote
+# login-shell would mangle without proper quoting
+response=$(
+    SMOKE_TEST_FAKE_SERVER_HOME=$(cd "$fakeServerHome" && pwd) \
+    PATH=$(cd "$sshStubDir" && pwd):$PATH \
+    HSADMINNG_DEPLOY_HOST=smoke-test@stubbed \
+    tools/remote backend sql "select count(*) from rbac.subject where name = '$HSADMINNG_SUPERUSER'" 2>/dev/null
+) || failed "tools/remote backend sql failed: $response"
+grep -qx 1 <<<"$response" ||
+    failed "tools/remote backend sql did not count the subject '$HSADMINNG_SUPERUSER' but answered: $response"
+passed
+
+# A security incident must alert immediately, even while an ordinary outage alarm is already
+# backing off, so each alarm needs its own state file. Sourcing the checker with
+# HSADMINNG_LOGIN_MONITOR_DEFINE_ONLY yields its functions without performing a real check.
+echo "tools/login-monitoring-check alerts a critical incident despite a running failure backoff"
+monitorStateDir=build/smoke-test/monitor-state
+rm -rf "$monitorStateDir"
+mkdir -p "$monitorStateDir"
+alarmProbe=$(
+    HSADMINNG_LOGIN_MONITOR_DEFINE_ONLY=true \
+    HSADMINNG_LOGIN_MONITOR_PASSWORD=irrelevant-for-this-probe \
+    HSADMINNG_LOGIN_MONITOR_STATE_FILE="$monitorStateDir/login-monitoring-check.state" \
+    bash -c '
+        source tools/login-monitoring-check
+        MATRIX_WEBHOOK_URL=https://example.invalid/webhook
+        # no Matrix here, just record what would have been sent
+        sendMatrixMessage() { echo "WOULD-SEND severity=$2"; }
+        # a failure alarm which has already backed off to its longest interval
+        now=$(date +%s)
+        printf "FIRST_FAILURE_TS=%s\nLAST_ALERT_TS=%s\nALERT_COUNT=6\n" \
+            $((now - 115200)) $((now - 3600)) >"$STATE_FILE"
+        critical "monitoring user unexpectedly has 3 role grant(s)"
+    ' 2>&1
+) || true
+grep -q 'WOULD-SEND severity=critical' <<<"$alarmProbe" ||
+    failed "the critical alert was swallowed by the running failure backoff: $alarmProbe"
+# a critical check is only reachable when login works, so the failure alarm must be closed
+# along the way -- a stale state from the formerly shared file would fake a later login-RESOLVED
+grep -q 'WOULD-SEND severity=ok' <<<"$alarmProbe" ||
+    failed "the pending failure alarm was not closed when the critical alert fired: $alarmProbe"
+[ ! -f "$monitorStateDir/login-monitoring-check.state" ] ||
+    failed "the failure state file survived the critical alert and could fake a later RESOLVED"
+passed
+
+# The subject is created before the global-admin role is resolved, so a failure in between must
+# be diagnosed rather than kill the script silently: the operator has to learn about the subject
+# left behind, otherwise the rerun only reports 'already exists'. The failure is injected by a jq
+# which fails for exactly that lookup.
+echo "tools/create-api-key-for-keycloak-sync reports the subject it left behind on a failed role-lookup"
+# back to the unrestricted provisioning API-key, the sync-key may not create subjects
+APIKEY --transient <<<"$provisioningApiKey" || failed "APIKEY --transient (provisioning API-key) failed"
+jqStubDir=build/smoke-test/jq-stub
+mkdir -p "$jqStubDir"
+cat >"$jqStubDir/jq" <<JQ_STUB
+#!/bin/bash
+for arg in "\$@"; do
+    case "\$arg" in *'.[0].uuid'*) exit 1 ;; esac
+done
+exec $(command -v jq) "\$@"
+JQ_STUB
+chmod +x "$jqStubDir/jq"
+response=$(
+    PATH=$(cd "$jqStubDir" && pwd):$PATH \
+    tools/create-api-key-for-keycloak-sync smoke.test.halfway.key 2>&1
+) && failed "create-api-key-for-keycloak-sync succeeded despite the failing role-lookup: $response"
+grep -q 'delete that subject before retrying' <<<"$response" ||
+    failed "the failed role-lookup did not name the subject left behind but: $response"
 passed
 
 echo

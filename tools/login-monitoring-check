@@ -57,10 +57,12 @@
 #   the first result is posted immediately, repetitions only after the intervals
 #   (in hours) listed in HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT (default 1,2,4,8,16,24),
 #   with the last interval repeating indefinitely. Once the problem clears, a
-#   RESOLVED message is posted. Latency warnings and the sync-freshness alarm back off
-#   independently from the login/backend failure alarm. The active-alarm state is kept next to
-#   HSADMINNG_LOGIN_MONITOR_STATE_FILE,
-#   default: ~/.local/state/login-monitoring-check.state ($XDG_STATE_HOME is honored).
+#   RESOLVED message is posted. Each alarm — login/backend failure, gained privileges,
+#   latency warning and sync-freshness — backs off in its own state file, so that a running
+#   backoff can never delay another alarm, least of all the critical one. The state files sit
+#   next to HSADMINNG_LOGIN_MONITOR_STATE_FILE (`*.critical.state`, `*.slow.state`,
+#   `*.sync.state`), default: ~/.local/state/login-monitoring-check.state
+#   ($XDG_STATE_HOME is honored).
 
 set -o pipefail
 
@@ -192,11 +194,14 @@ function failed() {
     exit 1
 }
 
-# like failed(), but a critical security alert (🆘, @room); shares the failure state
-# file, so repetitions follow the same ALARM_REPEAT backoff
+# like failed(), but a critical security alert (🆘, @room); its own state file, because a
+# security incident must alert immediately even while an outage alarm is already backing off
 function critical() {
     echo "CRITICAL: $*"
-    sendThrottledAlert critical "$STATE_FILE" "CRITICAL: $*"
+    # reaching a critical check proves login works: close a pending failure alarm right here,
+    # also so that no stale state from the formerly shared file can fake a later login-RESOLVED
+    sendMatrixResolved "$STATE_FILE" "RESOLVED: $HSADMINNG_JWT_USERNAME can log in again"
+    sendThrottledAlert critical "$CRITICAL_STATE_FILE" "CRITICAL: $*"
     exit 1
 }
 
@@ -215,11 +220,10 @@ if ! [[ "$ALARM_REPEAT" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
     ALARM_REPEAT=1,2,4,8,16,24
 fi
 STATE_FILE=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
-# a separate state file, so the latency-warning backoff never interferes with the
-# login/backend failure alarm
+# every alarm gets its own state file, so that no alarm's backoff can ever delay another one
 WARN_STATE_FILE="${STATE_FILE%.state}.slow.state"
-# and another, so the sync-freshness backoff is likewise independent
 SYNC_STATE_FILE="${STATE_FILE%.state}.sync.state"
+CRITICAL_STATE_FILE="${STATE_FILE%.state}.critical.state"
 # a successful but slower-than-this (seconds) check raises a latency warning
 SLOW_WARNING_SECONDS=${HSADMINNG_LOGIN_MONITOR_SLOW_WARNING_SECONDS:-2}
 if ! [[ "$SLOW_WARNING_SECONDS" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
@@ -233,6 +237,10 @@ if ! [[ "$SYNC_MAX_AGE_SECONDS" =~ ^[0-9]+$ ]]; then
     echo "WARNING: ignoring invalid HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS '$SYNC_MAX_AGE_SECONDS', using 300" >&2
     SYNC_MAX_AGE_SECONDS=300
 fi
+
+# lets a test source just the functions and the configuration above, without performing a check;
+# `return` only works when sourced, a direct execution needs `exit` lest the check runs anyway
+[ -z "${HSADMINNG_LOGIN_MONITOR_DEFINE_ONLY:-}" ] || return 0 2>/dev/null || exit 0
 
 MATRIX_WEBHOOK_URL=
 VERBOSE=
@@ -462,8 +470,9 @@ fi
 [ "$grantCount" = 0 ] ||
     critical "monitoring user $HSADMINNG_JWT_USERNAME unexpectedly has $grantCount role grant(s): $grantedRoles"
 
-# the login/backend side is healthy -> clear any active failure or critical alarm
-sendMatrixResolved "$STATE_FILE" "RESOLVED: $HSADMINNG_JWT_USERNAME passes all monitoring checks again"
+# the login/backend side is healthy and the user is unprivileged again -> clear both alarms
+sendMatrixResolved "$STATE_FILE" "RESOLVED: $HSADMINNG_JWT_USERNAME can log in again"
+sendMatrixResolved "$CRITICAL_STATE_FILE" "RESOLVED: $HSADMINNG_JWT_USERNAME is unprivileged again"
 
 # independently verify that the Keycloak subject-sync is alive: the syncer posts an
 # end-of-run report which the public GET /api/rbac/subjects/last-sync exposes as a bare
