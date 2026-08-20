@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestClassOrder;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -317,6 +320,84 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             toCleanup(HsHostingAssetRbacEntity.class, newWebspace);
         }
 
+        enum CallerWithoutInsertPermissionTestCases {
+            SELF_REGISTERED_USER_WITHOUT_ANY_GRANTS(
+                    "tst-drew_selfregistered", "", "D-1000212 default project"),
+            ADMIN_OF_ANOTHER_HOSTING_ASSET_IN_THE_SAME_PROJECT(
+                    "hsh-alex_superuser", "hs_hosting.asset#vm2098:ADMIN", "D-1000111 default project");
+
+            final String caller;
+            final String assumedRoles;
+            final String projectOfTheBookingItem;
+
+            CallerWithoutInsertPermissionTestCases(
+                    final String caller,
+                    final String assumedRoles,
+                    final String projectOfTheBookingItem) {
+                this.caller = caller;
+                this.assumedRoles = assumedRoles;
+                this.projectOfTheBookingItem = projectOfTheBookingItem;
+            }
+        }
+
+        /**
+         * A top-level hosting-asset consumes the booked resources of its booking-item, thus it may
+         * only be created by a caller with the INSERT permission on that booking-item. Admin rights on
+         * some other hosting-asset do not grant that, not even within the same project.
+         */
+        // verifies Fix for Security-Finding A-02
+        @ParameterizedTest
+        @EnumSource(CallerWithoutInsertPermissionTestCases.class)
+        void callerWithoutInsertPermissionOnBookingItem_canNotCreateNewTopLevelHostingAssets(
+                final CallerWithoutInsertPermissionTestCases testCase) {
+
+            // given a MANAGED_SERVER to hang the new asset below, so that only the booking-item is in question
+            context.define("hsh-alex_superuser");
+            val parentServer = givenSomeTemporaryManagedServer("temp ManagedServer for A-02", "vm2098");
+
+            // and a MANAGED_WEBSPACE booking-item that the caller is not entitled to use
+            val project = realProjectRepo.findByCaption(testCase.projectOfTheBookingItem).getFirst();
+            val inaccessibleBookingItem = realBookingItemRepo.findAllByProjectUuid(project.getUuid())
+                    .stream()
+                    .filter(item -> item.getType() == HsBookingItemType.MANAGED_WEBSPACE)
+                    .findFirst().orElseThrow();
+            // the identifier follows the debitor of the booking-item, not the one of the caller
+            val identifierPrefix = project.getDebitor().getDefaultPrefix();
+
+            // that booking-item is not even visible to the caller
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer(testCase.caller))
+                        .header("Hostsharing-Assumed-Roles", testCase.assumedRoles)
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/booking/items/" + inaccessibleBookingItem.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(404); // @formatter:on
+
+            // hence creating an asset which consumes it must be refused, all the more since the
+            // resulting grants would hand the caller TENANT on that booking-item and on its project
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer(testCase.caller))
+                        .header("Hostsharing-Assumed-Roles", testCase.assumedRoles)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                            {
+                                "bookingItem.uuid": "%s",
+                                "parentAsset.uuid": "%s",
+                                "type": "MANAGED_WEBSPACE",
+                                "identifier": "%s90",
+                                "caption": "temp webspace consuming an inaccessible booking-item"
+                            }
+                            """.formatted(inaccessibleBookingItem.getUuid(), parentServer.getUuid(), identifierPrefix))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/hosting/assets")
+                    .then().log().all().assertThat()
+                        .statusCode(404); // @formatter:on
+        }
+
         @Test
         void propertyValidationsArePerformend_whenAddingAsset() {
 
@@ -490,22 +571,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canPatchAllUpdatablePropertiesOfAsset() {
 
-            final var givenAsset = givenSomeTemporaryHostingAsset(() ->
-                    HsHostingAssetRealEntity.builder()
-                            .bookingItem(givenSomeNewBookingItem(
-                                    "D-1000111 default project",
-                                    HsBookingItemType.MANAGED_SERVER,
-                                    "temp ManagedServer"))
-                            .type(MANAGED_SERVER)
-                            .identifier("vm2001")
-                            .caption("some test-asset")
-                            .config(Map.ofEntries(
-                                    Map.<String, Object>entry("monit_max_ssd_usage", 80),
-                                    Map.<String, Object>entry("monit_max_hdd_usage", 90),
-                                    Map.<String, Object>entry("monit_max_cpu_usage", 90),
-                                    Map.<String, Object>entry("monit_max_ram_usage", 70)
-                            ))
-                            .build());
+            val givenAsset = givenSomeTemporaryManagedServer("temp ManagedServer", "vm2001");
             final var alarmContactUuid = givenContact().getUuid();
 
             RestAssured // @formatter:off
@@ -567,6 +633,48 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                         """);
                         return true;
                     });
+        }
+
+        // verifies Fix for Security-Finding A-02
+        @Test
+        void assetAdmin_canNotPatchAlarmContactToInvisibleForeignContact() {
+
+            val givenAsset = givenSomeTemporaryManagedServer("temp ManagedServer for A-01", "vm2099");
+            val assetAdmin = "hs_hosting.asset#vm2099:ADMIN";
+            val foreignContact = realContactRepo.findContactByOptionalCaptionLike("fourth contact").getFirst();
+
+            // the foreign contact is invisible to the asset admin
+            RestAssured // @formatter:off
+                    .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .header("Hostsharing-Assumed-Roles", assetAdmin)
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/office/contacts/" + foreignContact.getUuid())
+                    .then().assertThat()
+                    .statusCode(404); // @formatter:on
+
+            // yet setting it as the alarm contact must be refused, not silently wired through em.getReference
+            RestAssured // @formatter:off
+                    .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .header("Hostsharing-Assumed-Roles", assetAdmin)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                        {
+                            "alarmContact.uuid": "%s"
+                        }
+                        """.formatted(foreignContact.getUuid()))
+                    .port(port)
+                    .when()
+                    .patch("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
+                    .then().log().all().assertThat()
+                    .statusCode(404); // @formatter:on
+
+            // and the asset still has no alarm contact
+            em.clear();
+            assertThat(realAssetRepo.findByUuid(givenAsset.getUuid())).isPresent().get()
+                    .extracting(HsHostingAssetRealEntity::getAlarmContact).isNull();
         }
 
         @Test
@@ -649,22 +757,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canDeleteArbitraryAsset() {
             context.define("hsh-alex_superuser");
-            final var givenAsset = givenSomeTemporaryHostingAsset(() ->
-                    HsHostingAssetRealEntity.builder()
-                            .bookingItem(givenSomeNewBookingItem(
-                                    "D-1000111 default project",
-                                    HsBookingItemType.MANAGED_SERVER,
-                                    "temp ManagedServer"))
-                            .type(MANAGED_SERVER)
-                            .identifier("vm1002")
-                            .caption("some test-asset")
-                            .config(Map.ofEntries(
-                                    Map.<String, Object>entry("monit_max_ssd_usage", 80),
-                                    Map.<String, Object>entry("monit_max_hdd_usage", 90),
-                                    Map.<String, Object>entry("monit_max_cpu_usage", 90),
-                                    Map.<String, Object>entry("monit_max_ram_usage", 70)
-                            ))
-                            .build());
+            val givenAsset = givenSomeTemporaryManagedServer("temp ManagedServer", "vm1002");
             RestAssured // @formatter:off
                     .given()
                     .header("Authorization", bearer("hsh-alex_superuser"))
@@ -681,22 +774,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void normalUser_canNotDeleteUnrelatedAsset() {
             context.define("hsh-alex_superuser");
-            final var givenAsset = givenSomeTemporaryHostingAsset(() ->
-                    HsHostingAssetRealEntity.builder()
-                            .bookingItem(givenSomeNewBookingItem(
-                                    "D-1000111 default project",
-                                    HsBookingItemType.MANAGED_SERVER,
-                                    "temp ManagedServer"))
-                            .type(MANAGED_SERVER)
-                            .identifier("vm1003")
-                            .caption("some test-asset")
-                            .config(Map.ofEntries(
-                                    Map.<String, Object>entry("monit_max_ssd_usage", 80),
-                                    Map.<String, Object>entry("monit_max_hdd_usage", 90),
-                                    Map.<String, Object>entry("monit_max_cpu_usage", 90),
-                                    Map.<String, Object>entry("monit_max_ram_usage", 70)
-                            ))
-                            .build());
+            val givenAsset = givenSomeTemporaryManagedServer("temp ManagedServer", "vm1003");
             RestAssured // @formatter:off
                     .given()
                     .header("Authorization", bearer("tst-drew_selfregistered"))
@@ -771,6 +849,24 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                 .filter(a -> a.getType() == assetType)
                 .findAny().orElseThrow();
         return givenAsset;
+    }
+
+    private HsHostingAssetRealEntity givenSomeTemporaryManagedServer(final String bookingItemCaption, final String identifier) {
+        return givenSomeTemporaryHostingAsset(() ->
+                HsHostingAssetRealEntity.builder()
+                        .bookingItem(givenSomeNewBookingItem(
+                                "D-1000111 default project",
+                                HsBookingItemType.MANAGED_SERVER,
+                                bookingItemCaption))
+                        .type(MANAGED_SERVER)
+                        .identifier(identifier)
+                        .caption("some test-asset")
+                        .config(Map.ofEntries(
+                                Map.<String, Object>entry("monit_max_ssd_usage", 80),
+                                Map.<String, Object>entry("monit_max_hdd_usage", 90),
+                                Map.<String, Object>entry("monit_max_cpu_usage", 90),
+                                Map.<String, Object>entry("monit_max_ram_usage", 70)))
+                        .build());
     }
 
     private HsHostingAssetRealEntity givenSomeTemporaryHostingAsset(final Supplier<HsHostingAssetRealEntity> newAsset) {

@@ -4,12 +4,15 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRbacRepository;
+import net.hostsharing.hsadminng.lambda.Reducer;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -21,11 +24,17 @@ import org.springframework.orm.jpa.JpaSystemException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
@@ -230,6 +239,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             "{ grant role:hs_hosting.asset#fir00:ADMIN to role:hs_hosting.asset#fir00:OWNER by system and assume }",
                             "{ grant role:hs_hosting.asset#fir00:ADMIN to role:hs_booking.item#fir01:AGENT by system and assume }",
                             "{ grant perm:hs_hosting.asset#fir00:UPDATE to role:hs_hosting.asset#fir00:ADMIN by system and assume }",
+                            "{ grant perm:hs_hosting.asset#fir00:INSERT>hs_hosting.asset to role:hs_hosting.asset#fir00:ADMIN by system and assume }",
 
                             // agent
                             "{ grant role:hs_hosting.asset#fir00:ADMIN to role:hs_hosting.asset#vm1011:AGENT by system and assume }",
@@ -242,6 +252,111 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             "{ grant perm:hs_hosting.asset#fir00:SELECT to role:hs_hosting.asset#fir00:TENANT by system and assume }",
 
                             null));
+        }
+
+        /**
+         * The generated insert-permission trigger has to reject inserts by subjects without any
+         * INSERT permission on hs_hosting.asset; this guards the DB-level defense-in-depth
+         * below the controller checks for Security-Finding A-02.
+         */
+        @Test
+        public void userWithoutInsertPermission_canNotCreateTopLevelAsset() {
+            // given
+            context("hsh-alex_superuser");
+            val inaccessibleBookingItem = givenBookingItem("D-1000111 default project", "separate ManagedServer");
+
+            // when
+            context("tst-person_smithpeter");
+            val result = attempt(em, () -> {
+                val newAsset = HsHostingAssetRbacEntity.builder()
+                        .bookingItem(inaccessibleBookingItem)
+                        .type(MANAGED_SERVER)
+                        .identifier("vm9090")
+                        .caption("some top-level server consuming an inaccessible booking-item")
+                        .build();
+                return toCleanup(rbacAssetRepo.save(newAsset));
+            });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(
+                    PersistenceException.class,
+                    "ERROR: [403] insert into hs_hosting.asset ",
+                    "not allowed for current subjects {tst-person_smithpeter}");
+        }
+
+        /**
+         * Simulates a database which already contained hs_hosting.asset rows before the
+         * INSERT-permission granting got (re-)activated: without the backfill in the RBAC changeset,
+         * even the ADMIN of such a pre-existing parent cannot create sub-assets below it anymore.
+         */
+        // verifies Fix for Security-Finding A-02
+        @Test
+        public void insertPermissionBackfillAllowsSubAssetCreationBelowPreExistingParentAssets() {
+            // given the backfill from the RBAC changeset (this already fails without the fix)
+            val backfillSql = insertPermissionBackfillFromRbacChangeset();
+
+            // and given a parent asset in the state of a pre-existing row, i.e. without its INSERT permission
+            val parentAssetCreation = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                return toCleanup(rbacAssetRepo.save(HsHostingAssetRbacEntity.builder()
+                        .bookingItem(givenBookingItem("D-1000111 default project", "separate ManagedServer"))
+                        .type(MANAGED_SERVER)
+                        .identifier("vm9097")
+                        .caption("simulated pre-existing ManagedServer")
+                        .build()));
+            });
+            parentAssetCreation.assertSuccessful();
+            val givenParentAsset = parentAssetCreation.returnedValue();
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                em.createNativeQuery("""
+                        delete from rbac.grant
+                            where descendantUuid in (
+                                select uuid from rbac.permission
+                                    where objectUuid = :parentAssetUuid and op = 'INSERT')
+                        """)
+                        .setParameter("parentAssetUuid", givenParentAsset.getUuid())
+                        .executeUpdate();
+                em.createNativeQuery("""
+                        delete from rbac.reference
+                            where uuid in (
+                                select uuid from rbac.permission
+                                    where objectUuid = :parentAssetUuid and op = 'INSERT')
+                        """)
+                        .setParameter("parentAssetUuid", givenParentAsset.getUuid())
+                        .executeUpdate();
+            }).assertSuccessful();
+
+            // then, even the ADMIN of that parent asset cannot create a sub-asset below it
+            val rejected = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser", "hs_hosting.asset#vm9097:ADMIN");
+                return rbacAssetRepo.save(newWebspaceBelow(givenParentAsset.getUuid()));
+            });
+            rejected.assertExceptionWithRootCauseMessage(
+                    PersistenceException.class,
+                    "ERROR: [403] insert into hs_hosting.asset ");
+
+            // when the backfill from the RBAC changeset gets applied
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                em.createNativeQuery(backfillSql).executeUpdate();
+            }).assertSuccessful();
+
+            // then the sub-asset creation below the pre-existing parent asset works
+            val accepted = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser", "hs_hosting.asset#vm9097:ADMIN");
+                return toCleanup(rbacAssetRepo.save(newWebspaceBelow(givenParentAsset.getUuid())));
+            });
+            accepted.assertSuccessful();
+        }
+
+        private HsHostingAssetRbacEntity newWebspaceBelow(final UUID parentAssetUuid) {
+            return HsHostingAssetRbacEntity.builder()
+                    .parentAsset(em.getReference(HsHostingAssetRealEntity.class, parentAssetUuid))
+                    .type(MANAGED_WEBSPACE)
+                    .identifier("xyz98")
+                    .caption("some webspace below a simulated pre-existing server")
+                    .build();
         }
 
         @Test
@@ -486,6 +601,23 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             return toCleanup(realAssetRepo.save(newAsset));
         }).assertSuccessful().returnedValue();
+    }
+
+    /**
+     * Extracts the backfill for pre-existing rows from the committed RBAC changelog,
+     * so the test verifies the very SQL which will run on already populated databases.
+     */
+    @SneakyThrows
+    private String insertPermissionBackfillFromRbacChangeset() {
+        val changelogSql = Files.readString(Path.of(
+                "src/main/resources/db/changelog/7-hs-hosting/701-hosting-asset/7013-hs-hosting-asset-rbac.sql"));
+        return Pattern.compile("do language plpgsql \\$\\$.*?\\$\\$;", Pattern.DOTALL)
+                .matcher(changelogSql).results()
+                .map(MatchResult::group)
+                .filter(doBlock -> doBlock.contains("pre-exising hs_hosting.asset rows"))
+                .reduce(Reducer::toSingleElement)
+                .orElseThrow(() -> new AssertionError(
+                        "backfill for pre-existing hs_hosting.asset rows expected in 7013-hs-hosting-asset-rbac.sql"));
     }
 
     HsBookingItemRealEntity givenBookingItem(final String projectCaption, final String bookingItemCaption) {

@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetPatchResource;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,8 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import jakarta.persistence.EntityManager;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -20,7 +21,6 @@ import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
 import static net.hostsharing.hsadminng.mapper.PatchMap.patchMap;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 
 @TestInstance(PER_CLASS)
@@ -56,14 +56,12 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final String PATCHED_CAPTION = "patched caption";
 
     @Mock
-    private EntityManager em;
+    private HsOfficeContactRbacRepository rbacContactRepo;
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsHostingAssetRbacEntity.class), any())).thenAnswer(invocation ->
-                HsHostingAssetRbacEntity.builder().uuid(invocation.getArgument(1)).build());
-        lenient().when(em.getReference(eq(HsOfficeContactRealEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(rbacContactRepo.findVisibleByUuid(any())).thenAnswer(invocation ->
+                Optional.of(HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(0)).build()));
     }
 
     @Override
@@ -84,7 +82,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @Override
     protected HsHostingAssetEntityPatcher createPatcher(final HsHostingAssetRbacEntity server) {
-        return new HsHostingAssetEntityPatcher(em, server);
+        return new HsHostingAssetEntityPatcher(rbacContactRepo, server);
     }
 
     @Override

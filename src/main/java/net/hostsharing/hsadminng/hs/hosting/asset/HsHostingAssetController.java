@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRbacRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetsApi;
@@ -12,6 +12,7 @@ import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetPatchResource;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
@@ -23,9 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -48,10 +49,10 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     private HsHostingAssetRbacRepository rbacAssetRepo;
 
     @Autowired
-    private HsHostingAssetRealRepository realAssetRepo;
+    private HsBookingItemRbacRepository rbacBookingItemRepo;
 
     @Autowired
-    private HsBookingItemRealRepository realBookingItemRepo;
+    private HsOfficeContactRbacRepository rbacContactRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -140,7 +141,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entity = rbacAssetRepo.findByUuid(assetUuid).orElseThrow();
 
-        new HsHostingAssetEntityPatcher(emw, entity).apply(body);
+        new HsHostingAssetEntityPatcher(rbacContactRepo, entity).apply(body);
 
         final var mapped = new HostingAssetEntitySaveProcessor(emw, entity)
                 .preprocessEntity()
@@ -154,17 +155,20 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
         return ResponseEntity.ok(mapped);
     }
 
+    // these lookups must resolve via the restricted views: the DB-side insert-check only validates
+    // NEW.parentAssetUuid and short-circuits for DOMAIN_SETUP, it never checks bookingItemUuid,
+    // and invisible references must yield the same 404 as unknown ones (A-02)
     final BiConsumer<HsHostingAssetInsertResource, HsHostingAssetRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.putConfig(KeyValueMap.from("config", resource.getConfig()));
         if (resource.getBookingItemUuid() != null) {
-            entity.setBookingItem(realBookingItemRepo.findByUuid(resource.getBookingItemUuid())
-                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] bookingItemUuid %s not found".formatted(
-                            resource.getBookingItemUuid()))));
+            entity.setBookingItem(rbacBookingItemRepo.findVisibleByUuid(resource.getBookingItemUuid())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "cannot find bookingItem by bookingItemUuid: " + resource.getBookingItemUuid())));
         }
         if (resource.getParentAssetUuid() != null) {
-            entity.setParentAsset(realAssetRepo.findByUuid(resource.getParentAssetUuid())
-                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] parentAssetUuid %s not found".formatted(
-                            resource.getParentAssetUuid()))));
+            entity.setParentAsset(rbacAssetRepo.findVisibleByUuid(resource.getParentAssetUuid())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "cannot find parentAsset by parentAssetUuid: " + resource.getParentAssetUuid())));
         }
     };
 

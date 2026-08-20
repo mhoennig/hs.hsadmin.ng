@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.rbac.generator;
 
+import lombok.val;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BinaryOperator;
@@ -57,7 +59,7 @@ public class InsertTriggerGenerator {
                     """,
                 with("rawSubTable", g.getSuperRoleDef().getEntityAlias().getRawTableNameWithSchema()));
 
-            if (isGrantToADifferentTable(g)) {
+            if (isGrantToADifferentTable(g) || g.isBackfillForPreExistingRows()) {
                 plPgSql.writeLn(
                     """
                     /*
@@ -88,19 +90,19 @@ public class InsertTriggerGenerator {
                     with("rawSubTable", g.getPermDef().getEntityAlias().getRawTableNameWithSchema()),
                     with("superRoleRef", toRoleDescriptor(g.getSuperRoleDef(), "row")));
             } else {
+                // the mis-named table in this emitted text is frozen: the released changelog
+                // 6303-hs-booking-item-rbac.sql contains it verbatim and must stay checksum-stable
                 plPgSql.writeLn("""
                     -- Granting INSERT INTO hs_hosting.asset permissions to specified role of pre-existing hs_hosting.asset rows slipped,
                     -- because there cannot yet be any pre-existing rows in the same table yet.
-                    """,
-                    with("rawSuperTable", g.getSuperRoleDef().getEntityAlias().getRawTableNameWithSchema()),
-                    with("rawSubTable", g.getPermDef().getEntityAlias().getRawTableNameWithSchema()));
+                    """);
             }
 
             plPgSql.writeLn("""    
                 /**
                     Grants ${rawSubTable} INSERT permission to specified role of new ${rawSuperTable} rows.
                 */
-                create or replace function ${rawSubTableSchemaPrefix}${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf()
+                create or replace function ${rawSubTableSchemaPrefix}${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}${grantDiscriminator}_tf()
                     returns trigger
                     language plpgsql
                     strict as $$
@@ -112,13 +114,15 @@ public class InsertTriggerGenerator {
                     ${ifConditionEnd}
                     return NEW;
                 end; $$;
-                
+
                 -- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
-                create trigger ${rawSubTableName}_z_grants_after_insert_tg
+                create trigger ${afterInsertGrantTriggerName}
                     after insert on ${rawSuperTableWithSchema}
                     for each row
-                execute procedure ${rawSubTableSchemaPrefix}${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf();
+                execute procedure ${rawSubTableSchemaPrefix}${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}${grantDiscriminator}_tf();
                 """,
+                    with("grantDiscriminator", grantDiscriminatorFor(g)),
+                    with("afterInsertGrantTriggerName", afterInsertGrantTriggerName(g)),
                     with("ifConditionThen", g.getSuperRoleDef().getEntityAlias().isCaseDependent()
                             // TODO.impl: .type needs to be dynamically generated
                             ? "if NEW.type = '" + g.getSuperRoleDef().getEntityAlias().usingCase().value + "' then"
@@ -132,7 +136,6 @@ public class InsertTriggerGenerator {
                     with("rawSuperTable", g.getSuperRoleDef().getEntityAlias().getRawTableName()),
                     with("rawSubTable", g.getPermDef().getEntityAlias().getRawTableNameWithSchema()),
                     with("rawSubTableSchemaPrefix", g.getPermDef().getEntityAlias().getRawTableSchemaPrefix()),
-                    with("rawSubTableName", g.getPermDef().getEntityAlias().getRawTableName()),
                     with("rawSubTableShortName", g.getPermDef().getEntityAlias().getRawTableShortName()));
 
         });
@@ -207,9 +210,9 @@ public class InsertTriggerGenerator {
     private void generateInsertPermissionChecksForSingleGrant(final StringWriter plPgSql, final RbacSpec.RbacGrantDefinition g) {
         final RbacSpec.EntityAlias superRoleEntityAlias = g.getSuperRoleDef().getEntityAlias();
 
-        final var caseCondition = g.isConditional()
-                ? ("NEW.type in (" + toStringList(g.getForCases()) + ") and ")
-                : "";
+        val caseCondition = appliesToAllCases(g)
+                ? ""
+                : ("NEW.type in (" + toStringList(g.getForCases()) + ") and ");
 
         if (g.getSuperRoleDef().isGlobal(GUEST)) {
             plPgSql.writeLn(
@@ -284,6 +287,30 @@ public class InsertTriggerGenerator {
         return !rbacDef.getRootEntityAlias().getRawTableNameWithSchema().equals(g.getSuperRoleDef().getEntityAlias().getRawTableNameWithSchema());
     }
 
+    // PostgreSQL fires after-insert triggers in name order, so the granting trigger must sort behind
+    // the role-building trigger; the historic "_z_" infix only achieves that while the table name sorts
+    // behind "build...", so a leading token is prepended for the tables (e.g. asset) where it does not
+    private static final String ROLE_BUILDING_TRIGGER_NAME = "build_rbac_system_after_insert_tg";
+
+    private String afterInsertGrantTriggerName(final RbacSpec.RbacGrantDefinition grant) {
+        val subTableName = grant.getPermDef().getEntityAlias().getRawTableName();
+        val name = subTableName + "_z_grants" + grantDiscriminatorFor(grant) + "_after_insert_tg";
+        return name.compareTo(ROLE_BUILDING_TRIGGER_NAME) < 0 ? "z_" + name : name;
+    }
+
+    // the granting trigger/function name is keyed on sub- and super-table only, so several grants to
+    // distinct roles of the same super-table (e.g. global ADMIN and global GUEST) would collide; the
+    // grantee role disambiguates them, and stays empty for the single-grant case to keep names stable
+    private String grantDiscriminatorFor(final RbacSpec.RbacGrantDefinition grant) {
+        val superTableShortName = grant.getSuperRoleDef().getEntityAlias().getRawTableShortName();
+        val grantsToSameSuperTable = getInsertGrants()
+                .filter(g -> g.getSuperRoleDef().getEntityAlias().getRawTableShortName().equals(superTableShortName))
+                .count();
+        return grantsToSameSuperTable > 1
+                ? "_" + grant.getSuperRoleDef().getRole().name().toLowerCase()
+                : "";
+    }
+
     private Stream<RbacSpec.RbacGrantDefinition> getInsertGrants() {
         return rbacDef.getGrantDefs().stream()
                 .filter(g -> g.grantType() == PERM_TO_ROLE)
@@ -296,7 +323,16 @@ public class InsertTriggerGenerator {
 
     private boolean isInsertPermissionGrantedToGlobalGuest() {
          return getInsertGrants().anyMatch(g ->
-                 g.getSuperRoleDef().getEntityAlias().isGlobal() && g.getSuperRoleDef().getRole() == GUEST);
+                 g.getSuperRoleDef().getEntityAlias().isGlobal() && g.getSuperRoleDef().getRole() == GUEST
+                         && appliesToAllCases(g));
+    }
+
+    // a grant restricted to specific switchOnColumn cases needs a per-row type guard in the check;
+    // RbacGrantDefinition.isConditional() misses the single-declared-case setup (allCases.size()==1),
+    // so the case restriction is read directly from the grant instead
+    private static boolean appliesToAllCases(final RbacSpec.RbacGrantDefinition grant) {
+        val forCases = grant.getForCases();
+        return forCases == null || forCases.isEmpty();
     }
 
     private Optional<RbacSpec.RbacGrantDefinition> getOptionalInsertGrant() {

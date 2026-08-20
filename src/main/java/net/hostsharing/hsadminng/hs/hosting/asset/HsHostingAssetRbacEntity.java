@@ -56,7 +56,8 @@ public class HsHostingAssetRbacEntity extends HsHostingAsset {
                         dependsOnColumn("parentAssetUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)
-                .toRole("parentAsset", ADMIN).grantPermission(INSERT)
+                // the backfill is needed because the table was already populated when this INSERT-grant got introduced (A-02)
+                .toRole("parentAsset", ADMIN).grantPermissionAlsoForPreExistingRows(INSERT)
 
                 .importEntityAlias("assignedToAsset", HsHostingAssetRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("assignedToAssetUuid"),

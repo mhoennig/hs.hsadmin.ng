@@ -65,5 +65,8 @@ post:
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: 'error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            # an unknown or inaccessible bookingItem.uuid or parentAsset.uuid
+            $ref: 'error-responses.yaml#/components/responses/NotFound'
         "409":
             $ref: 'error-responses.yaml#/components/responses/Conflict'

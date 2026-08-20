@@ -15,6 +15,11 @@ public interface HsHostingAssetRbacRepository extends HsHostingAssetRepository<H
     @Timed("app.hostingAsset.repo.findByUuid.rbac")
     Optional<HsHostingAssetRbacEntity> findByUuid(final UUID serverUuid);
 
+    // see HsOfficeContactRbacRepository.findVisibleByUuid for the rationale of this pattern
+    @Query(value = "select ha.* from hs_hosting.asset_rv ha where ha.uuid = :uuid", nativeQuery = true)
+    @Timed("app.hostingAsset.repo.findVisibleByUuid.rbac")
+    Optional<HsHostingAssetRealEntity> findVisibleByUuid(UUID uuid);
+
     @Timed("app.hostingAsset.repo.findByIdentifier.rbac")
     List<HsHostingAssetRbacEntity> findByIdentifier(String assetIdentifier);
 

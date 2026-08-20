@@ -10,7 +10,8 @@ import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRbacRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapperFake;
@@ -79,14 +80,14 @@ public class HsHostingAssetControllerRestTest {
     EntityManagerFactory emf;
 
     @MockitoBean
-    @SuppressWarnings("unused") // bean needs to be present for HsHostingAssetController
-    private HsBookingItemRealRepository realBookingItemRepo;
-
-    @MockitoBean
-    private HsHostingAssetRealRepository realAssetRepo;
+    private HsBookingItemRbacRepository rbacBookingItemRepo;
 
     @MockitoBean
     private HsHostingAssetRbacRepository rbacAssetRepo;
+
+    @MockitoBean
+    @SuppressWarnings("unused") // bean needs to be present for HsHostingAssetController
+    private HsOfficeContactRbacRepository rbacContactRepo;
 
     enum ListTestCases {
         CLOUD_SERVER(
@@ -648,7 +649,7 @@ public class HsHostingAssetControllerRestTest {
         // given
         val bookingItemUuid = UUID.randomUUID();
         CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY.setUuid(bookingItemUuid);
-        when(realBookingItemRepo.findByUuid(bookingItemUuid)).thenReturn(Optional.of(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY));
+        when(rbacBookingItemRepo.findVisibleByUuid(bookingItemUuid)).thenReturn(Optional.of(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -677,7 +678,7 @@ public class HsHostingAssetControllerRestTest {
     void shouldRejectPostIfBookingItemIsMissing() throws Exception {
         // given
         val bookingItemUuid = UUID.randomUUID();
-        when(realBookingItemRepo.findByUuid(bookingItemUuid)).thenReturn(Optional.empty());
+        when(rbacBookingItemRepo.findVisibleByUuid(bookingItemUuid)).thenReturn(Optional.empty());
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -696,8 +697,8 @@ public class HsHostingAssetControllerRestTest {
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("message", is("ERROR: [400] bookingItemUuid %s not found".formatted(bookingItemUuid))));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("message", is("ERROR: [404] cannot find bookingItem by bookingItemUuid: " + bookingItemUuid)));
     }
 
     @Test

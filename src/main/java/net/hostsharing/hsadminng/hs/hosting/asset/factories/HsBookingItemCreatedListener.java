@@ -9,6 +9,8 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.booking.item.BookingItemCreatedAppEvent;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,12 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
     @Autowired
     private StrictMapper StrictMapper;
 
+    @Autowired
+    private HsOfficeContactRbacRepository rbacContactRepo;
+
+    @Autowired
+    private HsHostingAssetRbacRepository rbacAssetRepo;
+
     @Override
     @SneakyThrows
     public void onApplicationEvent(@NotNull BookingItemCreatedAppEvent bookingItemCreatedAppEvent) {
@@ -48,7 +56,8 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
             case PRIVATE_CLOUD, CLOUD_SERVER, MANAGED_SERVER ->
                     forNowNoAutomaticHostingAssetCreationPossible(emw, newBookingItemRealEntity, asset, StrictMapper);
             case MANAGED_WEBSPACE -> new ManagedWebspaceHostingAssetFactory(emw, newBookingItemRealEntity, asset, StrictMapper);
-            case DOMAIN_SETUP -> new DomainSetupHostingAssetFactory(emw, newBookingItemRealEntity, asset, StrictMapper);
+            case DOMAIN_SETUP -> new DomainSetupHostingAssetFactory(
+                    emw, newBookingItemRealEntity, asset, StrictMapper, rbacContactRepo, rbacAssetRepo);
         };
         if (factory != null) {
             final var statusMessage = factory.createAndPersist();

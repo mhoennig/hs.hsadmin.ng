@@ -1,12 +1,15 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.factories;
 
+import lombok.val;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetAutoInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetSubInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetTypeResource;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.lambda.Reducer;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
@@ -17,7 +20,6 @@ import jakarta.validation.ValidationException;
 import java.net.IDN;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Function;
 
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_DNS_SETUP;
@@ -27,12 +29,19 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMA
 
 public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
 
+    private final HsOfficeContactRbacRepository rbacContactRepo;
+    private final HsHostingAssetRbacRepository rbacAssetRepo;
+
     public DomainSetupHostingAssetFactory(
             final EntityManagerWrapper emw,
             final HsBookingItemRealEntity newBookingItemRealEntity,
             final HsHostingAssetAutoInsertResource asset,
-            final StrictMapper StrictMapper) {
+            final StrictMapper StrictMapper,
+            final HsOfficeContactRbacRepository rbacContactRepo,
+            final HsHostingAssetRbacRepository rbacAssetRepo) {
         super(emw, newBookingItemRealEntity, asset, StrictMapper);
+        this.rbacContactRepo = rbacContactRepo;
+        this.rbacAssetRepo = rbacAssetRepo;
     }
 
     @Override
@@ -45,7 +54,8 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
         final var domainHttpSetupAssetResource = findSubHostingAssetResource(HsHostingAssetTypeResource.DOMAIN_HTTP_SETUP);
         final var assignedToUnixUserAssetEntity = domainHttpSetupAssetResource
                 .map(HsHostingAssetSubInsertResource::getAssignedToAssetUuid)
-                .map(uuid -> emw.find(HsHostingAssetRealEntity.class, uuid))
+                // via the restricted view, so an invisible UNIX_USER behaves like a missing one (A-02)
+                .flatMap(rbacAssetRepo::findVisibleByUuid)
                 .orElseThrow(() -> new ValidationException("DOMAIN_HTTP_SETUP subAsset with assignedToAssetUuid required in compatibility mode"));
 
         subHostingAssets.add(
@@ -97,7 +107,7 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
                 .type(HsHostingAssetType.DOMAIN_SETUP)
                 .identifier(domainName)
                 .caption(asset.getCaption() != null ? asset.getCaption() : domainName)
-                .alarmContact(ref(HsOfficeContactRealEntity.class, asset.getAlarmContactUuid()))
+                .alarmContact(visibleAlarmContactOrNull())
                 // the sub-hosting-assets get added later
                 .build();
     }
@@ -153,7 +163,11 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
         newHostingAsset.getSubHostingAssets().forEach(super::persist);
     }
 
-    private <T> T ref(final Class<T> entityClass, final UUID uuid) {
-        return uuid != null ? emw.getReference(entityClass, uuid) : null;
+    // via the restricted view, so an invisible foreign contact cannot become the alarm-contact (A-02)
+    private HsOfficeContactRealEntity visibleAlarmContactOrNull() {
+        val alarmContactUuid = asset.getAlarmContactUuid();
+        return alarmContactUuid == null ? null
+                : rbacContactRepo.findVisibleByUuid(alarmContactUuid).orElseThrow(
+                        () -> new ValidationException("cannot find Contact by alarmContact.uuid: " + alarmContactUuid));
     }
 }

@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.booking.item;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
+import lombok.val;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
@@ -261,7 +262,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             context.define("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenProject = findDefaultProjectOfDebitorNumber(1000111);
-            // TODO.impl: "sec01-web" should not work, but does
+            // an invisible foreign UnixUser like "sec01-web" gets rejected, see projectAdmin_canNotAssignDomainHttpSetupToInvisibleForeignUnixUser
             final var givenUnixUser = realHostingAssetRepo.findByTypeAndIdentifier(UNIX_USER, "fir01-web").stream()
                     .findFirst().orElseThrow();
 
@@ -425,6 +426,168 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .isEqualTo("[[DNS] no TXT record 'Hostsharing-domain-setup-verification-code=just-a-fake-verification-code' found for domain name 'example.org' (nor in its super-domain)]");
 
             // but the related HostingAsset did not get created
+            assertThat(realHostingAssetRepo.findByIdentifier("example.org")).isEmpty();
+        }
+
+        // verifies Fix for Security-Finding A-02
+        @Test
+        void projectAdmin_canNotAttachInvisibleForeignContactAsAlarmContact() {
+
+            val projectAdmin = "hs_booking.project#D-1000111-D-1000111defaultproject:ADMIN";
+            context.define("hsh-alex_superuser", projectAdmin);
+            val givenProject = findDefaultProjectOfDebitorNumber(1000111);
+            val givenUnixUser = realHostingAssetRepo.findByTypeAndIdentifier(UNIX_USER, "fir01-web").stream()
+                    .findFirst().orElseThrow();
+            // fetched via native query, because the booking module must not access hs.office.contact classes
+            val invisibleForeignContactUuid = (UUID) em.createNativeQuery(
+                    "select uuid from hs_office.contact where caption='fourth contact'", UUID.class)
+                    .getSingleResult();
+
+            Dns.fakeResultForDomain("example.org",
+                    Dns.Result.fromRecords("Hostsharing-domain-setup-verification-code=just-a-fake-verification-code"));
+
+            // the foreign contact is not even visible to the caller
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .header("Hostsharing-Assumed-Roles", projectAdmin)
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/office/contacts/" + invisibleForeignContactUuid)
+                    .then().assertThat()
+                        .statusCode(404); // @formatter:on
+
+            // when the DOMAIN_SETUP booking-item names it as alarm-contact of the related hosting-asset
+            val location = RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .header("Hostsharing-Assumed-Roles", projectAdmin)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "project.uuid": "{projectUuid}",
+                                    "type": "DOMAIN_SETUP",
+                                    "caption": "Domain-Setup for example.org",
+                                    "resources": {
+                                        "domainName": "example.org",
+                                        "verificationCode": "just-a-fake-verification-code"
+                                    },
+                                    "hostingAsset": {
+                                        "identifier": "example.org", // also as default for all subAssets
+                                        "alarmContact.uuid": "{alarmContactUuid}",
+                                        "subHostingAssets": [
+                                            {
+                                                "type": "DOMAIN_DNS_SETUP"
+                                            },
+                                            {
+                                                "type": "DOMAIN_HTTP_SETUP",
+                                                "assignedToAsset.uuid": "{unixUserUuid}"
+                                            },
+                                            {
+                                                "type": "DOMAIN_MBOX_SETUP"
+                                            },
+                                            {
+                                                "type": "DOMAIN_SMTP_SETUP"
+                                            }
+                                        ]
+                                    }
+                                }
+                                """
+                                .replace("{projectUuid}", givenProject.getUuid().toString())
+                                .replace("{alarmContactUuid}", invisibleForeignContactUuid.toString())
+                                .replace("{unixUserUuid}", givenUnixUser.getUuid().toString())
+                        )
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/booking/items")
+                    .then().log().all().assertThat()
+                        .statusCode(201)
+                        .extract().header("Location");  // @formatter:on
+
+            // then the booking-item got created, but the hosting-asset creation was refused
+            val newBookingItem = fetchRealBookingItemFromURI(location);
+            val event = bookingItemCreationEventRepo.findByBookingItem(newBookingItem);
+            assertThat(event).as("the hosting-asset creation should have been refused, but no event got persisted").isNotNull();
+            assertThat(event.getStatusMessage())
+                    .isEqualTo("cannot find Contact by alarmContact.uuid: " + invisibleForeignContactUuid);
+            assertThat(realHostingAssetRepo.findByIdentifier("example.org")).isEmpty();
+        }
+
+        // verifies Fix for Security-Finding A-02
+        @Test
+        void projectAdmin_canNotAssignDomainHttpSetupToInvisibleForeignUnixUser() {
+
+            val projectAdmin = "hs_booking.project#D-1000111-D-1000111defaultproject:ADMIN";
+            context.define("hsh-alex_superuser", projectAdmin);
+            val givenProject = findDefaultProjectOfDebitorNumber(1000111);
+            val invisibleForeignUnixUser = realHostingAssetRepo.findByTypeAndIdentifier(UNIX_USER, "sec01-web").stream()
+                    .findFirst().orElseThrow();
+
+            Dns.fakeResultForDomain("example.org",
+                    Dns.Result.fromRecords("Hostsharing-domain-setup-verification-code=just-a-fake-verification-code"));
+
+            // the foreign UnixUser is not even visible to the caller
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .header("Hostsharing-Assumed-Roles", projectAdmin)
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/hosting/assets/" + invisibleForeignUnixUser.getUuid())
+                    .then().assertThat()
+                        .statusCode(404); // @formatter:on
+
+            // when the DOMAIN_SETUP booking-item assigns the DOMAIN_HTTP_SETUP to that UnixUser
+            val location = RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .header("Hostsharing-Assumed-Roles", projectAdmin)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "project.uuid": "{projectUuid}",
+                                    "type": "DOMAIN_SETUP",
+                                    "caption": "Domain-Setup for example.org",
+                                    "resources": {
+                                        "domainName": "example.org",
+                                        "verificationCode": "just-a-fake-verification-code"
+                                    },
+                                    "hostingAsset": {
+                                        "identifier": "example.org", // also as default for all subAssets
+                                        "subHostingAssets": [
+                                            {
+                                                "type": "DOMAIN_DNS_SETUP"
+                                            },
+                                            {
+                                                "type": "DOMAIN_HTTP_SETUP",
+                                                "assignedToAsset.uuid": "{unixUserUuid}"
+                                            },
+                                            {
+                                                "type": "DOMAIN_MBOX_SETUP"
+                                            },
+                                            {
+                                                "type": "DOMAIN_SMTP_SETUP"
+                                            }
+                                        ]
+                                    }
+                                }
+                                """
+                                .replace("{projectUuid}", givenProject.getUuid().toString())
+                                .replace("{unixUserUuid}", invisibleForeignUnixUser.getUuid().toString())
+                        )
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/booking/items")
+                    .then().log().all().assertThat()
+                        .statusCode(201)
+                        .extract().header("Location");  // @formatter:on
+
+            // then the booking-item got created, but the hosting-asset creation was refused
+            val newBookingItem = fetchRealBookingItemFromURI(location);
+            val event = bookingItemCreationEventRepo.findByBookingItem(newBookingItem);
+            assertThat(event).as("the hosting-asset creation should have been refused, but no event got persisted").isNotNull();
+            assertThat(event.getStatusMessage())
+                    .isEqualTo("DOMAIN_HTTP_SETUP subAsset with assignedToAssetUuid required in compatibility mode");
             assertThat(realHostingAssetRepo.findByIdentifier("example.org")).isEmpty();
         }
     }

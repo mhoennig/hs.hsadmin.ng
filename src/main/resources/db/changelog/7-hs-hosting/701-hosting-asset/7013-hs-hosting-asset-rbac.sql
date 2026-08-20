@@ -158,6 +158,178 @@ execute procedure hs_hosting.asset_update_rbac_system_after_update_tf();
 
 
 -- ============================================================================
+--changeset InsertTriggerGenerator:hs-hosting-asset-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- granting INSERT permission to rbac.global ----------------------------
+
+/*
+    Grants INSERT INTO hs_hosting.asset permissions to specified role of pre-existing rbac.global rows.
+ */
+do language plpgsql $$
+    declare
+        row rbac.global;
+    begin
+        call base.defineContext('create INSERT INTO hs_hosting.asset permissions for pre-exising rbac.global rows');
+
+        FOR row IN SELECT * FROM rbac.global
+            -- unconditional for all rows in that table
+            LOOP
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_hosting.asset'),
+                        rbac.global_ADMIN());
+            END LOOP;
+    end;
+$$;
+
+/**
+    Grants hs_hosting.asset INSERT permission to specified role of new global rows.
+*/
+create or replace function hs_hosting.asset_grants_insert_to_global_admin_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    -- unconditional for all rows in that table
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_hosting.asset'),
+            rbac.global_ADMIN());
+    -- end.
+    return NEW;
+end; $$;
+
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_asset_z_grants_admin_after_insert_tg
+    after insert on rbac.global
+    for each row
+execute procedure hs_hosting.asset_grants_insert_to_global_admin_tf();
+
+-- granting INSERT permission to hs_hosting.asset ----------------------------
+
+/*
+    Grants INSERT INTO hs_hosting.asset permissions to specified role of pre-existing hs_hosting.asset rows.
+ */
+do language plpgsql $$
+    declare
+        row hs_hosting.asset;
+    begin
+        call base.defineContext('create INSERT INTO hs_hosting.asset permissions for pre-exising hs_hosting.asset rows');
+
+        FOR row IN SELECT * FROM hs_hosting.asset
+            -- unconditional for all rows in that table
+            LOOP
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_hosting.asset'),
+                        hs_hosting.asset_ADMIN(row));
+            END LOOP;
+    end;
+$$;
+
+/**
+    Grants hs_hosting.asset INSERT permission to specified role of new asset rows.
+*/
+create or replace function hs_hosting.asset_grants_insert_to_asset_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    -- unconditional for all rows in that table
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_hosting.asset'),
+            hs_hosting.asset_ADMIN(NEW));
+    -- end.
+    return NEW;
+end; $$;
+
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_asset_z_grants_after_insert_tg
+    after insert on hs_hosting.asset
+    for each row
+execute procedure hs_hosting.asset_grants_insert_to_asset_tf();
+
+-- granting INSERT permission to rbac.global ----------------------------
+
+/*
+    Grants INSERT INTO hs_hosting.asset permissions to specified role of pre-existing rbac.global rows.
+ */
+do language plpgsql $$
+    declare
+        row rbac.global;
+    begin
+        call base.defineContext('create INSERT INTO hs_hosting.asset permissions for pre-exising rbac.global rows');
+
+        FOR row IN SELECT * FROM rbac.global
+            -- unconditional for all rows in that table
+            LOOP
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_hosting.asset'),
+                        rbac.global_GUEST());
+            END LOOP;
+    end;
+$$;
+
+/**
+    Grants hs_hosting.asset INSERT permission to specified role of new global rows.
+*/
+create or replace function hs_hosting.asset_grants_insert_to_global_guest_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    -- unconditional for all rows in that table
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_hosting.asset'),
+            rbac.global_GUEST());
+    -- end.
+    return NEW;
+end; $$;
+
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_asset_z_grants_guest_after_insert_tg
+    after insert on rbac.global
+    for each row
+execute procedure hs_hosting.asset_grants_insert_to_global_guest_tf();
+
+
+-- ============================================================================
+--changeset InsertTriggerGenerator:hs-hosting-asset-rbac-CHECKING-INSERT-PERMISSION runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
+-- ----------------------------------------------------------------------------
+
+/**
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_hosting.asset.
+*/
+create or replace function hs_hosting.asset_insert_permission_check_tf()
+    returns trigger
+    language plpgsql as $$
+declare
+    superObjectUuid uuid;
+begin
+    -- check INSERT permission if rbac.global ADMIN
+    if rbac.hasGlobalAdminRole() then
+        return NEW;
+    end if;
+    -- check INSERT permission via direct foreign key: NEW.parentAssetUuid
+    if rbac.hasInsertPermission(NEW.parentAssetUuid, 'hs_hosting.asset') then
+        return NEW;
+    end if;
+    -- check INSERT permission for rbac.global anyone
+    if NEW.type in ('DOMAIN_SETUP') and true then
+        return NEW;
+    end if;
+
+    raise exception '[403] insert into hs_hosting.asset values(%) not allowed for current subjects % (%)',
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
+end; $$;
+
+create or replace trigger asset_insert_permission_check_tg
+    before insert on hs_hosting.asset
+    for each row
+        execute procedure hs_hosting.asset_insert_permission_check_tf();
+--//
+
+
+-- ============================================================================
 --changeset RbacIdentityViewGenerator:hs-hosting-asset-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 

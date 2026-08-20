@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.generator;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.val;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import org.reflections.Reflections;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -564,6 +565,15 @@ public class RbacSpec {
             return RbacSpec.this;
         }
 
+        // for INSERT-grants introduced when the target table already contained released rows,
+        // which need the permission backfilled for these pre-existing rows
+        public RbacSpec grantPermissionAlsoForPreExistingRows(final Permission perm) {
+            val forTable = rootEntityAlias.getRawTableNameWithSchema();
+            findOrCreateGrantDef(findRbacPerm(rootEntityAlias, perm, forTable), superRoleDef)
+                    .toCreate().backfillForPreExistingRows();
+            return RbacSpec.this;
+        }
+
     }
 
     public enum Nullable {
@@ -581,6 +591,7 @@ public class RbacSpec {
         private final RbacPermissionDefinition permDef;
         private boolean assumed = true;
         private boolean toCreate = false;
+        private boolean backfillForPreExistingRows = false;
         private Set<CaseDef> forCases = new LinkedHashSet<>();
 
         @Override
@@ -663,6 +674,11 @@ public class RbacSpec {
 
         RbacGrantDefinition toCreate() {
             toCreate = true;
+            return this;
+        }
+
+        RbacGrantDefinition backfillForPreExistingRows() {
+            backfillForPreExistingRows = true;
             return this;
         }
 

@@ -2,20 +2,24 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetPatchResource;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
-import jakarta.persistence.EntityManager;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.UUID;
 
 public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAssetPatchResource> {
 
-    private final EntityManager em;
+    private final HsOfficeContactRbacRepository rbacContactRepo;
     private final HsHostingAssetRbacEntity entity;
 
-    public HsHostingAssetEntityPatcher(final EntityManager em, final HsHostingAssetRbacEntity entity) {
-        this.em = em;
+    public HsHostingAssetEntityPatcher(
+            final HsOfficeContactRbacRepository rbacContactRepo,
+            final HsHostingAssetRbacEntity entity) {
+        this.rbacContactRepo = rbacContactRepo;
         this.entity = entity;
     }
 
@@ -26,10 +30,13 @@ public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAsset
         Optional.ofNullable(resource.getConfig())
                 .ifPresent(r -> entity.getConfig().patch(KeyValueMap.from("config", resource.getConfig())));
         OptionalFromJson.of(resource.getAlarmContactUuid())
-                // HOWTO: patch nullable JSON resource uuid to an ntity reference
-                .ifPresent(newValue -> entity.setAlarmContact(
-                            Optional.ofNullable(newValue)
-                                .map(uuid -> em.getReference(HsOfficeContactRealEntity.class, newValue))
-                                .orElse(null)));
+                // HOWTO: patch nullable JSON resource uuid to an entity reference
+                .ifPresent(newValue -> entity.setAlarmContact(visibleContactOrNull(newValue)));
+    }
+
+    private HsOfficeContactRealEntity visibleContactOrNull(final UUID contactUuid) {
+        return contactUuid == null ? null
+                : rbacContactRepo.findVisibleByUuid(contactUuid).orElseThrow(
+                        () -> new NoSuchElementException("cannot find Contact by alarmContact.uuid: " + contactUuid));
     }
 }
