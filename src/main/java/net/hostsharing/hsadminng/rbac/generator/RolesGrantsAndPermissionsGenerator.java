@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.rbac.generator.RbacSpec.CaseDef;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacGrantDefinition;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec.RbacPermissionDefinition;
 
+import java.util.Locale;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,6 +24,10 @@ import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
 class RolesGrantsAndPermissionsGenerator {
+
+    // PostgreSQL fires after-insert triggers in name order and InsertTriggerGenerator sorts its
+    // granting triggers behind this name, thus both generators must share this constant
+    static final String ROLE_BUILDING_TRIGGER_NAME = "build_rbac_system_after_insert_tg";
 
     private final RbacSpec rbacDef;
     private final Set<RbacGrantDefinition> rbacGrants = new HashSet<>();
@@ -369,7 +374,7 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private String refVarName(final PostgresTriggerReference ref, final RbacSpec.EntityAlias entityAlias) {
-        return ref.name().toLowerCase() + capitalize(entityAlias.aliasName());
+        return ref.name().toLowerCase(Locale.ROOT) + capitalize(entityAlias.aliasName());
     }
 
     private String roleRef(final PostgresTriggerReference rootRefVar, final RbacSpec.RbacRoleDefinition roleDef) {
@@ -385,7 +390,7 @@ class RolesGrantsAndPermissionsGenerator {
             final RbacSpec.EntityAlias entityAlias) {
         return rbacDef.isRootEntityAlias(entityAlias)
                 ? rootRefVar.name()
-                : rootRefVar.name().toLowerCase() + capitalize(entityAlias.aliasName());
+                : rootRefVar.name().toLowerCase(Locale.ROOT) + capitalize(entityAlias.aliasName());
     }
 
     private void createRolesWithGrantsSql(final StringWriter plPgSql, final RbacSpec.Role role) {
@@ -537,11 +542,12 @@ class RolesGrantsAndPermissionsGenerator {
                     return NEW;
                 end; $$;
 
-                create or replace trigger build_rbac_system_after_insert_tg
+                create or replace trigger ${roleBuildingTriggerName}
                     after insert on ${rawTableQualifiedName}
                     for each row
                 execute procedure ${rawTableQualifiedName}_build_rbac_system_after_insert_tf();
                 """
+                .replace("${roleBuildingTriggerName}", ROLE_BUILDING_TRIGGER_NAME)
                 .replace("${rawTableQualifiedName}", qualifiedRawTableName)
         );
 
@@ -607,6 +613,6 @@ class RolesGrantsAndPermissionsGenerator {
     private static String toTriggerReference(
             final PostgresTriggerReference triggerRef,
             final RbacSpec.EntityAlias entityAlias) {
-        return triggerRef.name().toLowerCase() + capitalize(entityAlias.aliasName());
+        return triggerRef.name().toLowerCase(Locale.ROOT) + capitalize(entityAlias.aliasName());
     }
 }

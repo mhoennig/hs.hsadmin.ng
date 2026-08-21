@@ -117,7 +117,6 @@ class HsHostingAssetRbacEntityUnitTest {
             %% granting permissions to roles
             role:rbac.global:ADMIN ==> perm:asset:INSERT
             role:parentAsset:ADMIN ==> perm:asset:INSERT
-            role:rbac.global:GUEST ==> perm:asset:INSERT
             role:asset:OWNER ==> perm:asset:DELETE
             role:asset:ADMIN ==> perm:asset:UPDATE
             role:asset:TENANT ==> perm:asset:SELECT

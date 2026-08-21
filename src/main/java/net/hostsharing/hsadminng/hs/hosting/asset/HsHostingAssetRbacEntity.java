@@ -72,6 +72,9 @@ public class HsHostingAssetRbacEntity extends HsHostingAsset {
                 .switchOnColumn(
                         "type",
                         inCaseOf("DOMAIN_SETUP", then -> {
+                            // not "anyone may insert": the caller needs a visible DOMAIN_SETUP booking-item (only creatable
+                            // by a project admin), and HsDomainSetupHostingAssetValidator demands DNS-based proof of domain
+                            // control where the caller has no rights on the parent domain, e.g. for delegated subdomains
                             then.toRole(GLOBAL, GUEST).grantPermission(INSERT);
                         })
                 )

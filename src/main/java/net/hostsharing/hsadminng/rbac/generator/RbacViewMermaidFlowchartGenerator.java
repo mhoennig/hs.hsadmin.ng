@@ -1,11 +1,14 @@
 package net.hostsharing.hsadminng.rbac.generator;
 
 import lombok.SneakyThrows;
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec.CaseDef;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,6 +55,18 @@ public class RbacViewMermaidFlowchartGenerator {
 
     public RbacViewMermaidFlowchartGenerator(final RbacSpec rbacDef) {
        this(rbacDef, null);
+    }
+
+    static Map<String, RbacViewMermaidFlowchartGenerator> allByFileName(final RbacSpec rbacDef, final String baseFileName) {
+        val diagramGenerators = new LinkedHashMap<String, RbacViewMermaidFlowchartGenerator>();
+        // without a default case, no case diagram covers the unconditional grants
+        if (rbacDef.getAllCases().stream().noneMatch(CaseDef::isDefaultCase)) {
+            diagramGenerators.put(baseFileName + ".md", new RbacViewMermaidFlowchartGenerator(rbacDef));
+        }
+        rbacDef.getAllCases().forEach(caseDef -> diagramGenerators.put(
+                baseFileName + (caseDef.isDefaultCase() ? "" : "-" + caseDef.value) + ".md",
+                new RbacViewMermaidFlowchartGenerator(rbacDef, caseDef)));
+        return diagramGenerators;
     }
     private void renderEntitySubgraphs() {
         usedEntityAliases.stream()

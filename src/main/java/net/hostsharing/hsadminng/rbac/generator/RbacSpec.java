@@ -511,15 +511,8 @@ public class RbacSpec {
     }
 
     public void generateWithBaseFileName(final String baseFileName) {
-        if (allCases.size() > 1) {
-            allCases.forEach(caseDef -> {
-                final var fileName = baseFileName + (caseDef.isDefaultCase() ? "" : "-" + caseDef.value) + ".md";
-                new RbacViewMermaidFlowchartGenerator(this, caseDef)
-                        .generateToMarkdownFile(Path.of(OUTPUT_BASEDIR, fileName));
-            });
-        } else {
-            new RbacViewMermaidFlowchartGenerator(this).generateToMarkdownFile(Path.of(OUTPUT_BASEDIR, baseFileName + ".md"));
-        }
+        RbacViewMermaidFlowchartGenerator.allByFileName(this, baseFileName).forEach((fileName, diagramGenerator) ->
+                diagramGenerator.generateToMarkdownFile(Path.of(OUTPUT_BASEDIR, fileName)));
         new RbacViewPostgresGenerator(this).generateToChangeLog(Path.of(OUTPUT_BASEDIR, baseFileName + ".sql"));
     }
 
@@ -657,7 +650,11 @@ public class RbacSpec {
         }
 
         boolean isConditional() {
-            return forCases != null && !forCases.isEmpty() && forCases.size()<allCases.size();
+            if (forCases == null || forCases.isEmpty()) {
+                return false;
+            }
+            // the declared cases only cover all rows if a default case (inOtherCases) is among them
+            return allCases.stream().noneMatch(CaseDef::isDefaultCase) || forCases.size() < allCases.size();
         }
 
         boolean matchesCase(final ColumnValue requestedCase) {

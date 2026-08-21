@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.generator;
 
 import lombok.val;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BinaryOperator;
@@ -210,9 +211,9 @@ public class InsertTriggerGenerator {
     private void generateInsertPermissionChecksForSingleGrant(final StringWriter plPgSql, final RbacSpec.RbacGrantDefinition g) {
         final RbacSpec.EntityAlias superRoleEntityAlias = g.getSuperRoleDef().getEntityAlias();
 
-        val caseCondition = appliesToAllCases(g)
-                ? ""
-                : ("NEW.type in (" + toStringList(g.getForCases()) + ") and ");
+        val caseCondition = g.isConditional()
+                ? ("NEW.type in (" + toStringList(g.getForCases()) + ") and ")
+                : "";
 
         if (g.getSuperRoleDef().isGlobal(GUEST)) {
             plPgSql.writeLn(
@@ -290,25 +291,32 @@ public class InsertTriggerGenerator {
     // PostgreSQL fires after-insert triggers in name order, so the granting trigger must sort behind
     // the role-building trigger; the historic "_z_" infix only achieves that while the table name sorts
     // behind "build...", so a leading token is prepended for the tables (e.g. asset) where it does not
-    private static final String ROLE_BUILDING_TRIGGER_NAME = "build_rbac_system_after_insert_tg";
-
     private String afterInsertGrantTriggerName(final RbacSpec.RbacGrantDefinition grant) {
         val subTableName = grant.getPermDef().getEntityAlias().getRawTableName();
         val name = subTableName + "_z_grants" + grantDiscriminatorFor(grant) + "_after_insert_tg";
-        return name.compareTo(ROLE_BUILDING_TRIGGER_NAME) < 0 ? "z_" + name : name;
+        return name.compareTo(RolesGrantsAndPermissionsGenerator.ROLE_BUILDING_TRIGGER_NAME) < 0 ? "z_" + name : name;
     }
 
     // the granting trigger/function name is keyed on sub- and super-table only, so several grants to
     // distinct roles of the same super-table (e.g. global ADMIN and global GUEST) would collide; the
-    // grantee role disambiguates them, and stays empty for the single-grant case to keep names stable
+    // grantee role disambiguates them, and stays empty for the single-grant case to keep names stable;
+    // if even the role collides (same super-table imported via several aliases), the per-spec-unique
+    // alias name disambiguates further
     private String grantDiscriminatorFor(final RbacSpec.RbacGrantDefinition grant) {
         val superTableShortName = grant.getSuperRoleDef().getEntityAlias().getRawTableShortName();
         val grantsToSameSuperTable = getInsertGrants()
                 .filter(g -> g.getSuperRoleDef().getEntityAlias().getRawTableShortName().equals(superTableShortName))
+                .toList();
+        if (grantsToSameSuperTable.size() <= 1) {
+            return "";
+        }
+        val roleDiscriminator = "_" + grant.getSuperRoleDef().getRole().name().toLowerCase(Locale.ROOT);
+        val grantsToSameRole = grantsToSameSuperTable.stream()
+                .filter(g -> g.getSuperRoleDef().getRole() == grant.getSuperRoleDef().getRole())
                 .count();
-        return grantsToSameSuperTable > 1
-                ? "_" + grant.getSuperRoleDef().getRole().name().toLowerCase()
-                : "";
+        return grantsToSameRole > 1
+                ? roleDiscriminator + "_" + grant.getSuperRoleDef().getEntityAlias().aliasName().toLowerCase(Locale.ROOT)
+                : roleDiscriminator;
     }
 
     private Stream<RbacSpec.RbacGrantDefinition> getInsertGrants() {
@@ -324,15 +332,7 @@ public class InsertTriggerGenerator {
     private boolean isInsertPermissionGrantedToGlobalGuest() {
          return getInsertGrants().anyMatch(g ->
                  g.getSuperRoleDef().getEntityAlias().isGlobal() && g.getSuperRoleDef().getRole() == GUEST
-                         && appliesToAllCases(g));
-    }
-
-    // a grant restricted to specific switchOnColumn cases needs a per-row type guard in the check;
-    // RbacGrantDefinition.isConditional() misses the single-declared-case setup (allCases.size()==1),
-    // so the case restriction is read directly from the grant instead
-    private static boolean appliesToAllCases(final RbacSpec.RbacGrantDefinition grant) {
-        val forCases = grant.getForCases();
-        return forCases == null || forCases.isEmpty();
+                         && !g.isConditional());
     }
 
     private Optional<RbacSpec.RbacGrantDefinition> getOptionalInsertGrant() {

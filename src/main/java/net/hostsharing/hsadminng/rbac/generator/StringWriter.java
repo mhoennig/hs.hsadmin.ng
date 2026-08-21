@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.generator;
 
 import org.apache.commons.lang3.StringUtils;
+import java.util.Locale;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
@@ -129,8 +130,8 @@ public class StringWriter {
             // TODO.impl: I actually want a case-independent search+replace but ...
             // for which the substitution String can contain sequences of "${...}" to be replaced by further varDefs.
             text = text.replace("${" + name+ "}", value);
-            text = text.replace("${" + name.toUpperCase() + "}", value);
-            text = text.replace("${" + name.toLowerCase() + "}", value);
+            text = text.replace("${" + name.toUpperCase(Locale.ROOT) + "}", value);
+            text = text.replace("${" + name.toLowerCase(Locale.ROOT) + "}", value);
         }
     }
 }
