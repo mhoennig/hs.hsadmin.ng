@@ -4,12 +4,23 @@
 # Usage: remote <target> <action> [ARGS]
 #
 # Backend service (systemd user unit: backend):
-#   remote backend deploy [--with-documentation]
-#                                     build & deploy the local working-tree jar, restart the service,
-#                                     stream the startup log until the application reports it has started;
-#                                     --with-documentation renders the documentation into the jar instead
-#                                     of the /doc/ placeholder page (needs pandoc, mermaid-filter,
-#                                     pandoc-plantuml and the Testcontainers database for scenarioTest)
+#   remote backend deploy [--backend|--ansible] [--with-documentation]
+#                                     build & deploy the local working-tree jar;
+#                                     --backend (default): upload to the backend user, restart the
+#                                     systemd service and stream the startup log until the
+#                                     application reports it has started;
+#                                     --ansible: upload the jar for the Ansible reset, which installs
+#                                     it, RE-INITIALIZES the database from ~/db-dumps/ and restarts
+#                                     the service (its command is not wired up yet);
+#                                     --with-documentation renders the documentation into the jar
+#                                     instead of the /doc/ placeholder page (needs pandoc,
+#                                     mermaid-filter, pandoc-plantuml and the Testcontainers
+#                                     database for scenarioTest)
+#   remote backend upload [--backend|--ansible] [--with-documentation]
+#                                     build the jar like deploy, but only upload it, without restart:
+#                                     --ansible (default) into ~/jar/ of the ansible user,
+#                                     --backend into ~/backend/ of the backend user, where it
+#                                     becomes active with the next service restart
 #   remote backend start              start the backend service
 #   remote backend stop               stop the backend service
 #   remote backend restart            restart the backend service
@@ -39,11 +50,16 @@
 #   remote login-monitor log [ARGS]   tail the monitoring log (extra ARGS go to tail)
 #
 # Host:
-#   remote ssh [CMD]                  open a shell or run CMD on the server
-#   remote upload <file> <directory>  copy a local file into <directory> of the server's home,
-#                                     renamed into place only after a complete transfer
+#   remote ssh [--backend|--ansible] [CMD]
+#                                     open a shell or run CMD on the server, by default as the
+#                                     backend user, with --ansible as the ansible user
+#   remote upload <file> <directory>  copy a local file into <directory> of the ansible user's
+#                                     home, renamed into place only after a complete transfer
 #
-# Notes: `login-monitor deploy` reads its secrets and the optional interval
+# Notes: HSADMINNG_DEPLOY_HOST names the bare deploy host (e.g. hsh03); the tool derives
+# the logins <host>-backend (service, database, logs) and <host>-ansible, whose ~/jar/ and
+# ~/db-dumps/ are the staging areas for the Ansible-based deployment.
+# `login-monitor deploy` reads its secrets and the optional interval
 # from ~/.environment on the server; see doc/environment-variables.md.
 #
 # This deploys the local working state to a test stage for unmerged changes only;
@@ -64,10 +80,19 @@ STARTUP_SETTLE_SECONDS=2 # systemd needs a moment until is-active reflects a jus
 requireDeployHost() {
     [ -n "$HSADMINNG_DEPLOY_HOST" ] || {
         echo "ERROR: HSADMINNG_DEPLOY_HOST is not set, and there is deliberately no default;" >&2
-        echo "       export HSADMINNG_DEPLOY_HOST=<user@host> for the intended stage first," >&2
-        echo "       e.g. hshNN-stage@hshNN.hostsharing.net" >&2
+        echo "       export HSADMINNG_DEPLOY_HOST=<host> for the intended stage first, e.g. hsh03;" >&2
+        echo "       the tool logs in as <host>-backend resp. <host>-ansible" >&2
         exit 1
     }
+    case "$HSADMINNG_DEPLOY_HOST" in
+        *@*)
+            echo "ERROR: HSADMINNG_DEPLOY_HOST must name just the host (e.g. hsh03), no longer user@host;" >&2
+            echo "       the users <host>-backend and <host>-ansible are derived from it" >&2
+            exit 1 ;;
+    esac
+    local hostName=${HSADMINNG_DEPLOY_HOST%%.*}
+    backendLogin="$hostName-backend@$HSADMINNG_DEPLOY_HOST"
+    ansibleLogin="$hostName-ansible@$HSADMINNG_DEPLOY_HOST"
 }
 
 # prints the whole header comment (all # lines up to `set -euo pipefail`)
@@ -105,32 +130,33 @@ unitOf() {
 lifecycle() { # $1=target  $2=verb
     local unit; unit=$(unitOf "$1")
     case "$2" in
-        enable|disable) ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user "$2" --now "$unit" ;;
-        status)         exec ssh -t "$HSADMINNG_DEPLOY_HOST" systemctl --user status "$unit" ;;
-        *)              ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user "$2" "$unit" ;;
+        enable|disable) ssh "$backendLogin" systemctl --user "$2" --now "$unit" ;;
+        status)         exec ssh -t "$backendLogin" systemctl --user status "$unit" ;;
+        *)              ssh "$backendLogin" systemctl --user "$2" "$unit" ;;
     esac
 }
 
 # tails a remote logfile; $1 is the logfile, remaining args are passed to tail
 cmdLog() {
     local logfile=$1; shift
-    exec ssh -t "$HSADMINNG_DEPLOY_HOST" tail -f "$@" "$logfile"
+    exec ssh -t "$backendLogin" tail -f "$@" "$logfile"
 }
 
 # a tty only where there is one, so a scripted caller does not get ssh's warning about it
 cmdSsh() {
+    local login=$backendLogin
+    case "${1:-}" in
+        --backend) shift ;;
+        --ansible) login=$ansibleLogin; shift ;;
+    esac
     local ttyOpt=-t; [ -t 0 ] || ttyOpt=
-    exec ssh $ttyOpt "$HSADMINNG_DEPLOY_HOST" "$@"
+    exec ssh $ttyOpt "$login" "$@"
 }
 
-# Builds the application from the local working tree and deploys the jar to the
-# backend server; unlike the former push-and-build-on-the-server flow, uncommitted
-# changes are thus INCLUDED in the deployment.
-# Warns about uncommitted files and unpushed commits, but continues if confirmed.
-# The uploaded jar is activated by an atomic rename, so the running service keeps
-# its old jar until the restart.
-# Prints one line per step; full command output is only shown if a step fails.
-cmdBackendDeploy() {
+# Builds the jar from the local working tree; unlike the former push-and-build-on-the-server
+# flow, uncommitted changes are thus INCLUDED. Warns about uncommitted files and unpushed
+# commits, but continues if confirmed. Sets `branch` for the caller's messages.
+buildBackendJar() { # args: [--with-documentation]
     cd "$(dirname "$0")/.." # the local build needs to run in the repo root
 
     local withDocumentation=
@@ -139,7 +165,7 @@ cmdBackendDeploy() {
         shift
     fi
     if [ $# -gt 0 ]; then
-        echo "ERROR: unknown argument for 'backend deploy': $1" >&2
+        echo "ERROR: unknown argument: $1" >&2
         usage >&2
         exit 1
     fi
@@ -154,7 +180,6 @@ cmdBackendDeploy() {
         done
     fi
 
-    local branch
     branch=$(git rev-parse --abbrev-ref HEAD)
     if [ "$branch" = "HEAD" ]; then
         echo "ERROR: detached HEAD, please check out a branch" >&2
@@ -217,26 +242,69 @@ cmdBackendDeploy() {
     fi
     echo "built version info:"
     sed 's/^/    /' <<<"$versionInfo"
+}
 
-    step "uploading the jar to $HSADMINNG_DEPLOY_HOST" \
-        scp -q "build/libs/$JAR_NAME" "$HSADMINNG_DEPLOY_HOST:backend/$JAR_NAME.upload"
+# Splits the shared deploy/upload arguments: --backend/--ansible set the (global) deployTarget,
+# everything else stays in (global) buildArgs for buildBackendJar.
+parseDeployTarget() { # $1=default target, remaining args as given by the user
+    deployTarget=$1; shift
+    buildArgs=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --backend) deployTarget=backend ;;
+            --ansible) deployTarget=ansible ;;
+            *)         buildArgs+=("$1") ;;
+        esac
+        shift
+    done
+}
+
+# The uploaded jar is activated by an atomic rename, so the running service keeps
+# its old jar until the next restart.
+uploadJarToBackendUser() {
+    step "uploading the jar to $backendLogin" \
+        scp -q "build/libs/$JAR_NAME" "$backendLogin:backend/$JAR_NAME.upload"
     step "activating the uploaded jar" \
-        ssh "$HSADMINNG_DEPLOY_HOST" mv "backend/$JAR_NAME.upload" "backend/$JAR_NAME"
+        ssh "$backendLogin" mv "backend/$JAR_NAME.upload" "backend/$JAR_NAME"
+}
+
+# The Ansible reset installs the staged jar, RE-INITIALIZES the database from ~/db-dumps/
+# and restarts the service; its command comes from Ops and is not wired up yet.
+ansibleReset() {
+    echo "ERROR: the jar is staged, but this tool does not know the Ansible reset command yet;" >&2
+    echo "       run the Ansible deployment manually as $ansibleLogin" >&2
+    exit 1
+}
+
+# Deploys the freshly built jar: --backend (default) uploads it to the backend user and
+# restarts the systemd service; --ansible uploads it and hands over to the Ansible reset.
+# Prints one line per step; full command output is only shown if a step fails.
+cmdBackendDeploy() {
+    parseDeployTarget backend "$@"
+    buildBackendJar "${buildArgs[@]}"
+
+    if [ "$deployTarget" = ansible ]; then
+        cmdUpload "build/libs/$JAR_NAME" jar
+        ansibleReset
+        return
+    fi
+
+    uploadJarToBackendUser
 
     # remember the log size before the restart, so the startup can be streamed from exactly
     # the first new line and stopped at the "Started" marker further down
     local logOffset
-    logOffset=$(ssh "$HSADMINNG_DEPLOY_HOST" "stat -c%s var/backend.log 2>/dev/null || echo 0")
+    logOffset=$(ssh "$backendLogin" "stat -c%s var/backend.log 2>/dev/null || echo 0")
 
     step "restarting the backend service" \
-        ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user restart backend
+        ssh "$backendLogin" systemctl --user restart backend
 
     sleep 3
-    if ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --quiet is-active backend; then
+    if ssh "$backendLogin" systemctl --user --quiet is-active backend; then
         echo "backend service is active"
     else
         echo "backend service FAILED to start:"
-        ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --no-pager --lines=25 status backend || true
+        ssh "$backendLogin" systemctl --user --no-pager --lines=25 status backend || true
         exit 1
     fi
 
@@ -245,26 +313,41 @@ cmdBackendDeploy() {
     # lengthy, Liquibase-included — startup is easy to notice; the timeout guards against an
     # indefinite hang if neither marker ever appears, and sed exiting closes the pipe so tail stops
     echo "waiting for the backend to finish starting (Ctrl-C to stop watching the log):"
-    ssh -t "$HSADMINNG_DEPLOY_HOST" \
+    ssh -t "$backendLogin" \
         "timeout $STARTUP_LOG_TIMEOUT_SECONDS tail -f -c +$((logOffset + 1)) var/backend.log |
             sed -E '/Started HsadminNgApplication|APPLICATION FAILED TO START/q'" || true
 
     sleep $STARTUP_SETTLE_SECONDS
-    if ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --quiet is-active backend; then
+    if ssh "$backendLogin" systemctl --user --quiet is-active backend; then
         # the app answers now, so report the version it actually runs with
-        ssh "$HSADMINNG_DEPLOY_HOST" 'set -a; . ~/backend/.environment; set +a
+        ssh "$backendLogin" 'set -a; . ~/backend/.environment; set +a
             info=$(curl -s "http://localhost:${MANAGEMENT_SERVER_PORT:-8081}/actuator/info") && [ -n "$info" ] &&
                 echo "running version info: $info"' || true
         echo "deployment of branch '$branch' finished, the backend has started"
     else
         echo "ERROR: the backend service is not active after startup:" >&2
-        ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user --no-pager --lines=25 status backend >&2 || true
+        ssh "$backendLogin" systemctl --user --no-pager --lines=25 status backend >&2 || true
         exit 1
     fi
 }
 
-# Copies a local file into a directory of the server's home, for callers which know what they
-# are transferring; this command only knows the host. The upload goes to a temporary name and is
+# Only uploads the freshly built jar, without any restart: --ansible (default) into ~/jar/
+# of the ansible user for the Ansible reset, --backend into ~/backend/ of the backend user.
+cmdBackendUpload() {
+    parseDeployTarget ansible "$@"
+    buildBackendJar "${buildArgs[@]}"
+
+    if [ "$deployTarget" = backend ]; then
+        uploadJarToBackendUser
+        echo "upload of branch '$branch' finished, it becomes active with the next service restart"
+    else
+        cmdUpload "build/libs/$JAR_NAME" jar
+        echo "upload of branch '$branch' finished, deploy it with the Ansible reset"
+    fi
+}
+
+# Copies a local file into a directory of the ansible user's home, the staging area for the
+# Ansible-based deployment; this command only knows the host. The upload goes to a temporary name and is
 # renamed once it is complete, so an interrupted transfer leaves no half file under the real name.
 cmdUpload() {
     local file=${1:-} directory=${2:-}
@@ -291,13 +374,13 @@ cmdUpload() {
     done
 
     local target="$directory/$(basename "$file")"
-    step "creating ~/$directory on $HSADMINNG_DEPLOY_HOST" \
-        ssh "$HSADMINNG_DEPLOY_HOST" mkdir -p "$directory"
-    step "uploading $file ($(du -h "$file" | cut -f1)) to $HSADMINNG_DEPLOY_HOST" \
-        scp -q "$file" "$HSADMINNG_DEPLOY_HOST:$target.upload"
+    step "creating ~/$directory on $ansibleLogin" \
+        ssh "$ansibleLogin" mkdir -p "$directory"
+    step "uploading $file ($(du -h "$file" | cut -f1)) to $ansibleLogin" \
+        scp -q "$file" "$ansibleLogin:$target.upload"
     step "renaming it into place" \
-        ssh "$HSADMINNG_DEPLOY_HOST" mv "$target.upload" "$target"
-    echo "uploaded to ~/$target on $HSADMINNG_DEPLOY_HOST"
+        ssh "$ansibleLogin" mv "$target.upload" "$target"
+    echo "uploaded to ~/$target on $ansibleLogin"
 }
 
 # Installs (or refreshes) the backend systemd user unit on the server: the hsh11-style jar
@@ -305,7 +388,7 @@ cmdUpload() {
 # The prerequisites stay on the server and are only checked here: ~/backend/.environment
 # carries the stage secrets, and the JDK lives under ~/opt/jdk-21 by convention.
 cmdBackendSetup() {
-    ssh "$HSADMINNG_DEPLOY_HOST" bash -s <<'REMOTE_SCRIPT'
+    ssh "$backendLogin" bash -s <<'REMOTE_SCRIPT'
 set -euo pipefail
 
 [ -x "$HOME/opt/jdk-21/bin/java" ] || {
@@ -368,7 +451,7 @@ cmdProvisioningApiKey() {
     keyHash=$(tools/api-key-hash "$apiKey")
 
     local rc=0
-    ssh "$HSADMINNG_DEPLOY_HOST" bash -s -- "$keyHash" < <(unindented <<'REMOTE_SCRIPT'
+    ssh "$backendLogin" bash -s -- "$keyHash" < <(unindented <<'REMOTE_SCRIPT'
         set -euo pipefail
         keyHash=$1
         envFile="$HOME/backend/.environment"
@@ -450,7 +533,7 @@ cmdBackendSql() {
         # ssh joins its command arguments into one string which the remote login-shell parses
         # again, so the SQL has to survive that second parsing round: unquoted, `select * from x`
         # would reach psql as just `select`, with the `*` expanded against the remote home
-        ssh "$HSADMINNG_DEPLOY_HOST" "bash -s -- $(printf '%q' "$*")" < <(unindented <<'REMOTE_SCRIPT'
+        ssh "$backendLogin" "bash -s -- $(printf '%q' "$*")" < <(unindented <<'REMOTE_SCRIPT'
             set -uo pipefail
             sql=$1
             set -a; . "$HOME/backend/.environment"; set +a
@@ -471,7 +554,7 @@ REMOTE_SCRIPT
     # no SQL argument: keep the remote script as a single ssh argument so stdin stays
     # free for an interactive session (tty) or for SQL piped in (no tty)
     local ttyOpt=-t; [ -t 0 ] || ttyOpt=
-    exec ssh $ttyOpt "$HSADMINNG_DEPLOY_HOST" '
+    exec ssh $ttyOpt "$backendLogin" '
         set -euo pipefail
         set -a; . "$HOME/backend/.environment"; set +a
         url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
@@ -491,7 +574,7 @@ cmdBackendSqlTunnel() {
 
     # one round trip to resolve the datasource host/port/name/user/password
     local params
-    params=$(ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
+    params=$(ssh "$backendLogin" bash -s < <(unindented <<'REMOTE_SCRIPT'
         set -euo pipefail
         set -a; . "$HOME/backend/.environment"; set +a
         url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in ~/backend/.environment}}
@@ -508,7 +591,7 @@ REMOTE_SCRIPT
     { read -r dbHost; read -r dbPort; read -r dbName; read -r dbUser; read -r dbPass; } <<<"$params"
 
     cat >&2 <<INFO
-tunnel: localhost:$localPort -> $dbHost:$dbPort (via $HSADMINNG_DEPLOY_HOST)
+tunnel: localhost:$localPort -> $dbHost:$dbPort (via $backendLogin)
 connect your SQL GUI (or: psql "postgresql://$dbUser@localhost:$localPort/$dbName") to:
     host:     localhost
     port:     $localPort
@@ -518,7 +601,7 @@ connect your SQL GUI (or: psql "postgresql://$dbUser@localhost:$localPort/$dbNam
 keep this command running; press Ctrl-C to close the tunnel
 INFO
 
-    exec ssh -N -L "$localPort:$dbHost:$dbPort" "$HSADMINNG_DEPLOY_HOST"
+    exec ssh -N -L "$localPort:$dbHost:$dbPort" "$backendLogin"
 }
 
 # Installs (or refreshes) a systemd user timer on the backend server which runs
@@ -531,13 +614,13 @@ cmdMonitorDeploy() {
     toolsDir=$(cd "$(dirname "$0")" && pwd)
 
     step "creating the remote monitoring directory" \
-        ssh "$HSADMINNG_DEPLOY_HOST" mkdir -p monitoring
-    step "copying tools/login-monitoring-check to $HSADMINNG_DEPLOY_HOST" \
-        scp -q "$toolsDir/login-monitoring-check" "$HSADMINNG_DEPLOY_HOST:monitoring/"
+        ssh "$backendLogin" mkdir -p monitoring
+    step "copying tools/login-monitoring-check to $backendLogin" \
+        scp -q "$toolsDir/login-monitoring-check" "$backendLogin:monitoring/"
 
-    echo "installing the login-monitoring-check timer on $HSADMINNG_DEPLOY_HOST ..."
+    echo "installing the login-monitoring-check timer on $backendLogin ..."
 
-    ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
+    ssh "$backendLogin" bash -s < <(unindented <<'REMOTE_SCRIPT'
         set -euo pipefail
 
         # same helper as in the local part of the script, keep both in sync
@@ -621,11 +704,11 @@ REMOTE_SCRIPT
 # Runs the monitoring check once now (the oneshot .service, not the timer) and
 # reports the last log line; on failure it shows the tail of the log.
 cmdMonitorRun() {
-    if ssh "$HSADMINNG_DEPLOY_HOST" systemctl --user start login-monitoring-check.service </dev/null; then
-        ssh "$HSADMINNG_DEPLOY_HOST" tail -1 var/login-monitoring.log
+    if ssh "$backendLogin" systemctl --user start login-monitoring-check.service </dev/null; then
+        ssh "$backendLogin" tail -1 var/login-monitoring.log
     else
         echo "check FAILED:" >&2
-        ssh "$HSADMINNG_DEPLOY_HOST" tail -25 var/login-monitoring.log >&2
+        ssh "$backendLogin" tail -25 var/login-monitoring.log >&2
         exit 1
     fi
 }
@@ -635,7 +718,7 @@ cmdMonitorRun() {
 # the checker uses and reports each active one with since/count/next-due. The state-file path
 # and backoff are resolved from ~/.environment just as the checker's defaults do.
 cmdMonitorAlerts() {
-    ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
+    ssh "$backendLogin" bash -s < <(unindented <<'REMOTE_SCRIPT'
         set -uo pipefail
         [ -f .environment ] && { set -a; . ./.environment; set +a; }
 
@@ -686,7 +769,7 @@ REMOTE_SCRIPT
 # The bare timer status says little, so also show the schedule and the last check result.
 cmdMonitorStatus() {
     # via stdin, because `bash -c <script>` would lose its argument to ssh's argument flattening
-    exec ssh "$HSADMINNG_DEPLOY_HOST" bash -s < <(unindented <<'REMOTE_SCRIPT'
+    exec ssh "$backendLogin" bash -s < <(unindented <<'REMOTE_SCRIPT'
         systemctl --user status login-monitoring-check.timer --no-pager || true
         echo
         systemctl --user list-timers login-monitoring-check.timer --no-pager || true
@@ -717,6 +800,7 @@ case "$target" in
         action=${1:-}; shift || true
         case "$action" in
             deploy)                                    cmdBackendDeploy "$@" ;;
+            upload)                                    cmdBackendUpload "$@" ;;
             log)                                       cmdLog var/backend.log "$@" ;;
             setup)                                     cmdBackendSetup ;;
             provision-api-key)                         cmdProvisioningApiKey "$@" ;;

@@ -21,3 +21,12 @@ Conventions:
       Candidates: PMD `ExcessiveParameterList` in ratchet style, a custom XPath rule,
       or an ArchUnit rule against more than two `boolean` parameters per method.
       The underlying design question — flags instead of enums or dedicated types — stays with the review.
+
+- [ ] TODO.feat: Add `GET /api/hs/booking/item-types` and `GET /api/hs/booking/item-types/{itemType}`
+      analogous to `/api/hs/hosting/asset-types[/{assetType}]`,
+      so an adaptive UI can query the booking-item types and their resources validation
+      (CPU, RAM, SSD …) instead of hardcoding them.
+      The server side already has the data in the validators
+      under `hs/booking/item/validators/` (`HsBookingItemEntityValidatorRegistry`),
+      built on the same `HsEntityValidator` infrastructure as the hosting-asset validators;
+      needs OpenAPI YAML plus a controller method reading the registry properties.

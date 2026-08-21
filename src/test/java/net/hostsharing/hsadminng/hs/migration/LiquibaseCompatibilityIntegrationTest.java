@@ -1,6 +1,8 @@
 package net.hostsharing.hsadminng.hs.migration;
 
+import jakarta.persistence.EntityManager;
 import lombok.SneakyThrows;
+import lombok.val;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.io.File;
+import java.sql.DriverManager;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
 
 // BLOG: Liquibase-migration-test (not before the reference-SQL-dump-generation is simplified)
@@ -59,6 +63,9 @@ public class LiquibaseCompatibilityIntegrationTest {
     @Autowired
     private LiquibaseMigration liquibase;
 
+    @Autowired
+    private EntityManager em;
+
     @Test
     @SneakyThrows
     void baseSchemaDumpIsUnchanged() {
@@ -80,9 +87,35 @@ public class LiquibaseCompatibilityIntegrationTest {
         liquibase.runWithContexts("only-prod-schema", "with-test-data");
         PostgresTestcontainer.dump(jdbcUrl, new File("build/db/released-prod-schema-with-test-data.sql"));
 
+        // the reference dump predates the subject-delete triggers, thus the migration must have added them,
+        // otherwise deleting a subject which still holds grants fails with foreign-key violations
+        assertSubjectDeleteTriggersExist();
+
+        // a stage database can lack these triggers despite a databasechangelog row claiming otherwise,
+        // e.g. after a changelog-sync or a checksum-reset; runAlways has to re-create them on every update
+        executeInAutoCommitConnection("drop trigger delete_grants_of_subject_tg on rbac.subject");
+        liquibase.runWithContexts("only-prod-schema", "with-test-data");
+        assertSubjectDeleteTriggersExist();
+
         // then add another migration and assert if it was applied
         liquibase.runWithContexts("liquibase-migration-test");
         liquibase.assertThatCurrentMigrationsGotApplied(
                 initialChangeSetCount, EXPECTED_CHANGESET_ONLY_AFTER_NEW_MIGRATION);
+    }
+
+    private void assertSubjectDeleteTriggersExist() {
+        val triggerNames = em.createNativeQuery(
+                        "select tgname from pg_trigger where tgrelid = 'rbac.subject'::regclass and not tgisinternal")
+                .getResultList().stream().map(Object::toString).toList();
+        assertThat(triggerNames).contains("delete_grants_of_subject_tg", "delete_reference_of_subject_tg");
+    }
+
+    // the test transaction of the EntityManager would block Liquibase's own connection on DDL
+    @SneakyThrows
+    private void executeInAutoCommitConnection(final String sql) {
+        try (val connection = DriverManager.getConnection(jdbcUrl);
+                val statement = connection.createStatement()) {
+            statement.execute(sql);
+        }
     }
 }

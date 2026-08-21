@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-api-key-TABLE endDelimiter:--//
+--changeset michael.hoennig:rbac-api-key-TABLE runOnChange:false endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Stores the SHA-256 hash of the API-key of an API_KEY subject.
@@ -19,12 +20,14 @@ create table rbac.api_key
     created_at timestamptz not null default now()
 );
 
+-- variable expansion must not go into non-repeatable changesets, thus the next changeset is required to fix this issue
 grant select on rbac.api_key to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-api-key-scope-TABLE endDelimiter:--//
+--changeset michael.hoennig:rbac-api-key-scope-TABLE runOnChange:false endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Stores the named endpoint-scopes of an API-key, one row per granted scope.
@@ -41,6 +44,20 @@ create table rbac.api_key_scope
     primary key (apiKeyUuid, scope)
 );
 
+-- variable expansion must not go into non-repeatable changesets, thus the next changeset is required to fix this issue
+grant select on rbac.api_key_scope to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-api-key-GRANTS runOnChange:true endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Re-issues the grants from the table changesets: the grantee name differs between
+    environments, so after restoring a dump from another environment they must be
+    re-applied for the local restricted user.
+ */
+grant select on rbac.api_key to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 grant select on rbac.api_key_scope to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 

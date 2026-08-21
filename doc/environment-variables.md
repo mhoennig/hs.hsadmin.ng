@@ -99,7 +99,7 @@ at least `HSADMINNG_LOGIN_MONITOR_PASSWORD` and `HSADMINNG_MATRIX_WEBHOOK_URL`.
 
 | Variable                                | Purpose                                                                                                                             | Default/Example        |
 |-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|------------------------|
-| `HSADMINNG_DEPLOY_HOST`                 | SSH `user@host` of the backend server used by all `remote` commands; no default, to avoid using unintended stage                    | must be set explicitly |
+| `HSADMINNG_DEPLOY_HOST`                 | bare host of the deploy stage (e.g. `hsh03`) for all `remote` commands, which log in as `<host>-backend` or, for uploads, `<host>-ansible`; no default, to avoid using unintended stage | must be set explicitly |
 | `HSADMINNG_PROVISIONING_API_KEY_SHA256` | provisioned server-side by `remote backend provision-api-key` into the `EnvironmentFile` of the backend service (see backend table) | empty                  |
 
 ## Tests and Build

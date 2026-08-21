@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-subject-sync-report-TABLE endDelimiter:--//
+--changeset michael.hoennig:rbac-subject-sync-report-TABLE runOnChange:false endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
     Stores one row per finished subject-sync run, posted by the syncing API-key at the end
@@ -20,5 +21,18 @@ create table rbac.subject_sync_report
 
 create index on rbac.subject_sync_report (reported_by, reported_at);
 
+-- variable expansion must not go into non-repeatable changesets, thus the next changeset is required to fix this issue
+grant select, insert, delete on rbac.subject_sync_report to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+--//
+
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-subject-sync-report-GRANTS runOnChange:true endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Re-issues the grant from the table changeset: the grantee name differs between
+    environments, so after restoring a dump from another environment it must be
+    re-applied for the local restricted user.
+ */
 grant select, insert, delete on rbac.subject_sync_report to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//

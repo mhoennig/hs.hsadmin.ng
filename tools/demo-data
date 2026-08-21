@@ -18,7 +18,7 @@
 # Verbs:
 #   generate <customers> [<persons-csv>]  generate demodata<customers> and dump it
 #   dump     <dataset>                    write a dump of an existing dataset
-#   upload   <dataset> [<dump-file>]      copy a dump to ~/backup/ of the deploy host
+#   upload   <dataset> [<dump-file>]      copy a dump to ~/db-dumps/ of the deploy host's ansible user
 #   restore  <dataset> [<dump-file>]      restore into <dataset>_restored
 #   run      <dataset>                    start the application against the dataset
 #   verify   <dataset>                    restore, start, log in, query, exit code
@@ -348,9 +348,9 @@ uploadDataset() {
     local dataset=$1 givenDumpFile=${2:-} hostInfo hostPgVersion freeKb= sizeKb
     if [ -n "$dryRun" ]; then
         # the host would decide the version; a dry run has to make do with --pg-version=
-        echo "tools/remote ssh 'pg_restore --version; df -Pk \"\$HOME\" | tail -1'"
+        echo "tools/remote ssh --ansible 'pg_restore --version; df -Pk \"\$HOME\" | tail -1'"
     else
-        hostInfo=$(tools/remote ssh 'pg_restore --version; df -Pk "$HOME" | tail -1') ||
+        hostInfo=$(tools/remote ssh --ansible 'pg_restore --version; df -Pk "$HOME" | tail -1') ||
             fail "cannot reach the deploy host, see 'tools/remote --help'"
         hostPgVersion=$(sed -n 's/^pg_restore (PostgreSQL) \([0-9][0-9]*\).*/\1/p' <<<"$hostInfo")
         [ -n "$hostPgVersion" ] || fail "the deploy host has no pg_restore, a dump would be useless there"
@@ -372,7 +372,7 @@ uploadDataset() {
         fail "$dumpFile needs $((sizeKb / 1024)) MB, but only $((freeKb / 1024)) MB are free on the deploy host"
     fi
 
-    run tools/remote upload "$dumpFile" backup
+    run tools/remote upload "$dumpFile" db-dumps
 }
 
 runApplication() {

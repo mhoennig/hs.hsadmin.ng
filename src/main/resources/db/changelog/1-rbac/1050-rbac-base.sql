@@ -956,12 +956,16 @@ create unique index if not exists subject_name_active_key on rbac.subject (name)
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-BEFORE-DELETE-SUBJECT-TRIGGER runOnChange:true endDelimiter:--//
+--changeset michael.hoennig:rbac-base-BEFORE-DELETE-SUBJECT-TRIGGER runAlways:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
     Physically purging a subject, modelled on the rbac.role delete trigger (delete_grants_of_role_tf).
+
+    runAlways (not just runOnChange) because a database whose databasechangelog was checksum-reset or
+    changelog-synced would otherwise keep missing these triggers, failing subject deletion with
+    foreign-key violations on rbac.grant; see LiquibaseCompatibilityIntegrationTest.
 
     A BEFORE DELETE on rbac.subject first re-checks authorization at the DB level, mirroring the
     rbac.subject_rv instead-of-delete trigger (self or global-admin): physical deletion - directly
