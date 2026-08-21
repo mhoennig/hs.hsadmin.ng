@@ -22,12 +22,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_DNS_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_HTTP_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_MBOX_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SMTP_SETUP;
 
 public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
+
+    private static final List<HsHostingAssetType> REQUIRED_SUB_SETUP_TYPES =
+            List.of(DOMAIN_DNS_SETUP, DOMAIN_HTTP_SETUP, DOMAIN_MBOX_SETUP, DOMAIN_SMTP_SETUP);
 
     private final HsOfficeContactRbacRepository rbacContactRepo;
     private final HsHostingAssetRbacRepository rbacAssetRepo;
@@ -45,18 +49,41 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
     }
 
     @Override
+    protected void validateRequest() {
+        // TODO.legacy: drop this all-or-nothing rule once the backend manages the DNS itself
+        //  instead of the legacy file system, then sub-setups get assigned via the hosting-asset API
+        if (getSubHostingAssetResources() == null || getSubHostingAssetResources().isEmpty()) {
+            throw new ValidationException(
+                    "'hostingAsset.subHostingAssets' required in compatibility mode, with sub-assets of type "
+                            + requiredSubSetupTypes() + " (DOMAIN_HTTP_SETUP with assignedToAsset.uuid)");
+        }
+        REQUIRED_SUB_SETUP_TYPES.forEach(requiredSubSetupType ->
+                findSubHostingAssetResource(resourceTypeOf(requiredSubSetupType)).ifPresentOrElse(
+                        this::verifyNotOverspecified,
+                        () -> {
+                            throw new ValidationException(
+                                    "sub-asset of type " + requiredSubSetupType + " required in legacy mode, but missing");
+                        })
+        );
+        findSubHostingAssetResource(resourceTypeOf(DOMAIN_HTTP_SETUP))
+                .map(HsHostingAssetSubInsertResource::getAssignedToAssetUuid)
+                .orElseThrow(() -> new ValidationException(
+                        "DOMAIN_HTTP_SETUP subAsset with assignedToAsset.uuid required in compatibility mode"));
+    }
+
+    @Override
     protected HsHostingAsset create() {
         final var domainSetupAsset = createDomainSetupAsset(getDomainName());
         final var subHostingAssets = domainSetupAsset.getSubHostingAssets();
 
         // TODO.legacy: as long as we need to be compatible, we always do all technical domain-setups
 
-        final var domainHttpSetupAssetResource = findSubHostingAssetResource(HsHostingAssetTypeResource.DOMAIN_HTTP_SETUP);
-        final var assignedToUnixUserAssetEntity = domainHttpSetupAssetResource
+        final var assignedToUnixUserAssetEntity = findSubHostingAssetResource(resourceTypeOf(DOMAIN_HTTP_SETUP))
                 .map(HsHostingAssetSubInsertResource::getAssignedToAssetUuid)
                 // via the restricted view, so an invisible UNIX_USER behaves like a missing one (A-02)
                 .flatMap(rbacAssetRepo::findVisibleByUuid)
-                .orElseThrow(() -> new ValidationException("DOMAIN_HTTP_SETUP subAsset with assignedToAssetUuid required in compatibility mode"));
+                .orElseThrow(() -> new ValidationException(
+                        "DOMAIN_HTTP_SETUP subAsset's assignedToAsset.uuid not found"));
 
         subHostingAssets.add(
                 createDomainSubSetupAssetEntity(
@@ -116,15 +143,6 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
             final HsHostingAssetRealEntity domainSetupAsset,
             final HsHostingAssetType subAssetType,
             final Function<HsHostingAssetRealEntity.HsHostingAssetRealEntityBuilder<?, ?>, HsHostingAssetRealEntity.HsHostingAssetRealEntityBuilder<?, ?>> builderTransformer) {
-        final var resourceType = HsHostingAssetTypeResource.valueOf(subAssetType.name());
-
-        final var subAssetResourceOptional = findSubHostingAssetResource(resourceType);
-
-        subAssetResourceOptional.ifPresentOrElse(
-            this::verifyNotOverspecified,
-            () -> { throw new ValidationException("sub-asset of type " + resourceType.name() + " required in legacy mode, but missing"); }
-        );
-
         return builderTransformer.apply(
                         HsHostingAssetRealEntity.builder()
                                 .type(subAssetType)
@@ -147,6 +165,14 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
             throw new ValidationException("sub asset " + givenSubAssetResource.getType() + " is over-specified, in compatibility mode, only default values allowed");
         }
 
+    }
+
+    private static String requiredSubSetupTypes() {
+        return REQUIRED_SUB_SETUP_TYPES.stream().map(Enum::name).collect(joining(", "));
+    }
+
+    private static HsHostingAssetTypeResource resourceTypeOf(final HsHostingAssetType subSetupType) {
+        return HsHostingAssetTypeResource.valueOf(subSetupType.name());
     }
 
     private String getDomainName() {

@@ -2,8 +2,8 @@ package net.hostsharing.hsadminng.hs.booking.item;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
-import lombok.val;
 import io.restassured.http.ContentType;
+import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
@@ -42,6 +42,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANA
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.matchesRegex;
 
 @Tag("bookingIntegrationTest")
@@ -187,7 +188,14 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new bookingItem can be accessed under the generated UUID
-            assertThat(fetchRealBookingItemFromURI(location)).isNotNull();
+            val newBookingItem = fetchRealBookingItemFromURI(location);
+            assertThat(newBookingItem).isNotNull();
+
+            // and it is marked as waiting for the manual hosting-asset setup
+            val event = bookingItemCreationEventRepo.findByBookingItem(newBookingItem);
+            assertThat(event).as("the booking item should wait for manual setup, but no event got persisted").isNotNull();
+            assertThat(event.getStatusMessage())
+                    .isEqualTo("waiting for manual setup of hosting asset for booking item of type MANAGED_SERVER");
         }
 
         @Test
@@ -348,6 +356,45 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .isEqualTo(domainSetupHostingAsset);
             final var event = bookingItemCreationEventRepo.findByBookingItem(newBookingItem);
             assertThat(event).isNull();
+        }
+
+        @Test
+        void projectAgent_canNotAddDomainSetupBookingItemWithHostingAssetWithoutSubHostingAssets() {
+
+            context.define("hsh-alex_superuser", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            val givenProject = findDefaultProjectOfDebitorNumber(1000111);
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "project.uuid": "{projectUuid}",
+                                    "type": "DOMAIN_SETUP",
+                                    "caption": "some new domain-setup booking",
+                                    "resources": {
+                                        "domainName": "example.org",
+                                        "verificationCode": "just-a-fake-verification-code"
+                                    },
+                                    "hostingAsset": {
+                                        "identifier": "example.org"
+                                    }
+                                }
+                                """
+                                .replace("{projectUuid}", givenProject.getUuid().toString())
+                        )
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/booking/items")
+                    .then().log().all().assertThat()
+                        .statusCode(400)
+                        .body("message", containsString("'hostingAsset.subHostingAssets' required in compatibility mode"));
+            // @formatter:on
+
+            // and neither the booking-item nor the hosting asset got created
+            assertThat(realBookingItemRepo.findByCaption("some new domain-setup booking")).isEmpty();
+            assertThat(realHostingAssetRepo.findByIdentifier("example.org")).isEmpty();
         }
 
         @Test
@@ -587,7 +634,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             val event = bookingItemCreationEventRepo.findByBookingItem(newBookingItem);
             assertThat(event).as("the hosting-asset creation should have been refused, but no event got persisted").isNotNull();
             assertThat(event.getStatusMessage())
-                    .isEqualTo("DOMAIN_HTTP_SETUP subAsset with assignedToAssetUuid required in compatibility mode");
+                    .isEqualTo("DOMAIN_HTTP_SETUP subAsset's assignedToAsset.uuid not found");
             assertThat(realHostingAssetRepo.findByIdentifier("example.org")).isEmpty();
         }
     }

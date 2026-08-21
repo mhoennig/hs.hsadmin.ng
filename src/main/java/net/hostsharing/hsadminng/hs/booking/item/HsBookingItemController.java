@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingItemsApi;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
@@ -151,9 +152,11 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     private void publishSavedEvent(final BookingItemEntitySaveProcessor saveProcessor, final HsBookingItemInsertResource body) {
         try {
-            final var bookingItemRealEntity = em.getReference(HsBookingItemRealEntity.class, saveProcessor.getEntity().getUuid());
+            val bookingItemRealEntity = em.getReference(HsBookingItemRealEntity.class, saveProcessor.getEntity().getUuid());
+            // a JSON "null" string would trigger the hosting-asset factories even without a hostingAsset given
             applicationEventPublisher.publishEvent(new BookingItemCreatedAppEvent(
-                    this, bookingItemRealEntity, jsonMapper.writeValueAsString(body.getHostingAsset())));
+                    this, bookingItemRealEntity,
+                    body.getHostingAsset() == null ? null : jsonMapper.writeValueAsString(body.getHostingAsset())));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

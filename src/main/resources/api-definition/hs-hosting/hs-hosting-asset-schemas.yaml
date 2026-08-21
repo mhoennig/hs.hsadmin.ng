@@ -38,6 +38,10 @@ components:
                     type: string
                 caption:
                     type: string
+                assignedToAsset.uuid:
+                    type: string
+                    format: uuid
+                    nullable: true
                 alarmContact:
                     $ref: '../hs-office/hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
                 config:
@@ -53,6 +57,10 @@ components:
             properties:
                 caption:
                     type: string
+                    nullable: true
+                assignedToAsset.uuid:
+                    type: string
+                    format: uuid
                     nullable: true
                 alarmContact.uuid:
                     type: string
@@ -70,6 +78,10 @@ components:
                     format: uuid
                     nullable: true
                 parentAsset.uuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                assignedToAsset.uuid:
                     type: string
                     format: uuid
                     nullable: true

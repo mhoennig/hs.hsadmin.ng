@@ -27,6 +27,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -88,7 +89,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                 .prepareForSave()
                 .save()
                 .validateContext()
-                .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class))
+                .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class, ASSIGNED_TO_ASSET_POSTMAPPER))
                 .revampProperties();
 
         final var uri =
@@ -141,7 +142,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entity = rbacAssetRepo.findByUuid(assetUuid).orElseThrow();
 
-        new HsHostingAssetEntityPatcher(rbacContactRepo, entity).apply(body);
+        new HsHostingAssetEntityPatcher(rbacContactRepo, rbacAssetRepo, entity).apply(body);
 
         final var mapped = new HostingAssetEntitySaveProcessor(emw, entity)
                 .preprocessEntity()
@@ -149,7 +150,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                 .prepareForSave()
                 .save()
                 .validateContext()
-                .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class))
+                .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class, ASSIGNED_TO_ASSET_POSTMAPPER))
                 .revampProperties();
 
         return ResponseEntity.ok(mapped);
@@ -170,10 +171,22 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                     .orElseThrow(() -> new NoSuchElementException(
                             "cannot find parentAsset by parentAssetUuid: " + resource.getParentAssetUuid())));
         }
+        if (resource.getAssignedToAssetUuid() != null) {
+            entity.setAssignedToAsset(rbacAssetRepo.findVisibleByUuid(resource.getAssignedToAssetUuid())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "cannot find assignedToAsset by assignedToAssetUuid: " + resource.getAssignedToAssetUuid())));
+        }
     };
 
+    // ModelMapper in strict mode does not flatten an entity reference into its uuid property
+    final BiConsumer<HsHostingAsset, HsHostingAssetResource> ASSIGNED_TO_ASSET_POSTMAPPER = (entity, resource)
+            -> resource.setAssignedToAssetUuid(
+                    Optional.ofNullable(entity.getAssignedToAsset()).map(HsHostingAsset::getUuid).orElse(null));
+
     @SuppressWarnings("unchecked")
-    final BiConsumer<HsHostingAssetRbacEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource)
-            -> resource.setConfig(HostingAssetEntityValidatorRegistry.forType(entity.getType())
+    final BiConsumer<HsHostingAssetRbacEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        ASSIGNED_TO_ASSET_POSTMAPPER.accept(entity, resource);
+        resource.setConfig(HostingAssetEntityValidatorRegistry.forType(entity.getType())
                 .revampProperties(emw, entity, (Map<String, Object>) resource.getConfig()));
+    };
 }

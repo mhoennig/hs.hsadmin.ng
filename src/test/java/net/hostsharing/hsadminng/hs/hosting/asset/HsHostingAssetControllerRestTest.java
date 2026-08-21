@@ -607,12 +607,14 @@ public class HsHostingAssetControllerRestTest {
     void shouldGetSingleHostingAssetIfFound() throws Exception {
         // given
         val assetUuid = UUID.randomUUID();
+        val assignedToAssetUuid = UUID.randomUUID();
         when(rbacAssetRepo.findByUuid(assetUuid)).thenReturn(Optional.of(HsHostingAssetRbacEntity.builder()
                 .uuid(assetUuid)
                 .type(HsHostingAssetType.CLOUD_SERVER)
                 .bookingItem(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY)
                 .identifier("vm1234")
                 .caption("some fake cloud-server")
+                .assignedToAsset(HsHostingAssetRealEntity.builder().uuid(assignedToAssetUuid).build())
                 .build()));
 
         // when
@@ -625,7 +627,8 @@ public class HsHostingAssetControllerRestTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("uuid", is(assetUuid.toString())))
                 .andExpect(jsonPath("type", is("CLOUD_SERVER")))
-                .andExpect(jsonPath("identifier", is("vm1234")));
+                .andExpect(jsonPath("identifier", is("vm1234")))
+                .andExpect(jsonPath("['assignedToAsset.uuid']", is(assignedToAssetUuid.toString())));
     }
 
     @Test
@@ -672,6 +675,49 @@ public class HsHostingAssetControllerRestTest {
                 .andExpect(jsonPath("type", is("CLOUD_SERVER")))
                 .andExpect(jsonPath("identifier", is("vm1234")))
                 .andExpect(jsonPath("caption", is("some new cloud-server")));
+    }
+
+    @Test
+    void shouldPostNewHostingAssetWithAssignedToAsset() throws Exception {
+        // given
+        val parentAssetUuid = UUID.randomUUID();
+        when(rbacAssetRepo.findVisibleByUuid(parentAssetUuid)).thenReturn(Optional.of(
+                HsHostingAssetRealEntity.builder()
+                        .type(HsHostingAssetType.MANAGED_WEBSPACE)
+                        .identifier("xyz00")
+                        .build()));
+        val assignedToAssetUuid = UUID.randomUUID();
+        when(rbacAssetRepo.findVisibleByUuid(assignedToAssetUuid)).thenReturn(Optional.of(
+                HsHostingAssetRealEntity.builder()
+                        .uuid(assignedToAssetUuid)
+                        .type(HsHostingAssetType.PGSQL_INSTANCE)
+                        .identifier("vm1234|PgSql.default")
+                        .build()));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/hosting/assets")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "type": "PGSQL_USER",
+                                    "identifier": "PGU|xyz00",
+                                    "parentAsset.uuid": "%s",
+                                    "assignedToAsset.uuid": "%s",
+                                    "caption": "some new PostgreSQL user",
+                                    "config": {
+                                        "password": "Test1234"
+                                    }
+                                }
+                                """.formatted(parentAssetUuid, assignedToAssetUuid))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("type", is("PGSQL_USER")))
+                .andExpect(jsonPath("identifier", is("PGU|xyz00")))
+                .andExpect(jsonPath("['assignedToAsset.uuid']", is(assignedToAssetUuid.toString())));
     }
 
     @Test
@@ -843,6 +889,39 @@ public class HsHostingAssetControllerRestTest {
                }
                """);
         assertThat(actualConfig).isEqualTo(expectedConfig);
+    }
+
+    // an invisible asset has to yield the same 404 as an unknown one (A-02)
+    @Test
+    void shouldRejectPatchIfAssignedToAssetIsInvisible() throws Exception {
+        // given
+        val assetUuid = UUID.randomUUID();
+        val assignedToAssetUuid = UUID.randomUUID();
+        when(rbacAssetRepo.findByUuid(assetUuid)).thenReturn(Optional.of(HsHostingAssetRbacEntity.builder()
+                .uuid(assetUuid)
+                .type(HsHostingAssetType.CLOUD_SERVER)
+                .bookingItem(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY)
+                .identifier("vm1234")
+                .caption("some fake cloud-server")
+                .build()));
+        when(rbacAssetRepo.findVisibleByUuid(assignedToAssetUuid)).thenReturn(Optional.empty());
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .patch("/api/hs/hosting/assets/" + assetUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "assignedToAsset.uuid": "%s"
+                                }
+                                """.formatted(assignedToAssetUuid))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("message",
+                        is("ERROR: [404] cannot find HostingAsset by assignedToAsset.uuid: " + assignedToAssetUuid)));
     }
 
     private static final ObjectMapper SORTED_MAPPER = new ObjectMapper();

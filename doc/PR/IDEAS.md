@@ -15,6 +15,13 @@ Conventions:
 
 ## Entries
 
+- [ ] TODO.test: Add scenario-test coverage for the booking and hosting endpoints.
+      The rule "each API endpoint needs at least one scenario test with a realistic use case"
+      is unfulfilled for the whole hs/booking and hs/hosting API.
+      Only the list endpoints for booking projects and hosting assets show up at all,
+      as a side aspect of the account scenarios.
+      Missing are create/patch/delete for booking projects, booking items and hosting assets,
+      as well as the type-metadata endpoints and the hosting-asset list filters.
 - [ ] TODO.test: Consider a check against boolean-heavy signatures and types.
       Neither the PMD ratchet (`config/pmd/complexity.xml`) nor the `ArchitectureTest` notices
       a record full of booleans or a parameter list with several booleans today.

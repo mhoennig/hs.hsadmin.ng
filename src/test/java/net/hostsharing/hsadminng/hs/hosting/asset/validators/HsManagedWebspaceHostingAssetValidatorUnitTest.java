@@ -215,15 +215,14 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
         val em = mock(EntityManager.class);
         val nativeQuery = mock(Query.class);
         val assetQuery = mock(TypedQuery.class);
-        val assetStream = mock(Stream.class);
         when(em.find(HsHostingAssetRealEntity.class, webspaceUuid)).thenReturn(webspaceRealEntity);
         when(em.createNativeQuery("SELECT nextval('hs_hosting.asset_unixuser_system_id_seq')", Integer.class))
                 .thenReturn(nativeQuery);
         when(nativeQuery.getSingleResult()).thenReturn(100000);
         when(em.createQuery(any(String.class), any(Class.class))).thenReturn(assetQuery);
         when(assetQuery.setParameter(any(String.class), any())).thenReturn(assetQuery);
-        when(assetQuery.getResultStream()).thenReturn(assetStream);
-        when(assetStream.findFirst()).thenReturn(java.util.Optional.empty());
+        when(assetQuery.setMaxResults(1)).thenReturn(assetQuery);
+        when(assetQuery.getResultList()).thenReturn(java.util.List.of());
         when(em.contains(any())).thenReturn(false);
         doNothing().when(em).persist(any());
         doNothing().when(em).flush();

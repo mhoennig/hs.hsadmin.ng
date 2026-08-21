@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import jakarta.validation.ValidationException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,6 +33,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANA
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
 import static net.hostsharing.hsadminng.mapper.PatchableMapWrapper.entry;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -162,7 +164,7 @@ class DomainSetupHostingAssetFactoryUnitTest {
     }
 
     @Test
-    void persistsEventEntityIfDomainDnsSetupIsOverspecified() {
+    void rejectsOverSpecifiedSubHostingAsset() {
         // given
         final var givenBookingItem = createBookingItemFromResources(
                 entry("domainName", "example.org"),
@@ -194,13 +196,13 @@ class DomainSetupHostingAssetFactoryUnitTest {
                 Dns.Result.fromRecords("Hostsharing-domain-setup-verification-code=just-a-fake-verification-code"));
 
         // when
-        listener.onApplicationEvent(
-                new BookingItemCreatedAppEvent(this, givenBookingItem, givenAssetJson)
-        );
+        val thrown = catchThrowable(() -> listener.onApplicationEvent(
+                new BookingItemCreatedAppEvent(this, givenBookingItem, givenAssetJson)));
 
         // then
-        assertEventStatus(givenBookingItem, givenAssetJson,
-                "sub asset DOMAIN_DNS_SETUP is over-specified, in compatibility mode, only default values allowed");
+        assertThat(thrown).isInstanceOf(ValidationException.class)
+                .hasMessage("sub asset DOMAIN_DNS_SETUP is over-specified, in compatibility mode, only default values allowed");
+        assertNoEventPersisted();
     }
 
     // verifies Fix for Security-Finding A-02
@@ -294,8 +296,78 @@ class DomainSetupHostingAssetFactoryUnitTest {
 
         // then
         assertEventStatus(givenBookingItem, givenAssetJson,
-                "DOMAIN_HTTP_SETUP subAsset with assignedToAssetUuid required in compatibility mode");
+                "DOMAIN_HTTP_SETUP subAsset's assignedToAsset.uuid not found");
         assertNoDomainSetupAssetPersisted();
+    }
+
+    @Test
+    void rejectsIncompleteSubHostingAssets() {
+        // given
+        val givenBookingItem = createBookingItemFromResources(
+                entry("domainName", "example.org"),
+                entry("verificationCode", "just-a-fake-verification-code")
+        );
+        val givenAssetJson = """
+                {
+                    "identifier": "example.org", // also as default for all subAssets
+                    "subHostingAssets": [
+                        {
+                            "type": "DOMAIN_HTTP_SETUP",
+                            "assignedToAsset.uuid": "{unixUserHostingAssetUuid}"
+                        },
+                        {
+                            "type": "DOMAIN_DNS_SETUP"
+                        }
+                    ]
+                }
+                """
+                .replace("{unixUserHostingAssetUuid}", unixUserHostingAsset.getUuid().toString());
+
+        // when
+        val thrown = catchThrowable(() -> listener.onApplicationEvent(
+                new BookingItemCreatedAppEvent(this, givenBookingItem, givenAssetJson)));
+
+        // then
+        assertThat(thrown).isInstanceOf(ValidationException.class)
+                .hasMessage("sub-asset of type DOMAIN_MBOX_SETUP required in legacy mode, but missing");
+        assertNoEventPersisted();
+    }
+
+    @Test
+    void rejectsDomainHttpSetupWithoutAssignedToAsset() {
+        // given
+        val givenBookingItem = createBookingItemFromResources(
+                entry("domainName", "example.org"),
+                entry("verificationCode", "just-a-fake-verification-code")
+        );
+        val givenAssetJson = """
+                {
+                    "identifier": "example.org", // also as default for all subAssets
+                    "subHostingAssets": [
+                        {
+                            "type": "DOMAIN_HTTP_SETUP"
+                        },
+                        {
+                            "type": "DOMAIN_DNS_SETUP"
+                        },
+                        {
+                            "type": "DOMAIN_MBOX_SETUP"
+                        },
+                        {
+                            "type": "DOMAIN_SMTP_SETUP"
+                        }
+                    ]
+                }
+                """;
+
+        // when
+        val thrown = catchThrowable(() -> listener.onApplicationEvent(
+                new BookingItemCreatedAppEvent(this, givenBookingItem, givenAssetJson)));
+
+        // then
+        assertThat(thrown).isInstanceOf(ValidationException.class)
+                .hasMessage("DOMAIN_HTTP_SETUP subAsset with assignedToAsset.uuid required in compatibility mode");
+        assertNoEventPersisted();
     }
 
     @SafeVarargs
@@ -316,6 +388,12 @@ class DomainSetupHostingAssetFactoryUnitTest {
         assertThat(eventEntity.getBookingItem()).isSameAs(givenBookingItem);
         assertThat(eventEntity.getAssetJson()).isEqualTo(givenAssetJson);
         assertThat(eventEntity.getStatusMessage()).isEqualTo(expectedErrorMessage);
+    }
+
+    private void assertNoEventPersisted() {
+        assertThat(emwFake.stream(BookingItemCreatedEventEntity.class))
+                .as("the event should not have been persisted, but got persisted")
+                .isEmpty();
     }
 
     private void assertNoDomainSetupAssetPersisted() {

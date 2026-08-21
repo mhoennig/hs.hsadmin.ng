@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
+import lombok.val;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
@@ -46,10 +47,18 @@ class HsUnixUserHostingAssetValidator extends HostingAssetEntityValidator {
     }
 
     private static String computeHomedir(final EntityManager em, final PropertiesProvider propertiesProvider) {
-        final var entity = (HsHostingAsset) propertiesProvider;
-        final var webspaceName = entity.getParentAsset().getIdentifier();
-        return "/home/pacs/" + webspaceName
-                + "/users/" + entity.getIdentifier().substring(webspaceName.length()+DASH_LENGTH);
+        val entity = (HsHostingAsset) propertiesProvider;
+        val webspaceName = entity.getParentAsset().getIdentifier();
+        val identifier = entity.getIdentifier();
+        if (identifier.equals(webspaceName)) {
+            // the main user of the webspace itself has no sub-directory below users/
+            return "/home/pacs/" + webspaceName;
+        }
+        // imported identifiers can violate the identifierPattern, which is only validated on write
+        val userName = identifier.startsWith(webspaceName + "-")
+                ? identifier.substring(webspaceName.length() + DASH_LENGTH)
+                : identifier;
+        return "/home/pacs/" + webspaceName + "/users/" + userName;
     }
 
     private static Integer computeUserId(final EntityManager em, final PropertiesProvider propertiesProvider) {

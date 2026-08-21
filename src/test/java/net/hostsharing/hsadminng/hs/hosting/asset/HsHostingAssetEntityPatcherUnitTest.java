@@ -32,6 +32,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
 
     private static final UUID INITIAL_BOOKING_ITEM_UUID = UUID.randomUUID();
     private static final UUID PATCHED_CONTACT_UUID = UUID.randomUUID();
+    private static final UUID PATCHED_ASSIGNED_TO_ASSET_UUID = UUID.randomUUID();
 
     private static final Map<String, Object> INITIAL_CONFIG = patchMap(
             entry("CPU", 1),
@@ -58,10 +59,15 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
     @Mock
     private HsOfficeContactRbacRepository rbacContactRepo;
 
+    @Mock
+    private HsHostingAssetRbacRepository rbacAssetRepo;
+
     @BeforeEach
     void initMocks() {
         lenient().when(rbacContactRepo.findVisibleByUuid(any())).thenAnswer(invocation ->
                 Optional.of(HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(0)).build()));
+        lenient().when(rbacAssetRepo.findVisibleByUuid(any())).thenAnswer(invocation ->
+                Optional.of(HsHostingAssetRealEntity.builder().uuid(invocation.getArgument(0)).build()));
     }
 
     @Override
@@ -82,7 +88,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @Override
     protected HsHostingAssetEntityPatcher createPatcher(final HsHostingAssetRbacEntity server) {
-        return new HsHostingAssetEntityPatcher(rbacContactRepo, server);
+        return new HsHostingAssetEntityPatcher(rbacContactRepo, rbacAssetRepo, server);
     }
 
     @Override
@@ -105,7 +111,13 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
                         HsHostingAssetPatchResource::setAlarmContactUuid,
                         PATCHED_CONTACT_UUID,
                         HsHostingAssetRbacEntity::setAlarmContact,
-                        newContact(PATCHED_CONTACT_UUID))
+                        newContact(PATCHED_CONTACT_UUID)),
+                new JsonNullableProperty<>(
+                        "assignedToAsset",
+                        HsHostingAssetPatchResource::setAssignedToAssetUuid,
+                        PATCHED_ASSIGNED_TO_ASSET_UUID,
+                        HsHostingAssetRbacEntity::setAssignedToAsset,
+                        HsHostingAssetRealEntity.builder().uuid(PATCHED_ASSIGNED_TO_ASSET_UUID).build())
         );
     }
 

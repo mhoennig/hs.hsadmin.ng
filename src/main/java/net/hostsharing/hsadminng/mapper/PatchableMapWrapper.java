@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import static java.util.Optional.ofNullable;
 
@@ -52,19 +54,22 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
     public void assign(final Map<String, T> entries) {
         if (entries != null ) {
             delegate.clear();
-            delegate.putAll(entries);
+            // entry by entry, so that a POSTed value is treated exactly like a PATCHed one
+            entries.forEach(this::patch);
             patched.clear();
         }
     }
 
     public void patch(final Map<String, T> patch) {
-        patch.forEach((key, value) -> {
-            if (value == null) {
-                remove(key);
-            } else {
-                put(key, value);
-            }
-        });
+        patch.forEach(this::patch);
+    }
+
+    private void patch(final String key, final T value) {
+        if (value == null) {
+            remove(key);
+        } else {
+            put(key, value);
+        }
     }
 
     public boolean isPatched(final String propertyName) {
@@ -99,8 +104,9 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
     }
 
     @Override
+    // a value loaded from jsonb arrives as ArrayList, just like a freshly deserialized one
     public T get(final Object key) {
-        return delegate.get(key);
+        return toStringArrayIfList(delegate.get(key));
     }
 
     @Override
@@ -108,7 +114,7 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
         if (!Objects.equals(value, delegate.get(key))) {
             patched.add(key);
         }
-        return delegate.put(key, fixValueType(value));
+        return delegate.put(key, fixValueType(key, value));
     }
 
     @Override
@@ -121,7 +127,7 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
 
     @Override
     public void putAll(final @NotNull Map<? extends String, ? extends T> m) {
-        delegate.putAll(m);
+        m.forEach(this::put);
     }
 
     @Override
@@ -148,13 +154,28 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
         return delegate.entrySet();
     }
 
-    private T fixValueType(final T value) {
+    // only requests can be rejected, thus the null-check does not belong into the read path
+    private T fixValueType(final String key, final T value) {
+        if (value instanceof ArrayList<?> arrayListValue) {
+            IntStream.range(0, arrayListValue.size())
+                    .filter(index -> arrayListValue.get(index) == null)
+                    .findFirst()
+                    .ifPresent(index -> {
+                        throw new ValidationException("'" + key + "[" + index + "]' must not be null");
+                    });
+        }
+        return toStringArrayIfList(value);
+    }
+
+    private T toStringArrayIfList(final T value) {
         if (value instanceof ArrayList<?> arrayListValue) {
             // Jackson deserialization creates ArrayList for JSON arrays, but we need a String[].
             // Jackson could be configured to create Object[], but that does not help.
-            final var valueToPut = arrayListValue.stream().map(Object::toString).toArray(String[]::new);
+            final var convertedValue = arrayListValue.stream()
+                    .map(element -> element == null ? null : element.toString())
+                    .toArray(String[]::new);
             //noinspection unchecked
-            return (T) valueToPut;
+            return (T) convertedValue;
         }
         return value;
     }

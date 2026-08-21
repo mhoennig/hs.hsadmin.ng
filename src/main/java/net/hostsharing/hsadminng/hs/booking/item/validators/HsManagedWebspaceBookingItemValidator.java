@@ -110,6 +110,7 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
                         "SELECT asset FROM HsHostingAssetRealEntity asset WHERE asset.bookingItem.uuid=:bookingItemUuid",
                         HsHostingAssetRealEntity.class)
                 .setParameter("bookingItemUuid", entity.getUuid())
-                .getResultStream().findFirst(); // there are 0 or 1, never more
+                .setMaxResults(1) // there are 0 or 1, never more
+                .getResultList().stream().findFirst();
     }
 }

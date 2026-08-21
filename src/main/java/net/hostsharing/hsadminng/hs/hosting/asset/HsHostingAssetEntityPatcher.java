@@ -14,12 +14,15 @@ import java.util.UUID;
 public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAssetPatchResource> {
 
     private final HsOfficeContactRbacRepository rbacContactRepo;
+    private final HsHostingAssetRbacRepository rbacAssetRepo;
     private final HsHostingAssetRbacEntity entity;
 
     public HsHostingAssetEntityPatcher(
             final HsOfficeContactRbacRepository rbacContactRepo,
+            final HsHostingAssetRbacRepository rbacAssetRepo,
             final HsHostingAssetRbacEntity entity) {
         this.rbacContactRepo = rbacContactRepo;
+        this.rbacAssetRepo = rbacAssetRepo;
         this.entity = entity;
     }
 
@@ -32,11 +35,19 @@ public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAsset
         OptionalFromJson.of(resource.getAlarmContactUuid())
                 // HOWTO: patch nullable JSON resource uuid to an entity reference
                 .ifPresent(newValue -> entity.setAlarmContact(visibleContactOrNull(newValue)));
+        OptionalFromJson.of(resource.getAssignedToAssetUuid())
+                .ifPresent(newValue -> entity.setAssignedToAsset(visibleAssetOrNull(newValue)));
     }
 
     private HsOfficeContactRealEntity visibleContactOrNull(final UUID contactUuid) {
         return contactUuid == null ? null
                 : rbacContactRepo.findVisibleByUuid(contactUuid).orElseThrow(
                         () -> new NoSuchElementException("cannot find Contact by alarmContact.uuid: " + contactUuid));
+    }
+
+    private HsHostingAssetRealEntity visibleAssetOrNull(final UUID assetUuid) {
+        return assetUuid == null ? null
+                : rbacAssetRepo.findVisibleByUuid(assetUuid).orElseThrow(
+                        () -> new NoSuchElementException("cannot find HostingAsset by assignedToAsset.uuid: " + assetUuid));
     }
 }

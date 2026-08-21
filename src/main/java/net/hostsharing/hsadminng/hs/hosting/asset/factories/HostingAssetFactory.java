@@ -20,6 +20,11 @@ abstract class HostingAssetFactory {
 
     protected abstract HsHostingAsset create();
 
+    // a malformed request is the client's to fix, thus rejected right away,
+    // in contrast to create()-failures, which end up as statusMessage in the event entity
+    protected void validateRequest() {
+    }
+
     public String createAndPersist() {
         try {
             final HsHostingAsset newHostingAsset = create();

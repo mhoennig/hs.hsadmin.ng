@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
+import lombok.val;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hs.hosting.asset.EntityManagerMock;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
@@ -180,6 +181,71 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 entry("SSD hard quota", 50),
                 entry("SSD soft quota", 40),
                 entry("homedir", "/home/pacs/abc00/users/temp")
+        ));
+    }
+
+    @Test
+    void revampsDefaultUnixUserOfWebspace() {
+        // given
+        val webspaceUnixUserHostingAsset = HsHostingAssetRbacEntity.builder()
+                .type(UNIX_USER)
+                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET_REAL_ENTITY)
+                .identifier("abc00")
+                .caption("the default user of webspace abc00")
+                .config(new HashMap<>())
+                .build();
+        val validator = HostingAssetEntityValidatorRegistry.forType(webspaceUnixUserHostingAsset.getType());
+
+        // when
+        val result = validator.revampProperties(em, webspaceUnixUserHostingAsset,
+                webspaceUnixUserHostingAsset.getConfig());
+
+        // then
+        assertThat(result).containsExactlyInAnyOrderEntriesOf(ofEntries(
+                entry("homedir", "/home/pacs/abc00")
+        ));
+    }
+
+    /** The identifier pattern is only validated on write, thus imported data can violate it. */
+    @Test
+    void revampsUnixUserWithIdentifierShorterThanTheWebspaceName() {
+        // given
+        val unixUserHostingAsset = HsHostingAssetRbacEntity.builder()
+                .type(UNIX_USER)
+                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET_REAL_ENTITY)
+                .identifier("xyz")
+                .caption("some imported UnixUser not named after its webspace")
+                .config(new HashMap<>())
+                .build();
+        val validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+
+        // when
+        val result = validator.revampProperties(em, unixUserHostingAsset, unixUserHostingAsset.getConfig());
+
+        // then
+        assertThat(result).containsExactlyInAnyOrderEntriesOf(ofEntries(
+                entry("homedir", "/home/pacs/abc00/users/xyz")
+        ));
+    }
+
+    @Test
+    void revampsUnixUserWithIdentifierNotSeparatedByADash() {
+        // given
+        val unixUserHostingAsset = HsHostingAssetRbacEntity.builder()
+                .type(UNIX_USER)
+                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET_REAL_ENTITY)
+                .identifier("abc00temp")
+                .caption("some imported UnixUser without the dash")
+                .config(new HashMap<>())
+                .build();
+        val validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+
+        // when
+        val result = validator.revampProperties(em, unixUserHostingAsset, unixUserHostingAsset.getConfig());
+
+        // then
+        assertThat(result).containsExactlyInAnyOrderEntriesOf(ofEntries(
+                entry("homedir", "/home/pacs/abc00/users/abc00temp")
         ));
     }
 
