@@ -279,7 +279,7 @@ ENVIRONMENT_FILE
 response=$(
     SMOKE_TEST_FAKE_SERVER_HOME=$(cd "$fakeServerHome" && pwd) \
     PATH=$(cd "$sshStubDir" && pwd):$PATH \
-    HSADMINNG_DEPLOY_HOST=smoke-test@stubbed \
+    HSADMINNG_DEPLOY_HOST=stubbed \
     tools/remote backend sql "select count(*) from rbac.subject where name = '$HSADMINNG_SUPERUSER'" 2>/dev/null
 ) || failed "tools/remote backend sql failed: $response"
 grep -qx 1 <<<"$response" ||

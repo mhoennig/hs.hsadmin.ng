@@ -40,6 +40,6 @@ public class FetchAuthConfigurationFromForeignOrigin extends UseCase<FetchAuthCo
         assertThat(response.getResponse().headers().firstValue("Access-Control-Allow-Origin"))
                 .as("the response allows the foreign origin").isPresent();
         assertThat(response.<String>getFromBody("method"))
-                .as("the foreign origin receives the same configuration").isEqualTo("fake-jwt");
+                .as("the foreign origin receives the same configuration").isEqualTo("oidc");
     }
 }

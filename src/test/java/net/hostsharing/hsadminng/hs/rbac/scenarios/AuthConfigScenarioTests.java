@@ -26,8 +26,8 @@ class AuthConfigScenarioTests extends ScenarioTest {
 
     @Test
     @Order(9830)
-    void theFrontendLogsInDirectlyAtTheReportedFakeJwtTokenUrl() {
-        new LoginAtReportedFakeJwtTokenUrl(scenarioTest)
+    void theFrontendLogsInViaTheStandardOidcAuthorizationCodeFlow() {
+        new LoginViaOidcAuthorizationCodeFlow(scenarioTest)
                 .thenExpect(HttpStatus.OK);
     }
 }

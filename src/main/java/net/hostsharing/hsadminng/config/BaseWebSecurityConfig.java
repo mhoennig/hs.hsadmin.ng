@@ -170,9 +170,10 @@ public abstract class BaseWebSecurityConfig {
                         .allowedMethods("GET");
                 registry.addMapping("/api/**").allowedOrigins(allowedOrigins)
                         .allowedMethods("GET", "PUT", "POST", "PATCH", "DELETE");
-                // browser-frontends log in at the fake-jwt token endpoint directly, without a dev-server-proxy
+                // browser-frontends run the OIDC flow against the fake-jwt provider directly,
+                // without a dev-server-proxy: GET for discovery/JWKS/userinfo, POST for the token endpoint
                 registry.addMapping("/fake-jwt/**").allowedOrigins(allowedOrigins)
-                        .allowedMethods("POST");
+                        .allowedMethods("GET", "POST");
             }
         };
     }

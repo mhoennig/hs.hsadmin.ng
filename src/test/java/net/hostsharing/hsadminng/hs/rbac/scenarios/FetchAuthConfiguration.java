@@ -17,9 +17,10 @@ public class FetchAuthConfiguration extends UseCase<FetchAuthConfiguration> {
                 `GET /api/auth-config` reports which authentication method the backend expects and which
                 parameters a login for that method needs, so that a frontend can configure its login at
                 runtime instead of from environment-specific configuration files distributed separately.
-                With the `fake-jwt` profile active, the response reports the token-URL of the local
-                password-grant login, which is all a client needs — the fake token endpoint accepts any
-                credentials and involves neither a client registration nor any secrets.
+                The method is always `oidc`: with the `fake-jwt` profile active, the backend itself serves
+                a complete OIDC provider under the reported authority, which accepts any credentials and
+                involves neither a client registration nor any secrets — a frontend runs the very same
+                authorization-code flow as against the production Keycloak.
                 """);
     }
 
@@ -33,8 +34,8 @@ public class FetchAuthConfiguration extends UseCase<FetchAuthConfiguration> {
     @Override
     protected void verify(final HttpResponse response) {
         assertThat(response.<String>getFromBody("method"))
-                .as("the backend reports the fake-jwt authentication method").isEqualTo("fake-jwt");
-        assertThat(response.<String>getFromBody("tokenUrl"))
-                .as("the backend reports the token-URL for the fake-jwt login").isEqualTo("/fake-jwt/token");
+                .as("the backend reports the oidc authentication method").isEqualTo("oidc");
+        assertThat(response.<String>getFromBody("authority"))
+                .as("the backend reports its own fake OIDC provider as the authority").endsWith("/fake-jwt");
     }
 }

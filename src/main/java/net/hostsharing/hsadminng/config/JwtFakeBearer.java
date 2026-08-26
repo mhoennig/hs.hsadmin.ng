@@ -4,6 +4,7 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -72,6 +73,45 @@ public class JwtFakeBearer {
             claimsBuilder.claim(ApiKeyAuthenticationFilter.API_KEY_EXPIRES_AT_CLAIM, apiKeyExpiresAt.getEpochSecond());
         }
         return "Bearer " + sign(claimsBuilder.build());
+    }
+
+    /** An OIDC id_token; its issuer must match the discovery document, otherwise OIDC clients reject it. */
+    @SneakyThrows
+    public static String idToken(final String issuer, final String subject, final String clientId, final String nonce) {
+        val claims = new JWTClaimsSet.Builder()
+                .subject(subject)
+                .issuer(issuer)
+                .audience(clientId)
+                .claim("azp", clientId)
+                .claim("preferred_username", subject)
+                .jwtID(UUID.randomUUID().toString())
+                .issueTime(new Date())
+                .expirationTime(expiresIn(ACCESS_TOKEN_EXPIRES_IN_SECONDS));
+        if (nonce != null) {
+            claims.claim("nonce", nonce);
+        }
+        return sign(claims.build());
+    }
+
+    public static String publicJwkSetJson() {
+        return new JWKSet(RSA_KEY.toPublicJWK()).toString();
+    }
+
+    @SneakyThrows
+    public static String verifiedAccessTokenSubject(final String token) {
+        val signed = SignedJWT.parse(token);
+        if (!signed.verify(new RSASSAVerifier(RSA_KEY.toRSAPublicKey()))) {
+            throw new IllegalArgumentException("invalid token signature");
+        }
+        val claims = signed.getJWTClaimsSet();
+        // refresh, ID, and API-key tokens are signed with the same key, so the claims must discriminate
+        if (!claims.getAudience().contains("api") || claims.getStringClaim(TOKEN_TYPE_CLAIM) != null) {
+            throw new IllegalArgumentException("not an access token");
+        }
+        if (claims.getExpirationTime() == null || claims.getExpirationTime().before(new Date())) {
+            throw new IllegalArgumentException("token expired");
+        }
+        return claims.getSubject();
     }
 
     @SneakyThrows

@@ -774,6 +774,51 @@ begin
 end; $$;
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-base-GRANTS-REACHABILITY-FIXPOINT runOnChange:true endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Amends rbac.findGrantees and rbac.isGranted from the non-repeatable rbac-base-GRANTS changeset:
+    the `union` fixpoint visits every node only once and terminates even on a (corrupted) cyclic grant graph,
+    where the former `union all` per-path traversal recursed until statement-timeout or disk exhaustion.
+ */
+create or replace function rbac.findGrantees(grantedId uuid)
+    returns setof rbac.reference
+    returns null on null input
+    language sql as $$
+with recursive reachable(uuid) as (
+    select g.ascendantUuid
+        from rbac.grant g
+        where g.descendantUuid = grantedId
+    union
+    select g.ascendantUuid
+        from rbac.grant g
+                 join reachable r on g.descendantUuid = r.uuid
+)
+select ref.*
+    from rbac.reference ref
+             join reachable r on ref.uuid = r.uuid;
+$$;
+
+-- deliberately follows all edges regardless of `assumed`, like the definition it replaces
+create or replace function rbac.isGranted(granteeIds uuid[], grantedId uuid)
+    returns bool
+    returns null on null input
+    language sql as $$
+with recursive reachable(uuid) as (
+    select g.ascendantUuid
+        from rbac.grant g
+        where g.descendantUuid = grantedId
+    union
+    select g.ascendantUuid
+        from rbac.grant g
+                 join reachable r on g.descendantUuid = r.uuid
+)
+select grantedId = any (granteeIds)
+    or exists (select 1 from reachable where uuid = any (granteeIds));
+$$;
+--//
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-base-INSERT-PERMISSION-CHECK runOnChange:true endDelimiter:--//
 --validCheckSum: ANY
 -- ----------------------------------------------------------------------------
@@ -844,31 +889,21 @@ declare
 begin
     return query
         with recursive
-            recursive_grants as (
-                select distinct rbac.grant.descendantuuid,
-                                rbac.grant.ascendantuuid,
-                                1 as level,
-                                true as valid
-                    from rbac.grant
-                    where rbac.grant.assumed
-                      and rbac.grant.ascendantuuid = any (subjectIds)
-                union all
-                select distinct g.descendantuuid,
-                                g.ascendantuuid,
-                                grants.level + 1 as level,
-                                base.assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
+            -- `union` (not `union all`) visits every reachable node only once: shared sub-graphs are not
+            -- re-traversed per path, and the fixpoint terminates even on a (theoretically) cyclic grant graph,
+            -- which made the former grant-level and grant-count safety nets obsolete
+            reachable(uuid) as (
+                select t.uuid
+                    from unnest(subjectIds) as t(uuid)
+                union
+                select g.descendantuuid
                     from rbac.grant g
-                             join recursive_grants grants on grants.descendantuuid = g.ascendantuuid
-                    where g.assumed),
-            count_check as (
-                select base.assertTrue((select count(*) from recursive_grants) < 400000,
-                            'too many grants for current subjects: ' || (select count(*) from recursive_grants))
-                           as valid)
+                             join reachable r on g.ascendantuuid = r.uuid
+                    where g.assumed)
         select distinct perm.objectuuid
-            from recursive_grants
-                     join rbac.permission perm on recursive_grants.descendantuuid = perm.uuid
+            from reachable
+                     join rbac.permission perm on perm.uuid = reachable.uuid
                      join rbac.object obj on obj.uuid = perm.objectuuid
-                     join count_check cc on cc.valid
             where obj.objectTable = forObjectTable
               -- 'SELECT' permission is included in all other permissions
               and (requiredOp = 'SELECT' or perm.op = requiredOp)
@@ -886,32 +921,30 @@ $$;
 --//
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-QUERY-GRANTED-PERMISSIONS endDelimiter:--//
+--changeset michael.hoennig:rbac-base-QUERY-GRANTED-PERMISSIONS runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
-    Returns all permissions accessible to the given subject UUID (subject or role).
+    Returns all permissions accessible to the given subject UUID (subject or role),
+    as terminating `union` fixpoint, see rbac-base-GRANTS-REACHABILITY-FIXPOINT.
  */
 create or replace function rbac.queryPermissionsGrantedToSubjectId(subjectId uuid)
     returns setof rbac.permission
     strict
     language sql as $$
-with recursive grants as (
-    select descendantUuid, ascendantUuid
-        from rbac.grant
-        where ascendantUuid = subjectId
-    union all
-    select g.descendantUuid, g.ascendantUuid
+with recursive reachable(uuid) as (
+    select g.descendantUuid
         from rbac.grant g
-                 inner join grants on grants.descendantUuid = g.ascendantUuid
+        where g.ascendantUuid = subjectId
+    union
+    select g.descendantUuid
+        from rbac.grant g
+                 join reachable r on g.ascendantUuid = r.uuid
 )
 select perm.*
     from rbac.permission perm
-    where perm.uuid in (
-        select descendantUuid
-            from grants
-    );
+             join reachable r on perm.uuid = r.uuid;
 $$;
-
 --//
 
 -- ============================================================================
@@ -1052,32 +1085,29 @@ $$;
 
 
 -- ============================================================================
---changeset michael.hoennig:rbac-base-QUERY-SUBJECTS-WITH-PERMISSION-FOR-OBJECT endDelimiter:--//
+--changeset michael.hoennig:rbac-base-QUERY-SUBJECTS-WITH-PERMISSION-FOR-OBJECT runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 /*
-    Returns all subject UUIDs which have any permission for the given object UUID.
+    Returns all subject UUIDs which have any permission for the given object UUID,
+    as terminating `union` fixpoint, see rbac-base-GRANTS-REACHABILITY-FIXPOINT.
  */
-
 create or replace function rbac.queryAllRbacSubjectsWithPermissionsFor(objectId uuid)
     returns setof rbac.subject
     returns null on null input
     language sql as $$
-select *
-    from rbac.subject
-    where uuid in (
-        -- @formatter:off
-        with recursive grants as (
-            select descendantUuid, ascendantUuid
-                from rbac.grant
-                where descendantUuid = objectId
-            union all
-            select "grant".descendantUuid, "grant".ascendantUuid
-                from rbac.grant "grant"
-                inner join grants recur on recur.ascendantUuid = "grant".descendantUuid
-        )
-        -- @formatter:on
-        select ascendantUuid
-            from grants);
+with recursive reachable(uuid) as (
+    select g.ascendantUuid
+        from rbac.grant g
+        where g.descendantUuid = objectId
+    union
+    select g.ascendantUuid
+        from rbac.grant g
+                 join reachable r on g.descendantUuid = r.uuid
+)
+select s.*
+    from rbac.subject s
+             join reachable r on s.uuid = r.uuid;
 $$;
 --//
 

@@ -114,18 +114,16 @@ components:
                 Which authentication method this backend expects and which parameters a login for
                 that method needs. Clients branch on `method`, treat the other fields as
                 method-specific, and have to ignore unknown additional fields, so that a future
-                third method does not break existing clients.
+                second method does not break existing clients.
+                Currently the method is always `oidc`: the `fake-jwt` profile serves a complete
+                OIDC provider itself, so local development needs no special login handling.
             required:
                 - method
             properties:
                 method:
                     type: string
-                    description: '`oidc` (Keycloak) or `fake-jwt` (local development)'
+                    description: currently always `oidc`
                 authority:
                     type: string
                     nullable: true
-                    description: only for `oidc`; the issuer this backend validates tokens against
-                tokenUrl:
-                    type: string
-                    nullable: true
-                    description: only for `fake-jwt`; its password-grant accepts any credentials
+                    description: the OIDC issuer this backend validates tokens against

@@ -97,6 +97,11 @@ hsadminng:
         leakproof:
     cors:
         allowed-origins: ${ALLOWED_ORIGINS:*} # for compatibility with env-based CORS-configuration
+    fake-jwt:
+        # env override replaces this list, so a deployed frontend host must re-list loopback if still needed
+        # You can also use the env-var variant of the Spring property: HSADMINNG_FAKE_JWT_CLIENT_HOSTS,
+        # e.g. HSADMINNG_FAKE_JWT_CLIENT_HOSTS='frontend.dev.hostsharing.net, localhost, 127.0.0.1, [::1]'
+        client-hosts: "localhost, 127.0.0.1, [::1]"
     security:
         # SHA-256 hash (hex) of the API-key for provisioning the global-admin API_KEY subject,
         # e.g. generated via `printf '%s' "$apiKey" | sha256sum`, see ProvisioningApiKeyBootstrap

@@ -51,6 +51,10 @@ springdoc:
     swagger-ui:
         version: 5.32.11
 
+hsadminng:
+    fake-jwt:
+        client-hosts: "localhost, 127.0.0.1, [::1]"
+
 logging:
     level:
         liquibase: WARN
@@ -63,3 +67,16 @@ logging:
 testcontainers:
     network:
         mode: host
+
+---
+
+spring:
+    config:
+        activate:
+            on-profile: fake-jwt
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    # tests run on a random port, so the issuer only serves as a stable base for the fake OIDC URLs
+                    issuer-uri: "http://localhost:8080/fake-jwt"

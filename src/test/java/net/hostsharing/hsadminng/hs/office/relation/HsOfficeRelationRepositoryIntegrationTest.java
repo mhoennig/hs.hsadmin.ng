@@ -4,6 +4,7 @@ import lombok.val;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
 import net.hostsharing.hsadminng.lambda.Reducer;
 import net.hostsharing.hsadminng.mapper.Array;
@@ -24,6 +25,7 @@ import jakarta.persistence.PersistenceException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.UNINCORPORATED_FIRM;
@@ -191,6 +193,116 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office.contact#fourthcontact:ADMIN by system and assume }",
                     null)
             );
+        }
+
+        @Test
+        public void creatingARepresentativeRelationAsAnchorPersonAdmin_doesNotCreateAGrantCycle() {
+            // given
+            context("hsh-alex_superuser", "hs_office.person#ErbenBesslerMelBessler:ADMIN");
+            val givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                    .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                    .findFirst().orElseThrow();
+            val givenHolderPerson = personRepo.findPersonByOptionalNameLike("Bert").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            val givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
+                    .findFirst().orElseThrow();
+
+            // when
+            val result = attempt(
+                    em, () -> {
+                        val newRelation = HsOfficeRelationRbacEntity.builder()
+                                .anchor(givenAnchorPerson)
+                                .holder(givenHolderPerson)
+                                .type(HsOfficeRelationType.REPRESENTATIVE)
+                                .contact(givenContact)
+                                .build();
+                        return toCleanup(relationRbacRepo.save(newRelation));
+                    });
+
+            // then
+            result.assertSuccessful();
+            val personAdminRoleUuid = roleUuidOf(givenAnchorPerson.getUuid(), "ADMIN");
+            val relationOwnerRoleUuid = roleUuidOf(result.returnedValue().getUuid(), "OWNER");
+            val relationAgentRoleUuid = roleUuidOf(result.returnedValue().getUuid(), "AGENT");
+
+            // the creating context must not gain the relation OWNER: relation:ADMIN is granted the
+            // anchor-person's OWNER by the spec, thus that grant would close a privilege-escalating cycle
+            assertThat(isGranted(personAdminRoleUuid, relationOwnerRoleUuid)).isFalse();
+            // but the creating context keeps its spec-defined AGENT access to the new relation
+            assertThat(isGranted(personAdminRoleUuid, relationAgentRoleUuid)).isTrue();
+        }
+
+        @Test
+        public void creatingARepresentativeRelationForAHolderPersonCreatedByTheSameContext_doesNotCloseAGrantCycle() {
+            // given: the anchor-person's ADMIN creates the future holder person, thus gaining creator access to it
+            context("hsh-alex_superuser", "hs_office.person#ErbenBesslerMelBessler:ADMIN");
+            val givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                    .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                    .findFirst().orElseThrow();
+            val givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth contact").stream()
+                    .findFirst().orElseThrow();
+            val newHolderPerson = toCleanup(personRepo.save(HsOfficePersonRealEntity.builder()
+                    .personType(NATURAL_PERSON)
+                    .givenName("Holly")
+                    .familyName("Creator-Owned")
+                    .build()));
+            em.flush();
+
+            // when
+            val result = attempt(
+                    em, () -> {
+                        val newRelation = HsOfficeRelationRbacEntity.builder()
+                                .anchor(givenAnchorPerson)
+                                .holder(newHolderPerson)
+                                .type(HsOfficeRelationType.REPRESENTATIVE)
+                                .contact(givenContact)
+                                .build();
+                        return toCleanup(relationRbacRepo.save(newRelation));
+                    });
+
+            // then: the spec grants apply despite the creator access to the holder person ...
+            result.assertSuccessful();
+            val anchorAdminRoleUuid = roleUuidOf(givenAnchorPerson.getUuid(), "ADMIN");
+            val holderAdminRoleUuid = roleUuidOf(newHolderPerson.getUuid(), "ADMIN");
+            val relationOwnerRoleUuid = roleUuidOf(result.returnedValue().getUuid(), "OWNER");
+            assertThat(isGranted(holderAdminRoleUuid, relationOwnerRoleUuid)).isTrue();
+
+            // ... the graph stays acyclic, so the anchor ADMIN must not have escalated to its own OWNER ...
+            assertThat(isGranted(anchorAdminRoleUuid, roleUuidOf(givenAnchorPerson.getUuid(), "OWNER"))).isFalse();
+
+            // ... and the creating context keeps its creator access to the holder person via direct permissions
+            assertThat(isGranted(anchorAdminRoleUuid, permissionUuidOf(newHolderPerson.getUuid(), "UPDATE"))).isTrue();
+            assertThat(isGranted(anchorAdminRoleUuid, permissionUuidOf(newHolderPerson.getUuid(), "DELETE"))).isTrue();
+            assertThat(isGranted(anchorAdminRoleUuid, holderAdminRoleUuid)).isFalse();
+        }
+
+        private UUID permissionUuidOf(final UUID objectUuid, final String op) {
+            return (UUID) em.createNativeQuery("""
+                            select p.uuid from rbac.permission p
+                                where p.objectuuid = :objectUuid and p.op = cast(:op as rbac.RbacOp)
+                            """)
+                    .setParameter("objectUuid", objectUuid)
+                    .setParameter("op", op)
+                    .getSingleResult();
+        }
+
+        private UUID roleUuidOf(final UUID objectUuid, final String roleType) {
+            return (UUID) em.createNativeQuery("""
+                            select r.uuid from rbac.role r
+                                where r.objectuuid = :objectUuid and r.roletype = cast(:roleType as rbac.RoleType)
+                            """)
+                    .setParameter("objectUuid", objectUuid)
+                    .setParameter("roleType", roleType)
+                    .getSingleResult();
+        }
+
+        private boolean isGranted(final UUID granteeRoleUuid, final UUID grantedRoleUuid) {
+            return (Boolean) em.createNativeQuery(
+                            "select rbac.isGranted(array[cast(:granteeId as uuid)], :grantedId)")
+                    .setParameter("granteeId", granteeRoleUuid)
+                    .setParameter("grantedId", grantedRoleUuid)
+                    .getSingleResult();
         }
 
         // verifies Fix for Security-Finding A-01

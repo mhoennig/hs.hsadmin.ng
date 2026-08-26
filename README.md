@@ -137,7 +137,7 @@ At the beginning of the output, you'll see the full `./gradlew`-call like this:
 The meaning of the listed profiles is:
 
 - **dev**: the PostgreSQL users are created via Liquibase
-- **fake-jwt**: the app starts with a built-in fake OAuth2/JWT server
+- **fake-jwt**: the app starts with a built-in fake OIDC provider (login form, authorization-code flow with PKCE, password grant), which accepts any credentials
 - **complete**: all modules (rbac, office, account, hosting) are started
 - **test-data**: some test data gets inserted at startup 
 

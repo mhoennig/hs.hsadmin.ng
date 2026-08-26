@@ -747,7 +747,8 @@ def main():
         declared = None if args.base else declared_base(paths)
         if declared and declared_base_applies(declared, base):
             print(f"using the base {declared} declared in the PR document")
-            base = declared
+            # resolved like the default base, so a checkout without the local branch works too
+            base = authoritative_base_ref(declared)
             ensure_base_refs_match(base)
             ensure_branch_contains_base(base)
             merge_base, paths = changed_files(base, untracked)

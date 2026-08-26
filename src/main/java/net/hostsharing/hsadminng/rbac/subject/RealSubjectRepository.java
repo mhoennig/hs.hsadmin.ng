@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import io.micrometer.core.annotation.Timed;
+import net.hostsharing.hsadminng.config.FakeJwtSelectableUsers;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUID> {
+public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUID>, FakeJwtSelectableUsers {
 
     /**
      * The complete organization-(realm-)based subject-visibility policy, shared by the queries below:
@@ -85,6 +86,19 @@ public interface RealSubjectRepository extends Repository<RealSubjectEntity, UUI
     @Query(value = "select * from rbac.subject s where s.uuid = :subjectUuid", nativeQuery = true)
     @Timed("app.rbac.subjects.repo.findSubjectByUuidIncludingDeactivated.real")
     Optional<RealSubjectEntity> findSubjectByUuidIncludingDeactivated(UUID subjectUuid);
+
+    // deliberately WITHOUT the visibility condition: only serves the profile-gated fake-jwt
+    // login form, which must offer selectable users before any authentication context exists
+    @Query(value = """
+             select s.name
+               from rbac.subject s
+              where s.type = 'USER'
+                and s.deactivated_at is null
+              order by s.name
+            """, nativeQuery = true)
+    @Timed("app.rbac.subjects.repo.findAllActiveUserSubjectNames.real")
+    @Override
+    List<String> findAllActiveUserSubjectNames();
 
     @Query(value = """
              select *
