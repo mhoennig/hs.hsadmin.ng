@@ -276,11 +276,12 @@ SPRING_DATASOURCE_PASSWORD=$HSADMINNG_POSTGRES_ADMIN_PASSWORD
 ENVIRONMENT_FILE
 # the statement carries a space, a star, parentheses and quotes, all of which a remote
 # login-shell would mangle without proper quoting
+# stderr captured as well, so a failure message names its cause instead of staying empty
 response=$(
     SMOKE_TEST_FAKE_SERVER_HOME=$(cd "$fakeServerHome" && pwd) \
     PATH=$(cd "$sshStubDir" && pwd):$PATH \
     HSADMINNG_DEPLOY_HOST=stubbed \
-    tools/remote backend sql "select count(*) from rbac.subject where name = '$HSADMINNG_SUPERUSER'" 2>/dev/null
+    tools/remote backend sql "select count(*) from rbac.subject where name = '$HSADMINNG_SUPERUSER'" 2>&1
 ) || failed "tools/remote backend sql failed: $response"
 grep -qx 1 <<<"$response" ||
     failed "tools/remote backend sql did not count the subject '$HSADMINNG_SUPERUSER' but answered: $response"
