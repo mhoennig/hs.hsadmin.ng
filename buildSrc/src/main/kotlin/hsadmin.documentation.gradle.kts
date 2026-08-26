@@ -742,6 +742,7 @@ val documentationPdfTasks = documentationMarkdownSources.map { source ->
         inputs.file(sourceFile).withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.file(markdownToPdfTool).withPathSensitivity(PathSensitivity.RELATIVE)
         outputs.file(targetFile)
+        outputs.cacheIf { true }
 
         doFirst {
             targetFile.get().asFile.parentFile.mkdirs()

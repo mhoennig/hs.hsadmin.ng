@@ -579,7 +579,12 @@ For more details and options, run:
 pr-quick-check --help
 ```
 
-The same check runs at the end of the CI build via the Gradle task `prQuickCheck`, which `.gitTally` appends as the last task of the build command; a failing check fails the build.
+The same check runs at the end of the CI build via the Gradle task `prQuickCheck`, which `.gittally.yml` appends as the last task of the build command; a failing check fails the build.
+
+### CI Build-Server
+
+The CI build runs on [GitTally](https://github.com/mhoennig/gittally), configured by [`.gittally.yml`](.gittally.yml) in the repository root.
+To set up the build on a new Hostsharing container server, see [doc/ci-build-server-setup.md](doc/ci-build-server-setup.md).
 
 ## Running the SQL files
 

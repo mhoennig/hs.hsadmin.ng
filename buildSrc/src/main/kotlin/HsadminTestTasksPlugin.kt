@@ -14,6 +14,8 @@ class HsadminTestTasksPlugin : Plugin<Project> {
             testLogging {
                 events("started", "failed")
             }
+            // tests prove the current build, thus their results must never come from the build cache
+            outputs.cacheIf { false }
         }
 
         project.tasks.named<Test>("test") {

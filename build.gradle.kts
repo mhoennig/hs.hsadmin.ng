@@ -251,6 +251,7 @@ tasks.matching { it.name.startsWith("processSpring") && it.name != "processSprin
     inputs.dir("src/main/resources/api-definition")
         .withPropertyName("apiDefinitionDir")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.cacheIf { true }
 }
 
 // Add generated sources to the main source set
@@ -294,7 +295,11 @@ val openApiGenerate = tasks.register<Copy>("openApiGenerate") {
         "springHsBooking", "springHsHosting", "springAccounts"
     ).forEach { from(layout.buildDirectory.dir("generated/sources/openapi-javax/$it")) }
     into(layout.buildDirectory.dir("generated/sources/openapi"))
-    filter { line: String -> line.replace("javax", "jakarta") }
+    filter { line: String ->
+        line.replace("javax", "jakarta")
+            // the @Generated timestamp would defeat build-cache hits for compileJava and downstream
+            .replace(Regex("""date = "[^"]+""""), """date = "unset"""")
+    }
     dependsOn(processSpring) // Ensure generation happens first
 }
 
