@@ -21,11 +21,11 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.16"
     id("io.spring.dependency-management") version "1.1.7"        // manages implicit dependencies
-    id("com.gorylenko.gradle-git-properties") version "2.5.0"     // exposes git commit info via Actuator info endpoint
-    id("io.openapiprocessor.openapi-processor") version "2023.2" // generates Controller-interface and resources from API-spec
-    id("info.solidsoft.pitest") version "1.15.0"                 // performs mutation testing
+    id("com.gorylenko.gradle-git-properties") version "2.5.7"     // exposes git commit info via Actuator info endpoint
+    id("io.openapiprocessor.openapi-processor") version "2026.2" // generates Controller-interface and resources from API-spec
+    id("info.solidsoft.pitest") version "1.19.0"                 // performs mutation testing
     id("se.patrikerdes.use-latest-versions") version "0.2.18"    // updates module and plugin versions
-    id("com.github.ben-manes.versions") version "0.52.0"         // determines which dependencies have updates
+    id("com.github.ben-manes.versions") version "0.53.0"         // determines which dependencies have updates
 }
 
 springBoot {
@@ -47,7 +47,7 @@ version = "0.0.1-SNAPSHOT"
 
 tasks.named<Wrapper>("wrapper") {
     distributionType = Wrapper.DistributionType.BIN
-    gradleVersion = "8.5"
+    gradleVersion = "9.7.1"
 }
 
 // TODO.impl: self-attaching is deprecated, see:
@@ -82,7 +82,8 @@ java {
 }
 
 // For special versions, use `extra` properties delegate for type safety
-val testcontainersVersion by extra("1.21.4")
+val testcontainersVersion = "1.21.4"
+extra["testcontainersVersion"] = testcontainersVersion
 
 // Security patch-levels above what Spring Boot manages; drop each once the managed version catches up.
 extra["jackson-bom.version"] = "2.21.5"   // CVE-2026-54515 + CVE-2026-59889
@@ -174,7 +175,7 @@ tasks.withType<JavaCompile> {
 openapiProcessor {
     process("springRoot") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2022.5")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
         apiPath(project.file("src/main/resources/api-definition/api-definition.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -185,7 +186,7 @@ openapiProcessor {
 
     process("springRbac") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2022.5")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
         apiPath(project.file("src/main/resources/api-definition/rbac/rbac.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/rbac/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -195,7 +196,7 @@ openapiProcessor {
 
     process("springTest") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2022.5")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
         apiPath(project.file("src/main/resources/api-definition/test/test.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/test/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -205,7 +206,7 @@ openapiProcessor {
 
     process("springHsOffice") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2022.5")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
         apiPath(project.file("src/main/resources/api-definition/hs-office/hs-office.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/hs-office/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -215,7 +216,7 @@ openapiProcessor {
 
     process("springHsBooking") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2022.5")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
         apiPath(project.file("src/main/resources/api-definition/hs-booking/hs-booking.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/hs-booking/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -225,7 +226,7 @@ openapiProcessor {
 
     process("springHsHosting") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2022.5")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
         apiPath(project.file("src/main/resources/api-definition/hs-hosting/hs-hosting.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/hs-hosting/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -235,7 +236,7 @@ openapiProcessor {
 
     process("springAccounts") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2022.5")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
         apiPath(project.file("src/main/resources/api-definition/accounts/api-paths.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/accounts/api-mappings.yaml").path)
         prop("showWarnings", true)

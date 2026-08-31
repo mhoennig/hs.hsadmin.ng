@@ -1,5 +1,4 @@
 import java.io.File
-import java.io.FileOutputStream
 
 // The scenario tests write their Markdown reports here; build/reports/scenarios holds the HTML.
 val scenarioReportMarkdownDir = layout.buildDirectory.dir("scenario-reports")
@@ -31,14 +30,13 @@ tasks.register("convertMarkdownToHtml") {
     }
 
     doFirst {
-        // Check if pandoc is installed using exec and capturing output/errors
-        val result = project.exec {
-            commandLine("pandoc", "--version")
-            isIgnoreExitValue = true // Don't fail the build immediately
-            standardOutput = FileOutputStream(File.createTempFile("pandoc_check", ".out")) // Redirect output
-            errorOutput = FileOutputStream(File.createTempFile("pandoc_check", ".err")) // Redirect error
-        }
-        if (result.exitValue != 0) {
+        // Check if pandoc is installed
+        val proc = ProcessBuilder("pandoc", "--version")
+            .redirectOutput(File.createTempFile("pandoc_check", ".out"))
+            .redirectError(File.createTempFile("pandoc_check", ".err"))
+            .start()
+        proc.waitFor()
+        if (proc.exitValue() != 0) {
             throw GradleException("Pandoc is not installed or not found in the system path. Please install Pandoc.")
         }
 
@@ -57,14 +55,14 @@ tasks.register("convertMarkdownToHtml") {
             val outputFile = File(outputDir.get().asFile, file.name.replace(".md", ".html"))
 
             // Execute pandoc for each markdown file
-            project.exec {
-                commandLine(
-                    "pandoc",
-                    file.absolutePath,
-                    "--template", templateFile.absolutePath,
-                    "-o", outputFile.absolutePath
-                )
-            }
+            val p = ProcessBuilder(
+                "pandoc",
+                file.absolutePath,
+                "--template", templateFile.absolutePath,
+                "-o", outputFile.absolutePath
+            ).inheritIO().start()
+            p.waitFor()
+            if (p.exitValue() != 0) throw GradleException("pandoc failed for ${file.name}")
             println("Converted ${file.name} to ${outputFile.name}")
         }
     }
@@ -427,7 +425,7 @@ tasks.register("renderBundledDocumentation") {
         val markdownDir = bundledDocumentationMarkdownDir.get().asFile
         val htmlDir = bundledDocumentationHtmlDir.get().asFile
         // a renamed or removed source document must not leave its page behind
-        project.delete(htmlDir)
+        htmlDir.deleteRecursively()
 
         val header = documentationHeader("p", documentationLogoMarker)
 
@@ -468,16 +466,16 @@ tasks.register("renderBundledDocumentation") {
                 )
 
                 val targetFile = File(htmlDir, "${section.directory}/${markdownFile.nameWithoutExtension}.html")
-                project.exec {
-                    commandLine(
-                        markdownToHtmlTool.asFile.absolutePath,
-                        markdownFile.absolutePath,
-                        targetFile.absolutePath,
-                        bundledDocumentationStylesheet.asFile.absolutePath,
-                        navFile.absolutePath,
-                        bundledDocumentationPageFooter.asFile.absolutePath
-                    )
-                }
+                val proc2 = ProcessBuilder(
+                    markdownToHtmlTool.asFile.absolutePath,
+                    markdownFile.absolutePath,
+                    targetFile.absolutePath,
+                    bundledDocumentationStylesheet.asFile.absolutePath,
+                    navFile.absolutePath,
+                    bundledDocumentationPageFooter.asFile.absolutePath
+                ).inheritIO().start()
+                proc2.waitFor()
+                if (proc2.exitValue() != 0) throw GradleException("markdownToHtml failed for ${markdownFile.name}")
                 // every rendered document sits one level below the logo in the documentation tree
                 targetFile.writeText(
                     targetFile.readText().replace(
@@ -501,21 +499,20 @@ tasks.register("renderBundledApiDocumentation") {
     doLast {
         val targetDir = bundledApiHtmlDir.get().asFile
         // a renamed or removed spec must not leave its page behind
-        project.delete(targetDir)
+        targetDir.deleteRecursively()
 
-        project.exec {
-            commandLine(openApiToHtmlTool.asFile.absolutePath, "--install-redoc", targetDir.absolutePath)
-        }
+        ProcessBuilder(openApiToHtmlTool.asFile.absolutePath, "--install-redoc", targetDir.absolutePath)
+            .inheritIO().start().waitFor()
         bundledApiSpecs.forEach { spec ->
-            project.exec {
-                commandLine(
-                    openApiToHtmlTool.asFile.absolutePath,
-                    apiDefinitionDir.file(spec.rootSpec).asFile.absolutePath,
-                    targetDir.absolutePath,
-                    spec.name,
-                    spec.title
-                )
-            }
+            val pr = ProcessBuilder(
+                openApiToHtmlTool.asFile.absolutePath,
+                apiDefinitionDir.file(spec.rootSpec).asFile.absolutePath,
+                targetDir.absolutePath,
+                spec.name,
+                spec.title
+            ).inheritIO().start()
+            pr.waitFor()
+            if (pr.exitValue() != 0) throw GradleException("openApiToHtml failed for ${spec.name}")
         }
     }
 }
@@ -559,7 +556,7 @@ tasks.register("generateBundledDocumentationIndex") {
         val stylesheet = bundledDocumentationStylesheet.asFile.readText()
         val footer = bundledDocumentationPageFooter.asFile.readText()
         val targetDir = bundledDocumentationIndexDir.get().asFile
-        project.delete(targetDir)
+        targetDir.deleteRecursively()
         targetDir.mkdirs()
 
         // Swagger UI reads the API definitions directly, thus the API section is never empty,

@@ -297,7 +297,7 @@ public class HsOfficeMembershipControllerRestTest {
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
-                            .get("/api/hs/office/memberships/M-0000000")
+                            .get("/api/hs/office/memberships/M-1000000")
                             .header("Authorization", bearer("hsh-alex_superuser"))
                             .accept(MediaType.APPLICATION_JSON))
 

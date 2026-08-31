@@ -81,6 +81,7 @@ out/
 !gradle/wrapper/gradle-wrapper.jar
 /build/
 /buildSrc/build/
+/buildSrc/.kotlin/
 .gradletasknamecache
 gradle-app.setting
 
