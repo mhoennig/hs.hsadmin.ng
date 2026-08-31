@@ -4,6 +4,7 @@
 import argparse
 import re
 import subprocess
+from fnmatch import fnmatch
 from datetime import date
 from itertools import chain
 import time
@@ -21,6 +22,9 @@ PR_DOC_BASE_LINES = 50
 PR_DOC_LINES_PER_FILE = 3
 CHANGE_LINES_PER_SCOPE_POINT = 100
 CHANGE_LINES_PER_PR_DOC_LINE = 10
+MAX_COMMENT_RATIO_PERCENT = 12
+# a small change would otherwise have no room at all for the one comment that earns its place
+MIN_COMMENT_LINES_ALLOWED = 2
 MAX_FILE_SIZE = 142_994
 PR_DOC_DIR = Path("doc/PR")
 # exempt like the PR document itself, so unburdening it into an RFC/ADR does not raise the score
@@ -42,6 +46,28 @@ PR_DOC_NAME = re.compile(
     r"^\d{4}-\d{2}-\d{2}-PR#\d+-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\.md$"
 )
 SQL_DUMP_NAME = re.compile(r"^released-prod-schema-.*\.sql$")
+CODE_SUFFIXES = (".java", ".kt", ".kts", ".sql", ".sh", ".py", ".yaml", ".yml")
+# files whose comments carry what the file itself cannot say — why a setting has its value —
+# and vendored files nobody here writes; each pattern matches the path or the bare file name
+COMMENT_RATIO_EXEMPT = (
+    ".gittally.yml",
+    "application*.yml",
+    "gradlew",
+)
+SCRIPT_SUFFIXES = (".sh", ".py")
+SHEBANG = "#!"
+LIQUIBASE_DIRECTIVE = re.compile(
+    r"^--(/|\s*(changeset|liquibase|validCheckSum|precondition|preconditions"
+    r"|rollback|property|include|includeAll|comment|ignoreLines)\b)",
+    re.IGNORECASE,
+)
+COMMENT_MARKER = re.compile(r"^(//+|--+|/\*+|\*+/?)")
+# markers of the test convention; they name a place, not a reason, and therefore cannot fall
+# out of step with the code the way an explaining sentence does
+CONVENTION_MARKERS = {"given", "when", "then", "and"}
+# instructions to a tool rather than to a reader; matched by prefix, because they carry
+# arguments and, in this repository, the occasional typo like `@formatter:ff`
+TOOL_PRAGMAS = ("@formatter:", "noinspection", "nopmd", "checkstyle:")
 SCOPE_WAIVER_KEY = "max-scope-score"
 SCOPE_WAIVER = re.compile(r"pr-quick-check:max-scope-score=(\d+)`?\s*[:—–-]+\s*(\S.*)")
 RELEASE_NOTE_HEADING = "\n## Release Note\n"
@@ -431,6 +457,191 @@ def report_undefined_qualifiers(merge_base, untracked):
     return []
 
 
+def may_hold_code(path):
+    """Whether the file is worth reading for the ratio; an extension-less one may be a script."""
+    return path.endswith(CODE_SUFFIXES) or "." not in Path(path).name
+
+
+def comment_ratio_exempt(path):
+    """A bare name in the list exempts that file wherever it lies, a pattern with a slash
+    only at its place."""
+    return any(
+        fnmatch(path, pattern) or fnmatch(Path(path).name, pattern)
+        for pattern in COMMENT_RATIO_EXEMPT
+    )
+
+
+def comment_syntax(path, text):
+    """The line-comment token and whether the language has /* */ blocks, or None for a file
+    the ratio does not cover. An extension-less script is recognized by its shebang."""
+    if path.endswith((".java", ".kt", ".kts")):
+        return "//", True
+    if path.endswith(".sql"):
+        return "--", True
+    if path.endswith((*SCRIPT_SUFFIXES, ".yaml", ".yml")) or text.startswith(SHEBANG):
+        return "#", False
+    return None
+
+
+def is_script(path, text):
+    """Only a script gets its header block exempted, because only there does AGENTS.md turn that
+    block into the --help output; in a configuration file it would just be a place to hide prose."""
+    return path.endswith(SCRIPT_SUFFIXES) or text.startswith(SHEBANG)
+
+
+def documented_header(lines):
+    """How many leading lines are the shebang and the header comment block, which AGENTS.md
+    makes the source of a tool's --help output and thus its documentation, not its commentary."""
+    end = 0
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if index == 0 and stripped.startswith(SHEBANG):
+            end = 1
+        elif not stripped or stripped.startswith("#"):
+            end = index + 1
+        else:
+            break
+    return end
+
+
+def comment_parts(text, line_comment, blocks):
+    """Per line, its code outside any comment and its comment content.
+    `/* … */` spans a region whose inner lines carry no marker of their own, so the lines cannot
+    be classified one by one; string literals are skipped, or a `"http://…"` would open one."""
+    depth = 0
+    quote = None
+    for line in text.splitlines():
+        code = []
+        comment = []
+        index = 0
+        while index < len(line):
+            rest = line[index:]
+            if depth:
+                if rest.startswith("*/"):
+                    depth -= 1
+                    index += 2
+                elif rest.startswith("/*"):
+                    depth += 1
+                    index += 2
+                else:
+                    comment.append(line[index])
+                    index += 1
+            elif quote:
+                code.append(line[index])
+                if rest.startswith("\\"):
+                    index += 2
+                elif rest.startswith(quote):
+                    index += len(quote)
+                    quote = None
+                else:
+                    index += 1
+            elif rest.startswith(line_comment):
+                comment.append(rest[len(line_comment):])
+                break
+            elif blocks and rest.startswith("/*"):
+                depth = 1
+                index += 2
+            elif rest.startswith('"""'):
+                code.append(rest[:3])
+                quote = '"""'
+                index += 3
+            elif line[index] in "\"'":
+                code.append(line[index])
+                quote = line[index]
+                index += 1
+            else:
+                code.append(line[index])
+                index += 1
+        # a plain string literal cannot span lines; only a text block may
+        if quote and quote != '"""':
+            quote = None
+        yield "".join(code), "".join(comment)
+
+
+def is_comment_line(path, raw, code, comment):
+    """Whether the line is explaining prose, which is what can fall out of step with its code.
+    Liquibase directives, rulers, bare block-comment delimiters and convention markers cannot,
+    and a comment trailing a statement costs nothing, so all of them count as code."""
+    if code.strip():
+        return False
+    if path.endswith(".sql") and LIQUIBASE_DIRECTIVE.match(raw.strip()):
+        return False
+    prose = COMMENT_MARKER.sub("", comment.strip(), count=1).strip().lower()
+    if not any(character.isalpha() for character in prose):
+        return False
+    return prose not in CONVENTION_MARKERS and not prose.startswith(TOOL_PRAGMAS)
+
+
+def report_comment_ratio(merge_base, untracked):
+    """A comment which restates its code rots as soon as the code moves on, so a PR whose added
+    code is mostly prose is a review finding of its own. Only whole comment lines count; a short
+    trailing comment behind a statement costs nothing."""
+    added = {}
+    for path, line_number, _ in added_diff_lines(merge_base):
+        if may_hold_code(path):
+            added.setdefault(path, set()).add(line_number)
+    for path in untracked:
+        if may_hold_code(path):
+            added[path] = None  # a new file contributes all of its lines
+
+    code_lines = 0
+    comment_lines = 0
+    per_file = {}
+    exempted = []
+    for path, line_numbers in sorted(added.items()):
+        if comment_ratio_exempt(path):
+            exempted.append(path)
+            continue
+        raw_bytes = Path(path).read_bytes() if Path(path).is_file() else b"\0"
+        if b"\0" in raw_bytes:
+            continue
+        text = raw_bytes.decode("utf-8", errors="replace")
+        syntax = comment_syntax(path, text)
+        if not syntax:
+            continue
+        lines = text.splitlines()
+        header_end = documented_header(lines) if is_script(path, text) else 0
+        parts = comment_parts(text, *syntax)
+        for number, (raw, (code, comment)) in enumerate(zip(lines, parts), start=1):
+            if (line_numbers is not None and number not in line_numbers) or not raw.strip():
+                continue
+            if number <= header_end:
+                continue
+            code_lines += 1
+            if is_comment_line(path, raw, code, comment):
+                comment_lines += 1
+                per_file[path] = per_file.get(path, 0) + 1
+    shown = ", ".join(exempted[:3])
+    skipped = (
+        f", exempt: {shown}{f' and {len(exempted) - 3} more' if len(exempted) > 3 else ''}"
+        if exempted
+        else ""
+    )
+    if not code_lines:
+        print(f"PASSED: no added code lines to measure a comment ratio on{skipped}")
+        return []
+    allowed = max(
+        MIN_COMMENT_LINES_ALLOWED, code_lines * MAX_COMMENT_RATIO_PERCENT // 100
+    )
+    ratio = 100 * comment_lines / code_lines
+    if comment_lines <= allowed:
+        print(
+            f"PASSED: {comment_lines} of {code_lines} added code lines are comments "
+            f"({ratio:.1f}%), at most {allowed} allowed{skipped}"
+        )
+        return []
+    listed = "\n".join(
+        f"  {path}: {count} comment lines"
+        for path, count in sorted(per_file.items(), key=lambda item: -item[1])[:5]
+    )
+    return [
+        f"{comment_lines} of {code_lines} added code lines are comments ({ratio:.1f}%), "
+        f"at most {allowed} allowed ({MAX_COMMENT_RATIO_PERCENT}% or "
+        f"{MIN_COMMENT_LINES_ALLOWED} lines, whichever is more){skipped}; a comment has to "
+        f"give a reason, not restate the code:\n{listed}"
+    ]
+
+
 def report_open_fixmes():
     """Quotes the markers into the failure message, because tools/fixmes writes them straight
     to the terminal, whereas the failures are collected and printed screens further down."""
@@ -637,6 +848,7 @@ checks:
   - the PR document stays within its dynamic line budget
   - tools/fixmes reports no open {MARKER_WORD} markers
   - added lines only use the defined TODO/{MARKER_WORD} qualifiers
+  - at most 12% of the added code lines are whole comment lines
   - every RFC number under doc/rfc/ names exactly one document; the same
     number claimed differently on an open origin branch only warns
   - no secret environment files named .env* are tracked; .envrc and exact
@@ -657,6 +869,27 @@ size budgets:
   *-rbac.md files count as one.  The selected PR document, documents under
   doc/rfc/ and doc/adr/, generated RBAC files and released-prod-schema-*.sql
   dumps do not contribute substantive changed lines.
+
+comment ratio:
+  Of the lines a PR adds to code, at most 12% may be whole comment lines, but always at
+  least two of them, so that a small change keeps room for the one comment which earns
+  its place.  Code means .java, .kt, .kts, .sql, .sh, .py, .yaml and .yml plus the
+  extension-less tools, recognized by their shebang; YAML counts because configuration
+  is code rather than prose.  A script's shebang and the header comment block below it
+  do not count, being the source of its --help output, but a configuration file has no
+  such exemption.  There is deliberately no exception to declare in a PR document: the
+  mostly redundant comments are the very thing to prevent.  A fixed list of files is
+  exempt instead, named in COMMENT_RATIO_EXEMPT at the top of this tool: configuration
+  whose comments hold the reasons a key cannot state itself, such as .gittally.yml and
+  application*.yml, and vendored files such as gradlew.  Whatever it skipped, it names.
+
+  Since /* ... */ spans a region, the whole file is read and block comments and string
+  literals are tracked across lines.  Blank lines count for neither side, and a trailing
+  comment behind a statement is free.
+  Rulers without letters, bare block-comment delimiters, the // given, // when and
+  // then markers, tool pragmas such as // @formatter:off or //noinspection, and
+  Liquibase directives such as --changeset are code, not comments.
+  The two-line floor makes the rule continuous: 12% of 20 lines is two lines as well.
 
 scope-budget exception:
   When a PR legitimately has to exceed the scope budget, its PR document
@@ -817,6 +1050,8 @@ def main():
     failures.extend(report_open_fixmes())
 
     failures.extend(report_undefined_qualifiers(merge_base, untracked))
+
+    failures.extend(report_comment_ratio(merge_base, untracked))
 
     changed_pr_docs = pr_doc_candidates(paths)
     extra_pr_docs, extra_failures = parse_extra_pr_docs(pr_doc)

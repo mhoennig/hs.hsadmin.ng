@@ -613,9 +613,6 @@ You can explore the prototype as follows:
 
 #### General Directory Structure
  
-`.aider.conf.yml`
-    Configuration for the _aider AI_ coding agent.
-
 `.aiassistant/rules/hsadmin-ng.md`
     Symbolic link to `AGENTS.md` for IntelliJ IDEA AI Chat project rules.
 
@@ -1334,7 +1331,7 @@ You might want to add this to your shell's startup file (e.g., `.bashrc`, `.zshr
 1.  Navigate to your project's root directory in the terminal.
 2.  Start `aider` by simply typing:
     ```shell
-    aider # see also .aider.conf.yml
+    aider
     ```
 3.  Add the files you want the AI to work with:
     ```
