@@ -17,6 +17,8 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DeleteDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DontDeleteDefaultDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FinallyDeleteSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaMandateForDebitor;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllDebitorsWithCompleteMasterData;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListDebitorsWithCompleteMasterData;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsClearingTransaction;
@@ -282,6 +284,45 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("vatReverseCharge", false)
                     .given("defaultPrefix", "mim").thenExpect(HttpStatus.OK)
                     .keep();
+        }
+
+        @Test
+        @Order(2005)
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+        void shouldListDebitorsWithCompleteMasterData() {
+            new ListDebitorsWithCompleteMasterData(scenarioTest)
+                    .given("partnerNumber", "P-31011")
+                    .expected("debitorNumber", "D-3101100")
+                    .expected("partnerPersonType", "NATURAL_PERSON")
+                    .expected("partnerPersonGivenName", "Michelle")
+                    .expected("partnerPersonFamilyName", "Matthieu")
+                    .expected("contactCaption", "Michelle Matthieu")
+                    .expected("contactPostalName", "Michelle Matthieu")
+                    .expected("contactStreet", "An der Wandse 34")
+                    .expected("contactZipcode", "22123")
+                    .expected("contactCity", "Hamburg")
+                    .expected("contactCountry", "Germany")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(2006)
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+        void shouldListAllDebitorsWithCompleteMasterData() {
+            new ListAllDebitorsWithCompleteMasterData(scenarioTest)
+                    .expected("minimumDebitorCount", 4)
+                    .expected("debitorNumber", "D-3101100")
+                    .expected("partnerNumber", "P-31011")
+                    .expected("partnerPersonType", "NATURAL_PERSON")
+                    .expected("partnerPersonGivenName", "Michelle")
+                    .expected("partnerPersonFamilyName", "Matthieu")
+                    .expected("contactCaption", "Michelle Matthieu")
+                    .expected("contactPostalName", "Michelle Matthieu")
+                    .expected("contactStreet", "An der Wandse 34")
+                    .expected("contactZipcode", "22123")
+                    .expected("contactCity", "Hamburg")
+                    .expected("contactCountry", "Germany")
+                    .thenExpect(HttpStatus.OK);
         }
 
         @Test
