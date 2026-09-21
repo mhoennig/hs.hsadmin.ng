@@ -77,7 +77,7 @@ GitTally builds each branch in its own git worktree below `.git/gittally/worktre
 ~/opt/gittally/bin/gittally init
 ```
 
-This creates `.git/gittally/.gittally.yml`, which git never tracks.
+This creates `.git/werkator/.werkator.yml`, which git never tracks.
 It holds the secrets and all settings that belong to this host.
 Fill it in:
 
@@ -106,12 +106,12 @@ The nginx container cannot reach the `127.0.0.1` of the host, so a loopback bind
 GitTally obtains the certificate from Let's Encrypt through a certbot container.
 Therefore the DNS name must already point to the server before the first start.
 
-`init` would also create a `.gittally.yml` template in the repository root,
+`init` would also create a `../.werkator.yml` template in the repository root,
 but it never overwrites the committed file of `hsadmin-ng` — there is nothing to do here.
 
 ## 4. What the Committed Configuration Already Does
 
-[`.gittally.yml`](../.gittally.yml) in the repository root holds the build configuration of `hsadmin-ng`.
+[`../.werkator.yml`](../.werkator.yml) in the repository root holds the build configuration of `hsadmin-ng`.
 It is committed, so a branch can change its own build, and you do not configure any of it on the server.
 It defines:
 
@@ -186,7 +186,7 @@ Remove the backup after some quiet days.
 
 **The build fails with `environment variable HSADMINNG_POSTGRES_ADMIN_USERNAME not set`.**
 The host configuration overrides `branches.default.docker.env` and thus drops the values of the committed file.
-Do not set build settings on the host; keep them in the committed `.gittally.yml`.
+Do not set build settings on the host; keep them in the committed `../.werkator.yml`.
 
 **The build fails with `fatal: not a git repository` or `Failed to create parent directory`.**
 An old GitTally version — update it.

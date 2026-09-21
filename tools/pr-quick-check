@@ -50,7 +50,7 @@ CODE_SUFFIXES = (".java", ".kt", ".kts", ".sql", ".sh", ".py", ".yaml", ".yml")
 # files whose comments carry what the file itself cannot say — why a setting has its value —
 # and vendored files nobody here writes; each pattern matches the path or the bare file name
 COMMENT_RATIO_EXEMPT = (
-    ".gittally.yml",
+    ".werkator.yml",
     "application*.yml",
     "gradlew",
 )
@@ -880,7 +880,7 @@ comment ratio:
   such exemption.  There is deliberately no exception to declare in a PR document: the
   mostly redundant comments are the very thing to prevent.  A fixed list of files is
   exempt instead, named in COMMENT_RATIO_EXEMPT at the top of this tool: configuration
-  whose comments hold the reasons a key cannot state itself, such as .gittally.yml and
+  whose comments hold the reasons a key cannot state itself, such as .werkator.yml and
   application*.yml, and vendored files such as gradlew.  Whatever it skipped, it names.
 
   Since /* ... */ spans a region, the whole file is read and block comments and string

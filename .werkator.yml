@@ -1,7 +1,7 @@
-# GitTally project configuration for hs.hsadmin.ng — migrated from the legacy
+# Werkator project configuration for hs.hsadmin.ng — migrated from the legacy
 # gitTally environment file (see docs/migration-from-legacy.md in the gittally repo).
 # This file is intended to be committed to the hs.hsadmin.ng repository;
-# host-specific settings (server.*, nginx) live in .git/gittally/.gittally.yml
+# host-specific settings (server.*, nginx) live in .git/werkator/.werkator.yml
 # on the CI host, secrets (git.account/git.token) always do.
 #
 # Not ported from the legacy environment (see migration doc):
@@ -16,9 +16,6 @@ gitea:
   repo: hs.hsadmin.ng
   statusContext: GitTally
 
-builds:
-  maxConcurrent: 1
-
 artifacts:
   rootDir: ""
   retentionPerBranch: 3
@@ -30,11 +27,12 @@ watcher:
   newBranchMaxAge: 5d      # legacy left GITTALLY_NEW_BRANCH_COMMIT_MAX_AGE at its default
   pullRequestGate: true
 
-branches:
+builds:
   default:
+    trigger:
+      onPush: true
+      branches: ["*", "!master"]
     cleanCommand: rm -rf build
-    # prQuickCheck needs git in the build container, which GitTally provides
-    # (read-only, with .git/gittally masked).
     # The build cache only serves mechanical tasks; Test tasks are pinned to
     # `outputs.cacheIf { false }` instead of `--no-build-cache`.
     # --profile writes a per-task timing report under build/reports/profile,
@@ -46,39 +44,27 @@ branches:
     stdoutLog: build.stdout.log
     stderrLog: build.stderr.log
     requirePullRequest: false
-    autoBuild:
-      enabled: false
-      times: ["02:00"]
     docker:
       enabled: true
+      network: host
+      socket: true
       image: hsadmin-ng-build-env:latest
       dockerfile: Jenkins/jenkins-agent/Dockerfile
       context: Jenkins/jenkins-agent
-      network: host
       env:
         TESTCONTAINERS_RYUK_DISABLED: "true"
-        # Legacy GITTALLY_BUILD_DOCKER_JAVA_TOOL_OPTIONS (dedicated key not ported).
         JAVA_TOOL_OPTIONS: "-Ddocker.client.strategy=org.testcontainers.dockerclient.UnixSocketClientProviderStrategy -Dtestcontainers.docker.socket.override=/var/run/docker.sock"
-        # The hsadmin-ng Liquibase migration tests resolve these via Liquibase's
-        # env-var substitution (values = the test defaults from .tc-environment);
-        # the legacy script had a host-env passthrough for them.
         HSADMINNG_POSTGRES_ADMIN_USERNAME: "admin"
         HSADMINNG_POSTGRES_RESTRICTED_USERNAME: "restricted"
 
-  master:
-    # Same as the default command plus `bootJarWithDocumentation`, which builds the
-    # deployable jar with the rendered documentation — a release artifact that costs a
-    # second `scenarioTest` run plus the pandoc rendering, thus master only.
-    # Keep in sync with `branches.default.buildCommand` above.
+  release:
+    trigger:
+      onPush: true
+      atTimes: ["01:00"]
+      branches: ["master"]
     buildCommand: ./gradlew --console=plain --no-daemon --profile jacocoTestReport check generateDocumentation -x pitest -x dependencyCheckAnalyze smokeTest prQuickCheck bootJarWithDocumentation
     # Lists replace instead of merging, so the inherited entries are repeated here.
     artifactDirs:
       - build/reports
       - build/doc
       - build/libs
-    # Nightly build of master, even without new commits — catches creeping
-    # environment and dependency problems. Time is UTC: 01:00 = 03:00 Berlin
-    # in summer, 02:00 Berlin in winter.
-    autoBuild:
-      enabled: true
-      times: ["01:00"]

@@ -142,6 +142,20 @@ Tag-scoped Gradle test tasks are registered in `buildSrc/src/main/kotlin/Hsadmin
 - Prefer real API endpoints for lookups needed by a scenario. Do not use unrelated endpoints or temporary assumed-role context changes just to resolve data.
 - When an API surface is missing for a scenario, update the OpenAPI YAML, regenerate interfaces with `./gradlew openApiGenerate`, and adapt controller/repository/tests.
 
+## Writing Style
+
+Be terse; omit obvious details, implementation narration, and summaries.
+Prefer one short sentence per change.
+Remove all mannered prose; use literal language.
+Use ASD-STE100 as guidance: simple words, active voice, consistent terminology.
+Preserve code identifiers and established technical terms.
+
+Write at most one sentence per line.
+Wrap sentences longer than 128 characters at sensible points,
+preferably after commas, colons, semicolons or before 'and' or 'or'.
+Paragraphs should comprise at most 5 sentences; add blank lines between paragraphs.
+Format enumerations as such instead of clunky lists.
+
 ## PR Documentation
 
 - Each pull request has a document under `doc/PR/`; see `doc/PR/README.md`.
