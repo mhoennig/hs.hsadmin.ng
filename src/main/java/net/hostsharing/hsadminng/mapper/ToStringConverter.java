@@ -16,6 +16,7 @@ public class ToStringConverter {
     public String from(final Object obj) {
         return "{ " +
             Arrays.stream(obj.getClass().getDeclaredFields())
+                    .filter(f -> !f.isSynthetic())
                     .filter(f -> !ignoredFields.contains(f.getName()))
                     .map(field -> {
                         try {

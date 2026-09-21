@@ -1,7 +1,14 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.FORBIDDEN;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.OPTIONAL;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.REQUIRED;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.TERMINATORY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsHostingAssetTypeUnitTest {
@@ -230,5 +237,81 @@ class HsHostingAssetTypeUnitTest {
     
                 This code generated was by HsHostingAssetType.main, do not amend manually.
                 """);
+    }
+
+    @Test
+    void bookingItemPolicies() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.bookingItemPolicy()).isEqualTo(REQUIRED);
+        assertThat(HsHostingAssetType.MANAGED_SERVER.bookingItemPolicy()).isEqualTo(REQUIRED);
+        assertThat(HsHostingAssetType.MANAGED_WEBSPACE.bookingItemPolicy()).isEqualTo(REQUIRED);
+        assertThat(HsHostingAssetType.UNIX_USER.bookingItemPolicy()).isEqualTo(FORBIDDEN);
+        assertThat(HsHostingAssetType.DOMAIN_SETUP.bookingItemPolicy()).isEqualTo(TERMINATORY);
+        assertThat(HsHostingAssetType.DOMAIN_DNS_SETUP.bookingItemPolicy()).isEqualTo(FORBIDDEN);
+        assertThat(HsHostingAssetType.IPV4_NUMBER.bookingItemPolicy()).isEqualTo(FORBIDDEN);
+    }
+
+    @Test
+    void parentAssetPolicies() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.parentAssetPolicy()).isEqualTo(FORBIDDEN);
+        assertThat(HsHostingAssetType.MANAGED_WEBSPACE.parentAssetPolicy()).isEqualTo(OPTIONAL);
+        assertThat(HsHostingAssetType.UNIX_USER.parentAssetPolicy()).isEqualTo(REQUIRED);
+        assertThat(HsHostingAssetType.DOMAIN_SETUP.parentAssetPolicy()).isEqualTo(OPTIONAL);
+        assertThat(HsHostingAssetType.DOMAIN_DNS_SETUP.parentAssetPolicy()).isEqualTo(REQUIRED);
+        assertThat(HsHostingAssetType.IPV4_NUMBER.parentAssetPolicy()).isEqualTo(FORBIDDEN);
+    }
+
+    @Test
+    void assignedToAssetPolicies() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.assignedToAssetPolicy()).isEqualTo(FORBIDDEN);
+        assertThat(HsHostingAssetType.DOMAIN_DNS_SETUP.assignedToAssetPolicy()).isEqualTo(REQUIRED);
+        assertThat(HsHostingAssetType.DOMAIN_HTTP_SETUP.assignedToAssetPolicy()).isEqualTo(REQUIRED);
+        assertThat(HsHostingAssetType.IPV4_NUMBER.assignedToAssetPolicy()).isEqualTo(OPTIONAL);
+        assertThat(HsHostingAssetType.MANAGED_WEBSPACE.assignedToAssetPolicy()).isEqualTo(FORBIDDEN);
+    }
+
+    @Test
+    void bookingItemTypes() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.bookingItemTypes()).containsExactly(HsBookingItemType.CLOUD_SERVER);
+        assertThat(HsHostingAssetType.MANAGED_WEBSPACE.bookingItemTypes()).containsExactly(HsBookingItemType.MANAGED_WEBSPACE);
+        assertThat(HsHostingAssetType.DOMAIN_SETUP.bookingItemTypes()).containsExactly(HsBookingItemType.DOMAIN_SETUP);
+        assertThat(HsHostingAssetType.UNIX_USER.bookingItemTypes()).isEmpty();
+        assertThat(HsHostingAssetType.IPV4_NUMBER.bookingItemTypes()).isEmpty();
+    }
+
+    @Test
+    void parentAssetTypes() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.parentAssetTypes()).isEmpty();
+        assertThat(HsHostingAssetType.MANAGED_WEBSPACE.parentAssetTypes()).containsExactly(HsHostingAssetType.MANAGED_SERVER);
+        assertThat(HsHostingAssetType.UNIX_USER.parentAssetTypes()).containsExactly(HsHostingAssetType.MANAGED_WEBSPACE);
+        assertThat(HsHostingAssetType.DOMAIN_DNS_SETUP.parentAssetTypes()).containsExactly(HsHostingAssetType.DOMAIN_SETUP);
+        assertThat(HsHostingAssetType.DOMAIN_SETUP.parentAssetTypes()).containsExactly(HsHostingAssetType.DOMAIN_SETUP);
+    }
+
+    @Test
+    void assignedToAssetTypes() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.assignedToAssetTypes()).isEmpty();
+        assertThat(HsHostingAssetType.DOMAIN_DNS_SETUP.assignedToAssetTypes()).containsExactly(HsHostingAssetType.MANAGED_WEBSPACE);
+        assertThat(HsHostingAssetType.IPV4_NUMBER.assignedToAssetTypes()).containsExactlyInAnyOrder(
+                HsHostingAssetType.CLOUD_SERVER, HsHostingAssetType.MANAGED_SERVER, HsHostingAssetType.MANAGED_WEBSPACE);
+        assertThat(HsHostingAssetType.PGSQL_USER.assignedToAssetTypes()).containsExactly(HsHostingAssetType.PGSQL_INSTANCE);
+    }
+
+    @Test
+    void belongsToAnyAndNodeName() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.belongsToAny(Set.of("Server"))).isTrue();
+        assertThat(HsHostingAssetType.CLOUD_SERVER.belongsToAny(Set.of("Webspace"))).isFalse();
+        assertThat(HsHostingAssetType.UNIX_USER.belongsToAny(Set.of("Webspace", "Server"))).isTrue();
+        assertThat(HsHostingAssetType.CLOUD_SERVER.nodeName()).isEqualTo("HA_CLOUD_SERVER");
+        assertThat(HsHostingAssetType.of(HsHostingAssetType.CLOUD_SERVER)).isEqualTo(HsHostingAssetType.CLOUD_SERVER);
+        assertThat(HsHostingAssetType.of(null)).isNull();
+    }
+
+    @Test
+    void edges() {
+        assertThat(HsHostingAssetType.CLOUD_SERVER.edges(Set.of("Server"))).contains("HA_CLOUD_SERVER *==> BI_CLOUD_SERVER");
+        assertThat(HsHostingAssetType.MANAGED_WEBSPACE.edges(Set.of("Server")))
+                .contains("HA_MANAGED_WEBSPACE *==> BI_MANAGED_WEBSPACE", "HA_MANAGED_WEBSPACE o..> HA_MANAGED_SERVER");
+        assertThat(HsHostingAssetType.DOMAIN_DNS_SETUP.edges(Set.of("Domain", "Webspace")))
+                .contains("HA_DOMAIN_DNS_SETUP o--> HA_MANAGED_WEBSPACE");
     }
 }

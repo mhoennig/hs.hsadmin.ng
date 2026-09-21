@@ -152,6 +152,7 @@ tools/lib/__pycache__/
 /.environment*
 /.private/
 /src/test/resources/migration-prod/*
+/.pitest/
 .aider/
 .aider.tags.cache.*
 .aider.chat.history.md

@@ -12,6 +12,7 @@ import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.gradle.jvm.toolchain.JvmImplementation
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 import org.gradle.api.tasks.wrapper.Wrapper
+import java.math.BigDecimal
 
 // Import specific license report task/extension if needed (adjust class name if necessary)
 // import com.github.jk1.gradle.license.LicenseReportExtension
@@ -321,7 +322,10 @@ configure<PitestPluginExtension> {
         listOf(
             "net.hostsharing.hsadminng.config.**",
             // "net.hostsharing.hsadminng.**.*Controller",
-            "net.hostsharing.hsadminng.**.generated.**"
+            "net.hostsharing.hsadminng.**.generated.**",
+            "net.hostsharing.hsadminng.rbac.generator.**",
+            "net.hostsharing.hsadminng.rbac.test.**",
+            "net.hostsharing.hsadminng.**.*Repository"
         )
     )
 
@@ -336,20 +340,44 @@ configure<PitestPluginExtension> {
     junit5PluginVersion = "1.2.3" // Assuming direct assignment works
 
     threads.set(4)
+    timeoutFactor.set(BigDecimal("1.5"))
+    timeoutConstInMillis.set(8000)
+    jvmArgs.set(listOf("-XX:+EnableDynamicAgentLoading", "-Xmx2g"))
+    // incremental pitest: per-branch history survives `rm -rf build` (worktree-local `.pitest/`)
+    // on Gittally each branch has its own worktree, so history is per-branch and compares
+    // changed classes only; pitestFull forces full run by deleting history
+    enableDefaultIncrementalAnalysis.set(true)
+    historyInputLocation.set(layout.projectDirectory.file(".pitest/history.bin"))
+    historyOutputLocation.set(layout.projectDirectory.file(".pitest/history.bin"))
 
-    // As Java unit tests are pretty pointless in our case, this maybe makes not much sense.
-    mutationThreshold.set(71)
-    coverageThreshold.set(57)
-    testStrengthThreshold.set(87)
+    mutationThreshold.set(78)
+    coverageThreshold.set(90)
+    testStrengthThreshold.set(84)
 
     outputFormats.set(listOf("XML", "HTML"))
     timestampedReports.set(false)
 }
-// tasks.check { dependsOn(tasks.named("pitest")) } // TODO.test: PiTest currently does not work, needs to be fixed
 tasks.named("pitest") {
     doFirst { // Why not doLast? See README.md!
         println("PiTest Mutation Report: file://${project.rootDir}/build/reports/pitest/index.html")
     }
+}
+tasks.register("pitestPartial") {
+    group = "verification"
+    description = "Runs pitest incremental (only changed classes, history in .pitest/history.bin)"
+    dependsOn("pitest")
+}
+tasks.named("pitest") {
+    doFirst {
+        if (gradle.startParameter.taskNames.any { it.contains("pitestFull") }) {
+            delete(file(".pitest/history.bin"))
+        }
+    }
+}
+tasks.register("pitestFull") {
+    group = "verification"
+    description = "Runs pitest fully (deletes history, mutates all classes)"
+    dependsOn("pitest")
 }
 
 

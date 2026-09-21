@@ -44,7 +44,6 @@ tasks.named("check") {
 tasks.named("spotlessJava") {
     dependsOn(
         tasks.named("generateLicenseReport"),
-        // tasks.named("pitest"), // TODO.test: PiTest currently does not work, needs to be fixed
         tasks.named("processResources"),
         tasks.named("processTestResources")
     )

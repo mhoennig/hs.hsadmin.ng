@@ -9,6 +9,7 @@ import jakarta.persistence.EntityManager;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
@@ -27,18 +28,32 @@ class EntityManagerWrapperUnitTest {
         final var methods = EntityManager.class.getMethods();
 
         for (Method method : methods) {
-            // given prepared dummy arguments (if any)
+            // given prepared dummy arguments and stubbed return value (kills "replaced return value" mutants)
             final var args = Arrays.stream(method.getParameterTypes())
                     .map(this::getDefaultValue)
                     .toArray();
-
-            // when
-            method.invoke(wrapper, args);
-
-            // then verify that the same method was called on the mock delegate
-            Mockito.verify(delegateMock, times(1)).getClass()
-                    .getMethod(method.getName(), method.getParameterTypes())
-                    .invoke(delegateMock, args);
+            final var returnType = method.getReturnType();
+            final var isVoid = returnType == void.class;
+            if (isVoid) {
+                method.invoke(wrapper, args);
+                method.invoke(Mockito.verify(delegateMock, times(1)), args);
+            } else if (returnType == boolean.class) {
+                // boolean has two mutants (false/true) — need both values to kill them
+                for (boolean expected : new boolean[]{false, true}) {
+                    final var boolDelegate = mock(EntityManager.class);
+                    final var boolWrapper = new EntityManagerWrapper(boolDelegate);
+                    Mockito.lenient().when(method.invoke(boolDelegate, args)).thenReturn(expected);
+                    final var actual = (boolean) method.invoke(boolWrapper, args);
+                    assertThat(actual).as("return value of %s", method.getName()).isEqualTo(expected);
+                    method.invoke(Mockito.verify(boolDelegate, times(1)), args);
+                }
+            } else {
+                final var expected = getDefaultValue(returnType);
+                Mockito.lenient().when(method.invoke(delegateMock, args)).thenReturn(expected);
+                final var actual = method.invoke(wrapper, args);
+                assertThat(actual).as("return value of %s", method.getName()).isEqualTo(expected);
+                method.invoke(Mockito.verify(delegateMock, times(1)), args);
+            }
         }
     }
 
