@@ -22,6 +22,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllValidSepaMan
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListDebitorsWithCompleteMasterData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListValidSepaMandatesOfDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.ChangeMembershipFeeExemption;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsClearingTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDepositTransaction;
@@ -529,6 +530,79 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("newStatus", "ACTIVE")
                     .given("membershipFeeBillable", "true").thenExpect(HttpStatus.OK)
                     .keep();
+        }
+
+        @Test
+        @Order(4010)
+        @Requires("Partner: P-31011 - Michelle Matthieu")
+        void shouldRejectFeeFreeMembershipWithoutComment() {
+            new CreateMembership(scenarioTest)
+                    .given("partnerNumber", "P-31011")
+                    .given("validFrom", "2021-01-01")
+                    .given("membershipFeeBillable", "false")
+                    .expected("errorMessage", "membershipFeeComment is required if membershipFeeBillable is false")
+                    .thenExpect(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @Order(4015)
+        @Requires("Partner: P-31011 - Michelle Matthieu")
+        void shouldRejectFeeBillableMembershipWithComment() {
+            new CreateMembership(scenarioTest)
+                    .given("partnerNumber", "P-31011")
+                    .given("validFrom", "2021-01-01")
+                    .given("membershipFeeBillable", "true")
+                    .given("membershipFeeComment", "honorary member by resolution of the general meeting 2020")
+                    .expected("errorMessage", "membershipFeeComment must be null if membershipFeeBillable is true")
+                    .thenExpect(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @Order(4020)
+        @Requires("Partner: P-31011 - Michelle Matthieu")
+        @Produces("Membership: M-3101100 - Michelle Matthieu")
+        void shouldCreateFeeFreeMembershipWithComment() {
+            new CreateMembership(scenarioTest)
+                    .given("partnerNumber", "P-31011")
+                    .given("validFrom", "2021-01-01")
+                    .given("membershipFeeBillable", "false")
+                    .given("membershipFeeComment", "honorary member by resolution of the general meeting 2020")
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
+        }
+
+        @Test
+        @Order(4025)
+        @Requires("Membership: M-3101000 - Test AG")
+        void shouldRejectFeeExemptionWithoutComment() {
+            new ChangeMembershipFeeExemption(scenarioTest)
+                    .given("memberNumber", "M-3101000")
+                    .given("membershipFeeBillable", "false")
+                    .expected("errorMessage", "membershipFeeComment is required if membershipFeeBillable is false")
+                    .thenExpect(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @Order(4030)
+        @Requires("Membership: M-3101000 - Test AG")
+        void shouldExemptMembershipFromFee() {
+            new ChangeMembershipFeeExemption(scenarioTest)
+                    .given("memberNumber", "M-3101000")
+                    .given("membershipFeeBillable", "false")
+                    .given("membershipFeeComment", "exempt by resolution of the board, 2022-03-15")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(4040)
+        @Requires("Membership: M-3101000 - Test AG")
+        void shouldRejectCommentOnFeeBillableMembership() {
+            new ChangeMembershipFeeExemption(scenarioTest)
+                    .given("memberNumber", "M-3101000")
+                    .given("membershipFeeBillable", "true")
+                    .given("membershipFeeComment", "liable to the fee again since 2023")
+                    .expected("errorMessage", "membershipFeeComment must be null if membershipFeeBillable is true")
+                    .thenExpect(HttpStatus.BAD_REQUEST);
         }
 
         @Test

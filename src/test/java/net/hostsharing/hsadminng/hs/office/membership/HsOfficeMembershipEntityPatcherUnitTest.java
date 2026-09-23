@@ -36,6 +36,7 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
 
     private static final Boolean GIVEN_MEMBERSHIP_FEE_BILLABLE = true;
     private static final Boolean PATCHED_MEMBERSHIP_FEE_BILLABLE = false;
+    private static final String PATCHED_MEMBERSHIP_FEE_COMMENT = "exempt by resolution of the board";
 
     @Mock
     private EntityManagerWrapper em;
@@ -89,7 +90,12 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
                         "membershipFeeBillable",
                         HsOfficeMembershipPatchResource::setMembershipFeeBillable,
                         PATCHED_MEMBERSHIP_FEE_BILLABLE,
-                        HsOfficeMembershipEntity::setMembershipFeeBillable)
+                        HsOfficeMembershipEntity::setMembershipFeeBillable),
+                new JsonNullableProperty<>(
+                        "membershipFeeComment",
+                        HsOfficeMembershipPatchResource::setMembershipFeeComment,
+                        PATCHED_MEMBERSHIP_FEE_COMMENT,
+                        HsOfficeMembershipEntity::setMembershipFeeComment)
         );
     }
 }

@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDate;
@@ -406,6 +407,45 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(jsonPath("memberNumber", is("M-1234503")));
         }
 
+        @Test
+        void respondsCreatedWithFeeCommentForFeeFreeMembership() throws Exception {
+
+            // given
+            val givenPartnerUuid = UUID.randomUUID();
+            val givenPartner = HsOfficePartnerRealEntity.builder()
+                    .uuid(givenPartnerUuid)
+                    .partnerNumber(12345)
+                    .build();
+            when(partnerRepo.findByUuid(givenPartnerUuid)).thenReturn(Optional.of(givenPartner));
+            when(membershipRepo.save(any(HsOfficeMembershipEntity.class))).thenAnswer(invocation -> {
+                final HsOfficeMembershipEntity membership = invocation.getArgument(0);
+                membership.setUuid(UUID.randomUUID());
+                membership.setPartner(givenPartner);
+                return membership;
+            });
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/memberships")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                      {
+                                          "partner.uuid": "%s",
+                                          "memberNumberSuffix": "05",
+                                          "validFrom": "2022-10-13",
+                                          "membershipFeeBillable": false,
+                                          "membershipFeeComment": "honorary member"
+                                      }
+                                    """.formatted(givenPartnerUuid))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("membershipFeeBillable", is(false)))
+                    .andExpect(jsonPath("membershipFeeComment", is("honorary member")));
+        }
+
         @ParameterizedTest
         @EnumSource(InvalidMemberSuffixVariants.class)
         void respondBadRequest_ifMemberNumberSuffixIsInvalid(final InvalidMemberSuffixVariants testCase) throws Exception {
@@ -509,6 +549,7 @@ public class HsOfficeMembershipControllerRestTest {
                                   {
                                       "validTo": "2024-12-31",
                                       "membershipFeeBillable": false,
+                                      "membershipFeeComment": "exempt by resolution of the board",
                                       "status": "CANCELLED"
                                   }
                                 """)
@@ -518,6 +559,137 @@ public class HsOfficeMembershipControllerRestTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("validTo", is("2024-12-31")))
                 .andExpect(jsonPath("membershipFeeBillable", is(false)))
+                .andExpect(jsonPath("membershipFeeComment", is("exempt by resolution of the board")))
                 .andExpect(jsonPath("status", is("CANCELLED")));
+    }
+
+    @Nested
+    class MembershipFeeComment {
+
+        private static final String COMMENT_REQUIRED = "membershipFeeComment is required if membershipFeeBillable is false";
+        private static final String COMMENT_FORBIDDEN = "membershipFeeComment must be null if membershipFeeBillable is true";
+
+        @Test
+        void postRespondsBadRequest_ifFeeFreeWithoutComment() throws Exception {
+            postMembership("""
+                    "membershipFeeBillable": false
+                    """)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("message", containsString(COMMENT_REQUIRED)));
+        }
+
+        @Test
+        void postRespondsBadRequest_ifFeeFreeWithBlankComment() throws Exception {
+            postMembership("""
+                    "membershipFeeBillable": false,
+                    "membershipFeeComment": "  "
+                    """)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("message", containsString(COMMENT_REQUIRED)));
+        }
+
+        @Test
+        void postRespondsBadRequest_ifFeeBillableWithComment() throws Exception {
+            postMembership("""
+                    "membershipFeeBillable": true,
+                    "membershipFeeComment": "honorary member"
+                    """)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("message", containsString(COMMENT_FORBIDDEN)));
+        }
+
+        @Test
+        void patchRespondsBadRequest_ifChangedToFeeFreeWithoutComment() throws Exception {
+            val membershipUuid = givenMembership(true, null);
+
+            patchMembership(membershipUuid, """
+                    { "membershipFeeBillable": false }
+                    """)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("message", containsString(COMMENT_REQUIRED)));
+        }
+
+        @Test
+        void patchRespondsBadRequest_ifChangedToFeeBillableButCommentIsKept() throws Exception {
+            val membershipUuid = givenMembership(false, "honorary member");
+
+            patchMembership(membershipUuid, """
+                    { "membershipFeeBillable": true }
+                    """)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("message", containsString(COMMENT_FORBIDDEN)));
+        }
+
+        @Test
+        void patchRespondsOk_ifChangedToFeeBillableAndCommentIsRemoved() throws Exception {
+            val membershipUuid = givenMembership(false, "honorary member");
+
+            patchMembership(membershipUuid, """
+                    { "membershipFeeBillable": true, "membershipFeeComment": null }
+                    """)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("membershipFeeBillable", is(true)))
+                    .andExpect(jsonPath("membershipFeeComment").doesNotExist());
+        }
+
+        @Test
+        void patchRespondsOk_ifFeeFreeMembershipWithoutCommentGetsCancelled() throws Exception {
+            val membershipUuid = givenMembership(false, null);
+
+            patchMembership(membershipUuid, """
+                    { "validTo": "2024-12-31", "status": "CANCELLED" }
+                    """)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("status", is("CANCELLED")));
+        }
+
+        private ResultActions postMembership(final String feeProperties) throws Exception {
+            val givenPartnerUuid = UUID.randomUUID();
+            val givenPartner = HsOfficePartnerRealEntity.builder()
+                    .uuid(givenPartnerUuid)
+                    .partnerNumber(12345)
+                    .build();
+            when(partnerRepo.findByUuid(givenPartnerUuid)).thenReturn(Optional.of(givenPartner));
+            when(membershipRepo.save(any(HsOfficeMembershipEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            return mockMvc.perform(MockMvcRequestBuilders
+                    .post("/api/hs/office/memberships")
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                              {
+                                  "partner.uuid": "%s",
+                                  "memberNumberSuffix": "06",
+                                  "validFrom": "2022-10-13",
+                                  %s
+                              }
+                            """.formatted(givenPartnerUuid, feeProperties))
+                    .accept(MediaType.APPLICATION_JSON));
+        }
+
+        private UUID givenMembership(final boolean membershipFeeBillable, final String membershipFeeComment) {
+            val membershipUuid = UUID.randomUUID();
+            val current = HsOfficeMembershipEntity.builder()
+                    .uuid(membershipUuid)
+                    .partner(PARTNER_12345)
+                    .memberNumberSuffix("07")
+                    .validity(localDateRange("[2020-01-01,)"))
+                    .membershipFeeBillable(membershipFeeBillable)
+                    .membershipFeeComment(membershipFeeComment)
+                    .status(HsOfficeMembershipStatus.ACTIVE)
+                    .build();
+            when(membershipRepo.findByUuid(membershipUuid)).thenReturn(Optional.of(current));
+            when(membershipRepo.save(any(HsOfficeMembershipEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            return membershipUuid;
+        }
+
+        private ResultActions patchMembership(final UUID membershipUuid, final String body) throws Exception {
+            return mockMvc.perform(MockMvcRequestBuilders
+                    .patch("/api/hs/office/memberships/" + membershipUuid)
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+                    .accept(MediaType.APPLICATION_JSON));
+        }
     }
 }

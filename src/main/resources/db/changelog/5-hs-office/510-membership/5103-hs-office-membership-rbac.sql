@@ -194,6 +194,7 @@ $orderBy$,
     $updates$
         validity = new.validity,
         membershipFeeBillable = new.membershipFeeBillable,
+        membershipFeeComment = new.membershipFeeComment,
         status = new.status
 $updates$
 );

@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.membership;
 
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembershipsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
@@ -18,12 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.errors.Validate.validate;
 import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
@@ -76,6 +79,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         context.assumeRoles(assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeMembershipEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
+        validateMembershipFeeComment(entityToSave);
 
         final var saved = membershipRepo.save(entityToSave);
 
@@ -155,10 +159,25 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         final var current = membershipRepo.findByUuid(membershipUuid).orElseThrow();
 
         new HsOfficeMembershipEntityPatcher(mapper, current).apply(body);
+        // a fee-free membership from before the comment existed must stay patchable, e.g. to cancel it
+        if (body.getMembershipFeeBillable() != null || body.getMembershipFeeComment() != null) {
+            validateMembershipFeeComment(current);
+        }
 
         final var saved = membershipRepo.save(current);
         final var mapped = mapper.map(saved, HsOfficeMembershipResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
+    }
+
+    // only the API validates this, because no migration can supply comments for the existing fee-free memberships
+    private static void validateMembershipFeeComment(final HsOfficeMembershipEntity membership) {
+        val hasComment = isNotBlank(membership.getMembershipFeeComment());
+        if (Boolean.FALSE.equals(membership.getMembershipFeeBillable()) && !hasComment) {
+            throw new ValidationException("membershipFeeComment is required if membershipFeeBillable is false");
+        }
+        if (Boolean.TRUE.equals(membership.getMembershipFeeBillable()) && hasComment) {
+            throw new ValidationException("membershipFeeComment must be null if membershipFeeBillable is true");
+        }
     }
 
     final BiConsumer<HsOfficeMembershipEntity, HsOfficeMembershipResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {

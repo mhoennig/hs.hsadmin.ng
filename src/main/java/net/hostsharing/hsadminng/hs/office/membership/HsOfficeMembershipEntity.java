@@ -98,6 +98,9 @@ public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEn
     @Column(name = "membershipfeebillable", nullable = false)
     private Boolean membershipFeeBillable; // not primitive to force setting the value
 
+    @Column(name = "membershipfeecomment")
+    private String membershipFeeComment;
+
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private HsOfficeMembershipStatus status;
@@ -170,7 +173,7 @@ public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEn
                         JOIN hs_office.partner AS p ON p.uuid = m.partnerUuid
                         """))
                 .withRestrictedViewOrderBy(SQL.projection("validity"))
-                .withUpdatableColumns("validity", "membershipFeeBillable", "status")
+                .withUpdatableColumns("validity", "membershipFeeBillable", "membershipFeeComment", "status")
 
                 .importEntityAlias("partnerRel", HsOfficeRelationRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("partnerUuid"),

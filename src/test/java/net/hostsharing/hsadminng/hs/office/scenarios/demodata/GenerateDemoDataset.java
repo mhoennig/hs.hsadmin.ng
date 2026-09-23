@@ -764,11 +764,15 @@ public class GenerateDemoDataset extends UseCase<GenerateDemoDataset> {
             final String partnerNumber,
             final String partnerName,
             final LocalDate joiningDate) {
-        new CreateMembership(testSuite, "Membership: " + partnerName)
+        val membershipFeeBillable = values.percentageChance(90);
+        val createMembership = new CreateMembership(testSuite, "Membership: " + partnerName)
                 .given("partnerNumber", partnerNumber)
                 .given("validFrom", joiningDate.toString())
-                .given("membershipFeeBillable", values.percentageChance(90))
-                .thenExpect(HttpStatus.OK);
+                .given("membershipFeeBillable", membershipFeeBillable);
+        if (!membershipFeeBillable) {
+            createMembership.given("membershipFeeComment", "exempt by resolution of the board");
+        }
+        createMembership.thenExpect(HttpStatus.OK);
     }
 
     /** Shares are subscribed on joining and paid in shortly after, never before the membership starts. */

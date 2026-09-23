@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
+import lombok.val;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealRepository;
 import net.hostsharing.hsadminng.mapper.Array;
@@ -54,6 +55,33 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
     @Nested
     class CreateMembership {
+
+        @Test
+        public void globalAdmin_canCreateFeeFreeMembershipWithComment() {
+            // given
+            context("hsh-alex_superuser");
+            val givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
+
+            // when
+            val result = attempt(em, () -> {
+                val newMembership = HsOfficeMembershipEntity.builder()
+                        .memberNumberSuffix("12")
+                        .partner(givenPartner)
+                        .validity(Range.closedInfinite(LocalDate.parse("2026-01-01")))
+                        .membershipFeeBillable(false)
+                        .membershipFeeComment("honorary member")
+                        .build();
+                return toCleanup(membershipRepo.save(newMembership).load());
+            });
+
+            // then
+            result.assertSuccessful();
+            em.flush();
+            em.clear();
+            assertThat(membershipRepo.findByUuid(result.returnedValue().getUuid())).isNotEmpty().get()
+                    .extracting(HsOfficeMembershipEntity::getMembershipFeeComment)
+                    .isEqualTo("honorary member");
+        }
 
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewMembership() {
@@ -272,6 +300,32 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
             // then
             result.assertSuccessful();
+        }
+
+        @Test
+        public void globalAdmin_canUpdateFeeCommentOfArbitraryMembership() {
+            // given
+            context("hsh-alex_superuser");
+            val givenMembership = givenSomeTemporaryMembership("First", "12");
+            assertThat(givenMembership.getMembershipFeeComment()).isNull();
+
+            // when
+            val result = jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                givenMembership.setMembershipFeeBillable(false);
+                givenMembership.setMembershipFeeComment("exempt by resolution of the board");
+                return toCleanup(membershipRepo.save(givenMembership).load());
+            });
+
+            // then
+            result.assertSuccessful();
+            jpaAttempt.transacted(() -> {
+                context("hsh-alex_superuser");
+                val found = membershipRepo.findByUuid(givenMembership.getUuid());
+                assertThat(found).isNotEmpty().get()
+                        .extracting(HsOfficeMembershipEntity::getMembershipFeeComment)
+                        .isEqualTo("exempt by resolution of the board");
+            }).assertSuccessful();
         }
 
         @Test

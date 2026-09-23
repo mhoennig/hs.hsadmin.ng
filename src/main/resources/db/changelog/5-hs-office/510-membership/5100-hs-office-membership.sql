@@ -73,3 +73,11 @@ EXECUTE FUNCTION hs_office.validate_membership_validity();
 
 call base.create_journal('hs_office.membership');
 --//
+
+
+--changeset michael.hoennig:hs-office-membership-FEE-COMMENT endDelimiter:--//
+-- no separator line above, it would count to the previous changeset and change its released checksum
+-- nullable, because no migration can supply a sensible comment for the existing fee-free memberships
+alter table hs_office.membership
+    add column membershipFeeComment text;
+--//

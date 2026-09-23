@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.membership;
 
 import io.restassured.http.ContentType;
+import lombok.val;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
@@ -8,7 +9,9 @@ import org.springframework.http.HttpStatus;
 import static io.restassured.http.ContentType.JSON;
 import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.hasProperty;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
 public class CreateMembership extends UseCase<CreateMembership> {
@@ -23,22 +26,34 @@ public class CreateMembership extends UseCase<CreateMembership> {
 
     @Override
     protected HttpResponse run() {
+        return run(CREATED);
+    }
+
+    @Override
+    protected HttpResponse run(final HttpStatus expectedStatus) {
         assertThat(hasProperty("partnerNumber") ^ hasProperty("partnerName"))
                 .as("exactly one of partnerNumber and partnerName has to be given")
                 .isTrue();
 
         using("partnerAlias", hasProperty("partnerNumber") ? obtainPartnerByNumber() : obtainPartnerByName());
 
-        return httpPost(asGlobalAgent(), "/api/hs/office/memberships", usingJsonBody("""
+        // callers from before this signature pass OK for a successful creation
+        val expectedPostStatus = expectedStatus == OK ? CREATED : expectedStatus;
+        val response = withTitle("Create the Membership", () -> httpPost(asGlobalAgent(), "/api/hs/office/memberships", usingJsonBody("""
                 {
                    "partner.uuid": ${%{partnerAlias}},
                    "memberNumberSuffix": ${%{memberNumberSuffix???}???00},
                    "status": "ACTIVE",
                    "validFrom": ${validFrom},
-                   "membershipFeeBillable": ${membershipFeeBillable}
+                   "membershipFeeBillable": ${membershipFeeBillable},
+                   "membershipFeeComment": ${membershipFeeComment???}
                 }
                 """))
-                .expecting(HttpStatus.CREATED).expecting(ContentType.JSON);
+                .expecting(expectedPostStatus).expecting(ContentType.JSON));
+        if (hasProperty("errorMessage")) {
+            response.path("message").contains(ScenarioTest.resolve("%{errorMessage}", DROP_COMMENTS));
+        }
+        return response;
     }
 
     /** A human user knows the partner by name and would have to look up its number first. */
@@ -74,7 +89,11 @@ public class CreateMembership extends UseCase<CreateMembership> {
                 () -> httpGet(asGlobalAgent(), "/api/hs/office/memberships/" + response.getLocationUuid())
                         .expecting(OK).expecting(JSON),
                 path("validFrom").contains("%{validFrom}"),
-                path("status").contains("ACTIVE")
+                path("status").contains("ACTIVE"),
+                path("membershipFeeBillable").contains("%{membershipFeeBillable}"),
+                hasProperty("membershipFeeComment")
+                        ? path("membershipFeeComment").contains("%{membershipFeeComment}")
+                        : path("membershipFeeComment").doesNotExist()
         );
     }
 }

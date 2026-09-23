@@ -41,6 +41,9 @@ components:
                    $ref: '#/components/schemas/HsOfficeMembershipStatus'
                 membershipFeeBillable:
                     type: boolean
+                membershipFeeComment:
+                    type: string
+                    description: the reason why the membership is exempt from the membership fee
 
         HsOfficeMembershipPatch:
             type: object
@@ -54,6 +57,9 @@ components:
                 membershipFeeBillable:
                     nullable: true
                     type: boolean
+                membershipFeeComment:
+                    nullable: true
+                    type: string
             additionalProperties: false
 
         HsOfficeMembershipInsert:
@@ -80,6 +86,9 @@ components:
                 membershipFeeBillable:
                     nullable: false
                     type: boolean
+                membershipFeeComment:
+                    nullable: true
+                    type: string
             required:
                 - partner.uuid
                 - memberNumberSuffix

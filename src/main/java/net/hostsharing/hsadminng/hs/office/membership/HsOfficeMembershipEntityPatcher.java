@@ -28,5 +28,7 @@ public class HsOfficeMembershipEntityPatcher implements EntityPatcher<HsOfficeMe
                 .ifPresent(entity::setStatus);
         OptionalFromJson.of(resource.getMembershipFeeBillable()).ifPresent(
                 entity::setMembershipFeeBillable);
+        OptionalFromJson.of(resource.getMembershipFeeComment()).ifPresent(
+                entity::setMembershipFeeComment);
     }
 }
