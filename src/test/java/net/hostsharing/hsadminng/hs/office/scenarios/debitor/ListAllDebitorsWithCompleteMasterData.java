@@ -10,12 +10,11 @@ import java.util.List;
 import static io.restassured.http.ContentType.JSON;
 import static net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListDebitorsWithCompleteMasterData.HINTS_FOR_BILLING;
 import static net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListDebitorsWithCompleteMasterData.verifyDebitorAt;
-import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.OK;
 
-public class ListAllDebitorsWithCompleteMasterData extends UseCase<ListAllDebitorsWithCompleteMasterData> {
+public class ListAllDebitorsWithCompleteMasterData extends BillingUseCase<ListAllDebitorsWithCompleteMasterData> {
 
     public ListAllDebitorsWithCompleteMasterData(final ScenarioTest testSuite) {
         super(testSuite);
@@ -23,13 +22,13 @@ public class ListAllDebitorsWithCompleteMasterData extends UseCase<ListAllDebito
         introduction("""
                 The billing system fetches all debitors with a single request.
                 Each debitor contains the complete debitor number, the partner person and the contact.
-                """ + HINTS_FOR_BILLING);
+                """ + HINTS_FOR_BILLING + API_KEY_HINT);
     }
 
     @Override
     protected HttpResponse run() {
         return withTitle("Fetch the List of All Debitors", () ->
-                httpGet(asGlobalAgent(), "/api/hs/office/debitors")
+                httpGet(asBillingSystem(), "/api/hs/office/debitors")
                         .limitReportedResultTo(1)
                         .expecting(OK).expecting(JSON)
         );

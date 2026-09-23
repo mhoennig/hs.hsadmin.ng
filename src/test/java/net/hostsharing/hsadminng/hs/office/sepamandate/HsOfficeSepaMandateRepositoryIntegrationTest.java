@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
+import lombok.val;
+
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
@@ -215,6 +217,66 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
+                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
+        }
+    }
+
+    @Nested
+    class FindByDebitorUuidAndValidAt {
+
+        private static final String FIRST_IBAN = "DE02120300000000202051";
+        private static final String FIRST_CURRENT = "SEPA-Mandate(" + FIRST_IBAN + ", ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))";
+        private static final String FIRST_EXPIRED = "SEPA-Mandate(" + FIRST_IBAN + ", temp ref X, 2020-01-02, [2020-01-01,2023-01-01))";
+
+        @Test
+        public void findsAllSepaMandatesOfTheDebitor() {
+            // given
+            val givenExpiredSepaMandate = givenSomeTemporarySepaMandate(FIRST_IBAN);
+            context("hsh-alex_superuser");
+
+            // when
+            val result = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(
+                    null, givenExpiredSepaMandate.getDebitor().getUuid(), null);
+
+            // then
+            exactlyTheseSepaMandatesAreReturned(result, FIRST_CURRENT, FIRST_EXPIRED);
+        }
+
+        @Test
+        public void findsOnlyTheSepaMandatesOfTheDebitorWhichAreValidAtTheKeyDate() {
+            // given
+            val givenDebitorUuid = givenSomeTemporarySepaMandate(FIRST_IBAN).getDebitor().getUuid();
+            context("hsh-alex_superuser");
+
+            // when
+            val beforeTheOverlap = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(
+                    null, givenDebitorUuid, LocalDate.parse("2021-06-01"));
+            val atTheLastDayOfTheExpired = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(
+                    null, givenDebitorUuid, LocalDate.parse("2022-12-31"));
+            val atTheFirstDayAfterTheExpired = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(
+                    null, givenDebitorUuid, LocalDate.parse("2023-01-01"));
+
+            // then
+            exactlyTheseSepaMandatesAreReturned(beforeTheOverlap, FIRST_EXPIRED);
+            exactlyTheseSepaMandatesAreReturned(atTheLastDayOfTheExpired, FIRST_CURRENT, FIRST_EXPIRED);
+            exactlyTheseSepaMandatesAreReturned(atTheFirstDayAfterTheExpired, FIRST_CURRENT);
+        }
+
+        @Test
+        public void findsTheSepaMandatesOfAllDebitorsWhichAreValidAtTheKeyDate() {
+            // given
+            givenSomeTemporarySepaMandate(FIRST_IBAN);
+            context("hsh-alex_superuser");
+
+            // when
+            val result = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(
+                    null, null, LocalDate.parse("2024-01-01"));
+
+            // then
+            exactlyTheseSepaMandatesAreReturned(
+                    result,
+                    "SEPA-Mandate(DE02100500000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
+                    FIRST_CURRENT,
                     "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }

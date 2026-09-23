@@ -18,7 +18,9 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DontDeleteDefaultDe
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FinallyDeleteSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllDebitorsWithCompleteMasterData;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllValidSepaMandates;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListDebitorsWithCompleteMasterData;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListValidSepaMandatesOfDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsClearingTransaction;
@@ -291,6 +293,9 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Debitor: D-3101100 - Michelle Matthieu")
         void shouldListDebitorsWithCompleteMasterData() {
             new ListDebitorsWithCompleteMasterData(scenarioTest)
+                    // the read-only API-key of the billing system
+                    .given("subjectUuid", "b1111001-0000-0000-0000-000000000001")
+                    .given("subjectName", "billing.debitors.key")
                     .given("partnerNumber", "P-31011")
                     .expected("debitorNumber", "D-3101100")
                     .expected("partnerPersonType", "NATURAL_PERSON")
@@ -310,6 +315,9 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Debitor: D-3101100 - Michelle Matthieu")
         void shouldListAllDebitorsWithCompleteMasterData() {
             new ListAllDebitorsWithCompleteMasterData(scenarioTest)
+                    // the read-only API-key of the billing system
+                    .given("subjectUuid", "b1111002-0000-0000-0000-000000000002")
+                    .given("subjectName", "billing.alldebitors.key")
                     .expected("minimumDebitorCount", 4)
                     .expected("debitorNumber", "D-3101100")
                     .expected("partnerNumber", "P-31011")
@@ -431,6 +439,60 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("bankAccountIBAN", "DE02701500000000594937")
                     .given("bankAccountBIC", "SSKMDEMM").thenExpect(HttpStatus.OK)
                     .keep();
+        }
+
+        @Test
+        @Order(3101)
+        @Requires("Debitor: D-3101000 - Test AG - main debitor")
+        @Produces("SEPA-Mandate: Test AG - former bank account")
+        void shouldCreateFormerSepaMandateForDebitor() {
+            new CreateSepaMandateForDebitor(scenarioTest)
+                    // existing debitor
+                    .given("debitorNumber", "D-3101000")
+
+                    // former sepa-mandate, which ended the day before the current one started
+                    .given("mandateReference", "Test AG - former bank account")
+                    .given("mandateAgreement", "2020-02-01")
+                    .given("mandateValidFrom", "2020-03-01")
+                    .given("mandateValidTo", "2024-10-14")
+
+                    // former bank-account
+                    .given("bankAccountHolder", "Test AG - former debit bank account")
+                    .given("bankAccountIBAN", "DE02500105170137075030")
+                    .given("bankAccountBIC", "INGDDEFF")
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
+        }
+
+        @Test
+        @Order(3102)
+        @Requires({ "SEPA-Mandate: Test AG", "SEPA-Mandate: Test AG - former bank account" })
+        void shouldListValidSepaMandatesOfDebitor() {
+            new ListValidSepaMandatesOfDebitor(scenarioTest)
+                    // the read-only API-key of the billing system
+                    .given("subjectUuid", "b1111003-0000-0000-0000-000000000003")
+                    .given("subjectName", "billing.sepamandates.key")
+                    .given("debitorNumber", "D-3101000")
+                    .given("validAt", "2025-01-01")
+                    .expected("mandateReference", "Test AG - main debitor")
+                    .expected("mandateValidFrom", "2024-10-15")
+                    .expected("bankAccountIBAN", "DE02701500000000594937")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3103)
+        @Requires({ "SEPA-Mandate: Test AG", "SEPA-Mandate: Test AG - former bank account" })
+        void shouldListAllValidSepaMandates() {
+            new ListAllValidSepaMandates(scenarioTest)
+                    // the read-only API-key of the billing system
+                    .given("subjectUuid", "b1111004-0000-0000-0000-000000000004")
+                    .given("subjectName", "billing.allsepamandates.key")
+                    .given("validAt", "2025-01-01")
+                    .expected("minimumMandateCount", 4)
+                    .expected("validMandateReference", "Test AG - main debitor")
+                    .expected("unexpectedMandateReference", "Test AG - former bank account")
+                    .thenExpect(HttpStatus.OK);
         }
 
         @Test

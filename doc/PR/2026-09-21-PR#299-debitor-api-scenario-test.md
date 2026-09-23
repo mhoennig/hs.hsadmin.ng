@@ -43,6 +43,8 @@ Der Szenario-Report dient dem Billing als Anleitung.
   using the use-case [ListDebitorsWithCompleteMasterData](../../src/test/java/net/hostsharing/hsadminng/hs/office/scenarios/debitor/ListDebitorsWithCompleteMasterData.java)
 - CI-Report des Branches (Hostsharing-intern):
   [2005: List Debitors with Complete Master Data](https://vm4006.hostsharing.net/branches/mihoe_debitor-api-scenario-test/reports/scenarios/2005%3A%20List%20Debitors%20with%20Complete%20Master%20Data.html)
+- CI-Report auf `master` (Hostsharing-intern):
+  [2005: List Debitors with Complete Master Data](https://vm4006.hostsharing.net/branches/master_release/reports/scenarios/2005%3A%20List%20Debitors%20with%20Complete%20Master%20Data.html)
 
 #### Scenario#299.02: Das Billing ruft alle Debitoren mit vollständigen Stammdaten ab
 
@@ -59,6 +61,8 @@ Der Szenario-Report dient dem Billing als Anleitung.
   using the use-case [ListAllDebitorsWithCompleteMasterData](../../src/test/java/net/hostsharing/hsadminng/hs/office/scenarios/debitor/ListAllDebitorsWithCompleteMasterData.java)
 - CI-Report des Branches (Hostsharing-intern):
   [2006: List All Debitors with Complete Master Data](https://vm4006.hostsharing.net/branches/mihoe_debitor-api-scenario-test/reports/scenarios/2006%3A%20List%20All%20Debitors%20with%20Complete%20Master%20Data.html)
+- CI-Report auf `master` (Hostsharing-intern):
+  [2006: List All Debitors with Complete Master Data](https://vm4006.hostsharing.net/branches/master_release/reports/scenarios/2006%3A%20List%20All%20Debitors%20with%20Complete%20Master%20Data.html)
 
 ## Die Lösung
 

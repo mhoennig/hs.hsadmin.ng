@@ -12,6 +12,27 @@ get:
           schema:
               type: string
           description: (Beginning of) IBAN to filter the results.
+        - name: debitorUuid
+          in: query
+          required: false
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the debitor whose SEPA Mandates are requested, exclusive to `debitorNumber`.
+        - name: debitorNumber
+          in: query
+          required: false
+          schema:
+              type: string
+              pattern: 'D-[0-9]{7}'
+          description: Debitor number of the debitor whose SEPA Mandates are requested, exclusive to `debitorUuid`.
+        - name: validAt
+          in: query
+          required: false
+          schema:
+              type: string
+              format: date
+          description: Key date, only SEPA Mandates whose validity contains this date are returned.
     responses:
         "200":
             description: OK
@@ -21,6 +42,8 @@ get:
                         type: array
                         items:
                             $ref: 'hs-office-sepamandate-schemas.yaml#/components/schemas/HsOfficeSepaMandate'
+        "400":
+            $ref: 'error-responses.yaml#/components/responses/BadRequest'
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":

@@ -7,11 +7,10 @@ import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 
 import static io.restassured.http.ContentType.JSON;
-import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.springframework.http.HttpStatus.OK;
 
-public class ListDebitorsWithCompleteMasterData extends UseCase<ListDebitorsWithCompleteMasterData> {
+public class ListDebitorsWithCompleteMasterData extends BillingUseCase<ListDebitorsWithCompleteMasterData> {
 
     public ListDebitorsWithCompleteMasterData(final ScenarioTest testSuite) {
         super(testSuite);
@@ -19,7 +18,7 @@ public class ListDebitorsWithCompleteMasterData extends UseCase<ListDebitorsWith
         introduction("""
                 The billing system needs the complete debitor number, the partner person and the contact of each debitor.
                 The list of debitors contains these data, thus no further request per debitor is necessary.
-                """ + HINTS_FOR_BILLING);
+                """ + HINTS_FOR_BILLING + API_KEY_HINT);
     }
 
     static final String HINTS_FOR_BILLING = """
@@ -41,7 +40,7 @@ public class ListDebitorsWithCompleteMasterData extends UseCase<ListDebitorsWith
     @Override
     protected HttpResponse run() {
         return withTitle("Fetch the List of Debitors", () ->
-                httpGet(asGlobalAgent(), "/api/hs/office/debitors?partnerNumber=" + uriEncoded("%{partnerNumber}"))
+                httpGet(asBillingSystem(), "/api/hs/office/debitors?partnerNumber=" + uriEncoded("%{partnerNumber}"))
                         .expecting(OK).expecting(JSON),
                 "Without the query parameter `partnerNumber`, the list contains all debitors which are visible to the caller."
         );

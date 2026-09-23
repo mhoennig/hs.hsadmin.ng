@@ -23,7 +23,7 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
             response -> response.getFromBody("uuid")
         );
 
-        obtain("BankAccount: Test AG - debit bank account", () ->
+        obtain("BankAccount: %{bankAccountHolder}", () ->
             httpPost(asGlobalAgent(), "/api/hs/office/bankaccounts", usingJsonBody("""
                      {
                          "holder": ${bankAccountHolder},
@@ -37,10 +37,11 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
         return httpPost(asGlobalAgent(), "/api/hs/office/sepamandates", usingJsonBody("""
                 {
                    "debitor.uuid": ${Debitor: Test AG - main debitor},
-                   "bankAccount.uuid": ${BankAccount: Test AG - debit bank account},
+                   "bankAccount.uuid": ${BankAccount: %{bankAccountHolder}},
                    "reference": ${mandateReference},
                    "agreement": ${mandateAgreement},
-                   "validFrom": ${mandateValidFrom}
+                   "validFrom": ${mandateValidFrom},
+                   "validTo": ${mandateValidTo???}
                 }
                 """))
                 .expecting(CREATED).expecting(JSON);

@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
+import lombok.val;
+
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.rbac.context.Context;
@@ -19,11 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import jakarta.validation.ValidationException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import static net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity.DEBITOR_NUMBER_TAG;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
+import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
@@ -50,10 +55,28 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Timed("app.office.sepaMandates.api.getListOfSepaMandates")
     public ResponseEntity<List<HsOfficeSepaMandateResource>> getListOfSepaMandates(
             final String assumedRoles,
-            final String iban) {
+            final String iban,
+            final UUID debitorUuid,
+            final String debitorNumber,
+            final LocalDate validAt) {
         context.assumeRoles(assumedRoles);
 
-        final var entities = sepaMandateRepo.findSepaMandateByOptionalIban(iban);
+        if (debitorUuid != null && debitorNumber != null) {
+            throw new ValidationException("either debitorUuid or debitorNumber can be given, not both");
+        }
+        if (debitorNumber != null) {
+            val debitor = debitorRepo.findDebitorByDebitorNumber(cropTag(DEBITOR_NUMBER_TAG, debitorNumber));
+            if (debitor.isEmpty()) {
+                return ResponseEntity.ok(List.of());
+            }
+            return listOfSepaMandates(iban, debitor.get().getUuid(), validAt);
+        }
+        return listOfSepaMandates(iban, debitorUuid, validAt);
+    }
+
+    private ResponseEntity<List<HsOfficeSepaMandateResource>> listOfSepaMandates(
+            final String iban, final UUID debitorUuid, final LocalDate validAt) {
+        val entities = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(iban, debitorUuid, validAt);
 
         final var resources = mapper.mapList(entities, HsOfficeSepaMandateResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);

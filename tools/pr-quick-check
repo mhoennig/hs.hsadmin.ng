@@ -39,6 +39,8 @@ QUALIFIED_MARKER = re.compile(r"\b(TODO|" + MARKER_WORD + r")\.([A-Za-z0-9_-]+)"
 # same rule as in tools/fixmes: in Markdown a backtick span quotes a marker instead of using it
 CODE_SPAN = re.compile(r"`[^`]+`")
 HUNK_START = re.compile(r"^@@ -\S+ \+(\d+)")
+# AGENTS.md wants Lombok `val`; the agent hook only sees Write/Edit, not Java written from a shell
+FINAL_VAR = re.compile(r"\bfinal\s+var\b")
 RFC_DIR = Path("doc/rfc")
 RFC_NUMBER = re.compile(r"RFC#(\d+)")
 NON_PR_DOC_NAMES = {"README.md", "TEMPLATE.md", "TEMPLATE-de.md", "TEAMPLATE.md", "IDEAS.md"}
@@ -457,6 +459,19 @@ def report_undefined_qualifiers(merge_base, untracked):
     return []
 
 
+def report_final_var(merge_base, untracked):
+    findings = [
+        f"  {path}:{line_number}: {text.strip()}"
+        for path, line_number, text in chain(added_diff_lines(merge_base), untracked_lines(untracked))
+        if path.endswith(".java") and FINAL_VAR.search(text)
+    ]
+    if findings:
+        listed = "\n".join(findings)
+        return [f"added Java lines use 'final var', use Lombok 'val' instead:\n{listed}"]
+    print("PASSED: added Java lines use Lombok 'val' instead of 'final var'")
+    return []
+
+
 def may_hold_code(path):
     """Whether the file is worth reading for the ratio; an extension-less one may be a script."""
     return path.endswith(CODE_SUFFIXES) or "." not in Path(path).name
@@ -848,6 +863,7 @@ checks:
   - the PR document stays within its dynamic line budget
   - tools/fixmes reports no open {MARKER_WORD} markers
   - added lines only use the defined TODO/{MARKER_WORD} qualifiers
+  - added Java lines use Lombok 'val' instead of 'final var'
   - at most 12% of the added code lines are whole comment lines
   - every RFC number under doc/rfc/ names exactly one document; the same
     number claimed differently on an open origin branch only warns
@@ -1050,6 +1066,7 @@ def main():
     failures.extend(report_open_fixmes())
 
     failures.extend(report_undefined_qualifiers(merge_base, untracked))
+    failures.extend(report_final_var(merge_base, untracked))
 
     failures.extend(report_comment_ratio(merge_base, untracked))
 

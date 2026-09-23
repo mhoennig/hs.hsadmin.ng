@@ -33,6 +33,7 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -79,7 +80,7 @@ class HsOfficeSepaMandateControllerRestTest {
                     .partner(givenPartner)
                     .debitorNumberSuffix("00")
                     .build();
-            when(sepaMandateRepo.findSepaMandateByOptionalIban("DE123")).thenReturn(
+            when(sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt("DE123", null, null)).thenReturn(
                     List.of(
                             HsOfficeSepaMandateEntity.builder()
                                     .agreement(LocalDate.of(2024, 10, 15))
@@ -126,6 +127,94 @@ class HsOfficeSepaMandateControllerRestTest {
                               }
                             ]
                             """)));
+        }
+    }
+
+    @Nested
+    class GetListOfSepaMandatesByDebitorAndValidAt {
+
+        private static final UUID GIVEN_DEBITOR_UUID = UUID.fromString("11111111-2222-3333-4444-555555555555");
+        private static final LocalDate GIVEN_KEY_DATE = LocalDate.of(2025, 1, 1);
+
+        private final HsOfficeDebitorEntity givenDebitor = HsOfficeDebitorEntity.builder()
+                .uuid(GIVEN_DEBITOR_UUID)
+                .partner(HsOfficePartnerRealEntity.builder().partnerNumber(12345).build())
+                .debitorNumberSuffix("00")
+                .build();
+
+        private void givenSepaMandateFor(final String iban, final UUID debitorUuid, final LocalDate validAt) {
+            when(sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(iban, debitorUuid, validAt))
+                    .thenReturn(List.of(
+                            HsOfficeSepaMandateEntity.builder()
+                                    .agreement(LocalDate.of(2024, 10, 15))
+                                    .debitor(givenDebitor)
+                                    .reference("ref-valid")
+                                    .validity(Range.localDateRange("[2024-11-01,)"))
+                                    .build()));
+        }
+
+        @Test
+        void passesDebitorUuidAndValidAtToTheRepository() throws Exception {
+            // given
+            givenSepaMandateFor(null, GIVEN_DEBITOR_UUID, GIVEN_KEY_DATE);
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/sepamandates?debitorUuid=" + GIVEN_DEBITOR_UUID + "&validAt=2025-01-01")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()", is(1)))
+                    .andExpect(jsonPath("$[0].reference", is("ref-valid")));
+        }
+
+        @Test
+        void resolvesDebitorNumberToTheDebitorUuid() throws Exception {
+            // given
+            when(debitorRepo.findDebitorByDebitorNumber(1234500)).thenReturn(Optional.of(givenDebitor));
+            givenSepaMandateFor("DE123", GIVEN_DEBITOR_UUID, GIVEN_KEY_DATE);
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/sepamandates?iban=DE123&debitorNumber=D-1234500&validAt=2025-01-01")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()", is(1)))
+                    .andExpect(jsonPath("$[0].debitor.debitorNumber", is("D-1234500")));
+        }
+
+        @Test
+        void returnsEmptyListForUnknownDebitorNumber() throws Exception {
+            // given
+            when(debitorRepo.findDebitorByDebitorNumber(9999900)).thenReturn(Optional.empty());
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/sepamandates?debitorNumber=D-9999900")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()", is(0)));
+        }
+
+        @Test
+        void rejectsDebitorUuidTogetherWithDebitorNumber() throws Exception {
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/sepamandates?debitorUuid=" + GIVEN_DEBITOR_UUID + "&debitorNumber=D-1234500")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("message", containsString("either debitorUuid or debitorNumber can be given, not both")));
         }
     }
 
