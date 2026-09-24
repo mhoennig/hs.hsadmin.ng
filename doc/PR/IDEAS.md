@@ -37,3 +37,16 @@ Conventions:
       under `hs/booking/item/validators/` (`HsBookingItemEntityValidatorRegistry`),
       built on the same `HsEntityValidator` infrastructure as the hosting-asset validators;
       needs OpenAPI YAML plus a controller method reading the registry properties.
+
+- [ ] TODO.doc: Annotate the scenario tests of already merged PRs with `@Scenario`
+      and generate the `Verified by` sections of their PR documents with `tools/generate-verified-by`.
+      PR#304 introduced both only for new PRs; without an annotation the tool reports nothing.
+- [ ] TODO.refa: Replace the `@Order` numbers of the scenario tests by a thematically ordered,
+      alphanumeric key with separators, e.g. `office.bankaccount.complete-bic`.
+      The number orders the scenario reports today, but it says nothing about the subject
+      and has to be kept free by hand.
+      A combined annotation could carry both: the subject key, which also orders and names
+      the report index, and the PR-based Gherkin scenario ids of `@Scenario`,
+      which tie a test to the PR documents that specify it.
+      `@Scenario` (PR#304) is the first step; it already separates the two concerns,
+      because the test no longer needs its report name to be found by a PR document.

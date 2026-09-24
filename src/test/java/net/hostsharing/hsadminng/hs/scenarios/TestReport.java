@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.scenarios;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import lombok.val;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.system.SystemProcess;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class TestReport {
             "to", "of", "in", "on", "with", "by");
 
     private final Map<String, UUID> aliases;
+    private String currentReportTitle;
     private final PrintWriter markdownLog; // records everything for debugging purposes
     private File markdownReportFile;
     private PrintWriter markdownReport; // records only the use-case under test, without its pre-requisites
@@ -62,7 +64,10 @@ public class TestReport {
     }
 
     public void createTestLogMarkdownFile(final TestInfo testInfo) throws IOException {
-        markdownReportFile = new File(SCENARIO_REPORTS_MARKDOWN, reportFileName(testInfo.getTestMethod().orElseThrow()));
+        val testMethod = testInfo.getTestMethod().orElseThrow();
+        ScenarioIndex.record(testMethod);
+        currentReportTitle = reportTitle(testMethod);
+        markdownReportFile = new File(SCENARIO_REPORTS_MARKDOWN, reportFileName(testMethod));
         markdownReport = new PrintWriter(new FileWriter(markdownReportFile));
         previousMarkdownLineWasBlank = true;
         withinCodeBlock = false;
@@ -133,6 +138,12 @@ public class TestReport {
 
     private static @NotNull String determineScenarioTitle(final TestInfo testInfo) {
         return testInfo.getTestMethod().map(TestReport::reportTitle).orElseThrow();
+    }
+
+    void recordUseCase(final Class<?> useCase) {
+        if (currentReportTitle != null) {
+            ScenarioIndex.recordUseCase(currentReportTitle, useCase);
+        }
     }
 
     static String reportTitle(final Method method) {

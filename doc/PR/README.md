@@ -23,11 +23,18 @@ but initially prefix its title with `WIP: ` to mark it as a work in progress unt
   the German headings are defined in the [German template](TEMPLATE-de.md).
   Gherkin structure keywords stay in English in either language:
   `Feature:`, `Background`, `Scenario#...`, `Given`/`When`/`Then`, `Verified by`.
+- Write scenarios in Markdown-native pseudo-Gherkin under a `#### Scenario#…` heading, not in fenced Gherkin blocks.
+  Fenced blocks either render no recognizable headings, so that all scenarios run into each other,
+  or they force the scenario title twice, once as heading and once as `Scenario:` line.
+  Pseudo-Gherkin also allows direct links to tests, issues, ADRs, or explanations inside the requirement text.
 - Use clear and concise language and keep it short.
 - Include relevant details and context, explain the "why".
 - Mark reference to Taiga or any other tool that is not public as "Hostsharing-internal".
 - If necessary, copy important parts of the ticket description.
 - One sentence or statement per line to make diffs easier to read.
+- A PR document is read as CR before the merge and as record of the change after it.
+  Thus the problem section describes the state before the PR as "the former version of …" in the present tense,
+  which is true at both times, and tells concrete incidents in the past tense.
 
 ## Structure
 
@@ -61,13 +68,20 @@ Write each note as a dated statement about a change, not as a description of the
 The news page keeps a note after later changes, thus a note about the current state would silently
 become wrong, whereas a dated note about a change stays true.
 
+## Declarations for `tools/pr-quick-check`
+
+A PR document declares exceptions and its base with a tag of the form `pr-quick-check:<key>=<value>`.
+Only a tag outside of backticks declares something;
+in backticks it just documents the declaration, like a quoted marker.
+Thus a PR document which changes these rules can quote any tag without declaring it.
+
 ## Changing Further PR Documents
 
 A PR normally changes exactly one PR document, and `tools/pr-quick-check` enforces that.
 When a PR legitimately has to change more, for example to back-fill release notes into merged
 PRs, its own PR document declares how many further ones it changes:
 
-    `pr-quick-check:extra-pr-docs=<count>`: <reason>
+    pr-quick-check:extra-pr-docs=<count>: <reason>
 
 ## A PR Built on Another PR
 
@@ -76,7 +90,7 @@ Only the pull-request platform (e.g. GitEA) knows this target,
 thus `tools/pr-quick-check` measures against the default base and reports the changes of both PRs together.
 The PR document therefore names its target branch, preferably in the Prerequisite-PRs section:
 
-    `pr-quick-check:base=<ref>`
+    pr-quick-check:base=<ref>
 
 The declaration counts until the named branch is merged or deleted.
 From then on the default base gives the same result, and the line can stay as history.

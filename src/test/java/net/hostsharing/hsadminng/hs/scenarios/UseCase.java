@@ -88,6 +88,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         this.testSuite = testSuite;
         this.testReport = testSuite.testReport;
         this.resultAlias = resultAlias;
+        testReport.recordUseCase(getClass());
         if (resultAlias != null) {
             testReport.printPara("### UseCase " + title(resultAlias));
         }

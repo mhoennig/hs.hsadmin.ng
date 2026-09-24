@@ -20,6 +20,10 @@ MAX_SCOPE_SCORE = 35
 CONFLICT_SCAN_DAYS = 30
 PR_DOC_BASE_LINES = 50
 PR_DOC_LINES_PER_FILE = 3
+# a scenario including its Verified-by section takes about 13 to 23 lines; budgeting slightly less
+# keeps it from competing with the prose around it, yet makes each further scenario cost a few lines
+PR_DOC_LINES_PER_SCENARIO = 12
+SCENARIO_HEADING = re.compile(r"^#### Scenario#", re.MULTILINE)
 CHANGE_LINES_PER_SCOPE_POINT = 100
 CHANGE_LINES_PER_PR_DOC_LINE = 10
 MAX_COMMENT_RATIO_PERCENT = 12
@@ -71,11 +75,13 @@ CONVENTION_MARKERS = {"given", "when", "then", "and"}
 # arguments and, in this repository, the occasional typo like `@formatter:ff`
 TOOL_PRAGMAS = ("@formatter:", "noinspection", "nopmd", "checkstyle:")
 SCOPE_WAIVER_KEY = "max-scope-score"
-SCOPE_WAIVER = re.compile(r"pr-quick-check:max-scope-score=(\d+)`?\s*[:—–-]+\s*(\S.*)")
+SCOPE_WAIVER = re.compile(r"pr-quick-check:max-scope-score=(\d+)\s*[:—–-]+\s*(\S.*)")
+PR_DOC_LINES_WAIVER_KEY = "max-pr-doc-lines"
+PR_DOC_LINES_WAIVER = re.compile(r"pr-quick-check:max-pr-doc-lines=(\d+)\s*[:—–-]+\s*(\S.*)")
 RELEASE_NOTE_HEADING = "\n## Release Note\n"
 RELEASED_ON = re.compile(r"^released:\s*(\d{4}-\d{2}-\d{2})\s*$", re.MULTILINE)
 EXTRA_PR_DOCS_KEY = "extra-pr-docs"
-EXTRA_PR_DOCS = re.compile(r"pr-quick-check:extra-pr-docs=(\d+)`?\s*[:—–-]+\s*(\S.*)")
+EXTRA_PR_DOCS = re.compile(r"pr-quick-check:extra-pr-docs=(\d+)\s*[:—–-]+\s*(\S.*)")
 # no <> in the ref, so that a document explaining the syntax does not declare `<ref>` as its base
 DECLARED_BASE = re.compile(r"pr-quick-check:base=([^\s`<>]+)")
 ALLOWED_ENV_FILE_NAMES = {
@@ -210,6 +216,15 @@ def pr_doc_candidates(paths):
     ]
 
 
+def effective_lines(pr_doc):
+    """A tag in backticks documents a declaration, only one outside of them declares it."""
+    return [CODE_SPAN.sub("", line) for line in pr_doc.read_text(encoding="utf-8").splitlines()]
+
+
+def declared_in(pr_doc, pattern):
+    return next((match for line in effective_lines(pr_doc) if (match := pattern.search(line))), None)
+
+
 def declared_base(paths):
     """The target branch of a PR which builds on another one instead of the default base;
     in a deeper stack the prerequisite documents in the diff also carry their declarations,
@@ -217,7 +232,7 @@ def declared_base(paths):
     declaring = [
         (path, match.group(1))
         for path in pr_doc_candidates(paths)
-        if path.is_file() and (match := DECLARED_BASE.search(path.read_text(encoding="utf-8")))
+        if path.is_file() and (match := declared_in(path, DECLARED_BASE))
     ]
     own = [
         (path, ref)
@@ -263,7 +278,7 @@ def find_pr_doc(paths, explicit_pr_doc):
 
     # With several changed PR documents, the one carrying the exception is this PR's own;
     # the others are the ones it declares.
-    declaring = [path for path in candidates if EXTRA_PR_DOCS.search(path.read_text(encoding="utf-8"))]
+    declaring = [path for path in candidates if declared_in(path, EXTRA_PR_DOCS)]
     if len(declaring) == 1:
         return declaring[0]
     if len(declaring) > 1:
@@ -277,8 +292,8 @@ def find_pr_doc(paths, explicit_pr_doc):
     raise RuntimeError(
         f"expected exactly one changed PR document, found {len(candidates)}: {names}; "
         "for a PR built on another one name its target branch in this PR's own document with "
-        "`pr-quick-check:base=<ref>`, otherwise select the document with --pr-doc, or declare "
-        "the exception in it with `pr-quick-check:extra-pr-docs=<count>`: <reason>"
+        "pr-quick-check:base=<ref> outside of backticks, otherwise select the document with --pr-doc, "
+        "or declare the exception in it with pr-quick-check:extra-pr-docs=<count>: <reason>"
     )
 
 
@@ -365,26 +380,63 @@ def validate_pr_doc(pr_doc):
     return failures
 
 
-def parse_scope_waiver(pr_doc):
-    """A PR may declare a scope-budget exception in its PR document; the declared score
+def parse_declared_maximum(pr_doc, key, pattern, what, syntax):
+    """A PR may declare a budget exception in its PR document; the declared number
     becomes this PR's approved ceiling and may leave room for further changes."""
-    waivers = []
+    declarations = []
     failures = []
-    for line in pr_doc.read_text(encoding="utf-8").splitlines():
-        if SCOPE_WAIVER_KEY not in line:
+    for line in effective_lines(pr_doc):
+        if f"pr-quick-check:{key}" not in line:
             continue
-        match = SCOPE_WAIVER.search(line)
+        match = pattern.search(line)
         if match:
-            waivers.append((int(match.group(1)), match.group(2).strip()))
+            declarations.append((int(match.group(1)), match.group(2).strip()))
         else:
             failures.append(
-                f"{pr_doc} contains a malformed scope-budget exception; expected "
-                "`pr-quick-check:max-scope-score=<score>`: <reason> — fill in a "
-                "numeric score or remove the template example line"
+                f"{pr_doc} contains a malformed {what} exception; expected "
+                f"{syntax} outside of backticks — fill in a number, "
+                "or quote the line in backticks if it only documents the declaration"
             )
-    if len(waivers) > 1:
-        failures.append(f"{pr_doc} declares more than one scope-budget exception")
-    return (waivers[0] if len(waivers) == 1 else None), failures
+    if len(declarations) > 1:
+        failures.append(f"{pr_doc} declares more than one {what} exception")
+    return (declarations[0] if len(declarations) == 1 else None), failures
+
+
+def parse_scope_waiver(pr_doc):
+    return parse_declared_maximum(
+        pr_doc,
+        SCOPE_WAIVER_KEY,
+        SCOPE_WAIVER,
+        "scope-budget",
+        "pr-quick-check:max-scope-score=<score>: <reason>",
+    )
+
+
+def parse_pr_doc_lines_waiver(pr_doc):
+    return parse_declared_maximum(
+        pr_doc,
+        PR_DOC_LINES_WAIVER_KEY,
+        PR_DOC_LINES_WAIVER,
+        "PR-document-lines",
+        "pr-quick-check:max-pr-doc-lines=<lines>: <reason>",
+    )
+
+
+def check_verified_by_sections(pr_doc):
+    """The Verified-by links come from the scenario test run, thus they can be verified instead of
+    being proof-read; without an index there is nothing to compare against."""
+    result = subprocess.run(
+        ["tools/generate-verified-by", str(pr_doc), "--check"],
+        capture_output=True,
+        text=True,
+    )
+    reported = [line for line in result.stdout.splitlines() if line.startswith("FAILED: ")]
+    if reported:
+        return [line.removeprefix("FAILED: ") for line in reported]
+    if result.returncode != 0:
+        return [f"tools/generate-verified-by failed: {result.stderr.strip() or result.stdout.strip()}"]
+    print(result.stdout.strip())
+    return []
 
 
 def check_release_note_date(pr_doc):
@@ -813,8 +865,8 @@ def parse_extra_pr_docs(pr_doc):
     exception and its reason are as visible to the reviewer as the change itself."""
     declarations = []
     failures = []
-    for line in pr_doc.read_text(encoding="utf-8").splitlines():
-        if EXTRA_PR_DOCS_KEY not in line:
+    for line in effective_lines(pr_doc):
+        if f"pr-quick-check:{EXTRA_PR_DOCS_KEY}" not in line:
             continue
         match = EXTRA_PR_DOCS.search(line)
         if match:
@@ -822,8 +874,8 @@ def parse_extra_pr_docs(pr_doc):
         else:
             failures.append(
                 f"{pr_doc} contains a malformed further-PR-documents exception; expected "
-                "`pr-quick-check:extra-pr-docs=<count>`: <reason> — fill in a "
-                "numeric count or remove the template example line"
+                "pr-quick-check:extra-pr-docs=<count>: <reason> outside of backticks — fill in a "
+                "numeric count, or quote the line in backticks if it only documents the declaration"
             )
     if len(declarations) > 1:
         failures.append(f"{pr_doc} declares more than one further-PR-documents exception")
@@ -860,7 +912,7 @@ checks:
     the check passes trivially
   - git diff --check succeeds
   - exactly one changed PR document follows the filename and section conventions
-  - the PR document stays within its dynamic line budget
+  - the PR document stays within its dynamic line budget, or its declared maximum
   - tools/fixmes reports no open {MARKER_WORD} markers
   - added lines only use the defined TODO/{MARKER_WORD} qualifiers
   - added Java lines use Lombok 'val' instead of 'final var'
@@ -879,7 +931,12 @@ size budgets:
   maximum scope score = 35
 
   PR-document lines =
-      min(200, 50 + 3 * logical files + ceil(substantive changed lines / 10))
+      {PR_DOC_LINES_PER_SCENARIO} * scenarios + min(200, 50 + 3 * logical files + ceil(substantive changed lines / 10))
+
+  Scenarios are counted by their `#### Scenario#` headings.  Documentation grows with the
+  number of requirements a PR settles, not only with the code it changes, thus each scenario
+  brings its own budget.  It covers a short scenario; each longer one costs a few lines of
+  the general budget, which limits the number of scenarios in one PR.
 
   All changed *-rbac.sql files count as one logical file, and all changed
   *-rbac.md files count as one.  The selected PR document, documents under
@@ -907,11 +964,16 @@ comment ratio:
   Liquibase directives such as --changeset are code, not comments.
   The two-line floor makes the rule continuous: 12% of 20 lines is two lines as well.
 
+declarations:
+  A PR document declares an exception or its base with a tag of the form pr-quick-check:<key>=<value>
+  outside of backticks.  In backticks the same tag only documents it, as for the markers above,
+  thus a PR document which changes these rules can quote any tag without declaring it.
+
 scope-budget exception:
   When a PR legitimately has to exceed the scope budget, its PR document
   declares the exception, preferably in the Non-Goals section:
 
-      `pr-quick-check:max-scope-score=<score>`: <reason>
+      pr-quick-check:max-scope-score=<score>: <reason>
 
   The declared score becomes this PR's approved ceiling.
   It's purpose is to intentionally exceed the current score for specific PRs,
@@ -920,12 +982,22 @@ scope-budget exception:
   An exception whose score is not needed (actual score within the default maximum) fails the check
   and must be removed.
 
+PR-document-lines exception:
+  The line budget grows with the code a PR changes, but the documentation a PR needs grows with
+  the number of requirements and decisions it settles.  A small but dense change can therefore
+  legitimately need a longer document, and declares that the same way:
+
+      pr-quick-check:max-pr-doc-lines=<lines>: <reason>
+
+  The declared number replaces the dynamic maximum, and an exception which is not needed fails
+  the check and must be removed.
+
 base branch of a stacked PR:
   Only the pull-request platform knows that a PR targets another PR's branch instead of
   the default base, so its own PR document names the target, preferably in the
   Prerequisite-PRs section:
 
-      `pr-quick-check:base=<ref>`
+      pr-quick-check:base=<ref>
 
   It counts until the named ref is merged into the default base or disappears; from then
   on the default base gives the same diff and the declaration may stay as history.
@@ -946,7 +1018,7 @@ further-PR-documents exception:
   more, for example to back-fill release notes into merged PRs, its own PR document
   declares how many further ones it changes:
 
-      `pr-quick-check:extra-pr-docs=<count>`: <reason>
+      pr-quick-check:extra-pr-docs=<count>: <reason>
 
   The declaring document is taken as this PR's own.  The count has to match, and an
   exception which is not needed fails the check and must be removed.
@@ -1038,7 +1110,9 @@ def main():
     scope_score = file_count + (
         change_lines + CHANGE_LINES_PER_SCOPE_POINT - 1
     ) // CHANGE_LINES_PER_SCOPE_POINT
-    pr_doc_limit = min(
+    scenarios = len(SCENARIO_HEADING.findall(pr_doc.read_text(encoding="utf-8")))
+    scenario_lines = PR_DOC_LINES_PER_SCENARIO * scenarios
+    pr_doc_limit = scenario_lines + min(
         MAX_PR_DOC_LINES,
         PR_DOC_BASE_LINES
         + PR_DOC_LINES_PER_FILE * file_count
@@ -1047,15 +1121,30 @@ def main():
     )
 
     line_count = len(pr_doc.read_bytes().splitlines())
-    if line_count > pr_doc_limit:
+    pr_doc_waiver, pr_doc_waiver_failures = parse_pr_doc_lines_waiver(pr_doc)
+    failures.extend(pr_doc_waiver_failures)
+    if pr_doc_waiver and line_count <= pr_doc_limit:
         failures.append(
-            f"{pr_doc} has {line_count} lines, dynamic maximum is {pr_doc_limit} "
-            f"({file_count} logical files, {change_lines} substantive changed lines)"
+            f"{pr_doc} declares a PR-document-lines exception, but its {line_count} lines are "
+            f"within the dynamic maximum {pr_doc_limit}; remove it"
+        )
+    if pr_doc_waiver:
+        pr_doc_limit = pr_doc_waiver[0]
+    if line_count > pr_doc_limit:
+        limit_source = "declared exception" if pr_doc_waiver else "dynamic maximum"
+        failures.append(
+            f"{pr_doc} has {line_count} lines, {limit_source} is {pr_doc_limit} "
+            f"({file_count} logical files, {change_lines} substantive changed lines, "
+            f"{scenarios} scenarios)"
         )
     else:
+        exception_note = (
+            f" (PR-document-lines exception: {pr_doc_waiver[1]})" if pr_doc_waiver else ""
+        )
         print(
             f"PASSED: {pr_doc} has {line_count}/{pr_doc_limit} lines "
-            f"({file_count} logical files, {change_lines} substantive changed lines)"
+            f"({file_count} logical files, {change_lines} substantive changed lines, "
+            f"{scenarios} scenarios){exception_note}"
         )
 
     pr_doc_failures = validate_pr_doc(pr_doc)
@@ -1096,6 +1185,8 @@ def main():
     failures.extend(report_duplicate_rfc_numbers(merge_base, open_branches))
 
     failures.extend(check_release_note_date(pr_doc))
+
+    failures.extend(check_verified_by_sections(pr_doc))
 
     waiver, waiver_failures = parse_scope_waiver(pr_doc)
     failures.extend(waiver_failures)
