@@ -1384,7 +1384,7 @@ class RbacSubjectControllerRestTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", containsString(
                         "scopes[0] 'unknown:scope' is not valid, valid values are: "
-                                + "[rbac.subjects:sync, *:read]")));
+                                + "[rbac.subjects:sync, hs.office:billing-mda, *:read]")));
         verify(rbacSubjectRepository, never()).create(any());
         verify(rbacSubjectRepository, never()).createApiKey(any(), any(), any(), any());
     }

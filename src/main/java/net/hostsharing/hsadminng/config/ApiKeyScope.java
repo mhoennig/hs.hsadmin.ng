@@ -38,6 +38,15 @@ public enum ApiKeyScope {
             endpoint(HttpMethod.POST, "/api/rbac/subjects/sync-report")
     ),
 
+    // HSBilling NG MDA (master data adapter): reads the debitors and the SEPA-mandates valid at a key date
+    HS_OFFICE_BILLING_MDA(
+            "hs.office:billing-mda",
+            endpoint(HttpMethod.GET, "/api/hs/office/debitors"),
+            // repeating a billing run for a single debitor, but deliberately not by its UUID
+            endpoint(HttpMethod.GET, "/api/hs/office/debitors/D-{debitorNumber}"),
+            endpoint(HttpMethod.GET, "/api/hs/office/sepamandates")
+    ),
+
     // read-only API-keys: any GET endpoint, but nothing which changes data
     ANY_READ(
             "*:read",

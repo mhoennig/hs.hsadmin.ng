@@ -85,6 +85,9 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
     private final static Map<String, UUID> aliases = new HashMap<>();
 
+    // survive the scenario like aliases, but are no UUIDs, e.g. clear-text API-keys
+    private final static Map<String, Object> keptValues = new HashMap<>();
+
     private final static Map<String, Object> properties = new HashMap<>();
     public final TestReport testReport = new TestReport(aliases);
 
@@ -261,6 +264,10 @@ public abstract class ScenarioTest extends ContextBasedTest {
         aliases.put(name, value);
     }
 
+    static void putKeptValue(final String name, final Object value) {
+        keptValues.put(name, value);
+    }
+
     protected static void putProperty(final String name, final Object value) {
         properties.put(name, (value instanceof String string) ? resolveTyped(string) : value);
     }
@@ -276,6 +283,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
     public static Map<String, Object> knowVariables() {
         final var map = new LinkedHashMap<String, Object>();
         map.putAll(ScenarioTest.aliases);
+        map.putAll(ScenarioTest.keptValues);
         map.putAll(ScenarioTest.properties);
         return map;
     }

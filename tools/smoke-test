@@ -6,8 +6,8 @@
 # with some simple (ping, version) and some more complex (POST with RBAC grants) endpoints,
 # including the provisioning API-key bootstrap (HSADMINNG_PROVISIONING_API_KEY_SHA256) and creating
 # a further API-key with it. It also exercises the tooling scripts
-# `tools/create-accounts-from-csv`, `tools/create-api-key-for-keycloak-sync` and, against a
-# stubbed ssh, `tools/remote backend sql`.
+# `tools/create-accounts-from-csv`, `tools/api-key-create` and, against a
+# stubbed ssh, `tools/remote backend sql` and `tools/remote backend provision-api-key --force`.
 #
 # The throw-away database container (hsadmin-ng-smoke-test-postgres, host port 15432) is
 # reset at the start and removed at the end; the normal `hsadmin-ng-postgres` container
@@ -63,7 +63,7 @@ cleanup() {
 trap cleanup EXIT
 
 command -v docker >/dev/null || { echo "SMOKE-TEST FAILED: docker is not available" >&2; exit 1; }
-# needed by tools/create-api-key-for-keycloak-sync resp. tools/create-accounts-from-csv
+# needed by tools/api-key-create resp. tools/create-accounts-from-csv
 command -v jq >/dev/null || { echo "SMOKE-TEST FAILED: jq is not available" >&2; exit 1; }
 command -v python3 >/dev/null || { echo "SMOKE-TEST FAILED: python3 is not available" >&2; exit 1; }
 # needed by tools/remote backend sql
@@ -229,10 +229,10 @@ grep -q '1 already existed' <<<"$rerunOutput" ||
     failed "the re-run did not report the account as already existing but: $rerunOutput"
 passed
 
-echo "tools/create-api-key-for-keycloak-sync creates a global-admin API-key scoped to the sync endpoints"
-syncApiKey=$(tools/create-api-key-for-keycloak-sync) || failed "tools/create-api-key-for-keycloak-sync failed"
+echo "tools/api-key-create creates a global-admin API-key scoped to the sync endpoints"
+syncApiKey=$(tools/api-key-create --no-local-store hsadminng.keycloak.sync rbac.subjects:sync) || failed "tools/api-key-create failed"
 grep -q '^hsak_' <<<"$syncApiKey" ||
-    failed "tools/create-api-key-for-keycloak-sync did not print a clear-text API-key but: $syncApiKey"
+    failed "tools/api-key-create did not print a clear-text API-key but: $syncApiKey"
 passed
 
 # the sync-key may list the subjects (in scope, authorized via its global-admin role) ...
@@ -324,7 +324,7 @@ passed
 # be diagnosed rather than kill the script silently: the operator has to learn about the subject
 # left behind, otherwise the rerun only reports 'already exists'. The failure is injected by a jq
 # which fails for exactly that lookup.
-echo "tools/create-api-key-for-keycloak-sync reports the subject it left behind on a failed role-lookup"
+echo "tools/api-key-create reports the subject it left behind on a failed role-lookup"
 # back to the unrestricted provisioning API-key, the sync-key may not create subjects
 APIKEY --transient <<<"$provisioningApiKey" || failed "APIKEY --transient (provisioning API-key) failed"
 jqStubDir=build/smoke-test/jq-stub
@@ -339,10 +339,50 @@ JQ_STUB
 chmod +x "$jqStubDir/jq"
 response=$(
     PATH=$(cd "$jqStubDir" && pwd):$PATH \
-    tools/create-api-key-for-keycloak-sync smoke.test.halfway.key 2>&1
-) && failed "create-api-key-for-keycloak-sync succeeded despite the failing role-lookup: $response"
+    tools/api-key-create --no-local-store smoke.test.halfway.key rbac.subjects:sync 2>&1
+) && failed "api-key-create succeeded despite the failing role-lookup: $response"
 grep -q 'delete that subject before retrying' <<<"$response" ||
     failed "the failed role-lookup did not name the subject left behind but: $response"
+passed
+
+# The recovery from a lost provisioning API-key must remove both the stored API-key and the configured
+# hash, because the bootstrap never replaces a stored API-key. A stubbed systemctl fakes the restart
+# by logging the bootstrap message; the real bootstrap is covered by ProvisioningApiKeyBootstrap tests.
+echo "tools/remote backend provision-api-key --force replaces a lost provisioning API-key"
+cat >"$sshStubDir/systemctl" <<'SYSTEMCTL_STUB'
+#!/bin/bash
+case "$*" in
+    *restart*) echo "provisioned the provisioning API-key subject 'hsadminng.provisioning.key'" >>"$HOME/var/backend.log" ;;
+esac
+SYSTEMCTL_STUB
+chmod +x "$sshStubDir/systemctl"
+mkdir -p "$fakeServerHome/var"
+echo "HSADMINNG_PROVISIONING_API_KEY_SHA256=$HSADMINNG_PROVISIONING_API_KEY_SHA256" >>"$fakeServerHome/backend/.environment"
+function remoteWithStubs() {
+    SMOKE_TEST_FAKE_SERVER_HOME=$(cd "$fakeServerHome" && pwd) \
+    PATH=$(cd "$sshStubDir" && pwd):$PATH \
+    HSADMINNG_DEPLOY_HOST=stubbed \
+    tools/remote "$@" 2>&1
+}
+response=$(remoteWithStubs backend provision-api-key --no-local-store) &&
+    failed "provision-api-key without --force replaced the configured hash: $response"
+grep -q 'use --force' <<<"$response" ||
+    failed "provision-api-key without --force did not point to --force but: $response"
+response=$(remoteWithStubs backend provision-api-key --force --no-local-store <<<"https://wrong.stage.example.org") &&
+    failed "provision-api-key --force accepted a mistyped stage name: $response"
+grep -q 'nothing changed' <<<"$response" ||
+    failed "provision-api-key --force did not reject the mistyped stage name but: $response"
+response=$(remoteWithStubs backend provision-api-key --force --no-local-store <<<"${HSADMINNG_API_BASE_URL%/}") ||
+    failed "provision-api-key --force failed: $response"
+newProvisioningApiKey=$(grep -o 'hsak_hsadminng\.provisioning\.key\.[^ ]*' <<<"$response" | tail -1)
+[ -n "$newProvisioningApiKey" ] || failed "provision-api-key --force printed no new API-key but: $response"
+configuredHashes=$(grep '^HSADMINNG_PROVISIONING_API_KEY_SHA256=' "$fakeServerHome/backend/.environment")
+[ "$configuredHashes" == "HSADMINNG_PROVISIONING_API_KEY_SHA256=$(tools/api-key-hash "$newProvisioningApiKey")" ] ||
+    failed "the EnvironmentFile does not configure just the hash of the new API-key but: $configuredHashes"
+response=$(remoteWithStubs backend sql "select count(*) from rbac.subject where name = 'hsadminng.provisioning.key'") ||
+    failed "counting the provisioning API_KEY subject failed: $response"
+grep -qx 0 <<<"$response" ||
+    failed "provision-api-key --force did not delete the old provisioning API_KEY subject: $response"
 passed
 
 echo

@@ -3,7 +3,7 @@
 # Must be sourced (done on demand by the APIKEY function), so that it can export
 # HSADMINNG_API_KEY (and HSADMINNG_API_KEY_NAME) into the calling shell.
 # The git-ignored, GPG-encrypted `.apikeys.gpg` properties-file itself is maintained
-# by tools/lib/apikeys-file.py, in a section per Keycloak environment.
+# by tools/lib/apikeys-file.py, in a section per stage (HSADMINNG_API_BASE_URL).
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
     echo "ERROR: ${0} must be sourced, e.g. via the APIKEY function from .aliases" >&2
@@ -11,11 +11,11 @@ if [ "${BASH_SOURCE[0]}" == "$0" ]; then
 fi
 
 function _apikeyLogin() {
-    local issuer="${HSADMINNG_KEYCLOAK_ISSUER:-https://login.ng.hostsharing.net/realms/hs}"
+    local stage="${HSADMINNG_API_BASE_URL:-}"; stage="${stage%/}"
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" || "${1:-}" == "-?" ]]; then
         source tools/lib/unindented.sh
         unindented <<'HELP'
-            usage: APIKEY [--reset] <name> | APIKEY --remove <name> | APIKEY --transient | APIKEY --list | APIKEY --show
+            usage: APIKEY [--reset] <name> | APIKEY --remove <name> | APIKEY --transient | APIKEY --list | APIKEY --stages | APIKEY --show <name>
 
             Switches the HTTP function to an API-key instead of a JWT, by exporting it as
             HSADMINNG_API_KEY and unsetting the JWT bearer. Use LOGIN to switch back to a JWT
@@ -29,25 +29,35 @@ function _apikeyLogin() {
             APIKEY --transient      asks for an API-key which is NOT stored and lives only in this
                                     shell; deliberately prompted: an argument would end up in the
                                     shell history
-            APIKEY --list           lists the key-names stored for the current Keycloak environment
-            APIKEY --show           prints the decrypted `.apikeys.gpg` content of all Keycloak
-                                    environments -- including the clear-text API-keys!
+            APIKEY --list           lists the key-names stored for the current stage, followed by
+                                    legacy ones stored per Keycloak issuer by former versions
+            APIKEY --stages         lists the stages with stored API-keys, without the keys
+            APIKEY --show <name>    prints the clear-text API-key stored under that name for the
+                                    current stage, or else a legacy one
             APIKEY --help|-h|-?     shows this help
 
             Key-names must not start with '-'. API-keys are only ever stored GPG-encrypted, in
-            `.apikeys.gpg` with name=key entries in a section per Keycloak environment
-            ($HSADMINNG_KEYCLOAK_ISSUER), encrypted to $HSADMINNG_APIKEYS_GPG_RECIPIENT or, if
+            `.apikeys.gpg` with name=key entries in a section per stage
+            ($HSADMINNG_API_BASE_URL), encrypted to $HSADMINNG_APIKEYS_GPG_RECIPIENT or, if
             that is not set, to your default GPG key -- see README.md for the GPG setup.
 HELP
         return
     fi
     if [ "${1:-}" == "--list" ]; then
-        echo "API-key names stored in .apikeys.gpg for [$issuer]:" >&2
-        tools/lib/apikeys-file.py list "$issuer"
+        echo "API-key names stored in .apikeys.gpg for [$stage]:" >&2
+        tools/lib/apikeys-file.py list "$stage"
+        return
+    fi
+    if [ "${1:-}" == "--stages" ]; then
+        tools/lib/apikeys-file.py stages
         return
     fi
     if [ "${1:-}" == "--show" ]; then
-        tools/lib/apikeys-file.py show
+        if [ -z "${2:-}" ]; then
+            echo "usage: APIKEY --show <name>" >&2
+            return 1
+        fi
+        tools/lib/apikeys-file.py show "$stage" "$2"
         return
     fi
     if [ "${1:-}" == "--remove" ]; then
@@ -55,11 +65,11 @@ HELP
             echo "usage: APIKEY --remove <name>" >&2
             return 1
         fi
-        tools/lib/apikeys-file.py remove "$issuer" "$2" || return 1
+        tools/lib/apikeys-file.py remove "$stage" "$2" || return 1
         if [ "$2" == "${HSADMINNG_API_KEY_NAME:-}" ]; then
             unset HSADMINNG_API_KEY HSADMINNG_API_KEY_NAME
         fi
-        echo "removed the API-key '$2' for [$issuer]" >&2
+        echo "removed the API-key '$2' for [$stage]" >&2
         return
     fi
     if [ "${1:-}" == "--transient" ]; then
@@ -95,17 +105,17 @@ HELP
     fi
     local apiKey=""
     if [ "$reset" == no ]; then
-        apiKey=$(tools/lib/apikeys-file.py get "$issuer" "$HSADMINNG_API_KEY_NAME") || return 1
+        apiKey=$(tools/lib/apikeys-file.py get "$stage" "$HSADMINNG_API_KEY_NAME") || return 1
     fi
     if [ -z "$apiKey" ]; then
-        read -r -s -p "API-key '$HSADMINNG_API_KEY_NAME' for [$issuer]: " apiKey
+        read -r -s -p "API-key '$HSADMINNG_API_KEY_NAME' for [$stage]: " apiKey
         echo >&2
         if [ -z "$apiKey" ]; then
             echo "ERROR: no API-key given" >&2
             return 1
         fi
-        printf '%s' "$apiKey" | tools/lib/apikeys-file.py store "$issuer" "$HSADMINNG_API_KEY_NAME" || return 1
-        echo "stored the API-key '$HSADMINNG_API_KEY_NAME' for [$issuer] in the git-ignored, GPG-encrypted .apikeys.gpg file" >&2
+        printf '%s' "$apiKey" | tools/lib/apikeys-file.py store "$stage" "$HSADMINNG_API_KEY_NAME" || return 1
+        echo "stored the API-key '$HSADMINNG_API_KEY_NAME' for [$stage] in the git-ignored, GPG-encrypted .apikeys.gpg file" >&2
     fi
     export HSADMINNG_API_KEY="$apiKey"
     # tools/http prefers the JWT over the API-key, thus unset it so the API-key takes effect

@@ -395,6 +395,11 @@ public abstract class UseCase<T extends UseCase<?>> {
         }
     }
 
+    // for a value which later scenarios require via @Requires, but which is no UUID and thus no alias
+    protected void keep(final String name, final Object value) {
+        ScenarioTest.putKeptValue(ScenarioTest.resolve(name, DROP_COMMENTS), value);
+    }
+
     private UseCase<T> keepProperty(final Map<String, Object> usingProperties, final String propName, final Object propValue) {
         usingProperties.put(
                 propName,

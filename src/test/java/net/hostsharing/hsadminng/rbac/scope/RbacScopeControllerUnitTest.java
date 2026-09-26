@@ -29,6 +29,12 @@ class RbacScopeControllerUnitTest {
                                         "PUT /api/rbac/subjects/{uuid}",
                                         "POST /api/rbac/subjects/sync-report"
                                 )),
+                        tuple("hs.office:billing-mda",
+                                List.of(
+                                        "GET /api/hs/office/debitors",
+                                        "GET /api/hs/office/debitors/D-{debitorNumber}",
+                                        "GET /api/hs/office/sepamandates"
+                                )),
                         tuple("*:read",
                                 List.of("GET /api/**")));
     }

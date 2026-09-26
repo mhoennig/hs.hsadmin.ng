@@ -4,51 +4,77 @@ set -euo pipefail
 if [[ "${1:-}" == "-h" || "${1:-}" == "-?" || "${1:-}" == "--help" ]]; then
     source tools/lib/unindented.sh
     unindented <<'HELP'
-        usage: tools/create-api-key-for-keycloak-sync [subject-name]
+        usage: tools/api-key-create [--no-local-store] <subject-name> <scope>...
 
-        Creates an API_KEY subject for the Keycloak-sync and grants it the global-admin role,
-        in one step, then prints the clear-text API-key (once!) to stdout.
+        Creates an API_KEY subject with the given endpoint-scopes and grants it the global-admin
+        role, in one step, then prints the clear-text API-key (once!) to stdout.
 
-        The subject is created with the endpoint-scope 'rbac.subjects:sync', so the key may only
-        call the subject-sync endpoints; the granted global-admin role authorizes those calls.
-        Without an argument the subject-name defaults to 'hsadminng.keycloak.sync'.
+        The API-key is also stored under the subject-name in `.apikeys.gpg`, in the section of the
+        current stage (HSADMINNG_API_BASE_URL), so it does not get lost, see `APIKEY --help`;
+        `--no-local-store` skips this, e.g. for throw-away keys.
+
+        The scopes restrict the key to their endpoints, the granted global-admin role authorizes
+        these calls; at least one scope is required, because an unscoped global-admin key may do
+        anything. `HTTP GET /api/rbac/scopes` lists the available scopes, e.g.:
+          tools/api-key-create hsadminng.keycloak.sync rbac.subjects:sync
+          tools/api-key-create hsadminng.billing.mda hs.office:billing-mda
 
         Backend and credentials come from the personal '.environment' (the stage selection,
         e.g. copied from '.environment-int-remote'), which this tool sources via '.aliases'.
-        They therefore win over anything exported in the calling shell, including an
-        'APIKEY <name>' or 'LOGIN' done there; without a key in '.environment', do that first.
+        Values exported in the calling shell win, though, e.g. by 'APIKEY <name>' or 'LOGIN'
+        done there as a global-admin.
 
         The clear-text API-key is a secret, returned only in this creation response and never
         retrievable again -- capture it, e.g.:
-          apiKey=$(tools/create-api-key-for-keycloak-sync)
+          apiKey=$(tools/api-key-create hsadminng.billing.mda hs.office:billing-mda)
 HELP
     exit 0
+fi
+
+store=yes
+if [[ "${1:-}" == "--no-local-store" ]]; then
+    store=no
+    shift
+fi
+if [[ $# -lt 2 || -z "$1" ]]; then
+    echo "ERROR: expected <subject-name> and at least one <scope>, see --help" >&2
+    exit 1
 fi
 
 # run from the repository root, because the HTTP function calls `tools/http` via a relative path
 cd "$(dirname "$0")/.." || exit 1
 
-subjectName="${1:-hsadminng.keycloak.sync}"
-scope="rbac.subjects:sync"
+subjectName="$1"
+shift
+scopesJson=$(jq -cn '$ARGS.positional' --args "$@")
 globalAdminRole="rbac.global#global:ADMIN"
 
-# brings in the HTTP function and, with it, the stage selected in the personal `.environment`
+# brings in the HTTP function and, with it, the stage selected in the personal `.environment`,
+# whose defaults must not override what the calling shell exported, e.g. via APIKEY or LOGIN
+externalApiBaseUrl=${HSADMINNG_API_BASE_URL:-}
+externalApiKey=${HSADMINNG_API_KEY:-}
+externalJwtBearer=${HSADMINNG_JWT_BEARER:-}
 # shellcheck source=/dev/null
 source .aliases
+[ -n "$externalApiBaseUrl" ] && export HSADMINNG_API_BASE_URL=$externalApiBaseUrl
+[ -n "$externalApiKey" ] && export HSADMINNG_API_KEY=$externalApiKey
+[ -n "$externalJwtBearer" ] && export HSADMINNG_JWT_BEARER=$externalJwtBearer
+# an API-key from the calling shell must not lose against a JWT from .environment, which tools/http prefers
+[ -n "$externalApiKey" ] && [ -z "$externalJwtBearer" ] && unset HSADMINNG_JWT_BEARER
 
 if [ -z "${HSADMINNG_API_KEY:-}" ] && [ -z "${HSADMINNG_JWT_BEARER:-}" ]; then
     echo "ERROR: not authenticated; run APIKEY <name> or LOGIN as a global-admin first (see .aliases)" >&2
     exit 1
 fi
 
-echo "creating API_KEY subject '$subjectName' with scope '$scope' ..." >&2
+echo "creating API_KEY subject '$subjectName' with scopes $scopesJson ..." >&2
 createRc=0
 created=$(
   HTTP POST /api/rbac/subjects <<JSON
   {
     "type": "API_KEY",
     "name": "$subjectName",
-    "scopes": [ "$scope" ]
+    "scopes": $scopesJson
   }
 JSON
 ) || createRc=$?
@@ -91,6 +117,7 @@ grantResponse=$(
   HTTP POST /api/rbac/grants \
     -H "Hostsharing-Assumed-Roles: $globalAdminRole" <<JSON
   {
+    "assumed": true,
     "grantedRole.uuid": "$roleUuid",
     "granteeSubject.uuid": "$subjectUuid"
   }
@@ -103,5 +130,14 @@ if [ "$grantRc" -ne 0 ]; then
 fi
 
 echo "created API_KEY subject $subjectUuid ('$subjectName') and granted it the global-admin role." >&2
+
+if [ "$store" == yes ]; then
+    stage="${HSADMINNG_API_BASE_URL:-}"; stage="${stage%/}"
+    if tools/lib/apikeys-file.py store "$stage" "$subjectName" <<<"$apiKey"; then
+        echo "stored the API-key as '$subjectName' for [$stage] in .apikeys.gpg." >&2
+    else
+        echo "WARNING: could not store the API-key in .apikeys.gpg -- keep the one printed below!" >&2
+    fi
+fi
 echo "clear-text API-key (shown only once) follows on stdout:" >&2
 printf '%s\n' "$apiKey"

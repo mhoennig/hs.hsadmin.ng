@@ -9,7 +9,13 @@ import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelationMarks;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelations;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFromContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateDebitorAsBillingSystem;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateSepaMandateAsBillingSystem;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToListRelationsAsBillingSystem;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateExternalDebitorForPartner;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FetchDebitorByDebitorNumber;
+import net.hostsharing.hsadminng.hs.rbac.scenarios.CreateBillingApiKeySubject;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InspectBillingApiKeyContext;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSelfDebitorForPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSelfDebitorForPartnerWithIdenticalContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSepaMandateForDebitor;
@@ -48,6 +54,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeNewPe
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.UnsubscribeFromMailinglist;
 import net.hostsharing.hsadminng.hs.scenarios.Produces;
 import net.hostsharing.hsadminng.hs.scenarios.Requires;
+import net.hostsharing.hsadminng.hs.scenarios.Scenario;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.lambda.Reducer;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +68,8 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
+import static net.hostsharing.hsadminng.hs.office.scenarios.debitor.BillingUseCase.BILLING_MDA_API_KEY;
+import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
 import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asSubject;
 
 class HsOfficeScenarioTests extends ScenarioTest {
@@ -294,7 +303,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Debitor: D-3101100 - Michelle Matthieu")
         void shouldListDebitorsWithCompleteMasterData() {
             new ListDebitorsWithCompleteMasterData(scenarioTest)
-                    // the read-only API-key of the billing system
+                    // the API-key of the billing system
                     .given("subjectUuid", "b1111001-0000-0000-0000-000000000001")
                     .given("subjectName", "billing.debitors.key")
                     .given("partnerNumber", "P-31011")
@@ -316,7 +325,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("Debitor: D-3101100 - Michelle Matthieu")
         void shouldListAllDebitorsWithCompleteMasterData() {
             new ListAllDebitorsWithCompleteMasterData(scenarioTest)
-                    // the read-only API-key of the billing system
+                    // the API-key of the billing system
                     .given("subjectUuid", "b1111002-0000-0000-0000-000000000002")
                     .given("subjectName", "billing.alldebitors.key")
                     .expected("minimumDebitorCount", 4)
@@ -470,7 +479,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires({ "SEPA-Mandate: Test AG", "SEPA-Mandate: Test AG - former bank account" })
         void shouldListValidSepaMandatesOfDebitor() {
             new ListValidSepaMandatesOfDebitor(scenarioTest)
-                    // the read-only API-key of the billing system
+                    // the API-key of the billing system
                     .given("subjectUuid", "b1111003-0000-0000-0000-000000000003")
                     .given("subjectName", "billing.sepamandates.key")
                     .given("debitorNumber", "D-3101000")
@@ -486,7 +495,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires({ "SEPA-Mandate: Test AG", "SEPA-Mandate: Test AG - former bank account" })
         void shouldListAllValidSepaMandates() {
             new ListAllValidSepaMandates(scenarioTest)
-                    // the read-only API-key of the billing system
+                    // the API-key of the billing system
                     .given("subjectUuid", "b1111004-0000-0000-0000-000000000004")
                     .given("subjectName", "billing.allsepamandates.key")
                     .given("validAt", "2025-01-01")
@@ -511,6 +520,108 @@ class HsOfficeScenarioTests extends ScenarioTest {
         void shouldFinallyDeleteSepaMandateForDebitor() {
             new FinallyDeleteSepaMandateForDebitor(scenarioTest)
                     .given("bankAccountIBAN", "DE02701500000000594937").thenExpect(HttpStatus.OK);
+        }
+    }
+
+    @Nested
+    @Order(32)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class BillingApiKeyScenarios {
+
+        @Test
+        @Order(3200)
+        @Scenario("306.00")
+        @Produces(explicitly = "ApiKey-Subject: hsadminng.billing.mda", implicitly = BILLING_MDA_API_KEY)
+        void shouldCreateApiKeyForBillingMda() {
+            new CreateBillingApiKeySubject(scenarioTest, asGlobalAgent())
+                    .given("subjectUuid", "b1111200-0000-0000-0000-000000000200")
+                    .given("subjectName", "hsadminng.billing.mda")
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
+        }
+
+        @Test
+        @Order(3201)
+        @Scenario("306.01")
+        @Requires({ BILLING_MDA_API_KEY, "Debitor: D-3101100 - Michelle Matthieu" })
+        void shouldListAllDebitorsForBillingMda() {
+            new ListAllDebitorsWithCompleteMasterData(scenarioTest)
+                    .expected("minimumDebitorCount", 4)
+                    .expected("debitorNumber", "D-3101100")
+                    .expected("partnerNumber", "P-31011")
+                    .expected("partnerPersonType", "NATURAL_PERSON")
+                    .expected("partnerPersonGivenName", "Michelle")
+                    .expected("partnerPersonFamilyName", "Matthieu")
+                    .expected("contactCaption", "Michelle Matthieu")
+                    .expected("contactPostalName", "Michelle Matthieu")
+                    .expected("contactStreet", "An der Wandse 34")
+                    .expected("contactZipcode", "22123")
+                    .expected("contactCity", "Hamburg")
+                    .expected("contactCountry", "Germany")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3202)
+        @Scenario("306.02")
+        @Requires({ BILLING_MDA_API_KEY, "SEPA-Mandate: Test AG - former bank account" })
+        void shouldListAllValidSepaMandatesForBillingMda() {
+            new ListAllValidSepaMandates(scenarioTest)
+                    .given("validAt", "2025-01-01")
+                    .expected("minimumMandateCount", 3)
+                    // "Test AG - main debitor" is gone, it got deleted by scenario #3109
+                    .expected("validMandateReference", "ref-10001-11")
+                    .expected("unexpectedMandateReference", "Test AG - former bank account")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3203)
+        @Scenario("306.03")
+        @Requires(BILLING_MDA_API_KEY)
+        void shouldInspectBillingApiKeyContext() {
+            new InspectBillingApiKeyContext(scenarioTest)
+                    .expected("subjectName", "hsadminng.billing.mda")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3204)
+        @Scenario("306.04")
+        @Requires({ BILLING_MDA_API_KEY, "Debitor: D-3101100 - Michelle Matthieu" })
+        void shouldFetchDebitorByDebitorNumberForBillingMda() {
+            new FetchDebitorByDebitorNumber(scenarioTest)
+                    .given("debitorNumber", "D-3101100")
+                    .expected("partnerNumber", "P-31011")
+                    .expected("contactCity", "Hamburg")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3211)
+        @Scenario("306.11")
+        @Requires({ BILLING_MDA_API_KEY, "Partner: P-31010 - Test AG" })
+        void theBillingMdaApiKeyCannotCreateDebitors() {
+            new AttemptToCreateDebitorAsBillingSystem(scenarioTest)
+                    .thenExpect(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @Order(3212)
+        @Scenario("306.12")
+        @Requires({ BILLING_MDA_API_KEY, "SEPA-Mandate: Test AG" })
+        void theBillingMdaApiKeyCannotCreateSepaMandates() {
+            new AttemptToCreateSepaMandateAsBillingSystem(scenarioTest)
+                    .thenExpect(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @Order(3214)
+        @Scenario("306.14")
+        @Requires(BILLING_MDA_API_KEY)
+        void theBillingMdaApiKeyCannotListRelations() {
+            new AttemptToListRelationsAsBillingSystem(scenarioTest)
+                    .thenExpect(HttpStatus.FORBIDDEN);
         }
     }
 

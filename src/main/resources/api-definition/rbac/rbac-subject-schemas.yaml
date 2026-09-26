@@ -19,6 +19,7 @@ components:
                 403 Forbidden, regardless of the roles granted to the API_KEY subject.
             enum:
                 - rbac.subjects:sync
+                - hs.office:billing-mda
                 - "*:read"
 
         ApiKeyScopeInfo:

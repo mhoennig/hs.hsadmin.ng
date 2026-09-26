@@ -31,7 +31,13 @@
 #   remote backend setup              install (or refresh) the backend systemd user unit, a jar runner
 #                                     after the hsh11 model; expects ~/backend/.environment (chmod 600,
 #                                     incl. SPRING_PROFILES_ACTIVE) and a JDK 21 under ~/opt/jdk-21
-#   remote backend provision-api-key  generate an API-key locally and provision just its hash on the server
+#   remote backend provision-api-key [--force] [--no-local-store]
+#                                     generate an API-key locally and provision just its hash on the server;
+#                                     the API-key is stored in .apikeys.gpg for HSADMINNG_API_BASE_URL,
+#                                     unless --no-local-store is given;
+#                                     --force first deletes the API_KEY subject hsadminng.provisioning.key and
+#                                     its configured hash, e.g. to recover from a lost provisioning API-key;
+#                                     as a safeguard against the wrong stage, it asks to type the stage name
 #   remote backend sql [SQL]          run SQL on the backend database with its own datasource credentials;
 #                                     with SQL runs that statement, otherwise opens psql or reads SQL from stdin
 #   remote backend sql-tunnel [PORT]  forward a local port (default 15432) to the backend database and print
@@ -446,21 +452,61 @@ REMOTE_SCRIPT
 # restarted, and the bootstrap outcome is verified via the backend log.
 # The clear-text API-key is printed at the very end; it only ever exists at the client.
 cmdProvisioningApiKey() {
+    local force=no store=yes
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --force)          force=yes ;;
+            --no-local-store) store=no ;;
+            *)                echo "ERROR: unknown option '$1' for provision-api-key, see --help" >&2; exit 1 ;;
+        esac
+        shift
+    done
+    [ "$force" == yes ] && confirmStage
     local apiKey keyHash
     apiKey=$(tools/api-key-generate hsadminng.provisioning.key)
     keyHash=$(tools/api-key-hash "$apiKey")
 
     local rc=0
-    ssh "$backendLogin" bash -s -- "$keyHash" < <(unindented <<'REMOTE_SCRIPT'
+    ssh "$backendLogin" bash -s -- "$keyHash" "$force" < <(unindented <<'REMOTE_SCRIPT'
         set -euo pipefail
         keyHash=$1
+        force=$2
         envFile="$HOME/backend/.environment"
         logFile="$HOME/var/backend.log"
 
         if grep -q '^HSADMINNG_PROVISIONING_API_KEY_SHA256=' "$envFile"; then
-            echo "ERROR: HSADMINNG_PROVISIONING_API_KEY_SHA256 is already configured in $envFile," >&2
-            echo "       remove that line first if you really want to reconfigure it" >&2
-            exit 3
+            if [ "$force" != yes ]; then
+                echo "ERROR: HSADMINNG_PROVISIONING_API_KEY_SHA256 is already configured in $envFile," >&2
+                echo "       use --force if you really want to replace the provisioning API-key" >&2
+                exit 3
+            fi
+            echo "removing the configured HSADMINNG_PROVISIONING_API_KEY_SHA256 from $envFile"
+            sed -i '/^HSADMINNG_PROVISIONING_API_KEY_SHA256=/d' "$envFile"
+        fi
+
+        # the bootstrap never replaces a stored API-key, thus the old subject has to go;
+        # the DB only allows a subject to delete itself or a global-admin to delete it
+        # deleting the subject row, not its rbac.reference: only then its BEFORE DELETE trigger drops the
+        # grants in time, otherwise it depends on the FK trigger order, which differs in restored dumps
+        if [ "$force" == yes ]; then
+            echo "deleting the API_KEY subject hsadminng.provisioning.key, if it exists"
+            (
+                set -a; . "$envFile"; set +a
+                url=${SPRING_DATASOURCE_URL:-${HSADMINNG_POSTGRES_JDBC_URL:?no datasource URL configured in $envFile}}
+                url=${url#jdbc:}; url=${url%%\?*}
+                PGPASSWORD=${SPRING_DATASOURCE_PASSWORD:-password} \
+                    psql "$url" -U "${SPRING_DATASOURCE_USERNAME:-postgres}" -X -q -v ON_ERROR_STOP=1 -c "
+                        do language plpgsql \$\$
+                        begin
+                            if exists (select 1 from rbac.subject
+                                        where name = 'hsadminng.provisioning.key' and type = 'API_KEY') then
+                                call base.defineContext('re-provisioning the provisioning API-key',
+                                        null, 'hsadminng.provisioning.key', null);
+                                delete from rbac.subject
+                                        where name = 'hsadminng.provisioning.key' and type = 'API_KEY';
+                            end if;
+                        end \$\$;"
+            ) || { echo "ERROR: could not delete the API_KEY subject hsadminng.provisioning.key" >&2; exit 5; }
         fi
 
         logOffset=$(stat -c%s "$logFile" 2>/dev/null || echo 0)
@@ -501,8 +547,9 @@ REMOTE_SCRIPT
     ) || rc=$?
 
     case "$rc" in
-        0)  echo
-            echo "store the API-key in your password manager, it cannot be retrieved again:"
+        0)  [ "$store" == yes ] && storeProvisioningApiKey "$apiKey"
+            echo
+            echo "the new provisioning API-key, it cannot be retrieved from the server again:"
             echo
             echo "    export HSADMINNG_API_KEY=$apiKey"
             ;;
@@ -510,7 +557,7 @@ REMOTE_SCRIPT
             echo "       the stored API-key takes precedence, the newly generated one is NOT valid" >&2
             exit 1
             ;;
-        3)  exit 1
+        3|5) exit 1
             ;;
         *)  echo "WARNING: could not confirm the provisioning, check with '$0 backend log';" >&2
             echo "if the bootstrap succeeds on a later start, this is the matching API-key:" >&2
@@ -519,6 +566,37 @@ REMOTE_SCRIPT
             exit "$rc"
             ;;
     esac
+}
+
+# --force deletes the valid provisioning API-key of a stage, thus it must not hit the wrong one
+confirmStage() {
+    local stage=${HSADMINNG_API_BASE_URL:-}; stage=${stage%/}
+    if [ -z "$stage" ]; then
+        echo "ERROR: HSADMINNG_API_BASE_URL is not set, but --force needs it to confirm the stage" >&2
+        exit 1
+    fi
+    echo "This replaces the provisioning API-key of the stage $stage on host $HSADMINNG_DEPLOY_HOST."
+    local typedStage
+    read -r -p "To confirm, type the stage name exactly as shown: " typedStage
+    if [ "$typedStage" != "$stage" ]; then
+        echo "ERROR: '$typedStage' does not match '$stage', nothing changed" >&2
+        exit 1
+    fi
+}
+
+# keeps the new key, because the clear-text API-key cannot be retrieved again
+storeProvisioningApiKey() { # $1=apiKey
+    local stage=${HSADMINNG_API_BASE_URL:-}; stage=${stage%/}
+    if [ -z "$stage" ]; then
+        echo "WARNING: HSADMINNG_API_BASE_URL is not set, thus the API-key is NOT stored in .apikeys.gpg" >&2
+        return
+    fi
+    # .apikeys.gpg lives in the repository root, but this tool may be called from anywhere
+    if (cd "$(dirname "$0")/.." && tools/lib/apikeys-file.py store "$stage" hsadminng.provisioning.key <<<"$1"); then
+        echo "stored the API-key as 'hsadminng.provisioning.key' for [$stage] in .apikeys.gpg"
+    else
+        echo "WARNING: could not store the API-key in .apikeys.gpg -- keep the one printed below!" >&2
+    fi
 }
 
 # Runs SQL against the backend database using the backend service's own datasource

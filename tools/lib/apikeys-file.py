@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """Reads and writes the git-ignored, GPG-encrypted `.apikeys.gpg` properties-file in the
-current directory, which stores API-keys by name in a section per Keycloak environment:
+current directory, which stores API-keys by name in a section per stage, identified by its API base-URL,
+because hsadmin-ng API-keys belong to a backend, not to a Keycloak:
 
-    [https://login.ng.hostsharing.net/realms/hs]
-    provisioning=hsak_...
-    keycloak_sync=hsak_...
+    [https://backend.ng.hostsharing.net]
+    hsadminng.provisioning.key=hsak_...
+    hsadminng.keycloak.sync=hsak_...
 
 usage:
-    apikeys-file.py get <issuer> <name>     # prints the stored API-key, or nothing if there is none
-    apikeys-file.py store <issuer> <name>   # reads the API-key from stdin (kept off the process list)
-    apikeys-file.py remove <issuer> <name>  # removes the stored API-key
-    apikeys-file.py list <issuer>           # prints the key-names stored for that environment
-    apikeys-file.py show                    # prints the decrypted file content (all environments)
+    apikeys-file.py get <stage> <name>      # prints the stored API-key, or nothing if there is none
+    apikeys-file.py store <stage> <name>    # reads the API-key from stdin (kept off the process list)
+    apikeys-file.py remove <stage> <name>   # removes the stored API-key
+    apikeys-file.py list <stage>            # prints the key-names stored for that stage, then legacy ones
+    apikeys-file.py show <stage> <name>     # prints the API-key, falling back to a legacy entry
+    apikeys-file.py stages                  # prints the stage sections, marking the legacy ones
+
+Legacy entries are those in sections of a Keycloak issuer (containing `/realms/`), used by former
+versions; `list` and `show` still find them, so they can be moved to their stage via `APIKEY --reset`.
 
 API-keys are only ever stored encrypted: to HSADMINNG_APIKEYS_GPG_RECIPIENT or, if that is
 not set, to your default GPG key (--default-recipient-self). A legacy plain `.apikeys` file
@@ -102,14 +107,14 @@ def main():
     if command == "--help":
         print(__doc__.strip())
         return
-    if command not in ("get", "store", "remove", "list", "show"):
-        fail(f"unknown command '{command}', expected get, store, remove, list, or show")
-    if len(arguments) != {"list": 1, "show": 0}.get(command, 2):
+    if command not in ("get", "store", "remove", "list", "show", "stages"):
+        fail(f"unknown command '{command}', expected get, store, remove, list, show, or stages")
+    if len(arguments) != {"list": 1, "stages": 0}.get(command, 2):
         fail(f"wrong number of arguments for '{command}', see: {sys.argv[0]} --help")
 
-    issuer = arguments[0] if arguments else None
-    if command != "show" and not issuer:
-        fail("the <issuer> (Keycloak environment) must not be empty")
+    stage = arguments[0] if arguments else None
+    if command != "stages" and not stage:
+        fail("the <stage> (API base-URL) must not be empty")
     name = arguments[1] if len(arguments) > 1 else None
     if name is not None and not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", name):
         fail(f"API-key name '{name}' must only contain letters, digits, '.', '-' and '_',"
@@ -120,29 +125,47 @@ def main():
         # never keep API-keys unencrypted on disk: migrate even for read-only commands
         write_properties(properties)
     if command == "get":
-        if properties.has_option(issuer, name):
-            print(properties.get(issuer, name))
+        if properties.has_option(stage, name):
+            print(properties.get(stage, name))
     elif command == "store":
         api_key = sys.stdin.read().strip()
         if not api_key:
             fail("no API-key given on stdin")
-        if not properties.has_section(issuer):
-            properties.add_section(issuer)
-        properties.set(issuer, name, api_key)
+        if not properties.has_section(stage):
+            properties.add_section(stage)
+        properties.set(stage, name, api_key)
         write_properties(properties)
     elif command == "remove":
-        if not properties.has_option(issuer, name):
-            fail(f"no API-key named '{name}' is stored for [{issuer}]")
-        properties.remove_option(issuer, name)
-        if not properties.options(issuer):
-            properties.remove_section(issuer)
+        if not properties.has_option(stage, name):
+            fail(f"no API-key named '{name}' is stored for [{stage}]")
+        properties.remove_option(stage, name)
+        if not properties.options(stage):
+            properties.remove_section(stage)
         write_properties(properties)
     elif command == "list":
-        if properties.has_section(issuer):
-            for key_name in properties.options(issuer):
+        if properties.has_section(stage):
+            for key_name in properties.options(stage):
                 print(key_name)
+        for section in legacy_sections(properties):
+            for key_name in properties.options(section):
+                print(f"{key_name}  (legacy: [{section}])")
+    elif command == "stages":
+        for section in properties.sections():
+            print(f"[{section}]" + ("  (legacy)" if section in legacy_sections(properties) else ""))
     elif command == "show":
-        properties.write(sys.stdout, space_around_delimiters=False)
+        if properties.has_option(stage, name):
+            print(properties.get(stage, name))
+            return
+        legacy = [section for section in legacy_sections(properties) if properties.has_option(section, name)]
+        if not legacy:
+            fail(f"no API-key named '{name}' is stored for [{stage}]")
+        for section in legacy:
+            print(f"legacy entry from [{section}], move it with: APIKEY --reset {name}", file=sys.stderr)
+            print(properties.get(section, name))
+
+
+def legacy_sections(properties):
+    return [section for section in properties.sections() if "/realms/" in section]
 
 
 if __name__ == "__main__":

@@ -82,6 +82,20 @@ alter table rbac.api_key_scope
 
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-api-key-scope-format-HYPHENATED-ACCESS endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Relaxes the scope format to also allow hyphens in the access part, e.g. `hs.office:billing-mda`.
+ */
+alter table rbac.api_key_scope
+    drop constraint api_key_scope_scope_format;
+alter table rbac.api_key_scope
+    add constraint api_key_scope_scope_format
+        check (scope ~ '^([a-z][a-z0-9._-]*|\*):[a-z][a-z-]*$');
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-api-key-EXPIRES-AT-COLUMN endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*

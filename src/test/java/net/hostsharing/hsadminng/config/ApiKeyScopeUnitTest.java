@@ -33,6 +33,31 @@ class ApiKeyScopeUnitTest {
 
     @ParameterizedTest
     @CsvSource({
+            "GET, /api/hs/office/debitors, true",
+            "GET, /api/hs/office/sepamandates, true",
+            "GET, /api/hs/office/debitors/D-1000111, true",
+            "GET, /api/hs/office/debitors/40e2a1e8-0000-0000-0000-000000000000, false",
+            "GET, /api/hs/office/sepamandates/40e2a1e8-0000-0000-0000-000000000000, false",
+            "GET, /api/hs/office/partners, false",
+            "GET, /api/hs/office/memberships, false",
+            "POST, /api/hs/office/sepamandates, false",
+            "PATCH, /api/hs/office/debitors/40e2a1e8-0000-0000-0000-000000000000, false",
+            "GET, /api/hs/booking/items, false",
+            "GET, /api/rbac/subjects, false",
+    })
+    void hsOfficeBillingMdaAllowsListingDebitorsAndSepaMandatesAndFetchingADebitorByNumber(
+            final String method,
+            final String path,
+            final boolean allowed) {
+        // given
+        val request = new MockHttpServletRequest(method, path);
+
+        // then
+        assertThat(ApiKeyScope.HS_OFFICE_BILLING_MDA.allows(request)).isEqualTo(allowed);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
             "GET, /api/rbac/subjects, true",
             "GET, /api/rbac/subjects/40e2a1e8-0000-0000-0000-000000000000/permissions, true",
             "GET, /api/hs/office/memberships, true",

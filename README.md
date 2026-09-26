@@ -199,7 +199,7 @@ run `tools/smoke-test` (also available as the Gradle task `smokeTest`):
 it runs the application against a throw-away Docker-PostgreSQL
 on separate ports (neither the normal local database nor a running local application
 instance is affected) and exercises the endpoints above as well as the tooling scripts
-`tools/create-accounts-from-csv` and `tools/create-api-key-for-keycloak-sync`;
+`tools/create-accounts-from-csv` and `tools/api-key-create`;
 exit code 0 means all PASSED.
 
 ### HOWTO: Run the application with a real (OAuth2) JWT-authentication, e.g. Keycloak OIDC
@@ -260,6 +260,10 @@ the steps at once: it generates the API-key locally, configures just its hash in
 `EnvironmentFile` of the backend service, restarts the service, verifies the provisioning via
 the backend log, and finally prints the clear-text API-key for use as `HSADMINNG_API_KEY`
 (see below).
+It also stores the API-key in `.apikeys.gpg` for the stage, see below.
+If the provisioning API-key got lost, `tools/remote backend provision-api-key --force` first deletes
+the API_KEY subject `hsadminng.provisioning.key` and its configured hash, then provisions a new one;
+as a safeguard against the wrong stage, it asks to type the stage name (`HSADMINNG_API_BASE_URL`).
 
 **For a local server**, do the same steps by hand: generate the API-key, configure just its
 hash in the environment, then start the application:
@@ -279,16 +283,19 @@ GPG-encrypted in the git-ignored `.apikeys.gpg` file and unsets the JWT so the A
 effect (run `APIKEY --help` for all subcommands and details; `LOGOUT` drops the active identity,
 `LOGIN` switches back to a JWT):
 
-    APIKEY provisioning   # asks for the API-key just once, then stores it in `.apikeys.gpg`
+    APIKEY hsadminng.provisioning.key   # asks for the API-key just once, then stores it in `.apikeys.gpg`
     HTTP GET /api/hs/accounts/current   # shows the API_KEY subject and its global-admin flag
 
-The `.apikeys.gpg` file keeps a section per Keycloak environment, identified by
-`HSADMINNG_KEYCLOAK_ISSUER` (same default as `tools/jwt-login`), so keys of different
-environments with the same name (e.g. `provisioning`) do not clash:
+The `.apikeys.gpg` file keeps a section per stage, identified by its `HSADMINNG_API_BASE_URL`,
+so keys of different stages with the same name (e.g. `hsadminng.provisioning.key`) do not clash.
+hsadmin-ng API-keys belong to a backend, not to a Keycloak, thus the section does not depend on it:
 
-    [https://login.ng.hostsharing.net/realms/hs]
-    provisioning=hsak_...
-    keycloak_sync=hsak_...
+    [https://backend.ng.hostsharing.net]
+    hsadminng.provisioning.key=hsak_...
+    hsadminng.keycloak.sync=hsak_...
+
+Former versions used the Keycloak issuer as section instead; `APIKEY --list` shows such legacy
+entries as well, `APIKEY --stages` lists all sections, and `APIKEY --show <name>` prints one, so it can be moved to its stage via `APIKEY --reset <name>`.
 
 Keys are only ever stored GPG-encrypted, by default to your own key
 (`gpg --default-recipient-self`); to target a specific key, set
@@ -363,6 +370,10 @@ And for an API-key for a global-admin but just with read-only access:
 
 Scopes only restrict, they never grant anything: also a scoped API-key starts without any
 roles and needs them granted manually, as shown above.
+
+To create a scoped API-key and grant it the global ADMIN role in one step, e.g. on a stage:
+
+    apiKey=$(tools/api-key-create hsadminng.billing.mda hs.office:billing-mda)
 
 The available scopes and the endpoints they allow can be listed via `GET /api/rbac/scopes`.
 
