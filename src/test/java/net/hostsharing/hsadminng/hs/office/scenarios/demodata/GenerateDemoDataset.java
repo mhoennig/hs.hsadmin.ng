@@ -630,7 +630,6 @@ public class GenerateDemoDataset extends UseCase<GenerateDemoDataset> {
             final String partnerNumber,
             final int debitorIndex,
             final String fixedPrefix) {
-        val bankAccount = values.bankAccount(partnerPersonName);
         val debitorNumber = debitorNumberOf(partnerNumber, debitorIndex);
         val billingContactCaption =
                 contactCaptionOf(partnerPersonName, BILLING_CONTACT_PURPOSE, debitorNumber);
@@ -642,10 +641,6 @@ public class GenerateDemoDataset extends UseCase<GenerateDemoDataset> {
                 .given("billable", true)
                 .given("vatBusiness", values.percentageChance(80))
                 .given("defaultPrefix", prefix)
-                .given("bankAccountHolder",
-                        bankAccountHolder(bankAccount.holder(), " (" + partnerNumber + "/" + debitorIndex + ")"))
-                .given("iban", bankAccount.iban())
-                .given("bic", bankAccount.bic())
                 .given("billingContactCaption", billingContactCaption)
                 .given("billingContactEmailAddress",
                         values.emailAddress("rechnung" + debitorIndex, values.domainOf(partnerPersonName)))

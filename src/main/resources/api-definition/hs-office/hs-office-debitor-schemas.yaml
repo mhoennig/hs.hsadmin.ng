@@ -30,8 +30,6 @@ components:
                    type: boolean
                 vatReverseCharge:
                    type: boolean
-                refundBankAccount:
-                    $ref: 'hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
                 defaultPrefix:
                     type: string
                     pattern: '^[a-z0-9]{3}$'
@@ -59,10 +57,6 @@ components:
                 vatReverseCharge:
                     type: boolean
                     nullable: false
-                refundBankAccount.uuid:
-                    type: string
-                    format: uuid
-                    nullable: true
                 defaultPrefix:
                     type: string
                     pattern: '^[a-z0-9]{3}$'
@@ -91,10 +85,6 @@ components:
                     type: boolean
                 vatReverseCharge:
                     type: boolean
-                # TODO.feat: alternatively the complete refundBankAccount
-                refundBankAccount.uuid:
-                    type: string
-                    format: uuid
                 defaultPrefix:
                     type: string
                     pattern: '^[a-z]{3}$'

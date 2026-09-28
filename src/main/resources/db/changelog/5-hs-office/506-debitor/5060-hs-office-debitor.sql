@@ -63,3 +63,23 @@ execute procedure hs_office.debitor_delete_dependents_tf();
 
 call base.create_journal('hs_office.debitor');
 --//
+--changeset michael.hoennig:hs-office-debitor-DROP-REFUND-BANKACCOUNT endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- The administration asks a leaving member for the refund bank account, thus nobody maintains it in advance.
+do language plpgsql $$
+    begin
+        call base.defineContext('dropping the refund bank account of debitors');
+        delete from rbac.grant g
+            using hs_office.debitor debitor, rbac.role role
+            where g.grantedByTriggerOf = debitor.uuid
+                and role.objectUuid = debitor.refundBankAccountUuid
+                and role.uuid in (g.ascendantUuid, g.descendantUuid);
+    end;
+$$;
+
+-- the RBAC restricted-view changeset (5063) re-creates the view without the column
+drop view if exists hs_office.debitor_rv;
+
+alter table hs_office.debitor drop column refundBankAccountUuid;
+--//

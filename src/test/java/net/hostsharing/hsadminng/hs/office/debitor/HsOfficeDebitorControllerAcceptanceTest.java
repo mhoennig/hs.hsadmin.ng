@@ -4,7 +4,6 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRbacRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRealRepository;
@@ -65,9 +64,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
     @Autowired
     HsOfficeContactRealRepository contactRealRepo;
-
-    @Autowired
-    HsOfficeBankAccountRepository bankAccountRepo;
 
     @Autowired
     HsOfficePersonRealRepository personRealRepo;
@@ -222,11 +218,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         "vatCountryCode": null,
                         "vatBusiness": true,
                         "vatReverseCharge": false,
-                        "refundBankAccount": {
-                          "holder": "First GmbH",
-                          "iban": "DE02120300000000202051",
-                          "bic": "BYLADEM1001"
-                        },
                         "defaultPrefix": "fir"
                       },
                       {
@@ -260,7 +251,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         "vatCountryCode": null,
                         "vatBusiness": true,
                         "vatReverseCharge": false,
-                        "refundBankAccount": {"iban": "DE02100500000054540402"},
                         "defaultPrefix": "sec"
                       },
                       {
@@ -294,7 +284,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         "vatCountryCode": null,
                         "vatBusiness": true,
                         "vatReverseCharge": false,
-                        "refundBankAccount": {"iban": "DE02300209000106531065"},
                         "defaultPrefix": "thi"
                       }
                     ]
@@ -332,12 +321,11 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     class PostNewDebitor {
 
         @Test
-        void globalAdmin_withoutAssumedRole_canAddDebitorWithBankAccount() {
+        void globalAdmin_withoutAssumedRole_canAddDebitor() {
 
             context.define("hsh-alex_superuser");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenContact = contactRealRepo.findContactByOptionalCaptionLike("fourth").get(0);
-            final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
             final var givenBillingPerson = personRealRepo.findPersonByOptionalNameLike("Fourth").get(0);
 
             final var givenDebitorRelUUid = jpaAttempt.transacted(() -> {
@@ -363,10 +351,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                    "vatCountryCode": "DE",
                                    "vatBusiness": true,
                                    "vatReverseCharge": "false",
-                                   "refundBankAccount.uuid": "%s",
                                    "defaultPrefix": "for"
                                  }
-                            """.formatted( givenDebitorRelUUid, ++nextDebitorSuffix, givenBankAccount.getUuid()))
+                            """.formatted( givenDebitorRelUUid, ++nextDebitorSuffix))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/debitors")
@@ -378,7 +365,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .body("defaultPrefix", is("for"))
                         .body("debitorRel.contact.caption", is(givenContact.getCaption()))
                         .body("debitorRel.holder.tradeName", is(givenBillingPerson.getTradeName()))
-                        .body("refundBankAccount.holder", is(givenBankAccount.getHolder()))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
@@ -428,7 +414,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("vatId", equalTo(null))
                     .body("vatCountryCode", equalTo(null))
                     .body("vatBusiness", equalTo(false))
-                    .body("refundBankAccount", equalTo(null))
                     .body("defaultPrefix", equalTo("for"))
                     .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
@@ -502,6 +487,29 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("message", is("ERROR: [400] Unable to find debitorRel.uuid: 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
+
+        @Test
+        void globalAdmin_canNotAddDebitorWithRefundBankAccount() {
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "debitorRel.uuid": "00000000-0000-0000-0000-000000000000",
+                                "debitorNumberSuffix": "99",
+                                "refundBankAccount.uuid": "00000000-0000-0000-0000-000000000000",
+                                "defaultPrefix": "rfd"
+                            }
+                            """)
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/debitors")
+                .then().log().all().assertThat()
+                    .statusCode(400)
+                    .body("message", containsString("refundBankAccount.uuid"));
+            // @formatter:on
+        }
     }
 
     @Nested
@@ -562,11 +570,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                          "billable": true,
                          "vatBusiness": true,
                          "vatReverseCharge": false,
-                         "refundBankAccount": {
-                             "holder": "First GmbH",
-                             "iban": "DE02120300000000202051",
-                             "bic": "BYLADEM1001"
-                         },
                          "defaultPrefix": "fir"
                      }
                     """)); // @formatter:on
@@ -588,7 +591,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void contactAdminUser_canGetRelatedDebitorExceptRefundBankAccount() {
+        void contactAdminUser_canGetRelatedDebitor() {
             context.define("hsh-alex_superuser");
             final var givenDebitorUuid = debitorRepo.findDebitorsByOptionalNameLike("first contact").get(0).getUuid();
 
@@ -605,8 +608,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     {
                         "debitorNumber": "D-1000111",
                         "partner": { "partnerNumber": "P-10001" },
-                        "debitorRel": { "contact": { "caption": "first contact" } },
-                        "refundBankAccount": null
+                        "debitorRel": { "contact": { "caption": "first contact" } }
                     }
                     """)); // @formatter:on
         }
@@ -769,6 +771,26 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .extracting(d -> d.getDebitorRel().getUuid())
                         .isNotEqualTo(foreignRelationUuid);
             }).assertSuccessful();
+        }
+
+        @Test
+        void globalAdmin_canNotPatchRefundBankAccountOfDebitor() {
+            RestAssured // @formatter:off
+                .given()
+                    .header("Authorization", bearer("hsh-alex_superuser"))
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "refundBankAccount.uuid": "00000000-0000-0000-0000-000000000000"
+                            }
+                            """)
+                    .port(port)
+                .when()
+                    .patch("http://localhost/api/hs/office/debitors/00000000-0000-0000-0000-000000000000")
+                .then().log().all().assertThat()
+                    .statusCode(400)
+                    .body("message", containsString("refundBankAccount.uuid"));
+            // @formatter:on
         }
     }
 

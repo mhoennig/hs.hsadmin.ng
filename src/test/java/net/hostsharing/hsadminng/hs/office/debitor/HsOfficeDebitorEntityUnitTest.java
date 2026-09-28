@@ -238,19 +238,6 @@ class HsOfficeDebitorEntityUnitTest {
                     end
                 end
 
-                subgraph refundBankAccount["`**refundBankAccount**`"]
-                    direction TB
-                    style refundBankAccount fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-                    subgraph refundBankAccount:roles[ ]
-                        style refundBankAccount:roles fill:#99bcdb,stroke:white
-
-                        role:refundBankAccount:OWNER[[refundBankAccount:OWNER]]
-                        role:refundBankAccount:ADMIN[[refundBankAccount:ADMIN]]
-                        role:refundBankAccount:REFERRER[[refundBankAccount:REFERRER]]
-                    end
-                end
-
                 %% granting roles to roles
                 role:rbac.global:ADMIN -.-> role:debitorRel.anchorPerson:OWNER
                 role:debitorRel.anchorPerson:OWNER -.-> role:debitorRel.anchorPerson:ADMIN
@@ -272,11 +259,6 @@ class HsOfficeDebitorEntityUnitTest {
                 role:debitorRel:TENANT -.-> role:debitorRel.contact:REFERRER
                 role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel:OWNER
                 role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:AGENT
-                role:rbac.global:ADMIN -.-> role:refundBankAccount:OWNER
-                role:refundBankAccount:OWNER -.-> role:refundBankAccount:ADMIN
-                role:refundBankAccount:ADMIN -.-> role:refundBankAccount:REFERRER
-                role:refundBankAccount:ADMIN ==> role:debitorRel:AGENT
-                role:debitorRel:AGENT ==> role:refundBankAccount:REFERRER
                 role:rbac.global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
                 role:partnerRel.anchorPerson:OWNER -.-> role:partnerRel.anchorPerson:ADMIN
                 role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel.anchorPerson:REFERRER

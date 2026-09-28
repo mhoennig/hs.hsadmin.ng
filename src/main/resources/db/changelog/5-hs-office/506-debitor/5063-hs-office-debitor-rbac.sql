@@ -33,7 +33,6 @@ create or replace procedure hs_office.debitor_build_rbac_system(
 declare
     newPartnerRel hs_office.relation;
     newDebitorRel hs_office.relation;
-    newRefundBankAccount hs_office.bankaccount;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
@@ -50,11 +49,7 @@ begin
     SELECT * FROM hs_office.relation WHERE uuid = NEW.debitorRelUuid    INTO newDebitorRel;
     assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorRelUuid = %s of hs_office.debitor', NEW.debitorRelUuid);
 
-    SELECT * FROM hs_office.bankaccount WHERE uuid = NEW.refundBankAccountUuid    INTO newRefundBankAccount;
-
-    call rbac.grantRoleToRole(hs_office.bankaccount_REFERRER(newRefundBankAccount), hs_office.relation_AGENT(newDebitorRel));
     call rbac.grantRoleToRole(hs_office.relation_ADMIN(newDebitorRel), hs_office.relation_ADMIN(newPartnerRel));
-    call rbac.grantRoleToRole(hs_office.relation_AGENT(newDebitorRel), hs_office.bankaccount_ADMIN(newRefundBankAccount));
     call rbac.grantRoleToRole(hs_office.relation_AGENT(newDebitorRel), hs_office.relation_AGENT(newPartnerRel));
     call rbac.grantRoleToRole(hs_office.relation_TENANT(newPartnerRel), hs_office.relation_AGENT(newDebitorRel));
 
@@ -99,13 +94,64 @@ create or replace procedure hs_office.debitor_update_rbac_system(
     NEW hs_office.debitor
 )
     language plpgsql as $$
-begin
 
-    if NEW.debitorRelUuid is distinct from OLD.debitorRelUuid
-    or NEW.refundBankAccountUuid is distinct from OLD.refundBankAccountUuid then
-        delete from rbac.grant g where g.grantedbytriggerof = OLD.uuid;
-        call hs_office.debitor_build_rbac_system(NEW);
+declare
+    oldPartnerRel hs_office.relation;
+    newPartnerRel hs_office.relation;
+    oldDebitorRel hs_office.relation;
+    newDebitorRel hs_office.relation;
+
+begin
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
+
+    SELECT partnerRel.*
+        FROM hs_office.relation AS partnerRel
+        JOIN hs_office.relation AS debitorRel
+            ON debitorRel.type = 'DEBITOR' AND debitorRel.anchorUuid = partnerRel.holderUuid
+        WHERE partnerRel.type = 'PARTNER'
+            AND OLD.debitorRelUuid = debitorRel.uuid
+        INTO oldPartnerRel;
+    assert oldPartnerRel.uuid is not null, format('oldPartnerRel must not be null for OLD.debitorRelUuid = %s of hs_office.debitor', OLD.debitorRelUuid);
+
+    SELECT partnerRel.*
+        FROM hs_office.relation AS partnerRel
+        JOIN hs_office.relation AS debitorRel
+            ON debitorRel.type = 'DEBITOR' AND debitorRel.anchorUuid = partnerRel.holderUuid
+        WHERE partnerRel.type = 'PARTNER'
+            AND NEW.debitorRelUuid = debitorRel.uuid
+        INTO newPartnerRel;
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.debitorRelUuid = %s of hs_office.debitor', NEW.debitorRelUuid);
+
+    SELECT * FROM hs_office.relation WHERE uuid = OLD.debitorRelUuid    INTO oldDebitorRel;
+    assert oldDebitorRel.uuid is not null, format('oldDebitorRel must not be null for OLD.debitorRelUuid = %s of hs_office.debitor', OLD.debitorRelUuid);
+
+    SELECT * FROM hs_office.relation WHERE uuid = NEW.debitorRelUuid    INTO newDebitorRel;
+    assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorRelUuid = %s of hs_office.debitor', NEW.debitorRelUuid);
+
+
+    if NEW.debitorRelUuid <> OLD.debitorRelUuid then
+
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'DELETE'), hs_office.relation_OWNER(oldDebitorRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hs_office.relation_OWNER(newDebitorRel));
+
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'UPDATE'), hs_office.relation_ADMIN(oldDebitorRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hs_office.relation_ADMIN(newDebitorRel));
+
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'SELECT'), hs_office.relation_TENANT(oldDebitorRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hs_office.relation_TENANT(newDebitorRel));
+
+        call rbac.revokeRoleFromRole(hs_office.relation_ADMIN(oldDebitorRel), hs_office.relation_ADMIN(oldPartnerRel));
+        call rbac.grantRoleToRole(hs_office.relation_ADMIN(newDebitorRel), hs_office.relation_ADMIN(newPartnerRel));
+
+        call rbac.revokeRoleFromRole(hs_office.relation_AGENT(oldDebitorRel), hs_office.relation_AGENT(oldPartnerRel));
+        call rbac.grantRoleToRole(hs_office.relation_AGENT(newDebitorRel), hs_office.relation_AGENT(newPartnerRel));
+
+        call rbac.revokeRoleFromRole(hs_office.relation_TENANT(oldPartnerRel), hs_office.relation_AGENT(oldDebitorRel));
+        call rbac.grantRoleToRole(hs_office.relation_TENANT(newPartnerRel), hs_office.relation_AGENT(newDebitorRel));
+
     end if;
+
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -238,7 +284,6 @@ $orderBy$,
     $updates$
         debitorRelUuid = new.debitorRelUuid,
         billable = new.billable,
-        refundBankAccountUuid = new.refundBankAccountUuid,
         vatId = new.vatId,
         vatCountryCode = new.vatCountryCode,
         vatBusiness = new.vatBusiness,

@@ -23,17 +23,6 @@ public class CreateSelfDebitorForPartner extends UseCase<CreateSelfDebitorForPar
                 "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
-        obtain("BankAccount: Test AG - refund bank account", () ->
-            httpPost(asGlobalAgent(), "/api/hs/office/bankaccounts", usingJsonBody("""
-                     {
-                         "holder": "Test AG - refund bank account",
-                         "iban": "DE88100900001234567892",
-                         "bic": "BEVODEBB"
-                    }
-                    """))
-                    .expecting(CREATED).expecting(JSON)
-        );
-
         obtain("Contact: Test AG - billing department", () ->
             httpPost(asGlobalAgent(), "/api/hs/office/contacts", usingJsonBody("""
                     {
@@ -59,11 +48,14 @@ public class CreateSelfDebitorForPartner extends UseCase<CreateSelfDebitorForPar
                     "vatCountryCode": ${vatCountryCode},
                     "vatBusiness": ${vatBusiness},
                     "vatReverseCharge": ${vatReverseCharge},
-                    "refundBankAccount.uuid": ${BankAccount: Test AG - refund bank account},
                     "defaultPrefix": ${defaultPrefix}
                 }
                 """))
-                .expecting(CREATED).expecting(JSON);
+                .reportWithResponse().expecting(CREATED).expecting(JSON);
     }
 
+    @Override
+    protected void verify(final HttpResponse response) {
+        path("refundBankAccount").doesNotExist().accept(response);
+    }
 }

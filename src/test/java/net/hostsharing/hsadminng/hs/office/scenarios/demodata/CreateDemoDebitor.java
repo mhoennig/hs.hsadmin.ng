@@ -9,9 +9,8 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
 /**
- * Creates a self-debitor with its own billing contact and bank account.
- * CreateSelfDebitorForPartner cannot be reused, because its bank account and billing contact
- * are hard-wired to the Test AG scenario, down to a fixed IBAN.
+ * Creates a self-debitor with its own billing contact.
+ * CreateSelfDebitorForPartner cannot be reused, because its billing contact is hard-wired to the Test AG scenario.
  */
 public class CreateDemoDebitor extends UseCase<CreateDemoDebitor> {
 
@@ -21,17 +20,6 @@ public class CreateDemoDebitor extends UseCase<CreateDemoDebitor> {
 
     @Override
     protected HttpResponse run() {
-        obtain("BankAccount: %{bankAccountHolder}", () ->
-                httpPost(asGlobalAgent(), "/api/hs/office/bankaccounts", usingJsonBody("""
-                        {
-                            "holder": ${bankAccountHolder},
-                            "iban": ${iban},
-                            "bic": ${bic}
-                        }
-                        """))
-                        .expecting(CREATED).expecting(JSON)
-        );
-
         obtain("Contact: %{billingContactCaption}", () ->
                 httpPost(asGlobalAgent(), "/api/hs/office/contacts", usingJsonBody("""
                         {
@@ -55,7 +43,6 @@ public class CreateDemoDebitor extends UseCase<CreateDemoDebitor> {
                     "billable": ${billable},
                     "vatBusiness": ${vatBusiness},
                     "vatReverseCharge": false,
-                    "refundBankAccount.uuid": ${BankAccount: %{bankAccountHolder}},
                     "defaultPrefix": ${defaultPrefix}
                 }
                 """))

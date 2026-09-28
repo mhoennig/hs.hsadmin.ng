@@ -345,6 +345,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
         @Test
         @Order(2010)
+        @Scenario("310.01")
         @Requires("Partner: P-31010 - Test AG")
         @Produces("Debitor: D-3101000 - Test AG - main debitor")
         void shouldCreateSelfDebitorForPartnerWithDistinctContactData() {

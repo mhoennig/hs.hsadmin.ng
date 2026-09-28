@@ -2,7 +2,8 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-debitor-TEST-DATA-GENERATOR endDelimiter:--//
+--changeset michael.hoennig:hs-office-debitor-TEST-DATA-GENERATOR runOnChange:true endDelimiter:--//
+--validCheckSum: ANY
 -- ----------------------------------------------------------------------------
 
 /*
@@ -18,7 +19,6 @@ create or replace procedure hs_office.debitor_create_test_data(
 declare
     idName                  varchar;
     relatedDebitorRelUuid   uuid;
-    relatedBankAccountUuid  uuid;
 begin
     idName := base.cleanIdentifier( forPartnerPersonName|| '-' || forBillingContactCaption);
 
@@ -29,17 +29,10 @@ begin
                 and (person.tradeName = forPartnerPersonName or person.familyName = forPartnerPersonName)
             where debitorRel.type = 'DEBITOR';
 
-    select b.uuid
-            into relatedBankAccountUuid
-            from hs_office.bankaccount b
-            where b.holder = forPartnerPersonName;
-
     raise notice 'creating test debitor: % (#%)', idName, withDebitorNumberSuffix;
-    -- raise exception 'creating test debitor: (uuid=%, debitorRelUuid=%, debitornumbersuffix=%, billable=%, vatbusiness=%, vatreversecharge=%, refundbankaccountuuid=%, defaultprefix=%)',
-    --    uuid_generate_v4(), relatedDebitorRelUuid, withDebitorNumberSuffix, true,     true,        false,            relatedBankAccountUuid, withDefaultPrefix;
     insert
-        into hs_office.debitor (uuid,   debitorRelUuid,        debitornumbersuffix,     billable, vatbusiness, vatreversecharge, refundbankaccountuuid,  defaultprefix)
-            values (uuid_generate_v4(), relatedDebitorRelUuid, withDebitorNumberSuffix, true,     true,        false,            relatedBankAccountUuid, withDefaultPrefix);
+        into hs_office.debitor (uuid,   debitorRelUuid,        debitornumbersuffix,     billable, vatbusiness, vatreversecharge, defaultprefix)
+            values (uuid_generate_v4(), relatedDebitorRelUuid, withDebitorNumberSuffix, true,     true,        false,            withDefaultPrefix);
 end; $$;
 --//
 

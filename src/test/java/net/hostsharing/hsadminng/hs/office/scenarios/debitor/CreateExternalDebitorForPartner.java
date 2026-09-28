@@ -30,17 +30,6 @@ public class CreateExternalDebitorForPartner extends UseCase<CreateExternalDebit
                 "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
-        obtain("BankAccount: Billing GmbH - refund bank account", () ->
-            httpPost(asGlobalAgent(), "/api/hs/office/bankaccounts", usingJsonBody("""
-                     {
-                         "holder": "Billing GmbH - refund bank account",
-                         "iban": "DE02120300000000202051",
-                         "bic": "BYLADEM1001"
-                    }
-                    """))
-                    .expecting(CREATED).expecting(JSON)
-        );
-
         obtain("Contact: Billing GmbH - Test AG billing", () ->
             httpPost(asGlobalAgent(), "/api/hs/office/contacts", usingJsonBody("""
                     {
@@ -66,7 +55,6 @@ public class CreateExternalDebitorForPartner extends UseCase<CreateExternalDebit
                     "vatCountryCode": ${vatCountryCode},
                     "vatBusiness": ${vatBusiness},
                     "vatReverseCharge": ${vatReverseCharge},
-                    "refundBankAccount.uuid": ${BankAccount: Billing GmbH - refund bank account},
                     "defaultPrefix": ${defaultPrefix}
                 }
                 """))

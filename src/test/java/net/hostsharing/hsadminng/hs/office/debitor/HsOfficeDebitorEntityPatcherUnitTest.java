@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
-import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacRepository;
@@ -11,14 +10,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import jakarta.persistence.EntityManager;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 
 @TestInstance(PER_CLASS)
@@ -40,19 +37,9 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDeb
     private static final boolean INITIAL_VAT_REVERSE_CHARGE = true;
     private static final boolean PATCHED_VAT_REVERSE_CHARGE = false;
 
-    private static final UUID INITIAL_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
-    private static final UUID PATCHED_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
-
     private final HsOfficeRelationRealEntity givenInitialDebitorRel = HsOfficeRelationRealEntity.builder()
             .uuid(INITIAL_DEBITOR_REL_UUID)
             .build();
-
-    private final HsOfficeBankAccountEntity givenInitialBankAccount = HsOfficeBankAccountEntity.builder()
-            .uuid(INITIAL_REFUND_BANK_ACCOUNT_UUID)
-            .build();
-
-    @Mock
-    private EntityManager em;
 
     @Mock
     private HsOfficeRelationRbacRepository rbacRelationRepo;
@@ -61,8 +48,6 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDeb
     void initMocks() {
         lenient().when(rbacRelationRepo.findVisibleByUuid(any())).thenAnswer(invocation ->
                 Optional.of(HsOfficeRelationRealEntity.builder().uuid(invocation.getArgument(0)).build()));
-        lenient().when(em.getReference(eq(HsOfficeBankAccountEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeBankAccountEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
@@ -76,7 +61,6 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDeb
         entity.setVatBusiness(true);
         entity.setVatReverseCharge(INITIAL_VAT_REVERSE_CHARGE);
         entity.setDefaultPrefix("abc");
-        entity.setRefundBankAccount(givenInitialBankAccount);
         return entity;
     }
 
@@ -87,7 +71,7 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDeb
 
     @Override
     protected HsOfficeDebitorEntityPatcher createPatcher(final HsOfficeDebitorEntity debitor) {
-        return new HsOfficeDebitorEntityPatcher(em, rbacRelationRepo, debitor);
+        return new HsOfficeDebitorEntityPatcher(rbacRelationRepo, debitor);
     }
 
     @Override
@@ -133,25 +117,12 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDeb
                         HsOfficeDebitorPatchResource::setDefaultPrefix,
                         PATCHED_DEFAULT_PREFIX,
                         HsOfficeDebitorEntity::setDefaultPrefix)
-                        .notNullable(),
-                new JsonNullableProperty<>(
-                        "refundBankAccount",
-                        HsOfficeDebitorPatchResource::setRefundBankAccountUuid,
-                        PATCHED_REFUND_BANK_ACCOUNT_UUID,
-                        HsOfficeDebitorEntity::setRefundBankAccount,
-                        newBankAccount(PATCHED_REFUND_BANK_ACCOUNT_UUID))
                         .notNullable()
         );
     }
 
     private HsOfficeRelationRealEntity newDebitorRel(final UUID uuid) {
         return HsOfficeRelationRealEntity.builder()
-                .uuid(uuid)
-                .build();
-    }
-
-    private HsOfficeBankAccountEntity newBankAccount(final UUID uuid) {
-        return HsOfficeBankAccountEntity.builder()
                 .uuid(uuid)
                 .build();
     }

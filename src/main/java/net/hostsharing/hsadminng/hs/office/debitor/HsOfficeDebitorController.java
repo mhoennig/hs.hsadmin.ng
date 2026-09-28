@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.rbac.context.Context;
-import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeDebitorsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorInsertResource;
@@ -59,9 +58,6 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Autowired
     private HsOfficeContactRealRepository realContactRepo;
-
-    @Autowired
-    private HsOfficeBankAccountRepository bankAccountRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -178,7 +174,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
         final var current = debitorRepo.findByUuid(debitorUuid).orElseThrow().reload(em);
 
-        new HsOfficeDebitorEntityPatcher(em, rbacRelRepo, current).apply(body);
+        new HsOfficeDebitorEntityPatcher(rbacRelRepo, current).apply(body);
 
         final var saved = debitorRepo.save(current);
         Hibernate.initialize(saved);
@@ -210,11 +206,6 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
                         throw new ValidationException(
                                 "Unable to find debitorRel.uuid: " + resource.getDebitorRelUuid());
                     });
-        }
-
-        if (resource.getRefundBankAccountUuid() != null) {
-            entity.setRefundBankAccount(resolve(
-                    "refundBankAccount.uuid", resource.getRefundBankAccountUuid(), bankAccountRepo::findByUuid));
         }
 
     };

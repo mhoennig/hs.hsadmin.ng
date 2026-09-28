@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayAs;
-import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartner;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
@@ -45,7 +44,6 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usin
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.GLOBAL;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Permission.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacSpec.SQL.directlyFetchedByDependsOnColumn;
@@ -120,11 +118,6 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
     @Column(name = "vatreversecharge")
     private boolean vatReverseCharge;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "refundbankaccountuuid")
-    @NotFound(action = NotFoundAction.IGNORE)
-    private HsOfficeBankAccountEntity refundBankAccount;
-
     @Column(name = "defaultprefix", columnDefinition = "char(3) not null")
     private String defaultPrefix;
 
@@ -133,9 +126,6 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
         BaseEntity.super.load();
         partner.load();
         debitorRel.load();
-        if (refundBankAccount != null) {
-            refundBankAccount.load();
-        }
         return this;
     }
 
@@ -175,7 +165,6 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
                 .withUpdatableColumns(
                         "debitorRelUuid",
                         "billable",
-                        "refundBankAccountUuid",
                         "vatId",
                         "vatCountryCode",
                         "vatBusiness",
@@ -189,13 +178,6 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
                 .createPermission(DELETE).grantedTo("debitorRel", OWNER)
                 .createPermission(UPDATE).grantedTo("debitorRel", ADMIN)
                 .createPermission(SELECT).grantedTo("debitorRel", TENANT)
-
-                .importEntityAlias("refundBankAccount", HsOfficeBankAccountEntity.class, usingDefaultCase(),
-                        dependsOnColumn("refundBankAccountUuid"),
-                        directlyFetchedByDependsOnColumn(),
-                        NULLABLE)
-                .toRole("refundBankAccount", ADMIN).grantRole("debitorRel", AGENT)
-                .toRole("debitorRel", AGENT).grantRole("refundBankAccount", REFERRER)
 
                 .importEntityAlias("partnerRel", HsOfficeRelationRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("debitorRelUuid"),
