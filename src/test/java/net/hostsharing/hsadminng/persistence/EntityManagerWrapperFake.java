@@ -3,12 +3,18 @@ package net.hostsharing.hsadminng.persistence;
 import lombok.SneakyThrows;
 import lombok.val;
 
+import jakarta.persistence.EntityGraph;
+import jakarta.persistence.FindOption;
 import jakarta.persistence.Id;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.LockOption;
+import jakarta.persistence.RefreshOption;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class EntityManagerWrapperFake extends EntityManagerWrapper {
@@ -65,6 +71,51 @@ public class EntityManagerWrapperFake extends EntityManagerWrapper {
     @Override
     public void clear() {
         entityClasses.clear();
+    }
+
+    // the Jakarta Persistence 3.2 overloads would reach the null delegate of the super class,
+    // so they delegate to the faked form and name themselves when they cannot
+
+    @Override
+    public <T> T find(final Class<T> entityClass, final Object primaryKey, final FindOption... options) {
+        return withoutOptions(options, "find", () -> find(entityClass, primaryKey));
+    }
+
+    @Override
+    public <T> T find(final EntityGraph<T> entityGraph, final Object primaryKey, final FindOption... options) {
+        throw unsupported("find by EntityGraph");
+    }
+
+    @Override
+    public <T> T getReference(final T entity) {
+        //noinspection unchecked
+        return (T) getEntityId(entity)
+                .map(id -> find(entity.getClass(), id))
+                .orElse(null);
+    }
+
+    @Override
+    public void refresh(final Object entity, final RefreshOption... options) {
+        withoutOptions(options, "refresh", () -> {
+            refresh(entity);
+            return null;
+        });
+    }
+
+    @Override
+    public void lock(final Object entity, final LockModeType lockMode, final LockOption... options) {
+        throw unsupported("lock");
+    }
+
+    private <T> T withoutOptions(final Object[] options, final String method, final Supplier<T> faked) {
+        if (options.length > 0) {
+            throw unsupported(method + " with options");
+        }
+        return faked.get();
+    }
+
+    private UnsupportedOperationException unsupported(final String what) {
+        return new UnsupportedOperationException(getClass().getSimpleName() + " does not implement " + what);
     }
 
     public Stream<Object> stream() {

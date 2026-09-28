@@ -317,7 +317,7 @@ class HsOfficePersonRbacRepositoryIntegrationTest extends ContextBasedTestWithCl
 
     private HsOfficePersonRbacEntity givenSomeTemporaryPerson(final String createdByUser) {
         return givenSomeTemporaryPerson(createdByUser, () ->
-                hsOfficePersonRbacEntity("some temporary person #" + RandomStringUtils.random(12)));
+                hsOfficePersonRbacEntity("some temporary person #" + RandomStringUtils.insecure().next(12)));
     }
 
     void exactlyThesePersonsAreReturned(final List<HsOfficePersonRbacEntity> actualResult, final String... personCaptions) {

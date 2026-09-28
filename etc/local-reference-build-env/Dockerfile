@@ -18,8 +18,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     GRADLE_USER_HOME=/gradle
 
 # The mandatory prerequisites from the README: a JRE to run Gradle (Debian trixie
-# ships JDK 21, not 17; Gradle 8.5 runs on 21, and the build JDK is the
-# toolchain-provisioned Adoptium 21 regardless), the bind9 utils for the DNS
+# ships JDK 21, not 17; Gradle runs on 21, and the build JDK is the
+# toolchain-provisioned Adoptium 25 regardless), the bind9 utils for the DNS
 # checks, and the Docker client. The client talks to the host daemon through a
 # mounted socket (see the Makefile `test` target); no daemon runs in this
 # container. `locales` + locale-gen provide en_US.UTF-8 so the JVM uses a UTF-8

@@ -50,3 +50,16 @@ Conventions:
       which tie a test to the PR documents that specify it.
       `@Scenario` (PR#304) is the first step; it already separates the two concerns,
       because the test no longer needs its report name to be found by a PR document.
+
+- [ ] TODO.refa: Split the overloaded `test` profile so that the test configuration can inherit
+      the defaults of `src/main/resources/application.yml` instead of shadowing them.
+      `test` currently means both "test infrastructure" (Testcontainers datasource, Liquibase contexts,
+      actuator exposure) and "replace the production security", because `WebSecurityConfig`
+      carries `@Profile("!test")`.
+      The integration tests which deliberately keep the production security therefore must not activate
+      `test` and would lose the infrastructure settings with it,
+      which is why `src/test/resources/application.yml` still shadows the production file
+      and repeats every shared value.
+      Rename the security switch, for example to `@Profile("!mock-security")`,
+      then the infrastructure settings fit the ordinary Spring Boot pattern:
+      an `application-test.yml` which every test activates, with no shadowing and no repetition.

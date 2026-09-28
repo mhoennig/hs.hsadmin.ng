@@ -1,7 +1,5 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.val;
 import net.hostsharing.hsadminng.HsadminNgApplication;
@@ -24,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -295,7 +295,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
     @SneakyThrows
     public static List<Map<String, Object>> resolveJsonArray(final String text) {
-        return new ObjectMapper().readValue(
+        return new JsonMapper().readValue(
                 resolve(text, DROP_COMMENTS),
                 new TypeReference<>() {}
         );

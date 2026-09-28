@@ -1,9 +1,10 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.val;
 import net.hostsharing.hsadminng.config.JwtFakeBearer;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.http.HttpRequest;
 import java.util.Arrays;
@@ -21,7 +22,7 @@ public class FakeLoginUser {
             () -> new FakeLoginUser(GLOBAL_AGENT, List.of(), null);
     private static Supplier<FakeLoginUser> globalAgent = DEFAULT_GLOBAL_AGENT;
 
-    private static final ObjectMapper REPORT_OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper REPORT_OBJECT_MAPPER = new JsonMapper();
 
     private final String name;
     private final List<String> groups;

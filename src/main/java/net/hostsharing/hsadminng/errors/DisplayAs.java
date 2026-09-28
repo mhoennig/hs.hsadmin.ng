@@ -5,6 +5,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.jspecify.annotations.Nullable;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -21,7 +22,7 @@ public @interface DisplayAs {
             return of(instance.getClass());
         }
 
-        private static DisplayAs getDisplayNameAnnotation(final Class<?> clazz) {
+        private static @Nullable DisplayAs getDisplayNameAnnotation(final @Nullable Class<?> clazz) {
             if (clazz == null) {
                 return null;
             }

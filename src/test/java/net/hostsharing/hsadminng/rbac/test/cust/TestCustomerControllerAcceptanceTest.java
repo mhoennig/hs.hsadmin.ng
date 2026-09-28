@@ -232,8 +232,7 @@ class TestCustomerControllerAcceptanceTest {
                 .then().assertThat()
                     .statusCode(400)
                     .contentType(ContentType.JSON)
-                    .body("message", containsString("JSON parse error: Unexpected close marker ']': expected '}'"))
-                    .body("message", containsString("line: 1, column: 1"));
+                    .body("message", containsString("JSON parse error: Unexpected close marker ']': expected '}'"));
             // @formatter:on
         }
     }

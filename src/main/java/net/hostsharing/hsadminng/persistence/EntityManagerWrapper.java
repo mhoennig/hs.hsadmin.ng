@@ -7,7 +7,15 @@ import org.springframework.stereotype.Component;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.CacheRetrieveMode;
+import jakarta.persistence.CacheStoreMode;
+import jakarta.persistence.ConnectionConsumer;
+import jakarta.persistence.ConnectionFunction;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.FindOption;
+import jakarta.persistence.LockOption;
+import jakarta.persistence.RefreshOption;
+import jakarta.persistence.TypedQueryReference;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
@@ -17,6 +25,7 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaSelect;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.metamodel.Metamodel;
 import java.util.List;
@@ -296,5 +305,70 @@ public class EntityManagerWrapper implements EntityManager {
     @Override
     public <T> List<EntityGraph<? super T>> getEntityGraphs(final Class<T> entityClass) {
         return em.getEntityGraphs(entityClass);
+    }
+
+    @Override
+    public <T> T find(final Class<T> entityClass, final Object primaryKey, final FindOption... options) {
+        return em.find(entityClass, primaryKey, options);
+    }
+
+    @Override
+    public <T> T find(final EntityGraph<T> entityGraph, final Object primaryKey, final FindOption... options) {
+        return em.find(entityGraph, primaryKey, options);
+    }
+
+    @Override
+    public <T> T getReference(final T entity) {
+        return em.getReference(entity);
+    }
+
+    @Override
+    public void lock(final Object entity, final LockModeType lockMode, final LockOption... options) {
+        em.lock(entity, lockMode, options);
+    }
+
+    @Override
+    public void refresh(final Object entity, final RefreshOption... options) {
+        em.refresh(entity, options);
+    }
+
+    @Override
+    public void setCacheRetrieveMode(final CacheRetrieveMode cacheRetrieveMode) {
+        em.setCacheRetrieveMode(cacheRetrieveMode);
+    }
+
+    @Override
+    public void setCacheStoreMode(final CacheStoreMode cacheStoreMode) {
+        em.setCacheStoreMode(cacheStoreMode);
+    }
+
+    @Override
+    public CacheRetrieveMode getCacheRetrieveMode() {
+        return em.getCacheRetrieveMode();
+    }
+
+    @Override
+    public CacheStoreMode getCacheStoreMode() {
+        return em.getCacheStoreMode();
+    }
+
+    @Override
+    public <T> TypedQuery<T> createQuery(final CriteriaSelect<T> selectQuery) {
+        return em.createQuery(selectQuery);
+    }
+
+    @Override
+    public <T> TypedQuery<T> createQuery(final TypedQueryReference<T> reference) {
+        return em.createQuery(reference);
+    }
+
+    @Override
+    public <C, T> T callWithConnection(final ConnectionFunction<C, T> function) {
+        return em.callWithConnection(function);
+    }
+
+    @Override
+    public <C> void runWithConnection(final ConnectionConsumer<C> action) {
+        em.runWithConnection(action);
     }
 }

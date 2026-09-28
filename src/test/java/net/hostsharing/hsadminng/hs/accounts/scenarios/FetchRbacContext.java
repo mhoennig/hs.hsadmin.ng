@@ -1,11 +1,11 @@
 package net.hostsharing.hsadminng.hs.accounts.scenarios;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -85,6 +85,6 @@ public class FetchRbacContext extends UseCase<FetchRbacContext> {
 
     @SneakyThrows
     private static List<String> resolveStringArray(final String text) {
-        return new ObjectMapper().readValue(resolve(text, DROP_COMMENTS), new TypeReference<>() {});
+        return new JsonMapper().readValue(resolve(text, DROP_COMMENTS), new TypeReference<>() {});
     }
 }

@@ -489,7 +489,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     RbacSubjectEntity createRbacSubject() {
         return jpaAttempt.transacted(() -> {
-            final String newUserName = "tst-user_" + RandomStringUtils.randomAlphabetic(8).toLowerCase();
+            final String newUserName = "tst-user_" + RandomStringUtils.insecure().nextAlphabetic(8).toLowerCase();
             context(null);
             return rbacSubjectRepository.create(
                     RbacSubjectEntity.builder().uuid(randomUUID()).name(newUserName).build());

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -143,6 +143,31 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
                     // then
                     .andExpect(status().isNotFound());
         }
+    }
+
+    @Test
+    void namesTheRejectedPropertyIfANumberExceedsItsType() throws Exception {
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/office/coopsharestransactions")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                   "membership.uuid": "%s",
+                                   "transactionType": "SUBSCRIPTION",
+                                   "shareCount": 99999999999999999999,
+                                   "valueDate": "2022-10-13",
+                                   "reference": "valid reference"
+                                }
+                                """.formatted(UUID.randomUUID()))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().is4xxClientError())
+                // Jackson 3 keeps the original exception type and only prepends the path,
+                // thus the path has to be read from JacksonException, not from DatabindException
+                .andExpect(jsonPath("message", containsString("property \"shareCount\"")));
     }
 
     @Test

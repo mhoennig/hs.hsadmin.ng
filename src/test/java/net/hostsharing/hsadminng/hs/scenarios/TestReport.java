@@ -1,7 +1,5 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.val;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
@@ -9,6 +7,8 @@ import net.hostsharing.hsadminng.system.SystemProcess;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.TestInfo;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -154,7 +154,7 @@ public class TestReport {
         return reportTitle(method) + ".md";
     }
 
-    private static String prettyJson(final String json) throws JsonProcessingException {
+    private static String prettyJson(final String json) throws JacksonException {
         if (json == null) {
             return "";
         }

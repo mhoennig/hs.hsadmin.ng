@@ -1,15 +1,15 @@
 package net.hostsharing.hsadminng.test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
-import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
+import static tools.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
 public class JsonMatcher extends BaseMatcher<CharSequence> {
 
@@ -51,10 +51,10 @@ public class JsonMatcher extends BaseMatcher<CharSequence> {
         try {
             var actualJson = (actual instanceof CharSequence)
                     ? actual.toString()
-                    : new ObjectMapper().enable(INDENT_OUTPUT).writeValueAsString(actual);
+                    : new JsonMapper().writer(INDENT_OUTPUT).writeValueAsString(actual);
             JSONAssert.assertEquals(expectedJson, actualJson, compareMode);
             return true;
-        } catch (final JSONException | JsonProcessingException e) {
+        } catch (final JSONException | JacksonException e) {
             throw new AssertionError(e);
         }
     }

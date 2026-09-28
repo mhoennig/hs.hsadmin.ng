@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.val;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import org.reflections.Reflections;
-import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.scanners.Scanners;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -1052,7 +1052,7 @@ public class RbacSpec {
         TENANT,
         REFERRER,
 
-        @Deprecated
+        /// only valid for GLOBAL, where it grants INSERT without restricting it to a role of the new row
         GUEST;
 
         @Override
@@ -1295,7 +1295,7 @@ public class RbacSpec {
     }
 
     public static Set<Class<? extends BaseEntity>> findRbacEntityClasses(String packageName) {
-        final var reflections = new Reflections(packageName, TypeAnnotationsScanner.class);
+        val reflections = new Reflections(packageName, Scanners.TypesAnnotated);
         final Set<Class<? extends BaseEntity>> rbacEntityClasses = reflections.getTypesAnnotatedWith(Entity.class).stream()
                 .filter(BaseEntity.class::isAssignableFrom)
                 .filter(c -> stream(c.getDeclaredMethods())

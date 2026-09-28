@@ -16,7 +16,8 @@ tasks.register("convertMarkdownToHtml") {
     // otherwise Gradle's stale-output cleanup could delete them before this task runs.
     val inputDir = scenarioReportMarkdownDir
     val outputDir = layout.buildDirectory.dir("reports/scenarios")
-    inputs.files(fileTree(inputDir) { include("*.md") }).withPathSensitivity(PathSensitivity.RELATIVE)
+    val markdownFiles = fileTree(inputDir) { include("*.md") }
+    inputs.files(markdownFiles).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(outputDir)
 
     onlyIf {
@@ -48,10 +49,7 @@ tasks.register("convertMarkdownToHtml") {
 
     doLast {
         outputDir.get().asFile.mkdirs()
-        // Gather all Markdown files in the input directory
-        project.fileTree(inputDir) {
-            include("*.md")
-        }.forEach { file ->
+        markdownFiles.forEach { file ->
             val outputFile = File(outputDir.get().asFile, file.name.replace(".md", ".html"))
 
             // Execute pandoc for each markdown file

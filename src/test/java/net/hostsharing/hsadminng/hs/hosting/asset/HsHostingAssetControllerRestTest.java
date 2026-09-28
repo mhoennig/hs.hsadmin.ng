@@ -2,10 +2,6 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import lombok.val;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.config.MessageTranslator;
@@ -22,13 +18,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.SynchronizationType;
@@ -560,7 +561,7 @@ public class HsHostingAssetControllerRestTest {
             this.assetType = HsHostingAssetType.valueOf(name());
             this.givenHostingAssetsOfType = givenHostingAssetsOfType;
             this.expectedResponse = expectedResponse;
-            this.expectedResponseJson =  new ObjectMapper().readTree(expectedResponse);
+            this.expectedResponseJson =  new JsonMapper().readTree(expectedResponse);
         }
 
         @SneakyThrows
@@ -597,7 +598,7 @@ public class HsHostingAssetControllerRestTest {
                 .andReturn();
 
         // and the config properties do match not just leniently but even strictly
-        val resultBody = new ObjectMapper().readTree(result.getResponse().getContentAsString());
+        val resultBody = new JsonMapper().readTree(result.getResponse().getContentAsString());
         for (int n = 0; n < resultBody.size(); ++n) {
             assertThat(resultBody.get(n).path("config")).isEqualTo(testCase.expectedConfig(n));
         }
@@ -924,13 +925,13 @@ public class HsHostingAssetControllerRestTest {
                         is("ERROR: [404] cannot find HostingAsset by assignedToAsset.uuid: " + assignedToAssetUuid)));
     }
 
-    private static final ObjectMapper SORTED_MAPPER = new ObjectMapper();
-    static {
-        SORTED_MAPPER.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-    }
+    private static final ObjectMapper SORTED_MAPPER = JsonMapper.builder()
+            .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+            .build();
 
-    private static String formatJsonNode(final String json) throws JsonProcessingException {
-        val node = SORTED_MAPPER.readTree(json.replaceAll("//.*", "")).path("config");
+    private static String formatJsonNode(final String json) throws JacksonException {
+        // anchored, so that a URL inside a string value does not get truncated
+        val node = SORTED_MAPPER.readTree(json.replaceAll("(?m)^\\s*//.*$", "")).path("config");
         val obj = SORTED_MAPPER.treeToValue(node, Object.class);
         return SORTED_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
     }

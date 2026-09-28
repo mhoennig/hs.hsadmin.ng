@@ -81,8 +81,8 @@ class FakeJwtControllerUnitTest {
     @Test
     void refreshGrantRequiresRefreshTokenParameter() {
         val exception = catchThrowableOfType(
-                () -> controller.token("refresh_token", null, null, null, null, null, null, null, "openid"),
-                ResponseStatusException.class);
+                ResponseStatusException.class,
+                () -> controller.token("refresh_token", null, null, null, null, null, null, null, "openid"));
 
         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
@@ -90,9 +90,9 @@ class FakeJwtControllerUnitTest {
     @Test
     void refreshGrantRejectsInvalidRefreshToken() {
         val exception = catchThrowableOfType(
+                ResponseStatusException.class,
                 () -> controller.token(
-                        "refresh_token", null, null, null, null, null, null, "not-a-refresh-token", "openid"),
-                ResponseStatusException.class);
+                        "refresh_token", null, null, null, null, null, null, "not-a-refresh-token", "openid"));
 
         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
@@ -173,9 +173,9 @@ class FakeJwtControllerUnitTest {
     @Test
     void authorizationRejectsNonLoopbackRedirectUris() {
         val exception = catchThrowableOfType(
+                ResponseStatusException.class,
                 () -> controller.authorize(
-                        "code", CLIENT_ID, "https://evil.example/callback", null, null, null, "plain", "someone"),
-                ResponseStatusException.class);
+                        "code", CLIENT_ID, "https://evil.example/callback", null, null, null, "plain", "someone"));
 
         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
@@ -195,9 +195,9 @@ class FakeJwtControllerUnitTest {
 
         for (val redirectUri : List.of(REDIRECT_URI, "https://evil.example/callback")) {
             val exception = catchThrowableOfType(
+                    ResponseStatusException.class,
                     () -> configured.authorize(
-                            "code", CLIENT_ID, redirectUri, null, null, null, "plain", "someone"),
-                    ResponseStatusException.class);
+                            "code", CLIENT_ID, redirectUri, null, null, null, "plain", "someone"));
             assertThat(exception.getStatusCode()).describedAs(redirectUri).isEqualTo(HttpStatus.BAD_REQUEST);
         }
     }
@@ -210,8 +210,8 @@ class FakeJwtControllerUnitTest {
                 "ftp://localhost/callback",
                 "http://localhost:3000/callback#fragment")) {
             val exception = catchThrowableOfType(
-                    () -> controller.authorize("code", CLIENT_ID, redirectUri, null, null, null, "plain", "someone"),
-                    ResponseStatusException.class);
+                    ResponseStatusException.class,
+                    () -> controller.authorize("code", CLIENT_ID, redirectUri, null, null, null, "plain", "someone"));
 
             assertThat(exception).describedAs(redirectUri).isNotNull();
             assertThat(exception.getStatusCode()).describedAs(redirectUri).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -235,8 +235,8 @@ class FakeJwtControllerUnitTest {
 
         for (val token : List.of((String) body.get("refresh_token"), (String) body.get("id_token"))) {
             val exception = catchThrowableOfType(
-                    () -> controller.userinfo("Bearer " + token),
-                    ResponseStatusException.class);
+                    ResponseStatusException.class,
+                    () -> controller.userinfo("Bearer " + token));
 
             assertThat(exception).isNotNull();
             assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -282,7 +282,7 @@ class FakeJwtControllerUnitTest {
     }
 
     private void assertBadRequest(final Runnable tokenRequest) {
-        val exception = catchThrowableOfType(tokenRequest::run, ResponseStatusException.class);
+        val exception = catchThrowableOfType(ResponseStatusException.class, tokenRequest::run);
         assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 

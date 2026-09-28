@@ -1,9 +1,8 @@
 package net.hostsharing.hsadminng.context;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.val;
+import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -21,9 +20,9 @@ class HttpServletRequestBodyCachingFilterUnitTest {
 
     private static final int MAX_EXPECTED_REQUEST_BODY_SIZE = HttpServletRequestBodyCachingFilter.MAX_REQUEST_BODY_SIZE;
 
-    // the JavaTimeModule mirrors Spring Boot's auto-configured ObjectMapper for the CustomErrorResponse timestamp
+    // the production filter gets the @Primary mapper, thus the test has to use the same configuration
     private final HttpServletRequestBodyCachingFilter filter = new HttpServletRequestBodyCachingFilter(
-            new ObjectMapper().registerModule(new JavaTimeModule()));
+            JsonObjectMapperConfiguration.build());
 
     // verifies Fix for Security-Finding A-10
     @Test
@@ -138,7 +137,7 @@ class HttpServletRequestBodyCachingFilterUnitTest {
         assertThat(response.getContentType()).startsWith("application/json");
         assertThat(response.getContentAsString())
                 .contains("\"statusCode\":413")
-                .contains("\"statusPhrase\":\"Payload Too Large\"")
+                .contains("\"statusPhrase\":\"Content Too Large\"")
                 .contains("\"message\":\"ERROR: [413] the request body exceeds the maximum size of 262144 bytes\"");
     }
 

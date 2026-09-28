@@ -324,7 +324,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
         return jpaAttempt.transacted(() -> {
             context.define(creatingUser);
             final var newBankAccount = HsOfficeBankAccountEntity.builder()
-                    .holder("temp acc #" + RandomStringUtils.randomAlphabetic(3))
+                    .holder("temp acc #" + RandomStringUtils.insecure().nextAlphabetic(3))
                     .iban("DE93500105179473626226")
                     .bic("INGDDEFFXXX")
                     .build();

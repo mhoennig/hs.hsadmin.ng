@@ -52,7 +52,7 @@ tasks.named("spotlessJava") {
 
 // PMD Complexity Ratchet
 configure<PmdExtension> {
-    toolVersion = "7.13.0"
+    toolVersion = "7.28.0" // Includes the HTML report fix for CVE-2026-28338.
     ruleSets = emptyList() // otherwise PMD would additionally apply its default rule set
     ruleSetFiles = files("$rootDir/config/pmd/complexity.xml")
 }
@@ -75,12 +75,16 @@ tasks.withType<Pmd>().configureEach {
 
 
 // OWASP Dependency Security Test
+val dependencyCheckReportDirectory = layout.buildDirectory.dir("reports/dependency-check")
 configure<DependencyCheckExtension> {
+    outputDirectory.set(dependencyCheckReportDirectory)
     nvd {
         apiKey = project.findProperty("OWASP_API_KEY")?.toString() // set it in ~/.gradle/gradle.properties
         delay = 16000 // Milliseconds
     }
     analyzers {
+        // JNA and Argon2 bundle native Windows DLLs; this application has no .NET assemblies.
+        assemblyEnabled = false
         ossIndex {
             val ossIndexUsername = project.findProperty("OSSINDEX_USERNAME")?.toString() // set it in ~/.gradle/gradle.properties
             val ossIndexApiToken = project.findProperty("OSSINDEX_API_TOKEN")?.toString()
@@ -101,11 +105,10 @@ tasks.named("check") {
     dependsOn(tasks.named("dependencyCheckAnalyze"))
 }
 tasks.named("dependencyCheckAnalyze") {
-    doFirst { // Why not doLast? See README.md!
-        println("OWASP Dependency Security Report: file://${project.rootDir}/build/reports/dependency-check-report.html")
-    }
+    val reportUri = dependencyCheckReportDirectory.get().file("dependency-check-report.html").asFile.toURI().toString()
+    // announced up front, because the CVSS threshold can fail the task before doLast actions run
+    doFirst { logger.lifecycle("OWASP Dependency Security Report: $reportUri") }
 }
-
 
 configure<LicenseReportExtension> {
     renderers = arrayOf<ReportRenderer>(InventoryHtmlReportRenderer("report.html", "Backend"))
@@ -121,7 +124,7 @@ tasks.named("check") {
 
 // JaCoCo Test Code Coverage for unit-tests
 configure<JacocoPluginExtension> {
-    toolVersion = "0.8.10"
+    toolVersion = "0.8.15"
 }
 
 tasks.named<JacocoReport>("jacocoTestReport") {

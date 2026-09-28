@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
+import lombok.val;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
@@ -295,7 +296,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
     }
 
     private HsOfficeContactRbacEntity givenSomeTemporaryContact(final String createdByUser) {
-        final var random = RandomStringUtils.randomAlphabetic(12);
+        val random = RandomStringUtils.insecure().nextAlphabetic(12);
         return givenSomeTemporaryContact(
                 createdByUser, () ->
                         hsOfficeContact(

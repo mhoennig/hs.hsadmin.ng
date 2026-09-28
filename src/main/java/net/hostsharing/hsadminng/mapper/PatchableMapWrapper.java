@@ -1,9 +1,10 @@
 package net.hostsharing.hsadminng.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
@@ -23,9 +24,9 @@ import static java.util.Optional.ofNullable;
  */
 public class PatchableMapWrapper<T> implements Map<String, T> {
 
-    private static final ObjectMapper jsonWriter = new ObjectMapper()
-            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
-            .configure(SerializationFeature.INDENT_OUTPUT, true);
+    private static final ObjectMapper jsonWriter = JsonMapper.builder()
+            .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, SerializationFeature.INDENT_OUTPUT)
+            .build();
 
     private final Map<String, T> delegate;
     private final Set<String> patched = new HashSet<>();

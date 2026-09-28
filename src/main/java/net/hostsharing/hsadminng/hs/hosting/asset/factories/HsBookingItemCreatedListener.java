@@ -1,7 +1,5 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.factories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.SneakyThrows;
@@ -18,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @Profile("!only-prod-schema")
@@ -44,7 +44,7 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
         createRelatedHostingAsset(bookingItemCreatedAppEvent);
     }
 
-    private void createRelatedHostingAsset(final BookingItemCreatedAppEvent event) throws JsonProcessingException {
+    private void createRelatedHostingAsset(final BookingItemCreatedAppEvent event) throws JacksonException {
         final var newBookingItemRealEntity = event.getEntity().getBookingItem();
         final var asset = deserializedAsset(event);
         final var factory = switch (newBookingItemRealEntity.getType()) {
@@ -69,7 +69,7 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
     }
 
     private HsHostingAssetAutoInsertResource deserializedAsset(final BookingItemCreatedAppEvent event)
-            throws JsonProcessingException {
+            throws JacksonException {
         val assetJson = event.getEntity().getAssetJson();
         // event entities written before the JSON text "null" got suppressed still carry it
         return assetJson == null ? null : jsonMapper.readValue(assetJson, HsHostingAssetAutoInsertResource.class);

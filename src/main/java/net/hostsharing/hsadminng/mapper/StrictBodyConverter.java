@@ -1,9 +1,5 @@
 package net.hostsharing.hsadminng.mapper;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
@@ -11,8 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.exc.ValueInstantiationException;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -70,7 +70,7 @@ public class StrictBodyConverter {
                     .readValue(bodyTree);
         } catch (final ValueInstantiationException exc) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, invalidValueMessage(exc), exc);
-        } catch (final IOException | IllegalArgumentException exc) {
+        } catch (final JacksonException | IllegalArgumentException exc) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exc.getMessage(), exc);
         }
     }
@@ -79,7 +79,7 @@ public class StrictBodyConverter {
     // instead of Jackson's "Cannot construct instance of ..." with the full reference chain
     private String invalidValueMessage(final ValueInstantiationException exc) {
         final var path = exc.getPath().stream()
-                .map(ref -> ref.getFieldName() != null ? ref.getFieldName() : "[" + ref.getIndex() + "]")
+                .map(ref -> ref.getPropertyName() != null ? ref.getPropertyName() : "[" + ref.getIndex() + "]")
                 .collect(Collectors.joining());
         final var targetClass = exc.getType().getRawClass();
         if (targetClass.isEnum()) {

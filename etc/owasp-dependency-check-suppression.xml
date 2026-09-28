@@ -11,12 +11,10 @@
     </suppress>
     <suppress>
         <notes><![CDATA[
-            False positive: the advisory lists 6.5.0 through 6.5.10 as affected, our 6.5.11 already
-            contains the fix, but OSS-Index still flags it. Additionally, the vulnerable
-            SubjectDnX509PrincipalExtractor is X.509 client-certificate authentication,
-            which we do not use anywhere (JWT and API-key authentication only).
+            Spring Security 7.1.1 is outside the affected branches; the app uses JWT/API keys, not X.509 authentication.
+            https://spring.io/security/cve-2026-47838/
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring\-security\-web@6\.5\.11$</packageUrl>
+        <packageUrl>pkg:maven/org.springframework.security/spring-security-web@7.1.1</packageUrl>
         <cve>CVE-2026-47838</cve>
     </suppress>
     <suppress>
@@ -36,5 +34,51 @@
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.hdrhistogram/HdrHistogram@.*$</packageUrl>
         <cve>CVE-2026-14686</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            Spring lists 7.1.1 as fixed; the app does not use AesBytesEncryptor or Encryptors.
+            https://spring.io/security/cve-2026-47842/
+        ]]></notes>
+        <packageUrl>pkg:maven/org.springframework.security/spring-security-crypto@7.1.1</packageUrl>
+        <cve>CVE-2026-47842</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            Product mismatch: this CVE affects Spring Tools IDE YAML editors, not Spring Boot DevTools.
+            https://spring.io/security/cve-2022-31691/
+        ]]></notes>
+        <packageUrl>pkg:maven/org.springframework.boot/spring-boot-devtools@4.1.1</packageUrl>
+        <cve>CVE-2022-31691</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            Product mismatch: this CVE affects the WordPress Jobs-Plugin, not Eclipse's job scheduler.
+            https://github.com/mrbobbybryant/Jobs-Plugin/pull/2
+        ]]></notes>
+        <packageUrl>pkg:maven/org.eclipse.platform/org.eclipse.core.jobs@3.15.700</packageUrl>
+        <cve>CVE-2014-125035</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            The OpenAPI processor uses these Eclipse core modules for Java formatting; no Eclipse Help server is present.
+            CVE-2020-27225 requires the Help Subsystem, which is absent from all resolved project configurations.
+            https://bugs.eclipse.org/bugs/show_bug.cgi?id=569855
+        ]]></notes>
+        <packageUrl regex="true">(?x)^pkg:maven/org\.eclipse\.platform/org\.eclipse\.(
+            core\.commands@3\.12\.500
+            | core\.contenttype@3\.9\.800
+            | core\.expressions@3\.9\.500
+            | core\.filesystem@1\.11\.400
+            | core\.jobs@3\.15\.700
+            | core\.resources@3\.23\.100
+            | core\.runtime@3\.34\.100
+            | equinox\.app@1\.7\.500
+            | equinox\.common@3\.20\.300
+            | equinox\.preferences@3\.12\.100
+            | equinox\.registry@3\.12\.600
+            | text@3\.14\.500
+        )$</packageUrl>
+        <cve>CVE-2020-27225</cve>
     </suppress>
 </suppressions>

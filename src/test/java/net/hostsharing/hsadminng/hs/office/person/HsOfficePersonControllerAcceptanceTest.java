@@ -349,8 +349,8 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final var newPerson = HsOfficePersonRealEntity.builder()
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("Temp " + Context.getCallerMethodNameFromStackFrame(2))
-                    .familyName(RandomStringUtils.randomAlphabetic(10) + "@example.org")
-                    .givenName("Temp Given Name " + RandomStringUtils.randomAlphabetic(10))
+                    .familyName(RandomStringUtils.insecure().nextAlphabetic(10) + "@example.org")
+                    .givenName("Temp Given Name " + RandomStringUtils.insecure().nextAlphabetic(10))
                     .build();
 
             return personRepo.save(newPerson).load();

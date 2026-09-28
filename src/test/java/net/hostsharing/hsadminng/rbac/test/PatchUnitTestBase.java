@@ -84,8 +84,8 @@ public abstract class PatchUnitTestBase<R, E> {
 
         // when
         final var actualException = catchThrowableOfType(
-                () -> createPatcher(givenEntity).apply(patchResource),
-                IllegalArgumentException.class);
+                IllegalArgumentException.class,
+                () -> createPatcher(givenEntity).apply(patchResource));
 
         // then
         assertThat(actualException).hasMessage("property '" + testCase.name + "' must not be null");

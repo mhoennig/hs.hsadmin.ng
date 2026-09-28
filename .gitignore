@@ -96,6 +96,7 @@ gradle-app.setting
 ######################
 # Windows
 ######################
+/gradlew.bat
 # Windows image file caches
 Thumbs.db
 

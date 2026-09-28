@@ -2,7 +2,6 @@ package net.hostsharing.hsadminng.hs.hosting.asset.factories;
 
 import lombok.val;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetAutoInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetTypeResource;
@@ -24,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.TypedQuery;
 import jakarta.validation.ValidationException;

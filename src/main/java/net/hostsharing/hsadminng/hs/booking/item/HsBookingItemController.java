@@ -1,7 +1,5 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.val;
@@ -24,6 +22,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -157,7 +157,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
             applicationEventPublisher.publishEvent(new BookingItemCreatedAppEvent(
                     this, bookingItemRealEntity,
                     body.getHostingAsset() == null ? null : jsonMapper.writeValueAsString(body.getHostingAsset())));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

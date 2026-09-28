@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -244,7 +244,7 @@ class HsBookingItemControllerRestTest {
                     .andExpect(jsonPath(
                             "$", lenientlyEquals("""
                                     {
-                                        "message": "ERROR: [400] property \\"validFrom\\": JSON parse error: Unrecognized field \\"validFrom\\" (class ${resourceClass}), not marked as ignorable"
+                                        "message": "ERROR: [400] property \\"validFrom\\": JSON parse error: Unrecognized property \\"validFrom\\" (class ${resourceClass}), not marked as ignorable"
                                     }
                                     """.replace("${resourceClass}", HsBookingItemInsertResource.class.getName()))));
         }

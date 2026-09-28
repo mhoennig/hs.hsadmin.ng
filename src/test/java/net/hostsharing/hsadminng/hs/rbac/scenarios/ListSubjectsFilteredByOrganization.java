@@ -1,12 +1,12 @@
 package net.hostsharing.hsadminng.hs.rbac.scenarios;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.SneakyThrows;
 import lombok.val;
 import net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.List;
 import java.util.Map;

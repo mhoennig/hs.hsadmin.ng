@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Validation;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -9,6 +8,7 @@ import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Map;
 
@@ -26,7 +26,7 @@ class StrictBodyConverterUnitTest {
     }
 
     final StrictBodyConverter converter = new StrictBodyConverter(
-            new ObjectMapper(),
+            new JsonMapper(),
             Validation.buildDefaultValidatorFactory().getValidator());
 
     @Test

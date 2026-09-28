@@ -387,13 +387,13 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var newContact = HsOfficeContactRbacEntity.builder()
                     .caption("Temp from " + Context.getCallerMethodNameFromStackFrame(1) )
                     .postalAddress(Map.ofEntries(
-                            entry("name", RandomStringUtils.randomAlphabetic(6) + " " + RandomStringUtils.randomAlphabetic(10)),
-                            entry("street", RandomStringUtils.randomAlphabetic(10) + randomInt(1, 99)),
+                            entry("name", RandomStringUtils.insecure().nextAlphabetic(6) + " " + RandomStringUtils.insecure().nextAlphabetic(10)),
+                            entry("street", RandomStringUtils.insecure().nextAlphabetic(10) + randomInt(1, 99)),
                             entry("zipcode", "D-" + randomInt(10000, 99999)),
-                            entry("city", RandomStringUtils.randomAlphabetic(10))
+                            entry("city", RandomStringUtils.insecure().nextAlphabetic(10))
                     ))
-                    .emailAddresses(Map.of("main", RandomStringUtils.randomAlphabetic(10) + "@example.org"))
-                    .phoneNumbers(Map.of("phone_office", "+01 200 " + RandomStringUtils.randomNumeric(8)))
+                    .emailAddresses(Map.of("main", RandomStringUtils.insecure().nextAlphabetic(10) + "@example.org"))
+                    .phoneNumbers(Map.of("phone_office", "+01 200 " + RandomStringUtils.insecure().nextNumeric(8)))
                     .build();
 
             return contactRepo.save(newContact);

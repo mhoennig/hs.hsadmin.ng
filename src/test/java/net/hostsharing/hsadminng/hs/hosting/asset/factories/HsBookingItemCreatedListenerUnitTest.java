@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.factories;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
@@ -18,6 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 import jakarta.validation.ValidationException;
 import java.util.Arrays;

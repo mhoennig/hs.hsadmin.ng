@@ -5,6 +5,7 @@ import org.gradle.api.tasks.GradleBuild
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import java.io.ByteArrayOutputStream
 import java.net.InetAddress
+import java.nio.file.Files
 import org.apache.tools.ant.util.TeeOutputStream
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.JavaLanguageVersion
@@ -20,13 +21,13 @@ import java.math.BigDecimal
 
 plugins {
     java
-    id("org.springframework.boot") version "3.5.16"
+    id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"        // manages implicit dependencies
-    id("com.gorylenko.gradle-git-properties") version "2.5.7"     // exposes git commit info via Actuator info endpoint
+    id("com.gorylenko.gradle-git-properties") version "4.0.1"    // exposes git commit info via Actuator info endpoint
     id("io.openapiprocessor.openapi-processor") version "2026.2" // generates Controller-interface and resources from API-spec
     id("info.solidsoft.pitest") version "1.19.0"                 // performs mutation testing
-    id("se.patrikerdes.use-latest-versions") version "0.2.18"    // updates module and plugin versions
-    id("com.github.ben-manes.versions") version "0.53.0"         // determines which dependencies have updates
+    id("se.patrikerdes.use-latest-versions") version "0.2.19"    // updates module and plugin versions
+    id("io.github.ben-manes.versions") version "0.64.0"          // determines which dependencies have updates
 }
 
 springBoot {
@@ -58,13 +59,6 @@ configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
-
-    // Only JUnit 5 (Jupiter) should be used at compile time.
-    // TODO.test: For runtime, JUnit 4 is still needed by testcontainers < v2, which is not released yet.
-    // testCompileOnly {
-    //     exclude(group = "junit", module = "junit")
-    //     exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
-    // }
 }
 
 repositories {
@@ -72,7 +66,7 @@ repositories {
     maven { url = uri("https://repo.spring.io/milestone") }
 }
 
-val JAVA_VERSION = 21
+val JAVA_VERSION = 25
 
 java {
     toolchain {
@@ -83,57 +77,102 @@ java {
 }
 
 // For special versions, use `extra` properties delegate for type safety
-val testcontainersVersion = "1.21.4"
+val testcontainersVersion = "2.0.5"
 extra["testcontainersVersion"] = testcontainersVersion
 
-// Security patch-levels above what Spring Boot manages; drop each once the managed version catches up.
-extra["jackson-bom.version"] = "2.21.5"   // CVE-2026-54515 + CVE-2026-59889
-extra["logback.version"] = "1.5.38"       // CVE-2026-13006
-extra["log4j2.version"] = "2.25.5"        // CVE-2026-49844
-extra["postgresql.version"] = "42.7.13"   // CVE-2026-54291
+val junitVersion = "6.1.3"
+extra["junit-jupiter.version"] = junitVersion
+extra["lombok.version"] = "1.18.48"
+
+// Spring Boot 4.1.1 pins Tomcat 11.0.24, which is affected by CVE-2026-68763.
+extra["tomcat.version"] = "11.0.26"
+
+// Includes JSON-path escaping for CVE-2026-77874.
+extra["hibernate.version"] = "7.4.10.Final"
+
+// Align the OpenAPI processor's Kotlin libraries with the CVE-2026-53914 fixed release.
+extra["kotlin.version"] = "2.4.20"
+
+// Boot's Jackson versions lack fixes for CVE-2026-89425, CVE-2026-91776 and CVE-2026-91777;
+// Jackson 2 is still reachable transitively through swagger-core and datasource-proxy.
+extra["jackson-2-bom.version"] = "2.21.7"
+extra["jackson-bom.version"] = "3.1.7"
+
+ // Fixes MDC-based path traversal (CVE-2026-19880).
+extra["logback.version"] = "1.6.3"
 
 // springdoc resolves swagger-ui resources under the exact webjar version, a mismatch yields 404,
-// thus verifySwaggerUiVersionPin (part of `check`) enforces the mirrored application.yml pins
-val swaggerUiVersion = "5.32.11"
+// thus verifySwaggerUiVersionPin (part of `check`) enforces the application.yml pin
+val swaggerUiVersion = "5.32.15" // Bundles the DOMPurify fix for CVE-2026-75838.
 val verifySwaggerUiVersionPin = tasks.register("verifySwaggerUiVersionPin") {
-    val ymlFiles = listOf("src/main/resources/application.yml", "src/test/resources/application.yml")
+    val ymlFiles = listOf("src/main/resources/application.yml", "src/test/resources/application.yml").map { file(it) }
     val expectedPin = "version: $swaggerUiVersion"
     inputs.files(ymlFiles)
     inputs.property("expectedPin", expectedPin)
     doLast {
-        ymlFiles.forEach { path ->
-            check(File(path).readText().contains(expectedPin)) {
-                "$path must contain 'springdoc.swagger-ui.$expectedPin' to match the webjar pinned in build.gradle.kts"
+        ymlFiles.forEach { ymlFile ->
+            check(ymlFile.readText().contains(expectedPin)) {
+                "$ymlFile must contain 'springdoc.swagger-ui.$expectedPin' to match the webjar pinned in build.gradle.kts"
             }
         }
     }
 }
 tasks.named("check") { dependsOn(verifySwaggerUiVersionPin) }
 
+// Spring Data REST auto-exposes every repository as a CRUD endpoint, outside the API-key and assumed-roles filters
+val verifyNoSpringDataRest = tasks.register("verifyNoSpringDataRest") {
+    group = "verification"
+    description = "Fails if Spring Data REST reappears on the runtime classpath."
+    val runtimeJarNames = configurations.runtimeClasspath.map { classpath -> classpath.files.map { it.name } }
+    doLast {
+        val offending = runtimeJarNames.get().filter { it.startsWith("spring-data-rest") }
+        check(offending.isEmpty()) {
+            "Spring Data REST is back on the runtime classpath ($offending), which would expose every repository" +
+                    " as a CRUD endpoint; remove it again or configure 'spring.data.rest.detection-strategy: annotated'"
+        }
+    }
+}
+tasks.named("check") { dependsOn(verifyNoSpringDataRest) }
+
+// JUnit 4 on the test runtime classpath lets @org.junit.Test compile again, and Jupiter then skips those methods silently
+val verifyNoJunit4 = tasks.register("verifyNoJunit4") {
+    group = "verification"
+    description = "Fails if JUnit 4 or the vintage engine reappear on the test runtime classpath."
+    val testJarNames = configurations.testRuntimeClasspath.map { classpath -> classpath.files.map { it.name } }
+    doLast {
+        val offending = testJarNames.get()
+            .filter { it.startsWith("junit-4") || it.startsWith("junit-vintage-engine") }
+        check(offending.isEmpty()) {
+            "JUnit 4 is back on the test runtime classpath ($offending); @org.junit.Test methods would compile" +
+                    " again and be skipped silently by the Jupiter engine"
+        }
+    }
+}
+tasks.named("check") { dependsOn(verifyNoJunit4) }
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-data-rest")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
+    implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
     // springdoc bundles swagger-ui with DOMPurify 3.3.x, which has known sanitizer bypasses
     implementation("org.webjars:swagger-ui:$swaggerUiVersion")
-    implementation("com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.12.0")
+    implementation("com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:2.0.1")
     implementation("org.postgresql:postgresql")
-    implementation("org.liquibase:liquibase-core")
-    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.10.3")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    implementation("org.openapitools:jackson-databind-nullable:0.2.7")
-    implementation("org.apache.commons:commons-text:1.14.0")
-    implementation("net.java.dev.jna:jna:5.17.0")
-    implementation("org.modelmapper:modelmapper:3.2.4")
-    implementation("org.iban4j:iban4j:3.2.11-RELEASE")
+    implementation("org.springframework.boot:spring-boot-starter-liquibase")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-73:3.16.0")
+    implementation("org.springframework.boot:spring-boot-starter-jackson")
+    implementation("org.openapitools:jackson-databind-nullable:0.2.11")
+    implementation("org.apache.commons:commons-text:1.15.0")
+    implementation("net.java.dev.jna:jna:5.19.1")
+    implementation("org.modelmapper:modelmapper:3.2.6")
+    implementation("org.iban4j:iban4j:3.2.14-RELEASE")
     implementation("org.reflections:reflections:0.10.2")
-    implementation("de.mkammerer:argon2-jvm:2.11")
+    implementation("de.mkammerer:argon2-jvm:2.12")
 
     compileOnly("org.projectlombok:lombok")
     testCompileOnly("org.projectlombok:lombok")
@@ -144,16 +183,25 @@ dependencies {
     testAnnotationProcessor("org.projectlombok:lombok")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    // Spring Boot 4 splits the test slices out of the umbrella starter
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-web-server-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
     testImplementation("org.testcontainers:testcontainers")
-    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
-    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
-    testImplementation("io.rest-assured:spring-mock-mvc")
+    testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.5.1")
+    // Spring Boot 4 no longer manages rest-assured
+    testImplementation("io.rest-assured:spring-mock-mvc:6.0.1")
     testImplementation("org.hamcrest:hamcrest-core")
     testImplementation("org.pitest:pitest-junit5-plugin:1.2.3")
+    add("pitest", "org.pitest:pitest-history-plugin:0.0.1")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
-    testImplementation("org.wiremock:wiremock-standalone:3.13.1")
+    testImplementation("org.wiremock:wiremock-standalone:3.13.2")
 }
 
 // Configure dependency management using the extension
@@ -167,6 +215,11 @@ configure<DependencyManagementExtension> {
     }
 }
 
+// Gradle pins org.junit:junit-bom 5.12.2 in its distribution, which would hold the launcher at 1.x
+testing.suites.named<JvmTestSuite>("test") {
+    useJUnitJupiter(junitVersion)
+}
+
 // Java Compiler Options
 tasks.withType<JavaCompile> {
     options.compilerArgs.add("-parameters") // keep parameter names => no need for @Param for SpringData
@@ -176,7 +229,7 @@ tasks.withType<JavaCompile> {
 openapiProcessor {
     process("springRoot") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.3.2")
         apiPath(project.file("src/main/resources/api-definition/api-definition.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -187,7 +240,7 @@ openapiProcessor {
 
     process("springRbac") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.3.2")
         apiPath(project.file("src/main/resources/api-definition/rbac/rbac.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/rbac/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -197,7 +250,7 @@ openapiProcessor {
 
     process("springTest") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.3.2")
         apiPath(project.file("src/main/resources/api-definition/test/test.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/test/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -207,7 +260,7 @@ openapiProcessor {
 
     process("springHsOffice") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.3.2")
         apiPath(project.file("src/main/resources/api-definition/hs-office/hs-office.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/hs-office/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -217,7 +270,7 @@ openapiProcessor {
 
     process("springHsBooking") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.3.2")
         apiPath(project.file("src/main/resources/api-definition/hs-booking/hs-booking.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/hs-booking/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -227,7 +280,7 @@ openapiProcessor {
 
     process("springHsHosting") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.3.2")
         apiPath(project.file("src/main/resources/api-definition/hs-hosting/hs-hosting.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/hs-hosting/api-mappings.yaml").path)
         prop("showWarnings", true)
@@ -237,12 +290,19 @@ openapiProcessor {
 
     process("springAccounts") {
         processorName("spring")
-        processor("io.openapiprocessor:openapi-processor-spring:2026.2")
+        processor("io.openapiprocessor:openapi-processor-spring:2026.3.2")
         apiPath(project.file("src/main/resources/api-definition/accounts/api-paths.yaml").path)
         prop("mapping", project.file("src/main/resources/api-definition/accounts/api-mappings.yaml").path)
         prop("showWarnings", true)
         prop("openApiNullable", true)
         targetDir(layout.buildDirectory.dir("generated/sources/openapi-javax/springAccounts").get().asFile.path)
+    }
+}
+
+configurations.matching { it.name.endsWith("Classpath") }.configureEach {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("org.antlr:antlr4")).using(module("org.antlr:antlr4-runtime:4.13.2"))
+            .because("OpenAPI uses pre-generated parsers, not the grammar compiler affected by CVE-2026-13500/13503")
     }
 }
 
@@ -332,17 +392,13 @@ configure<PitestPluginExtension> {
     targetTests.set(listOf("net.hostsharing.hsadminng.**.*UnitTest", "net.hostsharing.hsadminng.**.*RestTest"))
     excludedTestClasses.set(listOf("**AcceptanceTest*", "**IntegrationTest*", "**ImportHostingAssets"))
 
-    // Check if these are Property<String> or direct assignment
-    // pitestVersion.set("1.17.0") // If Property<String>
-    // junit5PluginVersion.set("1.1.0") // If Property<String>
-    // Otherwise, direct assignment might work if the extension allows it, or check plugin docs.
-    pitestVersion = "1.20.2" // Assuming direct assignment works
-    junit5PluginVersion = "1.2.3" // Assuming direct assignment works
+    pitestVersion = "1.30.0"
+    junit5PluginVersion = "1.2.3"
 
     threads.set(4)
     timeoutFactor.set(BigDecimal("1.5"))
     timeoutConstInMillis.set(8000)
-    jvmArgs.set(listOf("-XX:+EnableDynamicAgentLoading", "-Xmx2g"))
+    jvmArgs.set(listOf("-XX:+EnableDynamicAgentLoading", "--enable-native-access=ALL-UNNAMED", "-Xmx2g"))
     // incremental pitest: per-branch history survives `rm -rf build` (worktree-local `.pitest/`)
     // on Gittally each branch has its own worktree, so history is per-branch and compares
     // changed classes only; pitestFull forces full run by deleting history
@@ -358,8 +414,9 @@ configure<PitestPluginExtension> {
     timestampedReports.set(false)
 }
 tasks.named("pitest") {
+    val reportFile = layout.buildDirectory.file("reports/pitest/index.html")
     doFirst { // Why not doLast? See README.md!
-        println("PiTest Mutation Report: file://${project.rootDir}/build/reports/pitest/index.html")
+        println("PiTest Mutation Report: ${reportFile.get().asFile.toPath().toUri()}")
     }
 }
 tasks.register("pitestPartial") {
@@ -368,9 +425,11 @@ tasks.register("pitestPartial") {
     dependsOn("pitest")
 }
 tasks.named("pitest") {
+    val fullRunRequested = gradle.startParameter.taskNames.any { it.contains("pitestFull") }
+    val historyFile = layout.projectDirectory.file(".pitest/history.bin").asFile
     doFirst {
-        if (gradle.startParameter.taskNames.any { it.contains("pitestFull") }) {
-            delete(file(".pitest/history.bin"))
+        if (fullRunRequested) {
+            Files.deleteIfExists(historyFile.toPath())
         }
     }
 }
@@ -380,12 +439,6 @@ tasks.register("pitestFull") {
     dependsOn("pitest")
 }
 
-
-// Dependency Versions Upgrade
-// Ensure the task name 'useLatestVersions' is correct
-tasks.named("useLatestVersions") {
-    finalizedBy(tasks.check)
-}
 
 // Define the stability check function at the top level or within an object
 val isNonStable = { version: String ->
@@ -502,12 +555,11 @@ tasks.register<GradleBuild>("bootJarWithDocumentation") {
 
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-    // Enable debug when the debug property is set
+    // JNA loads libcrypt for the /etc/shadow hashes, which the JDK blocks by default since Java 24
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
     if (project.hasProperty("debug")) {
-        jvmArgs = listOf("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
+        jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
     }
-    // Or always enable debug (remove the if condition)
-    // jvmArgs = listOf("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
 }
 
 // Generate git.properties for Spring Boot Actuator /actuator/info

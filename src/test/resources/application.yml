@@ -49,7 +49,7 @@ spring:
 # swagger-ui version pin has to be repeated here; enforced by verifySwaggerUiVersionPin
 springdoc:
     swagger-ui:
-        version: 5.32.11
+        version: 5.32.15
 
 hsadminng:
     fake-jwt:

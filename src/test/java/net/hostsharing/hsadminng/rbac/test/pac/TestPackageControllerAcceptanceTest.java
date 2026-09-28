@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test.pac;
 
+import lombok.val;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
@@ -93,7 +94,7 @@ class TestPackageControllerAcceptanceTest {
                     .as("precondition failed")
                     .isEqualTo("Here you can add your own description of package xxx00.");
 
-            final var randomDescription = RandomStringUtils.randomAlphanumeric(80);
+            val randomDescription = RandomStringUtils.insecure().nextAlphanumeric(80);
 
             // @formatter:off
             RestAssured

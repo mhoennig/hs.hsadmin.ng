@@ -11,7 +11,7 @@ public class LocaleUnitTest {
 
     @Test
     void testsAreUsingEnUsUtf8Locale() {
-        assertThat(Locale.getDefault()).isEqualTo(new Locale("en", "US"));
+        assertThat(Locale.getDefault()).isEqualTo(Locale.of("en", "US"));
         assertThat(new BigDecimal("64.00").toString()).isEqualTo("64.00");
     }
 }

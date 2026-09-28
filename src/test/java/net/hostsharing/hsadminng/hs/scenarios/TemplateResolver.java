@@ -1,8 +1,9 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -19,7 +20,7 @@ import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.D
 public class TemplateResolver {
 
     public static final String JSON_NULL_VALUE_TO_KEEP = "NULL";
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    public static final ObjectMapper OBJECT_MAPPER = new JsonMapper();
 
     public enum Resolver {
         DROP_COMMENTS,  // deletes comments ('#{whatever}' -> '')

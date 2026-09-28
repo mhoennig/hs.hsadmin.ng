@@ -1,9 +1,5 @@
 package net.hostsharing.hsadminng.rbac.context;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -15,6 +11,11 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -59,7 +60,7 @@ public class Context {
             "password$|^secret|secret$|totpKey$",
             Pattern.CASE_INSENSITIVE);
     private static final String MASKED_PROPERTY_VALUE = "<masked>";
-    private static final ObjectMapper BODY_MASKING_JSON_MAPPER = new ObjectMapper();
+    private static final ObjectMapper BODY_MASKING_JSON_MAPPER = new JsonMapper();
 
     @PersistenceContext
     private EntityManager em;
@@ -294,7 +295,7 @@ public class Context {
         try {
             final var root = BODY_MASKING_JSON_MAPPER.readTree(body);
             return maskProperties(root) ? root.toString() : body;
-        } catch (final JsonProcessingException exc) {
+        } catch (final JacksonException exc) {
             return body; // not JSON, nothing to mask
         }
     }
@@ -304,7 +305,7 @@ public class Context {
         if (node.isObject()) {
             final var objectNode = (ObjectNode) node;
             final var fieldNames = new ArrayList<String>();
-            objectNode.fieldNames().forEachRemaining(fieldNames::add);
+            fieldNames.addAll(objectNode.propertyNames());
             for (final var fieldName : fieldNames) {
                 if (BODY_PROPERTIES_TO_MASK.matcher(fieldName).find()) {
                     objectNode.put(fieldName, MASKED_PROPERTY_VALUE);

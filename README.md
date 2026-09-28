@@ -669,7 +669,7 @@ You can explore the prototype as follows:
 `gradle/`
     The Gradle distribution downloaded by `gradle wrapper`. Ignored by git.
 
-`gradlew` and `gradlew.bat` use these batches to run Gradle for builds etc. 
+`gradlew` runs Gradle using the configured wrapper distribution.
 
 `.idea/` (optional)
     Config and cache files created by *IntelliJ IDEA*. Ignore by git.
@@ -841,6 +841,11 @@ gw dependencyCheckAnalyze
 This task is also included in `gw build` and `gw check`.
 It is configured in [hsadmin.quality.gradle.kts](buildSrc/src/main/kotlin/hsadmin.quality.gradle.kts).
 
+Vulnerability details get stored in
+[dependency-check-report.html](build/reports/dependency-check/dependency-check-report.html).
+The task logs this link before the analysis, so it also appears when the CVSS threshold fails the build.
+An update or analysis error may prevent a new vulnerability report from being generated.
+
 The Sonatype OSS-Index is an optional second source.
 It rejects anonymous requests with `HTTP 401 Unauthorized`, which fails the whole analysis.
 Therefore, the OSS-Index analyzer stays switched off until you configure credentials for it.
@@ -898,8 +903,9 @@ Dependency versions can be automatically upgraded to the latest available versio
 gw useLatestVersions
 ```
 
-Afterward, `gw check` is automatically started.
-Please only commit+push to master if the check run shows no errors.
+Run `gw check` separately after the update, or let the PR's CI run it.
+A separate Gradle invocation loads the updated versions; a task in the updater's invocation would use the old configuration.
+The updater does not cover all BOM and tool version pins; review the remaining entries in `gw dependencyUpdates`.
 
 More information, e.g. on blacklists see on the [project's website](https://github.com/patrikerdes/gradle-use-latest-versions-plugin).
 

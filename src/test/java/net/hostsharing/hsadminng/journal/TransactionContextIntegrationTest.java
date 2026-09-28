@@ -29,7 +29,7 @@ import static org.springframework.transaction.annotation.Propagation.NEVER;
 @Tag("generalIntegrationTest")
 class TransactionContextIntegrationTest extends ContextBasedTestWithCleanup {
 
-    // one writer per connection of the test datasource, see maximum-pool-size in application.yml
+    // one writer per connection of the test datasource, see maximum-pool-size in src/test/resources/application.yml
     private static final int CONCURRENT_WRITERS = 3;
     private static final int WRITE_TO_COMMIT_MILLIS = 1000;
     private static final int BARRIER_TIMEOUT_SECONDS = 30;

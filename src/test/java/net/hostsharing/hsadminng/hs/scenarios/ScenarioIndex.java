@@ -1,8 +1,9 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.val;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -17,7 +18,7 @@ public final class ScenarioIndex {
 
     public static final File FILE = new File(TestReport.SCENARIO_REPORTS_MARKDOWN, "index.json");
 
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = new JsonMapper();
     private static final Map<String, Entry> entriesByReport = new TreeMap<>();
     private static boolean flushRegistered;
 

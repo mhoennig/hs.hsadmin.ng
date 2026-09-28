@@ -1,10 +1,6 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.val;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import io.restassured.http.ContentType;
@@ -18,6 +14,12 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.core.util.DefaultIndenter;
+import tools.jackson.core.util.DefaultPrettyPrinter;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
@@ -51,7 +53,7 @@ import static org.junit.platform.commons.util.StringUtils.isNotBlank;
 public abstract class UseCase<T extends UseCase<?>> {
 
     private static final HttpClient client = HttpClient.newHttpClient();
-    private static final ObjectMapper REPORT_OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper REPORT_OBJECT_MAPPER = new JsonMapper();
     static final String AUTH_HEADER_KEY = "Authorization";
     static final String FAKE_AUTH_HEADER_KEY = "X-Fake-Authorization";
     static final String API_KEY_HEADER_KEY = "Hostsharing-Api-Key";
@@ -66,7 +68,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     private static final String HTTP_TIMEOUT_SECONDS_ENV_VAR = "HSADMINNG_SCENARIO_HTTP_TIMEOUT_SECONDS";
     public static final int HTTP_TIMEOUT_SECONDS_DEFAULT = 20;
     private static final int HTTP_TIMEOUT_SECONDS = httpTimeoutSeconds(HTTP_TIMEOUT_SECONDS_DEFAULT);
-    protected final ObjectMapper objectMapper = new ObjectMapper();
+    protected final ObjectMapper objectMapper = new JsonMapper();
 
     protected final ScenarioTest testSuite;
     private final TestReport testReport;
@@ -520,7 +522,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         final var jwtClaims = REPORT_OBJECT_MAPPER.readTree(authHeaderValue.substring(BEARER_JWT_PREFIX.length()));
         final var prettyPrinter = new DefaultPrettyPrinter();
         prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
-        final var prettyJson = REPORT_OBJECT_MAPPER.writer(prettyPrinter).writeValueAsString(jwtClaims);
+        val prettyJson = REPORT_OBJECT_MAPPER.writer().with(prettyPrinter).writeValueAsString(jwtClaims);
         return escapedForBackticks(prettyJson).lines()
                 .map(line -> "`# " + line + "`")
                 .toList();
@@ -790,7 +792,7 @@ public abstract class UseCase<T extends UseCase<?>> {
             limitedArray.add("...");
             final var prettyPrinter = new DefaultPrettyPrinter();
             prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
-            return Optional.of(REPORT_OBJECT_MAPPER.writer(prettyPrinter).writeValueAsString(limitedArray));
+            return Optional.of(REPORT_OBJECT_MAPPER.writer().with(prettyPrinter).writeValueAsString(limitedArray));
         }
 
         private String headerValue(final Map.Entry<String, List<String>> entry) {

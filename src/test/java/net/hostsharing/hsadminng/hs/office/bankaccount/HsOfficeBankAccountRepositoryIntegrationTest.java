@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
+import lombok.val;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
@@ -281,7 +282,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
     }
 
     private HsOfficeBankAccountEntity givenSomeTemporaryBankAccount(final String createdByUser) {
-        final var random = RandomStringUtils.randomAlphabetic(3);
+        val random = RandomStringUtils.insecure().nextAlphabetic(3);
         return givenSomeTemporaryBankAccount(createdByUser, () ->
                 hsOfficeBankAccount(
                         "some temp acc #" + random,

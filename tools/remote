@@ -30,7 +30,7 @@
 #   remote backend log [ARGS]         tail the backend log (extra ARGS go to tail)
 #   remote backend setup              install (or refresh) the backend systemd user unit, a jar runner
 #                                     after the hsh11 model; expects ~/backend/.environment (chmod 600,
-#                                     incl. SPRING_PROFILES_ACTIVE) and a JDK 21 under ~/opt/jdk-21
+#                                     incl. SPRING_PROFILES_ACTIVE) and a JDK 25 under ~/opt/jdk-25
 #   remote backend provision-api-key [--force] [--no-local-store]
 #                                     generate an API-key locally and provision just its hash on the server;
 #                                     the API-key is stored in .apikeys.gpg for HSADMINNG_API_BASE_URL,
@@ -392,14 +392,14 @@ cmdUpload() {
 # Installs (or refreshes) the backend systemd user unit on the server: the hsh11-style jar
 # runner, so a new stage comes up reproducibly instead of by hand-crafted unit files.
 # The prerequisites stay on the server and are only checked here: ~/backend/.environment
-# carries the stage secrets, and the JDK lives under ~/opt/jdk-21 by convention.
+# carries the stage secrets, and the JDK lives under ~/opt/jdk-25 by convention.
 cmdBackendSetup() {
     ssh "$backendLogin" bash -s <<'REMOTE_SCRIPT'
 set -euo pipefail
 
-[ -x "$HOME/opt/jdk-21/bin/java" ] || {
-    echo "ERROR: no JDK under ~/opt/jdk-21 on the server; install e.g. Temurin 21 with:" >&2
-    echo "       mkdir -p ~/opt/jdk-21 && curl -sSfL 'https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse' | tar -xz --strip-components=1 -C ~/opt/jdk-21" >&2
+[ -x "$HOME/opt/jdk-25/bin/java" ] || {
+    echo "ERROR: no JDK under ~/opt/jdk-25 on the server; install e.g. Temurin 25 with:" >&2
+    echo "       mkdir -p ~/opt/jdk-25 && curl -sSfL 'https://api.adoptium.net/v3/binary/latest/25/ga/linux/x64/jdk/hotspot/normal/eclipse' | tar -xz --strip-components=1 -C ~/opt/jdk-25" >&2
     exit 1
 }
 [ -f "$HOME/backend/.environment" ] || {
@@ -425,11 +425,11 @@ Description=HSAdminNG Service
 [Service]
 WorkingDirectory=%h/backend
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
-Environment="JAVA_HOME=%h/opt/jdk-21"
+Environment="JAVA_HOME=%h/opt/jdk-25"
 Environment="HOME=%h"
 Environment="LANG=de_DE.UTF-8"
 EnvironmentFile=%h/backend/.environment
-ExecStart=%h/opt/jdk-21/bin/java -Xms512M -Xmx512M -jar %h/backend/hsadmin-ng-0.0.1-SNAPSHOT.jar
+ExecStart=%h/opt/jdk-25/bin/java -Xms512M -Xmx512M --enable-native-access=ALL-UNNAMED -jar %h/backend/hsadmin-ng-0.0.1-SNAPSHOT.jar
 StandardOutput=append:%h/var/backend.log
 StandardError=inherit
 Restart=always

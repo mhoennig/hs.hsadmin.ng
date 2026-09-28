@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.errors;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.RetroactiveTranslator;
 import org.iban4j.Iban4jException;
@@ -14,7 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.access.AccessDeniedException;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import tools.jackson.core.JacksonException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
@@ -73,9 +75,10 @@ public class RestResponseEntityExceptionHandler
     @ExceptionHandler(JpaSystemException.class)
     protected ResponseEntity<CustomErrorResponse> handleJpaExceptions(
             final RuntimeException exc, final WebRequest request) {
-        final var fullMaybeLocalizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
+        val causingException = NestedExceptionUtils.getMostSpecificCause(exc);
+        val fullMaybeLocalizedMessage = localizedMessage(causingException);
         final var sprippedMaybeLocalizedMessage = stripTechnicalDetails(fullMaybeLocalizedMessage);
-        return errorResponse(request, httpStatus(exc, sprippedMaybeLocalizedMessage).orElse(HttpStatus.INTERNAL_SERVER_ERROR), sprippedMaybeLocalizedMessage);
+        return errorResponse(request, httpStatus(causingException, sprippedMaybeLocalizedMessage).orElse(HttpStatus.INTERNAL_SERVER_ERROR), sprippedMaybeLocalizedMessage);
     }
 
     @ExceptionHandler(NoSuchElementException.class)
@@ -104,7 +107,7 @@ public class RestResponseEntityExceptionHandler
         return errorResponse(request, HttpStatus.CONFLICT, localizedMessage(exc));
     }
 
-    @ExceptionHandler({ JpaObjectRetrievalFailureException.class, EntityNotFoundException.class })
+    @ExceptionHandler({ JpaObjectRetrievalFailureException.class, EntityNotFoundException.class, ObjectNotFoundException.class })
     protected ResponseEntity<CustomErrorResponse> handleJpaObjectRetrievalFailureException(
             final RuntimeException exc, final WebRequest request) {
         final var localizedMessage = localizedMessage(NestedExceptionUtils.getMostSpecificCause(exc));
@@ -158,18 +161,19 @@ public class RestResponseEntityExceptionHandler
         return messageTranslator.translate("general.property-{0}", propertyPath) + ": " + message;
     }
 
-    private static String jsonPropertyPath(final Throwable causingException) {
-        if (!(causingException instanceof JsonMappingException jsonMappingException)
+    private static @Nullable String jsonPropertyPath(final Throwable causingException) {
+        // Jackson 3 defines the path on JacksonException and keeps the original type when prepending it
+        if (!(causingException instanceof JacksonException jsonMappingException)
                 || jsonMappingException.getPath().isEmpty()) {
             return null;
         }
         final var propertyPath = new StringBuilder();
         for (final var reference : jsonMappingException.getPath()) {
-            if (reference.getFieldName() != null) {
+            if (reference.getPropertyName() != null) {
                 if (propertyPath.length() > 0) {
                     propertyPath.append('.');
                 }
-                propertyPath.append(reference.getFieldName());
+                propertyPath.append(reference.getPropertyName());
             } else {
                 propertyPath.append('[').append(reference.getIndex()).append(']');
             }
@@ -232,7 +236,8 @@ public class RestResponseEntityExceptionHandler
     }
 
     private Optional<HttpStatus> httpStatus(final Throwable causingException, final String message) {
-        if ( EntityNotFoundException.class.isInstance(causingException) ) {
+        // Hibernate 7 reports an unresolvable reference as ObjectNotFoundException, earlier versions as EntityNotFoundException
+        if (causingException instanceof EntityNotFoundException || causingException instanceof ObjectNotFoundException) {
             return Optional.of(HttpStatus.BAD_REQUEST);
         }
         if (message.startsWith("ERROR: [")) {

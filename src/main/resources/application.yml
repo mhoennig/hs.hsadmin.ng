@@ -38,15 +38,9 @@ management:
 spring:
 
     datasource:
-        driver-class-name: org.postgresql.Driver
         password: password
         url: ${HSADMINNG_POSTGRES_JDBC_URL}
         username: postgres
-
-    data:
-        rest:
-            # do NOT implicilty expose SpringData repositories as REST-controllers
-            detection-strategy: annotated
 
     sql:
         init:
@@ -75,7 +69,7 @@ springdoc:
     swagger-ui:
         # must match the swagger-ui webjar pinned in build.gradle.kts, a mismatch yields 404;
         # enforced by the Gradle task verifySwaggerUiVersionPin (part of `check`)
-        version: 5.32.11
+        version: 5.32.15
         urls:
             - name: HS Office API
               url: /doc/api/spec/hs-office/hs-office.yaml

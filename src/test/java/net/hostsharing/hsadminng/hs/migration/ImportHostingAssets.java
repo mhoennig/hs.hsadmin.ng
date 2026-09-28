@@ -1,8 +1,7 @@
 package net.hostsharing.hsadminng.hs.migration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import lombok.val;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
@@ -32,7 +31,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,6 +39,9 @@ import org.springframework.orm.jpa.EntityManagerFactoryInfo;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +65,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.Map.entry;
 import static java.util.Map.ofEntries;
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
@@ -136,7 +139,7 @@ public class ImportHostingAssets extends CsvDataImport {
     static Map<String, HsHostingAssetRealEntity> dbUsersByEngineAndName = new WriteOnceMap<>();
     static Map<String, HsHostingAssetRealEntity> domainSetupsByName = new WriteOnceMap<>();
 
-    final ObjectMapper jsonMapper = new ObjectMapper();
+    final ObjectMapper jsonMapper = new JsonMapper();
 
     @Autowired
     HsBookingDebitorRepository debitorRepo;
@@ -1389,27 +1392,19 @@ public class ImportHostingAssets extends CsvDataImport {
                         default -> throw new IllegalArgumentException("unknown basecomponent_code: " + basecomponent_code);
                     };
 
-                    if (name.equals("SLA-Infrastructure")) {
-                        final var slaValue = switch (basecomponent_code) {
-                            case "SLABASIC" -> "BASIC";
-                            case "SLAINFR2H" -> "EXT2H";
-                            case "SLAINFR4H" -> "EXT4H";
-                            case "SLAINFR8H" -> "EXT8H";
-                            default -> throw new IllegalArgumentException("unknown basecomponent_code: " + basecomponent_code);
-                        };
-                        asset.getBookingItem().getResources().put(name, slaValue);
-                    } else if (name.equals("SLA-Platform")) {
-                        final var slaValue = switch (basecomponent_code) {
-                            case "SLABASIC" -> "BASIC";
-                            case "SLAEXT24H" -> "EXT24H";
-                            case "SLAPLAT2H" -> "EXT2H";
-                            case "SLAPLAT4H" -> "EXT4H";
-                            case "SLAPLAT8H" -> "EXT8H";
-                            default -> throw new IllegalArgumentException("unknown basecomponent_code: " + basecomponent_code);
-                        };
-                        if (ofNullable(asset.getBookingItem().getResources().get(name)).map("BASIC"::equals).orElse(true)) {
-                            asset.getBookingItem().getResources().put(name, slaValue);
-                        }
+                    if (name.equals("SLA-Platform") && !ofNullable(asset.getBookingItem().getResources().get(name))
+                            .map("BASIC"::equals).orElse(true)) {
+                        return;
+                    }
+                    if (Set.of("SLA-Infrastructure", "SLA-Platform").contains(name)) {
+                        val slaValues = Map.of(
+                                "SLABASIC", "BASIC", "SLAEXT24H", "EXT24H",
+                                "SLAINFR2H", "EXT2H", "SLAPLAT2H", "EXT2H",
+                                "SLAINFR4H", "EXT4H", "SLAPLAT4H", "EXT4H",
+                                "SLAINFR8H", "EXT8H", "SLAPLAT8H", "EXT8H");
+                        asset.getBookingItem().getResources().put(name, requireNonNull(
+                                slaValues.get(basecomponent_code),
+                                () -> "unknown basecomponent_code: " + basecomponent_code));
                     } else if (name.startsWith("SLA")) {
                         asset.getBookingItem().getResources().put(name, true);
                     } else if (quantity > 0) {
@@ -1770,7 +1765,7 @@ public class ImportHostingAssets extends CsvDataImport {
             //noinspection unchecked
             final Map<String, Map<String, Object>> zoneData = jsonMapper.readValue(zonenfilesJson, Map.class);
             importZonenfile(vmName, zoneData);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException("cannot read zonefile JSON: '" + zonenfilesJson + "'", e);
         }
     }

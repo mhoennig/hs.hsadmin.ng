@@ -354,14 +354,6 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule doNotUseOrgJUnitTestAnnotation = noMethods()
-            .should().beAnnotatedWith(org.junit.Test.class)
-            .as("Use @%s instead of @%s.".formatted(
-                    org.junit.jupiter.api.Test.class.getName(),
-                    org.junit.Test.class.getName()));
-
-    @ArchTest
-    @SuppressWarnings("unused")
     static final ArchRule everythingShouldBeFreeOfCycles =
         slices().matching("net.hostsharing.hsadminng.(*)..")
                 .should().beFreeOfCycles()

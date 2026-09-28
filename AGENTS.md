@@ -65,7 +65,7 @@ as follows: `. .tc-environment; ./gradlew migrationTest`.
 ## Coding Conventions
 
 - Follow existing Java style and formatting. Run `./gradlew spotlessApply -x test` for Java formatting.
-- Use Java 21 language features.
+- Use Java 25 language features.
 - Use Lombok according to the existing code-style.
 - Prefer Lombok `val` instead of `final var` for local inferred variables.
 - Comments explain WHY, never WHAT or HOW; if a comment restates what the code already shows,

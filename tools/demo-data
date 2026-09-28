@@ -380,12 +380,12 @@ runApplication() {
     databaseExists "$dataset" || [ -n "$dryRun" ] || fail "the database $dataset does not exist"
     buildJar
     if [ -n "$dryRun" ]; then
-        echo "java -jar $JAR --spring.profiles.active=$PROFILES --server.port=$appPort"
+        echo "java --enable-native-access=ALL-UNNAMED -jar $JAR --spring.profiles.active=$PROFILES --server.port=$appPort"
         return 0
     fi
     exportDatasetEnvironment "$dataset"
     echo "starting $JAR against $HSADMINNG_POSTGRES_JDBC_URL on port $appPort"
-    exec java -jar "$JAR" --spring.profiles.active="$PROFILES" --server.port="$appPort"
+    exec java --enable-native-access=ALL-UNNAMED -jar "$JAR" --spring.profiles.active="$PROFILES" --server.port="$appPort"
 }
 
 verifyDataset() {
@@ -393,7 +393,7 @@ verifyDataset() {
     restoreDataset "$dataset"
     buildJar
     if [ -n "$dryRun" ]; then
-        echo "java -jar $JAR --spring.profiles.active=$PROFILES --server.port=$appPort"
+        echo "java --enable-native-access=ALL-UNNAMED -jar $JAR --spring.profiles.active=$PROFILES --server.port=$appPort"
         echo "LOGIN $SUPERUSER; HTTP GET /api/hs/office/partners"
         return 0
     fi
@@ -403,7 +403,7 @@ verifyDataset() {
     export HSADMINNG_API_BASE_URL=http://localhost:$appPort
     export HSADMINNG_JWT_TOKEN_URL=$HSADMINNG_API_BASE_URL/fake-jwt/token
 
-    java -jar "$JAR" --spring.profiles.active="$PROFILES" --server.port="$appPort" \
+    java --enable-native-access=ALL-UNNAMED -jar "$JAR" --spring.profiles.active="$PROFILES" --server.port="$appPort" \
         >build/demo-data-verify.log 2>&1 &
     # deliberately not local: the EXIT trap expands the PID only after this function has returned
     appPid=$!

@@ -195,7 +195,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .post("http://localhost/api/hs/office/partners")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("ERROR: [400] Unable to find " + HsOfficeContactRealEntity.class.getName() + " with id " + GIVEN_NON_EXISTING_UUID));
+                    .body("message", is("ERROR: [400] No row with the given identifier exists for entity ["
+                            + HsOfficeContactRealEntity.class.getName() + " with id '" + GIVEN_NON_EXISTING_UUID + "']"));
             // @formatter:on
         }
 
@@ -234,7 +235,8 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     // TODO.impl: we want this error message:
                     // .body("message", is("ERROR: [400] Unable to find Person by uuid: " + GIVEN_NON_EXISTING_UUID));
                     // but ModelMapper creates this error message:
-                    .body("message", is("ERROR: [400] Unable to find " + HsOfficePersonRealEntity.class.getName() + " with id " + GIVEN_NON_EXISTING_UUID));
+                    .body("message", is("ERROR: [400] No row with the given identifier exists for entity ["
+                            + HsOfficePersonRealEntity.class.getName() + " with id '" + GIVEN_NON_EXISTING_UUID + "']"));
                 // @formatter:on
         }
     }

@@ -16,6 +16,8 @@ class HsadminTestTasksPlugin : Plugin<Project> {
             }
             // tests prove the current build, thus their results must never come from the build cache
             outputs.cacheIf { false }
+            // JNA loads libcrypt for the /etc/shadow hashes, which the JDK blocks by default since Java 24
+            jvmArgs("--enable-native-access=ALL-UNNAMED")
         }
 
         project.tasks.named<Test>("test") {
