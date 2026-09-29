@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @TestPropertySource(properties = {
         "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:17.7-trixie:///demodataTC}",
-        "spring.liquibase.contexts=without-test-data"
+        "spring.liquibase.contexts=without-test-data,demo-bankcodes"
 })
 class DemoDataScenarioTest extends ScenarioTest {
 

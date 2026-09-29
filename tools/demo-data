@@ -43,9 +43,10 @@
 # The dump excludes the data of rbac.api_key, rbac.api_key_scope and base.tx_journal and proves
 # that inside the container, where the pg_restore version matches the one which wrote the dump.
 #
-# The dataset is served with the profiles `fake-jwt,without-test-data`. `without-test-data` is
+# The dataset is served with the profiles `fake-jwt,without-test-data,demo-bankcodes`. `without-test-data` is
 # not optional: without it the start writes test partners and test subjects into the dataset for
 # good. `hsh-demo_admin` is the only login in every dataset, and `fake-jwt` accepts any password.
+# `demo-bankcodes` loads the demo banks, which the generated demo IBANs need to pass the bank directory check.
 #
 # The image, container, port and app-port options can also come from the environment as
 # HSADMINNG_DEMO_<OPTION> with dashes as underscores, e.g. HSADMINNG_DEMO_PG_CONTAINER;
@@ -55,7 +56,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
 JAR=build/libs/hsadmin-ng-0.0.1-SNAPSHOT.jar # as in tools/remote
-PROFILES=fake-jwt,without-test-data
+PROFILES=fake-jwt,without-test-data,demo-bankcodes
 SUPERUSER=hsh-demo_admin
 STARTUP_TIMEOUT=300
 

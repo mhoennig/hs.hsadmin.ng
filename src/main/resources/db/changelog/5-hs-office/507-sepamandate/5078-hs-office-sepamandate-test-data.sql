@@ -52,3 +52,27 @@ do language plpgsql $$
     end;
 $$;
 --//
+
+
+
+-- ============================================================================
+--changeset michael.hoennig:hs-office-bankaccount-TEST-DATA-DEMO-BANKS context:!without-test-data endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- The released bank account test-data changeset (5058) names real banks, which the bank directory check would reject
+-- in test databases; this moves the test bank accounts to the demo banks (5056), same account numbers, new check digits.
+-- It runs after the SEPA mandate test data, which looks the bank accounts up by their original IBANs.
+do language plpgsql $$
+    begin
+        call base.defineContext('moving bankaccount test-data to demo banks');
+        update hs_office.bankaccount set iban = 'DE34990200000000202051', bic = 'DEMVDEH0' where iban = 'DE02120300000000202051';
+        update hs_office.bankaccount set iban = 'DE33990300000137075030', bic = 'DEMRDEF0' where iban = 'DE02500105170137075030';
+        update hs_office.bankaccount set iban = 'DE09990100000054540402', bic = 'DEMSDEH0' where iban = 'DE02100500000054540402';
+        update hs_office.bankaccount set iban = 'DE47990600000106531065', bic = 'DEMPDED0' where iban = 'DE02300209000106531065';
+        update hs_office.bankaccount set iban = 'DE20990500001015871393', bic = 'DEMGDEM0' where iban = 'DE02200505501015871393';
+        update hs_office.bankaccount set iban = 'DE45990500000006820101', bic = 'DEMGDEM0' where iban = 'DE02100100100006820101';
+        update hs_office.bankaccount set iban = 'DE38990200000002474689', bic = 'DEMVDEH0' where iban = 'DE02300606010002474689';
+        update hs_office.bankaccount set iban = 'DE52990100000002034304', bic = 'DEMSDEH0' where iban = 'DE02600501010002034304';
+    end;
+$$;
+--//

@@ -9,6 +9,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelationMarks;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelations;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFromContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
+import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.CreateBankAccount;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateDebitorAsBillingSystem;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateSepaMandateAsBillingSystem;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToListRelationsAsBillingSystem;
@@ -424,6 +425,158 @@ class HsOfficeScenarioTests extends ScenarioTest {
     }
 
     @Nested
+    @Order(30)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class BankAccountScenarios {
+
+        @Test
+        @Order(3001)
+        @Scenario({"302.01"})
+        void shouldCreateGermanBankAccountWithMatchingBic() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - matching BIC")
+                    .given("iban", "DE56990300000000594937")
+                    .given("bic", "DEMRDEF0")
+                    .expected("expectedBic", "DEMRDEF0")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3013)
+        @Scenario({"302.01"})
+        void shouldCreateGermanBankAccountWithMatchingBicInElevenCharacterForm() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - matching BIC with branch code XXX")
+                    .given("iban", "DE56990300000000594937")
+                    .given("bic", "DEMRDEF0XXX")
+                    .expected("expectedBic", "DEMRDEF0XXX")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3002)
+        @Scenario({"302.02"})
+        void shouldRejectGermanBankAccountWithMismatchingBic() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - mismatching BIC")
+                    .given("iban", "DE56990300000000594937")
+                    .given("bic", "GENODEMIGLS")
+                    .expected("errorMessage", "BIC GENODEMIGLS does not match bank code 99030000")
+                    .thenExpect(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @Order(3003)
+        @Scenario({"302.03"})
+        void shouldCompleteBicOfGermanBankAccount() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - BIC completed from bank directory")
+                    .given("iban", "DE56990300000000594937")
+                    .expected("expectedBic", "DEMRDEF0")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3004)
+        @Scenario({"302.04"})
+        void shouldRejectGermanIbanWithUnknownBankCode() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - unknown bank code")
+                    .given("iban", "DE34000000000000594937")
+                    .given("bic", "DEMRDEF0")
+                    .expected("errorMessage", "IBAN DE34000000000000594937 has unknown bank code 00000000")
+                    .thenExpect(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @Order(3010)
+        @Scenario({"302.04"})
+        void shouldAcceptUnknownGermanBankCodeForGlobalAdminWithOverride() {
+            new CreateBankAccount(scenarioTest, asSubject("hsh-alex_superuser").whichIs("a global admin"))
+                    .given("holder", "Test AG - unknown bank code accepted by global admin")
+                    .given("iban", "DE34000000000000594937")
+                    .given("bic", "DEMRDEF0")
+                    .given("overrideBankDirectory", true)
+                    .expected("expectedBic", "DEMRDEF0")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3005)
+        @Scenario({"302.05"})
+        void shouldAcceptMismatchingBicForGlobalAdminWithOverride() {
+            new CreateBankAccount(scenarioTest, asSubject("hsh-alex_superuser").whichIs("a global admin"))
+                    .given("holder", "Test AG - BIC override by global admin")
+                    .given("iban", "DE56990300000000594937")
+                    .given("bic", "GENODEMIGLS")
+                    .given("overrideBankDirectory", true)
+                    .expected("expectedBic", "GENODEMIGLS")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3006)
+        @Scenario({"302.05"})
+        void shouldRejectBicOverrideForNonAdmin() {
+            new CreateBankAccount(scenarioTest, asSubject("tst-person_firbysusan"))
+                    .given("holder", "Test AG - BIC override by non-admin")
+                    .given("iban", "DE56990300000000594937")
+                    .given("bic", "GENODEMIGLS")
+                    .given("overrideBankDirectory", true)
+                    .expected("errorMessage", "overrideBankDirectory requires global admin")
+                    .thenExpect(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @Order(3012)
+        @Scenario({"302.05"})
+        void shouldRejectBicOverrideForGlobalAdminWithAssumedRole() {
+            new CreateBankAccount(scenarioTest, asSubject("hsh-alex_superuser").whichIs("a global admin"))
+                    .given("assumedRoles", "hs_office.person#FirstGmbH:ADMIN")
+                    .given("holder", "Test AG - BIC override by global admin with assumed role")
+                    .given("iban", "DE56990300000000594937")
+                    .given("bic", "GENODEMIGLS")
+                    .given("overrideBankDirectory", true)
+                    .expected("errorMessage", "overrideBankDirectory requires global admin")
+                    .thenExpect(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @Order(3007)
+        @Scenario({"302.06"})
+        void shouldCreateForeignBankAccountWithStructurallyValidBic() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - Austrian bank account of a bank not in the directory")
+                    .given("iban", "AT429999800000000001")
+                    .given("bic", "NODIATW0")
+                    .expected("expectedBic", "NODIATW0")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3008)
+        @Scenario({"302.06"})
+        void shouldRejectForeignBankAccountWithoutBic() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - Austrian bank account without BIC")
+                    .given("iban", "AT429999800000000001")
+                    .expected("errorMessage", "bic is required for IBAN AT429999800000000001")
+                    .thenExpect(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @Order(3009)
+        @Scenario({"302.07"})
+        void shouldCompleteBicOfForeignBankAccountInDirectory() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - Austrian bank account of a bank in the directory")
+                    .given("iban", "AT049999900000000001")
+                    .expected("expectedBic", "DEMOATW0")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+    }
+
+    @Nested
     @Order(31)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class SepaMandateScenarios {
@@ -447,8 +600,9 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
                     // new bank-account
                     .given("bankAccountHolder", "Test AG - debit bank account")
-                    .given("bankAccountIBAN", "DE02701500000000594937")
-                    .given("bankAccountBIC", "SSKMDEMM").thenExpect(HttpStatus.OK)
+                    .given("bankAccountIBAN", "DE56990300000000594937")
+                    .given("bankAccountBIC", "DEMRDEF0")
+                    .thenExpect(HttpStatus.OK)
                     .keep();
         }
 
@@ -469,8 +623,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
                     // former bank-account
                     .given("bankAccountHolder", "Test AG - former debit bank account")
-                    .given("bankAccountIBAN", "DE02500105170137075030")
-                    .given("bankAccountBIC", "INGDDEFF")
+                    .given("bankAccountIBAN", "DE33990300000137075030")
+                    .given("bankAccountBIC", "DEMRDEF0")
                     .thenExpect(HttpStatus.OK)
                     .keep();
         }
@@ -487,7 +641,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("validAt", "2025-01-01")
                     .expected("mandateReference", "Test AG - main debitor")
                     .expected("mandateValidFrom", "2024-10-15")
-                    .expected("bankAccountIBAN", "DE02701500000000594937")
+                    .expected("bankAccountIBAN", "DE56990300000000594937")
                     .thenExpect(HttpStatus.OK);
         }
 
@@ -511,7 +665,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("SEPA-Mandate: Test AG")
         void shouldInvalidateSepaMandateForDebitor() {
             new InvalidateSepaMandateForDebitor(scenarioTest)
-                    .given("bankAccountIBAN", "DE02701500000000594937")
+                    .given("bankAccountIBAN", "DE56990300000000594937")
                     .given("mandateValidTo", "2025-09-30").thenExpect(HttpStatus.OK);
         }
 
@@ -520,7 +674,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Requires("SEPA-Mandate: Test AG")
         void shouldFinallyDeleteSepaMandateForDebitor() {
             new FinallyDeleteSepaMandateForDebitor(scenarioTest)
-                    .given("bankAccountIBAN", "DE02701500000000594937").thenExpect(HttpStatus.OK);
+                    .given("bankAccountIBAN", "DE56990300000000594937")
+                    .thenExpect(HttpStatus.OK);
         }
     }
 

@@ -25,8 +25,17 @@ components:
                     type: string
                 bic:
                     type: string
+                    description: |
+                        For German IBANs, the BIC is looked up in the bank directory by the bank code of the IBAN;
+                        if given, it has to match, if omitted, it gets completed.
+                        For other IBANs, the BIC is required and only checked structurally unless overrideBankDirectory is set to true.
+                overrideBankDirectory:
+                    type: boolean
+                    default: false
+                    description: |
+                        Lets the given BIC take precedence over the bank directory, e.g. if the bank code is missing or its BIC is outdated.
+                        Only global admins can use this option.
             required:
                 - holder
                 - iban
-                - bic
             additionalProperties: false

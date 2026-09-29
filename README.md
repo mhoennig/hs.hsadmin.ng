@@ -1000,6 +1000,7 @@ These profiles mean:
 - **external-db**: an external PostgreSQL database is used with the PostgreSQL users already created as specified in the environment
 - **only-prod-schema**: only the Office module is started, but neither the Booking nor the Hosting modules
 - **without-test-data**: no test-data is inserted
+- **demo-bankcodes**: the demo banks are inserted even with `without-test-data`, e.g. for demo datasets; never use this in production
 
 
 ### How to Run the Application in a Debugger

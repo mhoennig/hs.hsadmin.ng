@@ -114,35 +114,35 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN",
-                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT",
-                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER",
-                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER"));
+                    "hs_office.sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):ADMIN",
+                    "hs_office.sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):AGENT",
+                    "hs_office.sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):OWNER",
+                    "hs_office.sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):REFERRER"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
                             // owner
-                            "{ grant perm:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):DELETE to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER by system and assume }",
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER to role:rbac.global#global:ADMIN by system and assume }",
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER to user:hsh-alex_superuser by sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER and assume }",
+                            "{ grant perm:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):DELETE to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):OWNER by system and assume }",
+                            "{ grant role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):OWNER to role:rbac.global#global:ADMIN by system and assume }",
+                            "{ grant role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):OWNER to user:hsh-alex_superuser by sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):OWNER and assume }",
 
                             // admin
-                            "{ grant perm:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):UPDATE to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN by system and assume }",
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER by system and assume }",
+                            "{ grant perm:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):UPDATE to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):ADMIN by system and assume }",
+                            "{ grant role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):ADMIN to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):OWNER by system and assume }",
 
                             // agent
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN by system and assume }",
-                            "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT by system and assume }",
+                            "{ grant role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):AGENT to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):ADMIN by system and assume }",
+                            "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):AGENT by system and assume }",
 
                             // referrer
-                            "{ grant perm:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):SELECT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
-                            "{ grant role:bankaccount#DE02600501010002034304:REFERRER to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT by system and assume }",
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER to role:bankaccount#DE02600501010002034304:ADMIN by system and assume }",
-                            "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:TENANT to role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
-                            "{ grant role:sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
+                            "{ grant perm:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):SELECT to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
+                            "{ grant role:bankaccount#DE52990100000002034304:REFERRER to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
+                            "{ grant role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):REFERRER to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):AGENT by system and assume }",
+                            "{ grant role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):REFERRER to role:bankaccount#DE52990100000002034304:ADMIN by system and assume }",
+                            "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:TENANT to role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):REFERRER by system and assume }",
+                            "{ grant role:sepamandate#DE52990100000002034304-[2020-01-01,2023-01-01):REFERRER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
 
                             null));
         }
@@ -167,9 +167,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             allTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02100500000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02120300000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE09990100000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE34990200000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE47990600000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
 
         @Test
@@ -183,7 +183,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then:
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02120300000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE34990200000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }
 
@@ -201,9 +201,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02100500000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02120300000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE09990100000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE34990200000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE47990600000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
 
         @Test
@@ -217,14 +217,14 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE47990600000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }
 
     @Nested
     class FindByDebitorUuidAndValidAt {
 
-        private static final String FIRST_IBAN = "DE02120300000000202051";
+        private static final String FIRST_IBAN = "DE34990200000000202051";
         private static final String FIRST_CURRENT = "SEPA-Mandate(" + FIRST_IBAN + ", ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))";
         private static final String FIRST_EXPIRED = "SEPA-Mandate(" + FIRST_IBAN + ", temp ref X, 2020-01-02, [2020-01-01,2023-01-01))";
 
@@ -275,9 +275,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02100500000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE09990100000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
                     FIRST_CURRENT,
-                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE47990600000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }
 
@@ -287,10 +287,10 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void hostsharingAdmin_canUpdateArbitrarySepaMandate() {
             // given
-            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02600501010002034304");
+            val givenSepaMandate = givenSomeTemporarySepaMandate("DE52990100000002034304");
             assertThatSepaMandateIsVisibleForUserWithRole(
                     givenSepaMandate,
-                    "hs_office.bankaccount#DE02600501010002034304:ADMIN");
+                    "hs_office.bankaccount#DE52990100000002034304:ADMIN");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -316,16 +316,16 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // given
             context("hsh-alex_superuser");
 
-            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02300606010002474689");
+            val givenSepaMandate = givenSomeTemporarySepaMandate("DE38990200000002474689");
             assertThatSepaMandateIsVisibleForUserWithRole(
                     givenSepaMandate,
-                    "hs_office.bankaccount#DE02300606010002474689:ADMIN");
+                    "hs_office.bankaccount#DE38990200000002474689:ADMIN");
             assertThatSepaMandateActuallyInDatabase(givenSepaMandate);
             final var newValidityEnd = LocalDate.now();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("hsh-alex_superuser", "hs_office.bankaccount#DE02300606010002474689:ADMIN");
+                context("hsh-alex_superuser", "hs_office.bankaccount#DE38990200000002474689:ADMIN");
 
                 givenSepaMandate.setValidity(Range.closedOpen(
                         givenSepaMandate.getValidity().lower(), newValidityEnd));
@@ -370,7 +370,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         public void globalAdmin_withoutAssumedRole_canDeleteAnySepaMandate() {
             // given
             context("hsh-alex_superuser", null);
-            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02200505501015871393");
+            val givenSepaMandate = givenSomeTemporarySepaMandate("DE20990500001015871393");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -390,7 +390,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         public void nonGlobalAdmin_canNotDeleteTheirRelatedSepaMandate() {
             // given
             context("hsh-alex_superuser", null);
-            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02300209000106531065");
+            val givenSepaMandate = givenSomeTemporarySepaMandate("DE47990600000106531065");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -416,7 +416,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             context("hsh-alex_superuser");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
-            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02600501010002034304");
+            val givenSepaMandate = givenSomeTemporarySepaMandate("DE52990100000002034304");
 
             // when
             final var result = jpaAttempt.transacted(() -> {

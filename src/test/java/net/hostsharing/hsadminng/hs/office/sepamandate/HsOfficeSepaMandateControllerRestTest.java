@@ -381,7 +381,7 @@ class HsOfficeSepaMandateControllerRestTest {
                 .uuid(bankAccountUuid)
                 .holder("Test Holder")
                 .iban("DE123")
-                .bic("GENODEF1HH2")
+                .bic("DEMPDED0")
                 .build();
     }
 }

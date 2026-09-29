@@ -55,7 +55,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             final var result = attempt(em, () -> toCleanup(bankAccountRepo.save(
-                    hsOfficeBankAccount("some temp acc A", "DE37500105177419788228", ""))));
+                    hsOfficeBankAccount("some temp acc A", "DE68990300007419788228", ""))));
 
             // then
             result.assertSuccessful();
@@ -72,7 +72,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             final var result = attempt(em, () -> toCleanup(bankAccountRepo.save(
-                    hsOfficeBankAccount("some temp acc B", "DE49500105174516484892", "INGDDEFFXXX"))));
+                    hsOfficeBankAccount("some temp acc B", "DE80990300004516484892", "DEMRDEF0"))));
 
             // then
             result.assertSuccessful();
@@ -90,28 +90,28 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // when
             attempt(em, () -> toCleanup(bankAccountRepo.save(
-                    hsOfficeBankAccount("some temp acc C", "DE25500105176934832579", "INGDDEFFXXX")))
+                    hsOfficeBankAccount("some temp acc C", "DE56990300006934832579", "DEMRDEF0")))
             ).assertSuccessful();
 
             // then
             final var roles = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office.bankaccount#DE25500105176934832579:OWNER",
-                    "hs_office.bankaccount#DE25500105176934832579:ADMIN",
-                    "hs_office.bankaccount#DE25500105176934832579:REFERRER"
+                    "hs_office.bankaccount#DE56990300006934832579:OWNER",
+                    "hs_office.bankaccount#DE56990300006934832579:ADMIN",
+                    "hs_office.bankaccount#DE56990300006934832579:REFERRER"
             ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant perm:hs_office.bankaccount#DE25500105176934832579:DELETE   to role:hs_office.bankaccount#DE25500105176934832579:OWNER     by system and assume }",
-                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:OWNER    to role:rbac.global#global:ADMIN                                    by system and assume }",
-                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:OWNER    to user:tst-drew_selfregistered               by hs_office.bankaccount#DE25500105176934832579:OWNER and assume }",
+                    "{ grant perm:hs_office.bankaccount#DE56990300006934832579:DELETE   to role:hs_office.bankaccount#DE56990300006934832579:OWNER     by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE56990300006934832579:OWNER    to role:rbac.global#global:ADMIN                                    by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE56990300006934832579:OWNER    to user:tst-drew_selfregistered               by hs_office.bankaccount#DE56990300006934832579:OWNER and assume }",
 
-                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:ADMIN    to role:hs_office.bankaccount#DE25500105176934832579:OWNER     by system and assume }",
-                    "{ grant perm:hs_office.bankaccount#DE25500105176934832579:UPDATE   to role:hs_office.bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE56990300006934832579:ADMIN    to role:hs_office.bankaccount#DE56990300006934832579:OWNER     by system and assume }",
+                    "{ grant perm:hs_office.bankaccount#DE56990300006934832579:UPDATE   to role:hs_office.bankaccount#DE56990300006934832579:ADMIN     by system and assume }",
 
-                    "{ grant perm:hs_office.bankaccount#DE25500105176934832579:SELECT   to role:hs_office.bankaccount#DE25500105176934832579:REFERRER  by system and assume }",
-                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:REFERRER to role:hs_office.bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
+                    "{ grant perm:hs_office.bankaccount#DE56990300006934832579:SELECT   to role:hs_office.bankaccount#DE56990300006934832579:REFERRER  by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE56990300006934832579:REFERRER to role:hs_office.bankaccount#DE56990300006934832579:ADMIN     by system and assume }",
                     null
             ));
         }
@@ -165,7 +165,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
             context("hsh-alex_superuser", null);
 
             // when
-            final var result = bankAccountRepo.findByIbanOrderByIbanAsc("DE02120300000000202051");
+            val result = bankAccountRepo.findByIbanOrderByIbanAsc("DE34990200000000202051");
 
             // then
             exactlyTheseBankAccountsAreReturned(result, "First GmbH");
@@ -278,7 +278,8 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         assertThat(customerLogEntries).map(Arrays::toString).contains(
                 "[creating bankaccount test-data, hs_office.bankaccount, INSERT, DE02120300000000202051]",
                 "[creating bankaccount test-data, hs_office.bankaccount, INSERT, DE02500105170137075030]",
-                "[creating bankaccount test-data, hs_office.bankaccount, INSERT, DE02100500000054540402]");
+                "[moving bankaccount test-data to demo banks, hs_office.bankaccount, UPDATE, DE34990200000000202051]",
+                "[moving bankaccount test-data to demo banks, hs_office.bankaccount, UPDATE, DE33990300000137075030]");
     }
 
     private HsOfficeBankAccountEntity givenSomeTemporaryBankAccount(final String createdByUser) {
@@ -286,8 +287,8 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         return givenSomeTemporaryBankAccount(createdByUser, () ->
                 hsOfficeBankAccount(
                         "some temp acc #" + random,
-                        "DE41500105177739718697",
-                        "INGDDEFFXXX"
+                        "DE72990300007739718697",
+                        "DEMRDEF0"
                 ));
     }
 

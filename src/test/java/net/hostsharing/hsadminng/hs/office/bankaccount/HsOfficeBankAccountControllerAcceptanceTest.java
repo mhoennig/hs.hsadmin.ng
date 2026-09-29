@@ -72,43 +72,43 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                         [
                               {
                                   "holder": "Anita Bessler",
-                                  "iban": "DE02300606010002474689",
-                                  "bic": "DAAEDEDD"
+                                  "iban": "DE38990200000002474689",
+                                  "bic": "DEMVDEH0"
                               },
                               {
                                   "holder": "First GmbH",
-                                  "iban": "DE02120300000000202051",
-                                  "bic": "BYLADEM1001"
+                                  "iban": "DE34990200000000202051",
+                                  "bic": "DEMVDEH0"
                               },
                               {
                                   "holder": "Fourth eG",
-                                  "iban": "DE02200505501015871393",
-                                  "bic": "HASPDEHH"
+                                  "iban": "DE20990500001015871393",
+                                  "bic": "DEMGDEM0"
                               },
                               {
                                   "holder": "Mel Bessler",
-                                  "iban": "DE02100100100006820101",
-                                  "bic": "PBNKDEFF"
+                                  "iban": "DE45990500000006820101",
+                                  "bic": "DEMGDEM0"
                               },
                               {
                                   "holder": "Paul Winkler",
-                                  "iban": "DE02600501010002034304",
-                                  "bic": "SOLADEST600"
+                                  "iban": "DE52990100000002034304",
+                                  "bic": "DEMSDEH0"
                               },
                               {
                                   "holder": "Peter Smith",
-                                  "iban": "DE02500105170137075030",
-                                  "bic": "INGDDEFF"
+                                  "iban": "DE33990300000137075030",
+                                  "bic": "DEMRDEF0"
                               },
                               {
                                   "holder": "Peter Smith - The Second Hand and Thrift Stores-n-Shipping e.K.",
-                                  "iban": "DE02100500000054540402",
-                                  "bic": "BELADEBE"
+                                  "iban": "DE09990100000054540402",
+                                  "bic": "DEMSDEH0"
                               },
                               {
                                   "holder": "Third OHG",
-                                  "iban": "DE02300209000106531065",
-                                  "bic": "CMCIDEDD"
+                                  "iban": "DE47990600000106531065",
+                                  "bic": "DEMPDED0"
                               }
                           ]
                         """
@@ -132,8 +132,8 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                         .body("""
                             {
                                 "holder": "temp test holder",
-                                "iban": "DE88100900001234567892",
-                                "bic": "BEVODEBB"
+                                "iban": "DE71990400001234567892",
+                                "bic": "DEMDDEB0"
                             }
                             """)
                         .port(port)
@@ -144,8 +144,8 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
                         .body("holder", is("temp test holder"))
-                        .body("iban", is("DE88100900001234567892"))
-                        .body("bic", is("BEVODEBB"))
+                        .body("iban", is("DE71990400001234567892"))
+                        .body("bic", is("DEMDDEB0"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
@@ -236,8 +236,8 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                     .body("""
                        {
                            "holder": "temp holder - patched",
-                           "iban": "DE02701500000000594937",
-                           "bic": "SSKMDEMM"
+                           "iban": "DE56990300000000594937",
+                           "bic": "DEMRDEF0"
                        }
                        """)
                     .port(port)
@@ -325,8 +325,8 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
             context.define(creatingUser);
             final var newBankAccount = HsOfficeBankAccountEntity.builder()
                     .holder("temp acc #" + RandomStringUtils.insecure().nextAlphabetic(3))
-                    .iban("DE93500105179473626226")
-                    .bic("INGDDEFFXXX")
+                    .iban("DE27990300009473626226")
+                    .bic("DEMRDEF0")
                     .build();
 
             return bankAccountRepo.save(newBankAccount);

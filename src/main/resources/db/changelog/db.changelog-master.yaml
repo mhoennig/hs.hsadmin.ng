@@ -136,6 +136,11 @@ databaseChangeLog:
     - include:
         file: db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql
     - include:
+        file: db/changelog/5-hs-office/505-bankaccount/5054-hs-office-bank-directory.sql
+    - include:
+        file: db/changelog/5-hs-office/505-bankaccount/5056-hs-office-bank-directory-demo-data.sql
+        context: "!without-test-data or demo-bankcodes"
+    - include:
           file: db/changelog/5-hs-office/505-bankaccount/5058-hs-office-bankaccount-test-data.sql
           context: "!without-test-data"
     - include:

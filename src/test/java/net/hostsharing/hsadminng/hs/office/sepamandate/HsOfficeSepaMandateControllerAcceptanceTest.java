@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
+import lombok.val;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -111,7 +112,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                         .header("Authorization", bearer("hsh-alex_superuser"))
                         .port(port)
                     .when()
-                        .get("http://localhost/api/hs/office/sepamandates?iban=DE02120300000000202051")
+                        .get("http://localhost/api/hs/office/sepamandates?iban=DE34990200000000202051")
                     .then().log().all().assertThat()
                         .statusCode(200)
                         .contentType("application/json")
@@ -121,7 +122,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                              {
                                  "debitor": { "debitorNumber": "D-1000111" },
                                  "bankAccount": {
-                                    "iban": "DE02120300000000202051",
+                                    "iban": "DE34990200000000202051",
                                     "holder": "First GmbH"
                                  },
                                  "reference": "ref-10001-11",
@@ -142,7 +143,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             context.define("hsh-alex_superuser");
             final var givenDebitor = debitorRepo.findDebitorsByOptionalNameLike("Third").get(0);
-            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
+            val givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE20990500001015871393").get(0);
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -165,7 +166,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
                         .body("debitor.partner.partnerNumber", is("P-10003"))
-                        .body("bankAccount.iban", is("DE02200505501015871393"))
+                        .body("bankAccount.iban", is("DE20990500001015871393"))
                         .body("reference", is("temp ref CAT A"))
                         .body("validFrom", is("2022-10-13"))
                         .body("validTo", equalTo(null))
@@ -183,7 +184,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         void globalAdmin_canNotPostNewSepaMandateWhenDebitorUuidIsMissing() {
 
             context.define("hsh-alex_superuser");
-            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
+            val givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE20990500001015871393").get(0);
 
             RestAssured // @formatter:off
                 .given()
@@ -238,7 +239,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             context.define("hsh-alex_superuser");
             final var givenDebitorUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
-            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
+            val givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE20990500001015871393").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -270,7 +271,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void globalAdmin_canGetArbitrarySepaMandate() {
             context.define("hsh-alex_superuser");
-            final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
+            val givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE34990200000000202051")
                     .get(0)
                     .getUuid();
 
@@ -288,7 +289,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                          "debitor": { "debitorNumber": "D-1000111" },
                          "bankAccount": {
                             "holder": "First GmbH",
-                            "iban": "DE02120300000000202051"
+                            "iban": "DE34990200000000202051"
                          },
                          "reference": "ref-10001-11",
                          "validFrom": "2022-10-01",
@@ -300,7 +301,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void normalUser_canNotGetUnrelatedSepaMandate() {
             context.define("hsh-alex_superuser");
-            final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
+            val givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE34990200000000202051")
                     .get(0)
                     .getUuid();
 
@@ -317,7 +318,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         @Test
         void bankAccountAdminUser_canGetRelatedSepaMandate() {
             context.define("hsh-alex_superuser");
-            final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
+            val givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE34990200000000202051")
                     .get(0)
                     .getUuid();
 
@@ -335,7 +336,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                          "debitor": { "debitorNumber": "D-1000111" },
                          "bankAccount": {
                             "holder": "First GmbH",
-                            "iban": "DE02120300000000202051"
+                            "iban": "DE34990200000000202051"
                          },
                          "reference": "ref-10001-11",
                          "validFrom": "2022-10-01",
@@ -373,7 +374,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
                     .body("debitor.debitorNumber", is("D-1000111"))
-                    .body("bankAccount.iban", is("DE02120300000000202051"))
+                    .body("bankAccount.iban", is("DE34990200000000202051"))
                     .body("reference", is("temp ref CAT Z - patched"))
                     .body("agreement", is("2020-06-01"))
                     .body("validFrom", is("2020-06-05"))
@@ -417,7 +418,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
                     .body("debitor.debitorNumber", is("D-1000111"))
-                    .body("bankAccount.iban", is("DE02120300000000202051"))
+                    .body("bankAccount.iban", is("DE34990200000000202051"))
                     .body("reference", is("temp ref CAT Z"))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", is("2022-12-31"));

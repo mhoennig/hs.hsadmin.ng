@@ -17,18 +17,18 @@ class HsOfficeBankAccountEntityUnitTest {
     void toStringReturnsAllProperties() {
         final var givenBankAccount = HsOfficeBankAccountEntity.builder()
                 .holder("given holder")
-                .iban("DE02370502990000684712")
-                .bic("COKSDE33")
+                .iban("DE88990400000000684712")
+                .bic("DEMDDEB0")
                 .build();
-        assertThat(givenBankAccount.toString()).isEqualTo("bankAccount(DE02370502990000684712: holder='given holder', bic='COKSDE33')");
+        assertThat(givenBankAccount.toString()).isEqualTo("bankAccount(DE88990400000000684712: holder='given holder', bic='DEMDDEB0')");
     }
 
     @Test
     void toShotStringReturnsHolder() {
         final var givenBankAccount = HsOfficeBankAccountEntity.builder()
                 .holder("given holder")
-                .iban("DE02370502990000684712")
-                .bic("COKSDE33")
+                .iban("DE88990400000000684712")
+                .bic("DEMDDEB0")
                 .build();
         assertThat(givenBankAccount.toShortString()).isEqualTo("given holder");
     }
