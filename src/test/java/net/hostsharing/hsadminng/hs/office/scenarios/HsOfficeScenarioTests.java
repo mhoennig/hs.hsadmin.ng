@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelations;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFromContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.CreateBankAccount;
+import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.ImportBundesbankBankDirectory;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateDebitorAsBillingSystem;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateSepaMandateAsBillingSystem;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToListRelationsAsBillingSystem;
@@ -572,6 +573,29 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("holder", "Test AG - Austrian bank account of a bank in the directory")
                     .given("iban", "AT049999900000000001")
                     .expected("expectedBic", "DEMOATW0")
+                    .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3015)
+        @Scenario({"307.01"})
+        @Produces("Bank Directory: Bundesbank 2026-09")
+        void shouldImportBundesbankBankDirectory() {
+            new ImportBundesbankBankDirectory(scenarioTest)
+                    .given("bundesbankVersion", "2026-09")
+                    .expected("expectedImportedBanks", 2)
+                    .thenExpectScheduledJobRun();
+        }
+
+        @Test
+        @Order(3016)
+        @Scenario({"307.02"})
+        @Requires("Bank Directory: Bundesbank 2026-09")
+        void shouldCompleteBicOfBankAccountAtNewlyImportedBank() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Test AG - bank account at a newly imported bank")
+                    .given("iban", "DE45980500000000307001")
+                    .expected("expectedBic", "NEUBDEB0XXX")
                     .thenExpect(HttpStatus.CREATED);
         }
     }

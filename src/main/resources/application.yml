@@ -100,6 +100,16 @@ hsadminng:
         # SHA-256 hash (hex) of the API-key for provisioning the global-admin API_KEY subject,
         # e.g. generated via `printf '%s' "$apiKey" | sha256sum`, see ProvisioningApiKeyBootstrap
         provisioning-api-key-sha256: ${HSADMINNG_PROVISIONING_API_KEY_SHA256:}
+    bank-directory:
+        import:
+            # the link of the CSV file on the Bundesbank download page; without it, the import is off,
+            # thus test and demo databases only know the demo banks
+            url: ${HSADMINNG_BANK_DIRECTORY_IMPORT_URL:}
+            initial-delay: PT10S
+            interval: P7D
+            # retries a failed import with exponentially growing delays, e.g. 5, 10, 20 and 40 minutes
+            retry-delay: PT5M
+            max-attempts: 5
 
 metrics:
     distribution:

@@ -20,8 +20,12 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -51,7 +55,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = { HsadminNgApplication.class,
-                    RbacGrantsDiagramService.class },
+                    RbacGrantsDiagramService.class,
+                    ScenarioTest.ScheduledJobsConfiguration.class },
         properties = {
                 "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:17.7-trixie:///scenariosTC}",
                 "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
@@ -93,6 +98,23 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
     @LocalServerPort
     Integer port;
+
+    @Autowired
+    ManualTaskScheduler scheduledJobs;
+
+    @TestConfiguration
+    static class ScheduledJobsConfiguration {
+
+        @Bean
+        ManualTaskScheduler taskScheduler() {
+            return new ManualTaskScheduler();
+        }
+    }
+
+    @DynamicPropertySource
+    static void externalSystems(final DynamicPropertyRegistry registry) {
+        ExternalSystem.registerProperties(registry);
+    }
 
     @Autowired
     protected JpaAttempt jpaAttempt;

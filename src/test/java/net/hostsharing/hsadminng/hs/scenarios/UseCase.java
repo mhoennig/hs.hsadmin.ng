@@ -1,5 +1,9 @@
 package net.hostsharing.hsadminng.hs.scenarios;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import lombok.val;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
@@ -12,6 +16,7 @@ import org.assertj.core.api.AbstractStringAssert;
 import org.hibernate.AssertionFailure;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import tools.jackson.core.JacksonException;
@@ -37,6 +42,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -101,6 +108,32 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final HttpResponse thenExpect(final HttpStatus expectedStatus) {
+        prepare();
+        val response = run(expectedStatus);
+        assertThat(response).as("use case implementation must return main response, never null").isNotNull();
+        if (!response.status.isError()) {
+            verify(response);
+        }
+        keepInProduceAlias(response);
+
+        resetProperties();
+
+        return response;
+    }
+
+    /** For use cases whose main action is a scheduled job, which runs without any request to the backend. */
+    public final ScheduledJobRun thenExpectScheduledJobRun() {
+        prepare();
+        val jobRun = runScheduledJob();
+        assertThat(jobRun).as("use case implementation must return the main scheduled job run, never null").isNotNull();
+        verify(jobRun);
+
+        resetProperties();
+
+        return jobRun;
+    }
+
+    private void prepare() {
         if (introduction != null) {
             testReport.printPara(introduction);
         }
@@ -120,16 +153,6 @@ public abstract class UseCase<T extends UseCase<?>> {
                     }
                 })
         );
-        final var response = run(expectedStatus);
-        assertThat(response).as("use case implementation must return main response, never null").isNotNull();
-        if (!response.status.isError()) {
-            verify(response);
-        }
-        keepInProduceAlias(response);
-
-        resetProperties();
-
-        return response;
     }
 
     private void renderProperties(final String title, final Map<String, Object> properties) {
@@ -157,6 +180,78 @@ public abstract class UseCase<T extends UseCase<?>> {
     protected HttpResponse run() {return null;}
 
     protected void verify(final HttpResponse response) {
+    }
+
+    // this method is called by the test framework for thenExpectScheduledJobRun(), override, but do not call from subclass
+    protected ScheduledJobRun runScheduledJob() {
+        return null;
+    }
+
+    protected void verify(final ScheduledJobRun jobRun) {
+    }
+
+    /** A report section for a step which is no HTTP request to the backend, e.g. of an external system. */
+    protected final void section(final String resolvableTitle, final Runnable step) {
+        testReport.printPara("### " + ScenarioTest.resolve(resolvableTitle, KEEP_COMMENTS));
+        step.run();
+    }
+
+    /** What an external system provides, e.g. a file which the backend fetches on its own. */
+    protected final ExternalSystem.Stub externalSystem(final ExternalSystem system) {
+        return system.new Stub(testReport);
+    }
+
+    /** Runs a scheduled job like its schedule would, and reports the requests to external systems and its log. */
+    protected final ScheduledJobRun whenScheduledJobRuns(final String resolvableTitle, final Class<?> jobClass) {
+        testReport.printPara("### " + ScenarioTest.resolve(resolvableTitle, KEEP_COMMENTS));
+        val requestCountsBefore = Arrays.stream(ExternalSystem.values())
+                .collect(Collectors.toMap(Function.identity(), ExternalSystem::requestCount));
+        val logAppender = new ListAppender<ILoggingEvent>();
+        val rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        logAppender.start();
+        rootLogger.addAppender(logAppender);
+        final String job;
+        try {
+            job = testSuite.scheduledJobs.run(jobClass);
+        } finally {
+            rootLogger.detachAppender(logAppender);
+        }
+
+        val thread = Thread.currentThread().getName();
+        val requests = new LinkedHashMap<ExternalSystem, List<String>>();
+        requestCountsBefore.forEach((system, countBefore) -> requests.put(system, system.requestsSince(countBefore)));
+        val logLines = logAppender.list.stream()
+                .filter(event -> event.getThreadName().equals(thread))
+                .filter(event -> event.getLoggerName().startsWith("net.hostsharing."))
+                .filter(event -> event.getLevel().isGreaterOrEqual(Level.INFO))
+                .map(event -> event.getLevel() + " " + event.getFormattedMessage())
+                .toList();
+
+        testReport.printLine("```");
+        testReport.printLine("scheduled job: " + job);
+        requests.forEach((system, received) ->
+                received.forEach(request -> testReport.printLine(system.getName() + " received: " + request)));
+        logLines.forEach(testReport::printLine);
+        testReport.printLine("```");
+        testReport.printLine("");
+        return new ScheduledJobRun(requests, logLines);
+    }
+
+    public record ScheduledJobRun(Map<ExternalSystem, List<String>> requests, List<String> logLines) {
+
+        public ScheduledJobRun expectingRequests(final ExternalSystem system, final String... resolvableRequests) {
+            assertThat(requests.get(system)).as("requests received by " + system.getName())
+                    .containsExactly(Arrays.stream(resolvableRequests)
+                            .map(request -> ScenarioTest.resolve(request, DROP_COMMENTS))
+                            .toArray(String[]::new));
+            return this;
+        }
+
+        public ScheduledJobRun expectingLog(final String resolvableRegex) {
+            val regex = Pattern.compile(ScenarioTest.resolve(resolvableRegex, DROP_COMMENTS));
+            assertThat(logLines).as("log of the scheduled job").anyMatch(line -> regex.matcher(line).find());
+            return this;
+        }
     }
 
     /** For bulk operations, where a report of every single request would grow unusably large. */

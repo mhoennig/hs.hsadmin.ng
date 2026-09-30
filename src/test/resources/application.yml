@@ -54,6 +54,13 @@ springdoc:
 hsadminng:
     fake-jwt:
         client-hosts: "localhost, 127.0.0.1, [::1]"
+    bank-directory:
+        import:
+            # scenario tests set the url to a stubbed Bundesbank and run the import via the ManualTaskScheduler
+            initial-delay: PT10S
+            interval: P7D
+            retry-delay: PT5M
+            max-attempts: 5
 
 logging:
     level:

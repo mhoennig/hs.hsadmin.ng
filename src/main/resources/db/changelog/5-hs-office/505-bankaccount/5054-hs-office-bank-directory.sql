@@ -46,3 +46,19 @@ insert into hs_office.bank (countryCode, bankCode, bic, source)
         group by bankCode
         having count(*) = 1;
 --//
+
+
+-- ============================================================================
+--changeset michael.hoennig:hs-office-bank-directory-IMPORT-TABLE endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- The Bundesbank publishes each version of its bank-code file under a URL of its own,
+-- thus an already imported URL needs no further import; other outcomes are meant for monitoring the import.
+create table hs_office.bank_directory_import
+(
+    startedAt           timestamp with time zone primary key default clock_timestamp(),
+    outcome             varchar(10) not null check (outcome in ('IMPORTED', 'UNCHANGED', 'FAILED')),
+    sourceUrl           varchar(512),
+    bankCount           integer
+);
+--//

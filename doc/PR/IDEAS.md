@@ -63,3 +63,24 @@ Conventions:
       Rename the security switch, for example to `@Profile("!mock-security")`,
       then the infrastructure settings fit the ordinary Spring Boot pattern:
       an `application-test.yml` which every test activates, with no shadowing and no repetition.
+
+- [ ] TODO.refa: Replace the negative Liquibase context `without-test-data` by a positive `test-data`.
+      Today a start without `without-test-data` inserts test data irreversibly and unnoticed,
+      e.g. into production; with `test-data` the default would be an empty database.
+      The `bootRun` calls in `.aliases`, `README.md` and `tools/smoke-test` already pass `test-data`,
+      but no changeset reads it yet.
+      Invert about 55 `!without-test-data` contexts in the changelogs, including the `2-rbactest` schema,
+      `5056-…` becomes `test-data or demo-bankcodes`.
+      Add `test-data` to the test `contexts`, drop `without-test-data` from `ImportHostingAssets`,
+      `DemoDataScenarioTest` and `tools/demo-data`, and coordinate the deployment profiles with Ops.
+      `migrationTest` must prove that the changed contexts keep the released checksums.
+
+- [ ] TODO.feat: Import the Bundesbank bank-code file from the NExt platform instead of the public, non-binding download.
+      NExt offers the binding version via REST with OAuth2 client credentials,
+      but needs two registrations: Hostsharing as a legal entity via routing@bundesbank.de
+      and a technical client via next@bundesbank.de; the API documentation is available on request only.
+      `HsOfficeBankDirectoryImporter` (PR#307) could switch the source via a property like
+      `hsadminng.bank-directory.import.source=public|next` and keep parsing and replacing the rows.
+      NExt differs in finding the version: list the provisions instead of following a redirect,
+      pick the one valid today (older and next versions are provided as well),
+      and cope with the download confirmation after which a file may no longer be available.

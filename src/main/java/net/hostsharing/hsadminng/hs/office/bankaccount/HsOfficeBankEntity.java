@@ -29,7 +29,7 @@ public class HsOfficeBankEntity {
         DEMO,
         EXISTING,   // seeded once from the existing bank accounts, thus names are unknown, and BIC might be wrong
         MANUAL,     // manually added by admin
-        BUNDESBANK  // reserved for an import of the Bundesbank bank-code file
+        BUNDESBANK  // imported by HsOfficeBankDirectoryImporter
     }
 
     @Id

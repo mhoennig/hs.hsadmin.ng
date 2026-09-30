@@ -29,6 +29,8 @@ watcher:
 
 builds:
   default:
+    # can only shorten the host limit executor.buildTimeout, never extend it
+    timeout: 30m
     trigger:
       onPush: true
       branches: ["*", "!master"]
@@ -58,6 +60,8 @@ builds:
         HSADMINNG_POSTGRES_RESTRICTED_USERNAME: "restricted"
 
   release:
+    # without the pitest cache, a release build takes about 28.5 minutes, and it would inherit the 30m of default
+    timeout: 60m
     trigger:
       onPush: true
       atTimes: ["01:00"]
