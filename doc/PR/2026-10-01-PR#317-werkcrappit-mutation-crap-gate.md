@@ -55,7 +55,7 @@ denn der Mutation-CRAP ist nie kleiner als die Komplexität.
 | Jetzt | Klasse und Methode                                            |  C | getötet | danach |
 |------:|---------------------------------------------------------------|---:|--------:|-------:|
 | 12,72 | `Context.maskProperties`                                      |  6 |     3/7 |   6,00 |
-| 12,41 | `IntegerProperty.deferredInit`                                |  5 |     2/6 |   8,13 |
+| 12,41 | `IntegerProperty.deferredInit`                                |  5 |     2/6 |   5,00 |
 | 12,00 | `HsDomainDnsSetupHostingAssetValidator.toZonefileString`      | 12 |   12/12 |    ≤ 9 |
 | 12,00 | `Stringify.<init>`                                            |  3 |     0/2 |   4,13 |
 | 12,00 | `HsOfficePartnerController.optionallyCreateExPartnerRelation` |  3 |     0/2 |   4,13 |
