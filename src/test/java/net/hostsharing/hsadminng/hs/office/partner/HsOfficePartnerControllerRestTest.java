@@ -33,6 +33,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.Query;
 import jakarta.persistence.SynchronizationType;
 import java.util.List;
 import java.util.Map;
@@ -42,9 +43,15 @@ import java.util.UUID;
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.equalTo;
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.EX_PARTNER;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -415,6 +422,68 @@ class HsOfficePartnerControllerRestTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("details.registrationOffice", is("Registergericht Hamburg")))
                 .andExpect(jsonPath("details.registrationNumber", is("222222")));
+    }
+
+    @Test
+    void patchingPartnerPersonCreatesExPartnerRelationForPreviousPartnerPerson() throws Exception {
+        // given
+        val partnerUuid = UUID.randomUUID();
+        val current = givenPartner(partnerUuid, 12345);
+        val previousPartnerPerson = current.getPartnerRel().getHolder();
+        when(partnerRepo.findByUuid(partnerUuid)).thenReturn(Optional.of(current));
+        when(partnerRepo.save(any(HsOfficePartnerRbacEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rbacPersonRepo.findVisibleByUuid(GIVEN_PERSON_UUID)).thenReturn(Optional.of(person));
+        val nativeQuery = mock(Query.class);
+        when(nativeQuery.setParameter(anyString(), any())).thenReturn(nativeQuery);
+        when(em.createNativeQuery(anyString())).thenReturn(nativeQuery);
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .patch("/api/hs/office/partners/" + partnerUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                  {
+                                      "partnerRel": {
+                                          "holder.uuid": "%s"
+                                      }
+                                  }
+                                """.formatted(GIVEN_PERSON_UUID))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isOk());
+        verify(rbacRelationRepo).save(argThat(relation ->
+                relation.getType() == EX_PARTNER
+                        && relation.getAnchor() == person
+                        && relation.getHolder() == previousPartnerPerson));
+    }
+
+    @Test
+    void patchingPartnerWithoutChangingPartnerPersonCreatesNoExPartnerRelation() throws Exception {
+        // given
+        val partnerUuid = UUID.randomUUID();
+        val current = givenPartner(partnerUuid, 12345);
+        when(partnerRepo.findByUuid(partnerUuid)).thenReturn(Optional.of(current));
+        when(partnerRepo.save(any(HsOfficePartnerRbacEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .patch("/api/hs/office/partners/" + partnerUuid)
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                  {
+                                      "details": {
+                                          "registrationNumber": "222222"
+                                      }
+                                  }
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isOk());
+        verify(rbacRelationRepo, never()).save(any());
     }
 
     private HsOfficePartnerRbacEntity givenPartner(final UUID uuid, final int partnerNumber) {

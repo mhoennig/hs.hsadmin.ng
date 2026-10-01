@@ -58,7 +58,7 @@ denn der Mutation-CRAP ist nie kleiner als die Komplexität.
 | 12,41 | `IntegerProperty.deferredInit`                                |  5 |     2/6 |   5,00 |
 | 12,00 | `HsDomainDnsSetupHostingAssetValidator.toZonefileString`      | 12 |   12/12 |   1,00 |
 | 12,00 | `Stringify.<init>`                                            |  3 |     0/2 |   3,00 |
-| 12,00 | `HsOfficePartnerController.optionallyCreateExPartnerRelation` |  3 |     0/2 |   4,13 |
+| 12,00 | `HsOfficePartnerController.optionallyCreateExPartnerRelation` |  3 |     0/2 |   3,00 |
 | 11,60 | `HsOfficeDebitorController.postNewDebitor`                    |  7 |    6/11 |   9,36 |
 
 Was jeweils fehlte:
