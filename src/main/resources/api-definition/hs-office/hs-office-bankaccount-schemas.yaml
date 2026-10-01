@@ -21,6 +21,33 @@ components:
                     description: |
                         The name of the bank, looked up in the bank directory by the country and bank code of the IBAN.
                         Empty for a bank which is not in the directory, which only happens outside Germany.
+                issues:
+                    $ref: '#/components/schemas/HsOfficeBankAccountIssues'
+
+        HsOfficeBankAccountIssues:
+            type: object
+            description: Only present if the bank account has any issue.
+            properties:
+                bankDirectoryMismatch:
+                    $ref: '#/components/schemas/HsOfficeBankAccountBankDirectoryMismatch'
+
+        HsOfficeBankAccountBankDirectoryMismatch:
+            type: object
+            description: The German bank account does not match the bank directory, e.g. after an import of a new Bundesbank bank-code file.
+            properties:
+                reason:
+                    type: string
+                    enum:
+                        - UNKNOWN_BANK_CODE
+                        - BIC_MISMATCH
+                bankCode:
+                    type: string
+                expectedBic:
+                    type: string
+                    description: The BIC of the bank directory; missing if the bank code is unknown.
+            required:
+                - reason
+                - bankCode
 
         HsOfficeBankAccountInsert:
             type: object

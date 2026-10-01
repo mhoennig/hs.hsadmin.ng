@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -45,6 +46,7 @@ public class HsOfficeBankDirectoryImporter {
     private final JdbcTemplate jdbc;
     private final TransactionTemplate transaction;
     private final TaskScheduler scheduler;
+    private final ApplicationEventPublisher events;
     private final URI sourceUrl;
     private final Duration retryDelay;
     private final int maxAttempts;
@@ -57,12 +59,14 @@ public class HsOfficeBankDirectoryImporter {
             final JdbcTemplate jdbc,
             final PlatformTransactionManager transactionManager,
             final TaskScheduler scheduler,
+            final ApplicationEventPublisher events,
             @Value("${hsadminng.bank-directory.import.url}") final URI sourceUrl,
             @Value("${hsadminng.bank-directory.import.retry-delay}") final Duration retryDelay,
             @Value("${hsadminng.bank-directory.import.max-attempts}") final int maxAttempts) {
         this.jdbc = jdbc;
         this.transaction = new TransactionTemplate(transactionManager);
         this.scheduler = scheduler;
+        this.events = events;
         this.sourceUrl = sourceUrl;
         this.retryDelay = retryDelay;
         this.maxAttempts = maxAttempts;
@@ -72,6 +76,10 @@ public class HsOfficeBankDirectoryImporter {
     }
 
     public record BankCodeFile(List<Bank> banks, Set<String> deletedBankCodes) {
+    }
+
+    /** Lets those who use bank accounts check them against the new version without this package knowing them. */
+    public record Imported(URI sourceUrl) {
     }
 
     @Scheduled(
@@ -91,6 +99,7 @@ public class HsOfficeBankDirectoryImporter {
             val file = parse(download(currentUrl));
             transaction.executeWithoutResult(status -> replaceBundesbankRows(currentUrl, file));
             log.info("bank directory {} imported with {} banks", currentUrl, file.banks().size());
+            checkAgainst(currentUrl);
         } catch (final IOException | RuntimeException exc) {
             retryOrGiveUp(attempt, exc);
         } catch (final InterruptedException exc) {
@@ -108,6 +117,15 @@ public class HsOfficeBankDirectoryImporter {
         } else {
             log.error("bank directory import from {} failed {} times, the possibly outdated previous version stays in use",
                     sourceUrl, maxAttempts, exc);
+        }
+    }
+
+    // the import stays valid even if a check against it fails
+    private void checkAgainst(final URI currentUrl) {
+        try {
+            events.publishEvent(new Imported(currentUrl));
+        } catch (final RuntimeException exc) {
+            log.warn("bank directory {} is imported, but a check against it failed", currentUrl, exc);
         }
     }
 

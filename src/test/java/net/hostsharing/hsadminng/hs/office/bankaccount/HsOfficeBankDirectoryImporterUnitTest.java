@@ -142,7 +142,7 @@ class HsOfficeBankDirectoryImporterUnitTest {
             bundesbank = new WireMockServer(options().dynamicPort());
             bundesbank.start();
             importer = new HsOfficeBankDirectoryImporter(
-                    jdbc, mock(PlatformTransactionManager.class), scheduler,
+                    jdbc, mock(PlatformTransactionManager.class), scheduler, event -> {},
                     URI.create(bundesbank.baseUrl() + "/blob/0/blz.csv"), Duration.ofMinutes(5), 5);
         }
 

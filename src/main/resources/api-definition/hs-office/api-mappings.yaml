@@ -15,6 +15,8 @@ map:
         - type: string:format => java.lang.String
         - type: number:currency => java.math.BigDecimal
         - type: number:integer => java.lang.Integer
+        # a bank account renders its issues only if there are any, instead of as null
+        - type: HsOfficeBankAccount @ com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
 
     paths:
         /api/hs/office/partners/{partnerUUID}:

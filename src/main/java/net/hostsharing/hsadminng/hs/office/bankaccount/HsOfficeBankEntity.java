@@ -12,8 +12,10 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.val;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 /** A bank from the bank directory, keyed by the country code and the national bank code of its IBANs. */
 @Entity
@@ -47,13 +49,24 @@ public class HsOfficeBankEntity {
     @Enumerated(EnumType.STRING)
     private Source source;
 
-    /** Compares BICs ignoring the optional 'XXX' branch code suffix. */
+    /** Compares BICs ignoring blanks, case and the optional 'XXX' branch code suffix. */
     public boolean hasBic(final String otherBic) {
         return bic != null && normalized(bic).equals(normalized(otherBic));
     }
 
     private static String normalized(final String bic) {
-        return bic.length() == 11 && bic.endsWith("XXX") ? bic.substring(0, 8) : bic;
+        val compact = bic.replace(" ", "").toUpperCase();
+        return compact.length() == 11 && compact.endsWith("XXX") ? compact.substring(0, 8) : compact;
+    }
+
+    /** Bank accounts entered before the bank directory was complete might not match it; a bank without BIC matches any. */
+    public static boolean matches(final HsOfficeBankEntity bankOrNull, final String bic) {
+        return bankOrNull != null && (bankOrNull.bic == null || bankOrNull.hasBic(bic));
+    }
+
+    public static Optional<String> germanBankCodeOf(final String iban) {
+        val compact = iban.replace(" ", "").toUpperCase();
+        return compact.startsWith("DE") && compact.length() >= 12 ? Optional.of(compact.substring(4, 12)) : Optional.empty();
     }
 
     @NoArgsConstructor

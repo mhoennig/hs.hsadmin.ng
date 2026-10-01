@@ -95,3 +95,6 @@ Conventions:
       and the next bank account at the same bank neither gets its BIC completed nor shows a bank name.
       Open: where the bank name comes from, and whether a known bank code with a different BIC
       updates the entry or stays a per-account override; the Bundesbank import replaces German entries anyway.
+- [ ] TODO.refa: Rename `HsOfficeCoopAssetsTransactionRepository` and its entity with the `Rbac` infix,
+      as they read the RBAC view `hs_office.coopassettx_rv` beside `HsOfficeCoopAssetsTransactionRealRepository`;
+      everywhere else a repository with a `Real` variant names its RBAC variant `…RbacRepository`.

@@ -16,7 +16,10 @@ public class ImportBundesbankBankDirectory extends UseCase<ImportBundesbankBankD
 
         introduction("""
                 The Bundesbank publishes a new bank-code file every quarter;
-                the backend imports it on its own, nobody triggers it.
+                the backend imports it on its own, nobody triggers it,
+                and checks the bank accounts of all SEPA mandates which are valid today or later.
+                The required SEPA mandates and bank accounts were entered before the import, via overrideBankDirectory,
+                because the bank directory did not know their banks.
                 """);
     }
 
@@ -37,6 +40,8 @@ public class ImportBundesbankBankDirectory extends UseCase<ImportBundesbankBankD
     @Override
     protected void verify(final ScheduledJobRun jobRun) {
         jobRun.expectingRequests(BUNDESBANK, "HEAD /blz-aktuell.csv", "GET /%{bundesbankVersion}/blz.csv")
-                .expectingLog("bank directory .*/%{bundesbankVersion}/blz.csv imported with %{expectedImportedBanks} banks");
+                .expectingLog("bank directory .*/%{bundesbankVersion}/blz.csv imported with %{expectedImportedBanks} banks")
+                .expectingLog("%{expectedSepaMandatesWithIssues} valid SEPA mandates have a bank account "
+                        + "which does not match the bank directory .*, GET /api/hs/office/sepamandates\\?issues=true lists them");
     }
 }

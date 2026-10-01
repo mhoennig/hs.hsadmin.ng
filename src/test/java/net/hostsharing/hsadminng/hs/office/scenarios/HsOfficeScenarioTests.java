@@ -24,13 +24,16 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSelfDebitorFo
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DeleteDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DontDeleteDefaultDebitor;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FetchSepaMandateWithBankAccountIssue;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FinallyDeleteSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllDebitorsWithCompleteMasterData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllValidSepaMandates;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListDebitorsWithCompleteMasterData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListSepaMandatesOfDebitorWithBankName;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListSepaMandatesWithIssues;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListValidSepaMandatesOfDebitor;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListValidSepaMandatesWithoutIssues;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.ChangeMembershipFeeExemption;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
@@ -509,7 +512,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
         @Test
         @Order(3005)
-        @Scenario({"302.05"})
+        @Scenario({"302.05", "311.05"})
         void shouldAcceptMismatchingBicForGlobalAdminWithOverride() {
             new CreateBankAccount(scenarioTest, asSubject("hsh-alex_superuser").whichIs("a global admin"))
                     .given("holder", "Test AG - BIC override by global admin")
@@ -518,6 +521,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("overrideBankDirectory", true)
                     .expected("expectedBic", "GENODEMIGLS")
                     .expected("expectedBankName", "Regionalbank Musterhausen")
+                    .expected("expectedIssueReason", "BIC_MISMATCH")
+                    .expected("expectedDirectoryBic", "DEMRDEF0")
                     .thenExpect(HttpStatus.CREATED);
         }
 
@@ -620,19 +625,121 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .thenExpect(HttpStatus.OK);
         }
 
+        // the following bank accounts were entered before the bank-directory import, thus only via overrideBankDirectory
+
         @Test
         @Order(3015)
-        @Scenario({"307.01"})
-        @Produces("Bank Directory: Bundesbank 2026-09")
-        void shouldImportBundesbankBankDirectory() {
-            new ImportBundesbankBankDirectory(scenarioTest)
-                    .given("bundesbankVersion", "2026-09")
-                    .expected("expectedImportedBanks", 2)
-                    .thenExpectScheduledJobRun();
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+        @Produces("SEPA-Mandate: Michelle Matthieu - wrong BIC")
+        void shouldCreateValidSepaMandateWithWrongBicBeforeBankDirectoryImport() {
+            new CreateSepaMandateForDebitor(scenarioTest)
+                    .given("debitorNumber", "D-3101100")
+                    .given("mandateReference", "Michelle Matthieu - wrong BIC")
+                    .given("mandateAgreement", "2024-12-01")
+                    .given("mandateValidFrom", "2025-01-01")
+                    .given("bankAccountHolder", "Michelle Matthieu - wrong BIC")
+                    .given("bankAccountIBAN", "DE42980600000000307002")
+                    .given("bankAccountBIC", "FUSNDEB0XXX")
+                    .given("bankAccountOverrideBankDirectory", true)
+                    // no expectedBankName, because this bank is not in the directory before the import
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
         }
 
         @Test
         @Order(3016)
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+        @Produces("SEPA-Mandate: Michelle Matthieu - unknown bank code")
+        void shouldCreateValidSepaMandateWithUnknownBankCodeBeforeBankDirectoryImport() {
+            new CreateSepaMandateForDebitor(scenarioTest)
+                    .given("debitorNumber", "D-3101100")
+                    .given("mandateReference", "Michelle Matthieu - unknown bank code")
+                    .given("mandateAgreement", "2024-12-01")
+                    .given("mandateValidFrom", "2025-01-01")
+                    .given("bankAccountHolder", "Michelle Matthieu - unknown bank code")
+                    .given("bankAccountIBAN", "DE39980700000000307003")
+                    .given("bankAccountBIC", "AUSLDEB0XXX")
+                    .given("bankAccountOverrideBankDirectory", true)
+                    // no expectedBankName, because this bank is not in the directory
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
+        }
+
+        @Test
+        @Order(3017)
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+        @Produces("SEPA-Mandate: Michelle Matthieu - expired, wrong BIC")
+        void shouldCreateExpiredSepaMandateWithWrongBicBeforeBankDirectoryImport() {
+            new CreateSepaMandateForDebitor(scenarioTest)
+                    .given("debitorNumber", "D-3101100")
+                    .given("mandateReference", "Michelle Matthieu - expired, wrong BIC")
+                    .given("mandateAgreement", "2024-12-01")
+                    .given("mandateValidFrom", "2025-01-01")
+                    .given("mandateValidTo", "2025-12-31")
+                    .given("bankAccountHolder", "Michelle Matthieu - expired, wrong BIC")
+                    .given("bankAccountIBAN", "DE58980600000000307005")
+                    .given("bankAccountBIC", "FUSNDEB0XXX")
+                    .given("bankAccountOverrideBankDirectory", true)
+                    // no expectedBankName, because this bank is not in the directory before the import
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
+        }
+
+        @Test
+        @Order(3025)
+        @Requires("Debitor: D-3101100 - Michelle Matthieu")
+        @Produces("SEPA-Mandate: Michelle Matthieu - never valid, wrong BIC")
+        void shouldCreateNeverValidSepaMandateWithWrongBic() {
+            new CreateSepaMandateForDebitor(scenarioTest)
+                    .given("debitorNumber", "D-3101100")
+                    .given("mandateReference", "Michelle Matthieu - never valid, wrong BIC")
+                    .given("mandateAgreement", "2024-12-01")
+                    // validTo before validFrom gives an empty validity
+                    .given("mandateValidFrom", "2025-01-01")
+                    .given("mandateValidTo", "2024-12-31")
+                    .given("bankAccountHolder", "Michelle Matthieu - never valid, wrong BIC")
+                    .given("bankAccountIBAN", "DE74980600000000307008")
+                    .given("bankAccountBIC", "FUSNDEB0XXX")
+                    .given("bankAccountOverrideBankDirectory", true)
+                    .expected("expectedBankName", "Fusionsbank")
+                    .thenExpect(HttpStatus.OK)
+                    .keep();
+        }
+
+        @Test
+        @Order(3018)
+        @Produces("BankAccount: Michelle Matthieu - without SEPA-mandate, wrong BIC")
+        void shouldCreateBankAccountWithoutSepaMandateWithWrongBicBeforeBankDirectoryImport() {
+            new CreateBankAccount(scenarioTest)
+                    .given("holder", "Michelle Matthieu - without SEPA-mandate, wrong BIC")
+                    .given("iban", "DE85980600000000307004")
+                    .given("bic", "FUSNDEB0XXX")
+                    .given("overrideBankDirectory", true)
+                    .expected("expectedBic", "FUSNDEB0XXX")
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
+        }
+
+        @Test
+        @Order(3019)
+        @Scenario({"307.01", "311.01"})
+        @Requires({
+                "SEPA-Mandate: Michelle Matthieu - wrong BIC",
+                "SEPA-Mandate: Michelle Matthieu - unknown bank code",
+                "SEPA-Mandate: Michelle Matthieu - expired, wrong BIC",
+                "BankAccount: Michelle Matthieu - without SEPA-mandate, wrong BIC" })
+        @Produces("Bank Directory: Bundesbank 2026-09")
+        void shouldImportBundesbankBankDirectoryAndLogSepaMandatesWithIssues() {
+            new ImportBundesbankBankDirectory(scenarioTest)
+                    .given("bundesbankVersion", "2026-09")
+                    .expected("expectedImportedBanks", 2)
+                    // the valid SEPA mandates with wrong BIC and with unknown bank code, not the expired one
+                    .expected("expectedSepaMandatesWithIssues", 2)
+                    .thenExpectScheduledJobRun();
+        }
+
+        @Test
+        @Order(3020)
         @Scenario({"307.02"})
         @Requires("Bank Directory: Bundesbank 2026-09")
         void shouldCompleteBicOfBankAccountAtNewlyImportedBank() {
@@ -728,6 +835,31 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .expected("minimumMandateCount", 4)
                     .expected("validMandateReference", "Test AG - main debitor")
                     .expected("unexpectedMandateReference", "Test AG - former bank account")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3104)
+        @Scenario({"311.02"})
+        @Requires({ "Bank Directory: Bundesbank 2026-09", "SEPA-Mandate: Michelle Matthieu - never valid, wrong BIC" })
+        void shouldListValidSepaMandatesWithBankAccountIssuesAfterBundesbankImport() {
+            new ListSepaMandatesWithIssues(scenarioTest)
+                    .given("holderPrefix", "Michelle Matthieu")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3105)
+        @Scenario({"311.03"})
+        @Requires({ "Debitor: D-3101100 - Michelle Matthieu", "Bank Directory: Bundesbank 2026-09" })
+        void shouldShowIssueOfSepaMandateWithBankAccountWhoseBicGlobalAdminAccepted() {
+            new FetchSepaMandateWithBankAccountIssue(scenarioTest)
+                    .given("bankAccountHolder", "Michelle Matthieu - BIC override by global admin")
+                    .given("bankAccountIBAN", "DE07980500000000307006")
+                    .given("bankAccountBIC", "NEUBDEFFXXX")
+                    .expected("expectedBankCode", "98050000")
+                    .expected("expectedDirectoryBic", "NEUBDEB0XXX")
+                    .expected("expectedBankName", "Neue Beispielbank")
                     .thenExpect(HttpStatus.OK);
         }
 
@@ -833,6 +965,24 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("debitorNumber", "D-3101100")
                     .expected("partnerNumber", "P-31011")
                     .expected("contactCity", "Hamburg")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3205)
+        @Scenario("311.04")
+        @Requires({
+                BILLING_MDA_API_KEY,
+                "SEPA-Mandate: Michelle Matthieu - wrong BIC",
+                "SEPA-Mandate: Michelle Matthieu - unknown bank code",
+                "SEPA-Mandate: Michelle Matthieu - expired, wrong BIC",
+                "Bank Directory: Bundesbank 2026-09" })
+        void shouldListValidSepaMandatesWithoutIssuesForBillingMda() {
+            new ListValidSepaMandatesWithoutIssues(scenarioTest)
+                    // the expired SEPA-mandate is still valid at this key date
+                    .given("validAt", "2025-06-01")
+                    .given("holderPrefix", "Michelle Matthieu")
+                    .expected("validMandateReference", "ref-10001-11")
                     .thenExpect(HttpStatus.OK);
         }
 

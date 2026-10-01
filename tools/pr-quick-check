@@ -15,7 +15,9 @@ from pathlib import Path
 # spelled apart, or this tool's own messages would be findings of the very check they report
 MARKER_WORD = "FIX" + "ME"
 MAX_PR_DOC_LINES = 200
-MAX_SCOPE_SCORE = 35
+# a file counts as much as 15 changed lines, so that small touches weigh less than whole classes;
+# together with a maximum below 100 the limit is also easier to remember
+MAX_SCOPE_SCORE = 99
 # A build may run a few days after the release date was set, e.g. after a rebase or a queued CI.
 RELEASE_DATE_TOLERANCE_DAYS = 2
 # Beyond this, a branch is stale rather than open work, and its conflicts are noise.
@@ -26,7 +28,7 @@ PR_DOC_LINES_PER_FILE = 3
 # keeps it from competing with the prose around it, yet makes each further scenario cost a few lines
 PR_DOC_LINES_PER_SCENARIO = 12
 SCENARIO_HEADING = re.compile(r"^#### Scenario#", re.MULTILINE)
-CHANGE_LINES_PER_SCOPE_POINT = 100
+CHANGE_LINES_PER_SCOPE_POINT = 15
 CHANGE_LINES_PER_PR_DOC_LINE = 10
 MAX_COMMENT_RATIO_PERCENT = 12
 # a small change would otherwise have no room at all for the one comment that earns its place
@@ -931,8 +933,8 @@ checks:
   - all non-ignored, untracked files are explicitly allowed
 
 size budgets:
-  scope score = logical files + ceil(substantive changed lines / 100)
-  maximum scope score = 35
+  scope score = logical files + ceil(substantive changed lines / 15)
+  maximum scope score = 99
 
   PR-document lines =
       {PR_DOC_LINES_PER_SCENARIO} * scenarios + min(200, 50 + 3 * logical files + ceil(substantive changed lines / 10))

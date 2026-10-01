@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// TODO.refa: rename to HsOfficeSepaMandateRbacRepository and its entity to HsOfficeSepaMandateRbacEntity,
+//  as it reads the RBAC view, beside HsOfficeSepaMandateRealRepository
 public interface HsOfficeSepaMandateRepository extends Repository<HsOfficeSepaMandateEntity, UUID> {
 
     @Timed("app.office.sepaMandates.repo.findByUuid")

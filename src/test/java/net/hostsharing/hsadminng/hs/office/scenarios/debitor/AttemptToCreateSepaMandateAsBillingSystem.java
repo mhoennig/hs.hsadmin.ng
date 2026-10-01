@@ -23,7 +23,7 @@ public class AttemptToCreateSepaMandateAsBillingSystem extends BillingUseCase<At
         return withTitle("Attempt to Create a SEPA-Mandate", () ->
                 httpPost(asBillingSystem(), "/api/hs/office/sepamandates", usingJsonBody("""
                         {
-                            "debitor.uuid": ${Debitor: Test AG - main debitor},
+                            "debitor.uuid": ${Debitor: D-3101000 - Test AG - main debitor},
                             "bankAccount.uuid": ${BankAccount: Test AG - debit bank account},
                             "reference": "never created",
                             "agreement": "2026-09-01",

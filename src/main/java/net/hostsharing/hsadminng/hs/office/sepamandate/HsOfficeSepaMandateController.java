@@ -5,6 +5,7 @@ import lombok.val;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.hostsharing.hsadminng.rbac.context.Context;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountIssues;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeSepaMandatesApi;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -50,6 +52,9 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Autowired
     private HsOfficeSepaMandateRepository sepaMandateRepo;
 
+    @Autowired
+    private HsOfficeBankAccountIssues bankAccountIssues;
+
     @Override
     @Transactional(readOnly = true)
     @Timed("app.office.sepaMandates.api.getListOfSepaMandates")
@@ -58,7 +63,8 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
             final String iban,
             final UUID debitorUuid,
             final String debitorNumber,
-            final LocalDate validAt) {
+            final LocalDate validAt,
+            final Boolean issues) {
         context.assumeRoles(assumedRoles);
 
         if (debitorUuid != null && debitorNumber != null) {
@@ -69,18 +75,38 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
             if (debitor.isEmpty()) {
                 return ResponseEntity.ok(List.of());
             }
-            return listOfSepaMandates(iban, debitor.get().getUuid(), validAt);
+            return listOfSepaMandates(iban, debitor.get().getUuid(), validAt, issues);
         }
-        return listOfSepaMandates(iban, debitorUuid, validAt);
+        return listOfSepaMandates(iban, debitorUuid, validAt, issues);
     }
 
     private ResponseEntity<List<HsOfficeSepaMandateResource>> listOfSepaMandates(
-            final String iban, final UUID debitorUuid, final LocalDate validAt) {
-        val entities = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(iban, debitorUuid, validAt);
+            final String iban, final UUID debitorUuid, final LocalDate validAt, final Boolean issues) {
+        val onlyWithIssues = Boolean.TRUE.equals(issues);
+        val resources = sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(iban, debitorUuid, validAt).stream()
+                .filter(entity -> !onlyWithIssues || validAt != null || isValidTodayOrLater(entity))
+                .map(entity -> mapper.map(entity, HsOfficeSepaMandateResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER))
+                .toList();
+        bankAccountIssues.addTo(resources.stream().map(HsOfficeSepaMandateResource::getBankAccount).filter(Objects::nonNull).toList());
+        return ResponseEntity.ok(resources.stream()
+                .filter(resource -> issues == null || issues == hasBankAccountIssues(resource))
+                .toList());
+    }
 
-        final var resources = mapper.mapList(entities, HsOfficeSepaMandateResource.class,
-                SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
-        return ResponseEntity.ok(resources);
+    // an empty validity, e.g. from validTo before validFrom, has no upper bound either, but is never valid
+    private static boolean isValidTodayOrLater(final HsOfficeSepaMandateEntity entity) {
+        val validity = entity.getValidity();
+        return !validity.isEmpty() && (validity.upper() == null || validity.upper().isAfter(LocalDate.now()));
+    }
+
+    private static boolean hasBankAccountIssues(final HsOfficeSepaMandateResource resource) {
+        return resource.getBankAccount() != null && resource.getBankAccount().getIssues() != null;
+    }
+
+    private HsOfficeSepaMandateResource toResource(final HsOfficeSepaMandateEntity entity) {
+        val resource = mapper.map(entity, HsOfficeSepaMandateResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
+        bankAccountIssues.addTo(resource.getBankAccount());
+        return resource;
     }
 
     @Override
@@ -101,9 +127,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
                         .path("/api/hs/office/sepamandates/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
-        final var mapped = mapper.map(saved, HsOfficeSepaMandateResource.class,
-                SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
-        return ResponseEntity.created(uri).body(mapped);
+        return ResponseEntity.created(uri).body(toResource(saved));
     }
 
     @Override
@@ -119,8 +143,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeSepaMandateResource.class,
-                SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER));
+        return ResponseEntity.ok(toResource(result.get()));
     }
 
     @Override
@@ -154,8 +177,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         new HsOfficeSepaMandateEntityPatcher(current).apply(body);
 
         final var saved = sepaMandateRepo.save(current);
-        final var mapped = mapper.map(saved, HsOfficeSepaMandateResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
-        return ResponseEntity.ok(mapped);
+        return ResponseEntity.ok(toResource(saved));
     }
 
     final BiConsumer<HsOfficeSepaMandateEntity, HsOfficeSepaMandateResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {

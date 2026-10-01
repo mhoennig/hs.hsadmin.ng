@@ -33,6 +33,16 @@ get:
               type: string
               format: date
           description: Key date, only SEPA Mandates whose validity contains this date are returned.
+        - name: issues
+          in: query
+          required: false
+          schema:
+              type: boolean
+          description: |
+              If true, only SEPA Mandates whose bank account has `issues` are returned,
+              without `validAt` only those which are valid today or later.
+              If false, only SEPA Mandates whose bank account has no `issues` are returned.
+              If missing, SEPA Mandates are returned regardless of `issues`.
     responses:
         "200":
             description: OK

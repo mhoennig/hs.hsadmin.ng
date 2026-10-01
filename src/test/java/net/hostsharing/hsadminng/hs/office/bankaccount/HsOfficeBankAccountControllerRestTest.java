@@ -27,15 +27,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeBankAccountController.class)
 @Import({ StrictMapper.class,
+          HsOfficeBankAccountIssues.class,
           MessageTranslator.class,
           WebSecurityConfigForWebMvcTests.class })
 @ActiveProfiles({"fake-jwt", "test"})
@@ -117,7 +121,9 @@ class HsOfficeBankAccountControllerRestTest {
                     .andExpect(jsonPath("uuid", is(bankAccountUuid.toString())))
                     .andExpect(jsonPath("holder", is("Test Holder")))
                     .andExpect(jsonPath("iban", is("DE71990400001234567892")))
-                    .andExpect(jsonPath("bic", is("DEMDDEB0")));
+                    .andExpect(jsonPath("bic", is("DEMDDEB0")))
+                    // a bank account without issues does not even render them as null
+                    .andExpect(content().string(not(containsString("\"issues\""))));
         }
 
         @Test

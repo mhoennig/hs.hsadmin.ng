@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 import org.springframework.scheduling.TaskScheduler;
 import java.time.Duration;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import lombok.val;
 import net.hostsharing.hsadminng.rbac.test.RbacDataJpaTest;
@@ -18,6 +19,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -51,6 +53,7 @@ class HsOfficeBankDirectoryImporterIntegrationTest {
     @Autowired
     PlatformTransactionManager transactionManager;
 
+    final List<Object> publishedEvents = new ArrayList<>();
     WireMockServer bundesbank;
     HsOfficeBankDirectoryImporter importer;
 
@@ -59,7 +62,7 @@ class HsOfficeBankDirectoryImporterIntegrationTest {
         bundesbank = new WireMockServer(options().dynamicPort());
         bundesbank.start();
         importer = new HsOfficeBankDirectoryImporter(
-                jdbc, transactionManager, mock(TaskScheduler.class),
+                jdbc, transactionManager, mock(TaskScheduler.class), publishedEvents::add,
                 URI.create(bundesbank.baseUrl() + "/blob/0/blz.csv"), Duration.ofMinutes(5), 5);
     }
 
@@ -89,6 +92,28 @@ class HsOfficeBankDirectoryImporterIntegrationTest {
         assertThat(count("source = 'EXISTING' and bankCode = '98010000'")).isZero();
         assertThat(importedUrls()).containsExactly(bundesbank.baseUrl() + "/blob/hash1/blz.csv");
         bundesbank.verify(1, getRequestedFor(urlEqualTo("/blob/hash1/blz.csv")));
+        assertThat(publishedEvents).containsExactly(
+                new HsOfficeBankDirectoryImporter.Imported(URI.create(bundesbank.baseUrl() + "/blob/hash1/blz.csv")));
+    }
+
+    @Test
+    void keepsTheImportWithoutRetryingIfACheckAgainstItFails() {
+        // given
+        val scheduler = mock(TaskScheduler.class);
+        val importerWithFailingCheck = new HsOfficeBankDirectoryImporter(
+                jdbc, transactionManager, scheduler, event -> {
+                    throw new IllegalStateException("check failed");
+                },
+                URI.create(bundesbank.baseUrl() + "/blob/0/blz.csv"), Duration.ofMinutes(5), 5);
+        givenCurrentVersion("hash1", FIRST_VERSION);
+
+        // when
+        importerWithFailingCheck.importIfNewVersion();
+
+        // then
+        assertThat(importedUrls()).containsExactly(bundesbank.baseUrl() + "/blob/hash1/blz.csv");
+        assertThat(bundesbankRows()).hasSize(2);
+        verifyNoInteractions(scheduler);
     }
 
     @ParameterizedTest

@@ -8,7 +8,10 @@ import net.hostsharing.hsadminng.config.MessageTranslator;
 import net.hostsharing.hsadminng.config.MessagesResourceConfig;
 import net.hostsharing.hsadminng.config.WebSecurityConfigForWebMvcTests;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountIssues;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankRepository;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRealEntity;
@@ -32,8 +35,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.bearer;
+import static net.hostsharing.hsadminng.hs.office.bankaccount.TestHsOfficeBankAccount.hsOfficeBankAccount;
 import static net.hostsharing.hsadminng.test.JsonMatcher.lenientlyEquals;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -43,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(HsOfficeSepaMandateController.class)
 @Import({ StrictMapper.class,
+          HsOfficeBankAccountIssues.class,
           JsonObjectMapperConfiguration.class,
           MessagesResourceConfig.class,
           MessageTranslator.class,
@@ -59,6 +65,9 @@ class HsOfficeSepaMandateControllerRestTest {
     @MockitoBean
     HsOfficeSepaMandateRepository sepaMandateRepo;
 
+    @MockitoBean
+    HsOfficeBankRepository bankRepo;
+
     @Autowired
     MockMvc mockMvc;
 
@@ -67,6 +76,84 @@ class HsOfficeSepaMandateControllerRestTest {
 
     @MockitoBean
     EntityManagerWrapper em;
+
+    @Nested
+    class GetListOfSepaMandatesWithIssues {
+
+        @Test
+        void returnsValidSepaMandatesWhoseGermanBankAccountHasMismatchingBicOrUnknownBankCode() throws Exception {
+            // given
+            when(bankRepo.findAllByCountryCode("DE")).thenReturn(List.of(
+                    HsOfficeBankEntity.builder().countryCode("DE").bankCode("99040000").bic("DEMDDEB0XXX").build(),
+                    HsOfficeBankEntity.builder().countryCode("DE").bankCode("99070000").build()));
+            when(sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(null, null, null)).thenReturn(List.of(
+                    givenSepaMandateWithBankAccount("matching BIC", "de71 9904 0000 1234 5678 92", "demd deb0", "[2024-11-01,)"),
+                    givenSepaMandateWithBankAccount("mismatching BIC", "DE71990400001234567892", "GENODEMIGLS", "[2024-11-01,)"),
+                    givenSepaMandateWithBankAccount("expired", "DE71990400001234567892", "GENODEMIGLS", "[2024-11-01,2025-01-01)"),
+                    givenSepaMandateWithBankAccount("bank without BIC", "DE02990700000000000001", "DEMODEB0", "[2024-11-01,)"),
+                    givenSepaMandateWithBankAccount("unknown bank code", "DE34990200000000202051", "DEMVDEH0", "[2024-11-01,)"),
+                    givenSepaMandateWithBankAccount("foreign", "AT049999900000000001", "DEMOATW0", "[2024-11-01,)")));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/sepamandates?issues=true")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(2)))
+                    .andExpect(jsonPath("$[0].reference", is("mismatching BIC")))
+                    .andExpect(jsonPath("$[0].bankAccount.issues.bankDirectoryMismatch.reason", is("BIC_MISMATCH")))
+                    .andExpect(jsonPath("$[0].bankAccount.issues.bankDirectoryMismatch.bankCode", is("99040000")))
+                    .andExpect(jsonPath("$[0].bankAccount.issues.bankDirectoryMismatch.expectedBic", is("DEMDDEB0XXX")))
+                    .andExpect(jsonPath("$[1].reference", is("unknown bank code")))
+                    .andExpect(jsonPath("$[1].bankAccount.issues.bankDirectoryMismatch.reason", is("UNKNOWN_BANK_CODE")))
+                    .andExpect(jsonPath("$[1].bankAccount.issues.bankDirectoryMismatch.bankCode", is("99020000")))
+                    .andExpect(jsonPath("$[1].bankAccount.issues.bankDirectoryMismatch.expectedBic").doesNotExist());
+        }
+
+        @Test
+        void returnsSepaMandatesValidAtKeyDateWithoutIssuesIfIssuesIsFalse() throws Exception {
+            // given
+            when(bankRepo.findAllByCountryCode("DE")).thenReturn(List.of(
+                    HsOfficeBankEntity.builder().countryCode("DE").bankCode("99040000").bic("DEMDDEB0XXX").build()));
+            when(sepaMandateRepo.findSepaMandatesByOptionalIbanAndDebitorUuidAndValidAt(null, null, LocalDate.parse("2024-12-01")))
+                    .thenReturn(List.of(
+                            givenSepaMandateWithBankAccount("matching BIC", "DE71990400001234567892", "DEMDDEB0", "[2024-11-01,2025-01-01)"),
+                            givenSepaMandateWithBankAccount("mismatching BIC", "DE71990400001234567892", "GENODEMIGLS", "[2024-11-01,)"),
+                            givenSepaMandateWithBankAccount("unknown bank code", "DE34990200000000202051", "DEMVDEH0", "[2024-11-01,)"),
+                            givenSepaMandateWithBankAccount("foreign", "AT049999900000000001", "DEMOATW0", "[2024-11-01,)")));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/sepamandates?validAt=2024-12-01&issues=false")
+                            .header("Authorization", bearer("hsh-alex_superuser"))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(2)))
+                    .andExpect(jsonPath("$[0].reference", is("matching BIC")))
+                    .andExpect(jsonPath("$[1].reference", is("foreign")))
+                    .andExpect(jsonPath("$[0].bankAccount.issues").doesNotExist())
+                    .andExpect(jsonPath("$[1].bankAccount.issues").doesNotExist());
+        }
+
+        private HsOfficeSepaMandateEntity givenSepaMandateWithBankAccount(
+                final String reference, final String iban, final String bic, final String validity) {
+            return HsOfficeSepaMandateEntity.builder()
+                    .debitor(HsOfficeDebitorEntity.builder()
+                            .partner(HsOfficePartnerRealEntity.builder().partnerNumber(12345).build())
+                            .debitorNumberSuffix("00")
+                            .build())
+                    .bankAccount(hsOfficeBankAccount(reference, iban, bic))
+                    .reference(reference)
+                    .agreement(LocalDate.of(2024, 10, 15))
+                    .validity(Range.localDateRange(validity))
+                    .build();
+        }
+    }
 
     @Nested
     class GetListOfSepaMandates {

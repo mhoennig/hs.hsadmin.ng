@@ -41,6 +41,9 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     @Autowired
     private HsOfficeBankRepository bankRepo;
 
+    @Autowired
+    private HsOfficeBankAccountIssues bankAccountIssues;
+
     @Override
     @Transactional(readOnly = true)
     @Timed("app.office.bankAccounts.api.patchDebitor")
@@ -52,6 +55,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
         final var entities = bankAccountRepo.findByOptionalHolderLike(holder);
 
         final var resources = mapper.mapList(entities, HsOfficeBankAccountResource.class);
+        bankAccountIssues.addTo(resources);
         return ResponseEntity.ok(resources);
     }
 
@@ -78,6 +82,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
         final var mapped = mapper.map(saved, HsOfficeBankAccountResource.class);
         // the entity reads bankName through a formula, which Hibernate only evaluates when loading
         mapped.setBankName(bank == null ? null : bank.getName());
+        bankAccountIssues.addTo(mapped);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -94,7 +99,9 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeBankAccountResource.class));
+        val resource = mapper.map(result.get(), HsOfficeBankAccountResource.class);
+        bankAccountIssues.addTo(resource);
+        return ResponseEntity.ok(resource);
     }
 
     @Override

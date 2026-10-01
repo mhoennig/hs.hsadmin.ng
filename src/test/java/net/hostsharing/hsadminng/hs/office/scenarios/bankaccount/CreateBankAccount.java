@@ -56,5 +56,9 @@ public class CreateBankAccount extends UseCase<CreateBankAccount> {
         } else {
             response.path("bankName").isEqualTo(expectedBankName);
         }
+        if (ScenarioTest.hasProperty("expectedIssueReason")) {
+            path("issues.bankDirectoryMismatch.reason").contains("%{expectedIssueReason}").accept(response);
+            path("issues.bankDirectoryMismatch.expectedBic").contains("%{expectedDirectoryBic}").accept(response);
+        }
     }
 }

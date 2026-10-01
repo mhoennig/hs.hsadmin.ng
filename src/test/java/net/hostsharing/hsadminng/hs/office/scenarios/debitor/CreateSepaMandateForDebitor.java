@@ -1,11 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.debitor;
 
-import net.hostsharing.hsadminng.hs.scenarios.PathAssertion;
+import lombok.val;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 
 import static io.restassured.http.ContentType.JSON;
 import static net.hostsharing.hsadminng.hs.scenarios.FakeLoginUser.asGlobalAgent;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -18,7 +19,7 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
     @Override
     protected HttpResponse run() {
 
-        obtain("Debitor: Test AG - main debitor", () ->
+        obtain("Debitor: %{debitorNumber}", () ->
             httpGet(asGlobalAgent(), "/api/hs/office/debitors/%{debitorNumber}")
                     .expecting(OK).expecting(JSON),
             response -> response.getFromBody("uuid")
@@ -29,7 +30,8 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
                      {
                          "holder": ${bankAccountHolder},
                          "iban": ${bankAccountIBAN},
-                         "bic": ${bankAccountBIC}
+                         "bic": ${bankAccountBIC},
+                         "overrideBankDirectory": ${bankAccountOverrideBankDirectory???}
                     }
                     """))
                     .expecting(CREATED).expecting(JSON)
@@ -37,7 +39,7 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
 
         return httpPost(asGlobalAgent(), "/api/hs/office/sepamandates", usingJsonBody("""
                 {
-                   "debitor.uuid": ${Debitor: Test AG - main debitor},
+                   "debitor.uuid": ${Debitor: %{debitorNumber}},
                    "bankAccount.uuid": ${BankAccount: %{bankAccountHolder}},
                    "reference": ${mandateReference},
                    "agreement": ${mandateAgreement},
@@ -50,6 +52,12 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
 
     @Override
     protected void verify(final HttpResponse response) {
-        new PathAssertion("bankAccount.bankName").contains("%{expectedBankName}").accept(response);
+        // an empty expectation means the bank is not in the directory, thus the response carries no bankName
+        val expectedBankName = ScenarioTest.resolve("%{expectedBankName???}", DROP_COMMENTS);
+        if (expectedBankName == null || expectedBankName.isEmpty()) {
+            response.path("bankAccount.bankName").isNull();
+        } else {
+            response.path("bankAccount.bankName").isEqualTo(expectedBankName);
+        }
     }
 }
