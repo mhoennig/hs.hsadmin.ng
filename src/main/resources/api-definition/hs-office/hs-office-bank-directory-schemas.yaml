@@ -1,0 +1,93 @@
+
+components:
+
+    schemas:
+
+        HsOfficeBankDirectoryImportStatus:
+            type: object
+            properties:
+                currentImport:
+                    $ref: '#/components/schemas/HsOfficeBankDirectoryImport'
+                lastSuccessfulRunAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    description: |
+                        The last attempt which imported a new version or found the current one already imported;
+                        a monitoring can alert if this is older than the weekly interval.
+                recentRuns:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/HsOfficeBankDirectoryImportRun'
+                    description: The most recent attempts, the newest first.
+                validSepaMandatesWithIssues:
+                    type: integer
+                    description: |
+                        The number of SEPA mandates valid today or later whose bank account does not match the bank directory;
+                        `GET /api/hs/office/sepamandates?issues=true` lists them.
+            additionalProperties: false
+
+        HsOfficeBankDirectoryImport:
+            type: object
+            nullable: true
+            properties:
+                sourceUrl:
+                    type: string
+                    description: The URL of the imported file, which also names its version.
+                importedAt:
+                    type: string
+                    format: date-time
+                bankCount:
+                    type: integer
+            additionalProperties: false
+
+        HsOfficeBankDirectoryImportRun:
+            type: object
+            properties:
+                startedAt:
+                    type: string
+                    format: date-time
+                outcome:
+                    type: string
+                    enum:
+                        - IMPORTED
+                        - UNCHANGED
+                        - FAILED
+                sourceUrl:
+                    type: string
+                    nullable: true
+                bankCount:
+                    type: integer
+                    nullable: true
+                failure:
+                    $ref: '#/components/schemas/HsOfficeBankDirectoryImportFailure'
+            additionalProperties: false
+
+        HsOfficeBankDirectoryImportFailure:
+            type: object
+            nullable: true
+            properties:
+                kind:
+                    type: string
+                    enum:
+                        - HTTP_ERROR
+                        - NO_RESPONSE
+                        - INVALID_FILE
+                        - INTERNAL
+                    description: |
+                        HTTP_ERROR: the Bundesbank answered with an error status or without redirect,
+                        NO_RESPONSE: the Bundesbank could not be reached,
+                        INVALID_FILE: the file does not have the expected format,
+                        INTERNAL: the backend failed, see its log.
+                request:
+                    type: string
+                    nullable: true
+                    description: The HTTP method and URL of the failed request to the Bundesbank.
+                httpStatus:
+                    type: integer
+                    nullable: true
+                line:
+                    type: integer
+                    nullable: true
+                    description: The line of the file which does not have the expected format.
+            additionalProperties: false

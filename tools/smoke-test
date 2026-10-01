@@ -295,17 +295,17 @@ passed
 
 # A security incident must alert immediately, even while an ordinary outage alarm is already
 # backing off, so each alarm needs its own state file. Sourcing the checker with
-# HSADMINNG_LOGIN_MONITOR_DEFINE_ONLY yields its functions without performing a real check.
-echo "tools/login-monitoring-check alerts a critical incident despite a running failure backoff"
+# HSADMINNG_MONITORING_DEFINE_ONLY yields its functions without performing a real check.
+echo "tools/monitoring-check alerts a critical incident despite a running failure backoff"
 monitorStateDir=build/smoke-test/monitor-state
 rm -rf "$monitorStateDir"
 mkdir -p "$monitorStateDir"
 alarmProbe=$(
-    HSADMINNG_LOGIN_MONITOR_DEFINE_ONLY=true \
-    HSADMINNG_LOGIN_MONITOR_PASSWORD=irrelevant-for-this-probe \
-    HSADMINNG_LOGIN_MONITOR_STATE_FILE="$monitorStateDir/login-monitoring-check.state" \
+    HSADMINNG_MONITORING_DEFINE_ONLY=true \
+    HSADMINNG_MONITORING_LOGIN_PASSWORD=irrelevant-for-this-probe \
+    HSADMINNG_MONITORING_STATE_FILE="$monitorStateDir/monitoring-check.state" \
     bash -c '
-        source tools/login-monitoring-check
+        source tools/monitoring-check
         MATRIX_WEBHOOK_URL=https://example.invalid/webhook
         # no Matrix here, just record what would have been sent
         sendMatrixMessage() { echo "WOULD-SEND severity=$2"; }
@@ -322,7 +322,7 @@ grep -q 'WOULD-SEND severity=critical' <<<"$alarmProbe" ||
 # along the way -- a stale state from the formerly shared file would fake a later login-RESOLVED
 grep -q 'WOULD-SEND severity=ok' <<<"$alarmProbe" ||
     failed "the pending failure alarm was not closed when the critical alert fired: $alarmProbe"
-[ ! -f "$monitorStateDir/login-monitoring-check.state" ] ||
+[ ! -f "$monitorStateDir/monitoring-check.state" ] ||
     failed "the failure state file survived the critical alert and could fake a later RESOLVED"
 passed
 

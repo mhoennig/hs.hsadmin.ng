@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# Monitoring-check for the Keycloak-OIDC integration of a deployed hsadmin-NG backend.
+# Monitoring-check for a deployed hsadmin-NG backend, its Keycloak-OIDC integration and its scheduled jobs.
 #
 # Performs an automated Keycloak login as a dedicated, unprivileged monitoring user
 # and verifies that the backend accepts the resulting JWT via GET /api/rbac/context,
 # checking that the user stays unprivileged (no global-admin, roles, groups, or grants).
 # It additionally verifies, via the public GET /api/rbac/subjects/last-sync, that the
-# Keycloak subject-sync reported a run within the configured max age (default 5min).
+# Keycloak subject-sync reported a run within the configured max age (default 5min),
+# and via the public GET /api/hs/office/bank-directory/import-status that the bank-directory import
+# succeeded within the last 8 days and the bank directory is not older than 100 days (both configurable).
 # The monitoring user only exists as a Keycloak user plus a matching rbac USER subject
 # (same name and UUID); it has neither an account nor any role grants, so its
 # credentials can be stored on an external monitoring host without a security risk.
@@ -22,20 +24,28 @@
 #
 # Configuration via environment variables:
 #   HSADMINNG_API_BASE_URL            backend to check, default: https://backend.ng.hostsharing.net
-#   HSADMINNG_LOGIN_MONITOR_USERNAME  Keycloak username, default: hsh-login_monitor
-#   HSADMINNG_LOGIN_MONITOR_PASSWORD  the monitoring user's Keycloak password, required
+#   HSADMINNG_MONITORING_LOGIN_USERNAME
+#                                     Keycloak username, default: hsh-login_monitor
+#   HSADMINNG_MONITORING_LOGIN_PASSWORD
+#                                     the monitoring user's Keycloak password, required
 #   HSADMINNG_KEYCLOAK_ISSUER         default: https://login.ng.hostsharing.net/realms/hs
 #   HSADMINNG_KEYCLOAK_CLIENT_ID      default: hs-admin-web
 #   HSADMINNG_KEYCLOAK_REDIRECT_URI   default: https://testui.ng.hostsharing.net/
-#   HSADMINNG_LOGIN_MONITOR_SLOW_WARNING_SECONDS
+#   HSADMINNG_MONITORING_SLOW_WARNING_SECONDS
 #                                     a successful but slower check raises a latency
 #                                     warning above this many seconds, default: 2
-#   HSADMINNG_LOGIN_MONITOR_SYNC_KEY_NAME
+#   HSADMINNG_MONITORING_SYNC_KEY_NAME
 #                                     API-key subject-name whose sync-runs are checked via
 #                                     GET /api/rbac/subjects/last-sync, default: hsadminng.keycloak.sync
-#   HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS
+#   HSADMINNG_MONITORING_SYNC_MAX_AGE_SECONDS
 #                                     fail if the last keycloak-sync run is older than this
 #                                     many seconds; 0 disables the sync check, default: 300
+#   HSADMINNG_MONITORING_BANK_DIRECTORY_MAX_AGE_DAYS
+#                                     fail if the imported bank directory is older than this
+#                                     many days; 0 disables the bank-directory checks, default: 100
+#   HSADMINNG_MONITORING_BANK_DIRECTORY_MAX_RUN_AGE_DAYS
+#                                     fail if the last successful bank-directory import run is older
+#                                     than this many days, default: 8
 #
 # Options:
 #   -v, --verbose           prints the used username and password to stderr;
@@ -55,13 +65,13 @@
 #
 #   While a problem persists, repeated alerts are throttled with a backoff:
 #   the first result is posted immediately, repetitions only after the intervals
-#   (in hours) listed in HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT (default 1,2,4,8,16,24),
+#   (in hours) listed in HSADMINNG_MONITORING_ALARM_REPEAT (default 1,2,4,8,16,24),
 #   with the last interval repeating indefinitely. Once the problem clears, a
 #   RESOLVED message is posted. Each alarm — login/backend failure, gained privileges,
-#   latency warning and sync-freshness — backs off in its own state file, so that a running
+#   latency warning, sync-freshness and bank-directory age — backs off in its own state file, so that a running
 #   backoff can never delay another alarm, least of all the critical one. The state files sit
-#   next to HSADMINNG_LOGIN_MONITOR_STATE_FILE (`*.critical.state`, `*.slow.state`,
-#   `*.sync.state`), default: ~/.local/state/login-monitoring-check.state
+#   next to HSADMINNG_MONITORING_STATE_FILE (`*.critical.state`, `*.slow.state`,
+#   `*.sync.state`, `*.bank-directory.state`), default: ~/.local/state/monitoring-check.state
 #   ($XDG_STATE_HOME is honored).
 
 set -o pipefail
@@ -133,7 +143,7 @@ function sendMatrixMessage() {
     # to keep it out of curl's process-list entry, like the password in keycloakLogin.
     printf 'url = "%s"\n' "$MATRIX_WEBHOOK_URL" |
         "${CURL[@]}" --config - -X POST -H 'Content-Type: application/json' \
-            -d "{\"username\": \"login-monitoring-check\", \"text\": $(jsonString "$text"), \"html\": $(jsonString "$html")}" \
+            -d "{\"username\": \"monitoring-check\", \"text\": $(jsonString "$text"), \"html\": $(jsonString "$html")}" \
             >/dev/null || {
         echo "ERROR: could not send the message to the Matrix webhook" >&2
         return 1
@@ -161,7 +171,7 @@ function sendThrottledAlert() {
         local idx=$(( ALERT_COUNT <= ${#gaps[@]} ? ALERT_COUNT - 1 : ${#gaps[@]} - 1 ))
         local dueTs=$(( LAST_ALERT_TS + gaps[idx] * 3600 ))
         if [ "$now" -lt "$dueTs" ]; then
-            echo "Matrix alert #$(( ALERT_COUNT + 1 )) suppressed by HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT until $(date -d "@$dueTs" '+%F %T')" >&2
+            echo "Matrix alert #$(( ALERT_COUNT + 1 )) suppressed by HSADMINNG_MONITORING_ALARM_REPEAT until $(date -d "@$dueTs" '+%F %T')" >&2
             return 0
         fi
         sendMatrixMessage "$message"$'  \n'"(alert #$(( ALERT_COUNT + 1 )), ongoing since $(date -d "@$FIRST_FAILURE_TS" '+%F %T') = $(formatDuration $(( now - FIRST_FAILURE_TS ))))" "$severity" ||
@@ -213,34 +223,54 @@ function syncFailed() {
     exit 1
 }
 
+# like syncFailed(), but for the bank-directory age
+function bankDirectoryFailed() {
+    echo "FAILED: $*"
+    sendThrottledAlert alert "$BANK_DIRECTORY_STATE_FILE" "BANK-DIRECTORY-FAILED: $*"
+    exit 1
+}
+
 # backoff configuration for repeated Matrix alerts, see the header comment
-ALARM_REPEAT=${HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT:-1,2,4,8,16,24}
+ALARM_REPEAT=${HSADMINNG_MONITORING_ALARM_REPEAT:-1,2,4,8,16,24}
 if ! [[ "$ALARM_REPEAT" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
-    echo "WARNING: ignoring invalid HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT '$ALARM_REPEAT', using 1,2,4,8,16,24" >&2
+    echo "WARNING: ignoring invalid HSADMINNG_MONITORING_ALARM_REPEAT '$ALARM_REPEAT', using 1,2,4,8,16,24" >&2
     ALARM_REPEAT=1,2,4,8,16,24
 fi
-STATE_FILE=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
+STATE_FILE=${HSADMINNG_MONITORING_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/monitoring-check.state}
 # every alarm gets its own state file, so that no alarm's backoff can ever delay another one
 WARN_STATE_FILE="${STATE_FILE%.state}.slow.state"
 SYNC_STATE_FILE="${STATE_FILE%.state}.sync.state"
+BANK_DIRECTORY_STATE_FILE="${STATE_FILE%.state}.bank-directory.state"
 CRITICAL_STATE_FILE="${STATE_FILE%.state}.critical.state"
 # a successful but slower-than-this (seconds) check raises a latency warning
-SLOW_WARNING_SECONDS=${HSADMINNG_LOGIN_MONITOR_SLOW_WARNING_SECONDS:-2}
+SLOW_WARNING_SECONDS=${HSADMINNG_MONITORING_SLOW_WARNING_SECONDS:-2}
 if ! [[ "$SLOW_WARNING_SECONDS" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-    echo "WARNING: ignoring invalid HSADMINNG_LOGIN_MONITOR_SLOW_WARNING_SECONDS '$SLOW_WARNING_SECONDS', using 2" >&2
+    echo "WARNING: ignoring invalid HSADMINNG_MONITORING_SLOW_WARNING_SECONDS '$SLOW_WARNING_SECONDS', using 2" >&2
     SLOW_WARNING_SECONDS=2
 fi
 # the API-key subject-name whose sync-runs are monitored, and the max tolerated age (0 disables)
-SYNC_KEY_NAME=${HSADMINNG_LOGIN_MONITOR_SYNC_KEY_NAME:-hsadminng.keycloak.sync}
-SYNC_MAX_AGE_SECONDS=${HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS:-300}
+SYNC_KEY_NAME=${HSADMINNG_MONITORING_SYNC_KEY_NAME:-hsadminng.keycloak.sync}
+SYNC_MAX_AGE_SECONDS=${HSADMINNG_MONITORING_SYNC_MAX_AGE_SECONDS:-300}
 if ! [[ "$SYNC_MAX_AGE_SECONDS" =~ ^[0-9]+$ ]]; then
-    echo "WARNING: ignoring invalid HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS '$SYNC_MAX_AGE_SECONDS', using 300" >&2
+    echo "WARNING: ignoring invalid HSADMINNG_MONITORING_SYNC_MAX_AGE_SECONDS '$SYNC_MAX_AGE_SECONDS', using 300" >&2
     SYNC_MAX_AGE_SECONDS=300
+fi
+# the Bundesbank publishes quarterly, thus a directory older than that indicates a failing import (0 disables)
+BANK_DIRECTORY_MAX_AGE_DAYS=${HSADMINNG_MONITORING_BANK_DIRECTORY_MAX_AGE_DAYS:-100}
+if ! [[ "$BANK_DIRECTORY_MAX_AGE_DAYS" =~ ^[0-9]+$ ]]; then
+    echo "WARNING: ignoring invalid HSADMINNG_MONITORING_BANK_DIRECTORY_MAX_AGE_DAYS '$BANK_DIRECTORY_MAX_AGE_DAYS', using 100" >&2
+    BANK_DIRECTORY_MAX_AGE_DAYS=100
+fi
+# the import runs weekly, thus a failing import shows up about a day after its first failed attempt
+BANK_DIRECTORY_MAX_RUN_AGE_DAYS=${HSADMINNG_MONITORING_BANK_DIRECTORY_MAX_RUN_AGE_DAYS:-8}
+if ! [[ "$BANK_DIRECTORY_MAX_RUN_AGE_DAYS" =~ ^[0-9]+$ ]]; then
+    echo "WARNING: ignoring invalid HSADMINNG_MONITORING_BANK_DIRECTORY_MAX_RUN_AGE_DAYS '$BANK_DIRECTORY_MAX_RUN_AGE_DAYS', using 8" >&2
+    BANK_DIRECTORY_MAX_RUN_AGE_DAYS=8
 fi
 
 # lets a test source just the functions and the configuration above, without performing a check;
 # `return` only works when sourced, a direct execution needs `exit` lest the check runs anyway
-[ -z "${HSADMINNG_LOGIN_MONITOR_DEFINE_ONLY:-}" ] || return 0 2>/dev/null || exit 0
+[ -z "${HSADMINNG_MONITORING_DEFINE_ONLY:-}" ] || return 0 2>/dev/null || exit 0
 
 MATRIX_WEBHOOK_URL=
 VERBOSE=
@@ -270,11 +300,11 @@ while [ $# -gt 0 ]; do
 done
 
 HSADMINNG_API_BASE_URL=${HSADMINNG_API_BASE_URL:-https://backend.ng.hostsharing.net}
-[ -n "$HSADMINNG_LOGIN_MONITOR_PASSWORD" ] || failed "HSADMINNG_LOGIN_MONITOR_PASSWORD is not set"
+[ -n "$HSADMINNG_MONITORING_LOGIN_PASSWORD" ] || failed "HSADMINNG_MONITORING_LOGIN_PASSWORD is not set"
 # the keycloakLogin function below is kept in sync with tools/jwt-login,
 # which expects the credentials in the generic variables
-HSADMINNG_JWT_USERNAME=${HSADMINNG_LOGIN_MONITOR_USERNAME:-hsh-login_monitor}
-HSADMINNG_JWT_PASSWORD=$HSADMINNG_LOGIN_MONITOR_PASSWORD
+HSADMINNG_JWT_USERNAME=${HSADMINNG_MONITORING_LOGIN_USERNAME:-hsh-login_monitor}
+HSADMINNG_JWT_PASSWORD=$HSADMINNG_MONITORING_LOGIN_PASSWORD
 
 KEYCLOAK_ISSUER="${HSADMINNG_KEYCLOAK_ISSUER:-https://login.ng.hostsharing.net/realms/hs}"
 CLIENT_ID="${HSADMINNG_KEYCLOAK_CLIENT_ID:-hs-admin-web}"
@@ -479,7 +509,7 @@ sendMatrixResolved "$CRITICAL_STATE_FILE" "RESOLVED: $HSADMINNG_JWT_USERNAME is 
 # timestamp (no credentials needed, hence safe to poll from this unprivileged host)
 if [ "$SYNC_MAX_AGE_SECONDS" -eq 0 ]; then
     syncSummary=" (sync-check disabled)"
-    echo "SYNC CHECK DISABLED (HSADMINNG_LOGIN_MONITOR_SYNC_MAX_AGE_SECONDS=0)" >&2
+    echo "SYNC CHECK DISABLED (HSADMINNG_MONITORING_SYNC_MAX_AGE_SECONDS=0)" >&2
 else
     # query a window wider than the threshold, so the actual age can be reported even for a
     # moderately stale sync; freshness is then decided locally against the threshold
@@ -514,12 +544,59 @@ else
     syncSummary=" and keycloak-sync ran ${syncAgeSeconds}s ago"
 fi
 
+# SEPA mandates with issues are just reported, not alerted: they need a fix before the next direct debit, not within minutes
+if [ "$BANK_DIRECTORY_MAX_AGE_DAYS" -eq 0 ]; then
+    bankDirectorySummary=" (bank-directory check disabled)"
+    echo "BANK-DIRECTORY CHECK DISABLED (HSADMINNG_MONITORING_BANK_DIRECTORY_MAX_AGE_DAYS=0)" >&2
+else
+    echo "probing: GET $HSADMINNG_API_BASE_URL/api/hs/office/bank-directory/import-status" >&2
+    startTimer
+    importStatusResponse=$("${CURL[@]}" "$HSADMINNG_API_BASE_URL/api/hs/office/bank-directory/import-status") || {
+        [ -n "$importStatusResponse" ] && printf '%s\n' "$importStatusResponse" >&2
+        bankDirectoryFailed "GET /api/hs/office/bank-directory/import-status on $HSADMINNG_API_BASE_URL"
+    }
+    printf '%s\n' "$importStatusResponse" >&2
+    tookFor "GET $HSADMINNG_API_BASE_URL/api/hs/office/bank-directory/import-status"
+    if command -v jq >/dev/null 2>&1; then
+        importedAt=$(jq -r '.currentImport.importedAt // empty' <<<"$importStatusResponse")
+        lastSuccessfulRunAt=$(jq -r '.lastSuccessfulRunAt // empty' <<<"$importStatusResponse")
+        sepaMandatesWithIssues=$(jq -r '.validSepaMandatesWithIssues // "?"' <<<"$importStatusResponse")
+    else
+        # fallback without jq: only currentImport carries an importedAt
+        importedAt=$(grep -o '"importedAt"[[:space:]]*:[[:space:]]*"[^"]*"' <<<"$importStatusResponse" |
+            head -1 | sed -e 's/.*"\([^"]*\)"$/\1/')
+        lastSuccessfulRunAt=$(grep -o '"lastSuccessfulRunAt"[[:space:]]*:[[:space:]]*"[^"]*"' <<<"$importStatusResponse" |
+            head -1 | sed -e 's/.*"\([^"]*\)"$/\1/')
+        sepaMandatesWithIssues=$(grep -o '"validSepaMandatesWithIssues"[[:space:]]*:[[:space:]]*[0-9]*' <<<"$importStatusResponse" |
+            head -1 | sed -e 's/.*:[[:space:]]*//')
+    fi
+    [ -n "$importedAt" ] ||
+        bankDirectoryFailed "no bank directory imported on $HSADMINNG_API_BASE_URL"
+    importedEpoch=$(date -d "$importedAt" +%s 2>/dev/null) ||
+        bankDirectoryFailed "could not parse importedAt '$importedAt' from /api/hs/office/bank-directory/import-status"
+    bankDirectoryAgeSeconds=$(( $(date +%s) - importedEpoch ))
+    bankDirectoryAgeDays=$(( bankDirectoryAgeSeconds / 86400 ))
+    [ "$bankDirectoryAgeSeconds" -le $(( BANK_DIRECTORY_MAX_AGE_DAYS * 86400 )) ] ||
+        bankDirectoryFailed "the bank directory was imported more than ${BANK_DIRECTORY_MAX_AGE_DAYS} days ago"
+    [ -n "$lastSuccessfulRunAt" ] ||
+        bankDirectoryFailed "no successful bank-directory import run on $HSADMINNG_API_BASE_URL"
+    lastSuccessfulRunEpoch=$(date -d "$lastSuccessfulRunAt" +%s 2>/dev/null) ||
+        bankDirectoryFailed "could not parse lastSuccessfulRunAt '$lastSuccessfulRunAt' from /api/hs/office/bank-directory/import-status"
+    lastSuccessfulRunAgeSeconds=$(( $(date +%s) - lastSuccessfulRunEpoch ))
+    lastSuccessfulRunAgeDays=$(( lastSuccessfulRunAgeSeconds / 86400 ))
+    [ "$lastSuccessfulRunAgeSeconds" -le $(( BANK_DIRECTORY_MAX_RUN_AGE_DAYS * 86400 )) ] ||
+        bankDirectoryFailed "the last successful bank-directory import run was more than ${BANK_DIRECTORY_MAX_RUN_AGE_DAYS} days ago"
+    sendMatrixResolved "$BANK_DIRECTORY_STATE_FILE" "RESOLVED: the bank directory is up to date again (imported ${bankDirectoryAgeDays} days ago, last successful run ${lastSuccessfulRunAgeDays} days ago)"
+    echo "BANK-DIRECTORY OK: imported ${bankDirectoryAgeDays} days ago (<= ${BANK_DIRECTORY_MAX_AGE_DAYS} days), last successful run ${lastSuccessfulRunAgeDays} days ago (<= ${BANK_DIRECTORY_MAX_RUN_AGE_DAYS} days)" >&2
+    bankDirectorySummary=", the bank directory was imported ${bankDirectoryAgeDays} days ago (${sepaMandatesWithIssues:-?} valid SEPA mandates with issues)"
+fi
+
 echo >&2
 checkDuration=$(awk "BEGIN { printf \"%.3f\", $(date +%s.%N) - $checkStart }")
 if awk "BEGIN { exit !($checkDuration > $SLOW_WARNING_SECONDS) }"; then
     sendThrottledAlert warn "$WARN_STATE_FILE" "SLOW: the complete check took ${checkDuration}s (warning above ${SLOW_WARNING_SECONDS}s)"
-    echo "OK (SLOW: ${checkDuration}s > ${SLOW_WARNING_SECONDS}s): $HSADMINNG_JWT_USERNAME logged in via Keycloak and was successfully accepted by $HSADMINNG_API_BASE_URL${syncSummary}"
+    echo "OK (SLOW: ${checkDuration}s > ${SLOW_WARNING_SECONDS}s): $HSADMINNG_JWT_USERNAME logged in via Keycloak and was successfully accepted by $HSADMINNG_API_BASE_URL${syncSummary}${bankDirectorySummary}"
 else
     sendMatrixResolved "$WARN_STATE_FILE" "RESOLVED: check latency for $HSADMINNG_JWT_USERNAME is back to normal (${checkDuration}s)"
-    echo "OK: $HSADMINNG_JWT_USERNAME logged in via Keycloak and was successfully accepted by $HSADMINNG_API_BASE_URL (${checkDuration}s)${syncSummary}"
+    echo "OK: $HSADMINNG_JWT_USERNAME logged in via Keycloak and was successfully accepted by $HSADMINNG_API_BASE_URL (${checkDuration}s)${syncSummary}${bankDirectorySummary}"
 fi

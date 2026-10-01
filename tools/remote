@@ -43,17 +43,17 @@
 #   remote backend sql-tunnel [PORT]  forward a local port (default 15432) to the backend database and print
 #                                     the connection parameters, so a local SQL GUI can edit it (Ctrl-C closes)
 #
-# Login-monitor (systemd user units: login-monitoring-check.{service,timer}):
-#   remote login-monitor deploy       install (or refresh) the monitoring timer (see notes)
-#   remote login-monitor run          run the monitoring check once now
-#   remote login-monitor start        start the monitoring timer (resume monitoring)
-#   remote login-monitor stop         stop the monitoring timer (pause monitoring)
-#   remote login-monitor restart      restart the monitoring timer
-#   remote login-monitor status       show the timer status, schedule and last check result
-#   remote login-monitor alerts       list the alerts currently active (from the monitor's state files)
-#   remote login-monitor enable       enable and start the monitoring timer (--now)
-#   remote login-monitor disable      disable and stop the monitoring timer (--now)
-#   remote login-monitor log [ARGS]   tail the monitoring log (extra ARGS go to tail)
+# Monitoring (systemd user units: monitoring-check.{service,timer}):
+#   remote monitoring deploy          install (or refresh) the monitoring timer (see notes)
+#   remote monitoring run             run the monitoring check once now
+#   remote monitoring start           start the monitoring timer (resume monitoring)
+#   remote monitoring stop            stop the monitoring timer (pause monitoring)
+#   remote monitoring restart         restart the monitoring timer
+#   remote monitoring status          show the timer status, schedule and last check result
+#   remote monitoring alerts          list the alerts currently active (from the monitor's state files)
+#   remote monitoring enable          enable and start the monitoring timer (--now)
+#   remote monitoring disable         disable and stop the monitoring timer (--now)
+#   remote monitoring log [ARGS]      tail the monitoring log (extra ARGS go to tail)
 #
 # Host:
 #   remote ssh [--backend|--ansible] [CMD]
@@ -65,7 +65,7 @@
 # Notes: HSADMINNG_DEPLOY_HOST names the bare deploy host (e.g. hsh03); the tool derives
 # the logins <host>-backend (service, database, logs) and <host>-ansible, whose ~/jar/ and
 # ~/db-dumps/ are the staging areas for the Ansible-based deployment.
-# `login-monitor deploy` reads its secrets and the optional interval
+# `monitoring deploy` reads its secrets and the optional interval
 # from ~/.environment on the server; see doc/environment-variables.md.
 #
 # This deploys the local working state to a test stage for unmerged changes only;
@@ -124,11 +124,11 @@ step() {
 }
 
 # the systemd user unit a target's lifecycle verbs (start/stop/...) act on;
-# for the login-monitor this is the timer, while `run` triggers the .service
+# for the monitoring this is the timer, while `run` triggers the .service
 unitOf() {
     case "$1" in
         backend)       echo backend ;;
-        login-monitor) echo login-monitoring-check.timer ;;
+        monitoring)    echo monitoring-check.timer ;;
     esac
 }
 
@@ -683,9 +683,9 @@ INFO
 }
 
 # Installs (or refreshes) a systemd user timer on the backend server which runs
-# the local version of tools/login-monitoring-check every 5 minutes with Matrix
+# the local version of tools/monitoring-check every 5 minutes with Matrix
 # alerting. The secrets are NOT deployed by this command: ~/.environment on the server
-# must already contain HSADMINNG_LOGIN_MONITOR_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL
+# must already contain HSADMINNG_MONITORING_LOGIN_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL
 # (plain VAR=value lines, systemd EnvironmentFile format).
 cmdMonitorDeploy() {
     local toolsDir
@@ -693,10 +693,10 @@ cmdMonitorDeploy() {
 
     step "creating the remote monitoring directory" \
         ssh "$backendLogin" mkdir -p monitoring
-    step "copying tools/login-monitoring-check to $backendLogin" \
-        scp -q "$toolsDir/login-monitoring-check" "$backendLogin:monitoring/"
+    step "copying tools/monitoring-check to $backendLogin" \
+        scp -q "$toolsDir/monitoring-check" "$backendLogin:monitoring/"
 
-    echo "installing the login-monitoring-check timer on $backendLogin ..."
+    echo "installing the monitoring-check timer on $backendLogin ..."
 
     ssh "$backendLogin" bash -s < <(unindented <<'REMOTE_SCRIPT'
         set -euo pipefail
@@ -718,43 +718,57 @@ cmdMonitorDeploy() {
 
         if [ ! -f .environment ]; then
             echo "ERROR: ~/.environment not found on the server;" >&2
-            echo "       create it (chmod 600) with at least HSADMINNG_LOGIN_MONITOR_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL" >&2
+            echo "       create it (chmod 600) with at least HSADMINNG_MONITORING_LOGIN_PASSWORD and HSADMINNG_MATRIX_WEBHOOK_URL" >&2
             exit 1
         fi
-        for var in HSADMINNG_LOGIN_MONITOR_PASSWORD HSADMINNG_MATRIX_WEBHOOK_URL; do
+        # TODO.impl: remove this migration once dev and int run the renamed monitoring
+        if grep -qE '^HSADMINNG_LOGIN_MONITOR_' .environment; then
+            echo "ERROR: ~/.environment on the server still contains HSADMINNG_LOGIN_MONITOR_* variables;" >&2
+            echo "       rename them to HSADMINNG_MONITORING_LOGIN_USERNAME/_PASSWORD and HSADMINNG_MONITORING_* otherwise" >&2
+            exit 1
+        fi
+        for var in HSADMINNG_MONITORING_LOGIN_PASSWORD HSADMINNG_MATRIX_WEBHOOK_URL; do
             grep -qE "^$var=" .environment || {
                 echo "ERROR: ~/.environment on the server must contain a plain '$var=...' line" >&2
                 echo "       (systemd EnvironmentFile format: no 'export', no shell expansions)" >&2
                 exit 1
             }
         done
-        interval=$(sed -n 's/^HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES=//p' .environment | tail -1)
+        interval=$(sed -n 's/^HSADMINNG_MONITORING_INTERVAL_MINUTES=//p' .environment | tail -1)
         interval=${interval:-5}
         if ! [[ "$interval" =~ ^[0-9]+$ ]] || [ "$interval" -lt 1 ] || [ "$interval" -gt 59 ]; then
-            echo "ERROR: HSADMINNG_LOGIN_MONITOR_INTERVAL_MINUTES in ~/.environment must be an integer from 1 to 59, got '$interval'" >&2
+            echo "ERROR: HSADMINNG_MONITORING_INTERVAL_MINUTES in ~/.environment must be an integer from 1 to 59, got '$interval'" >&2
             exit 1
         fi
 
+        # TODO.impl: remove this migration once dev and int run the renamed monitoring
+        # only after the checks above, so that an invalid configuration keeps the former timer running
+        if [ -f .config/systemd/user/login-monitoring-check.timer ]; then
+            step "removing the former login-monitoring-check timer" \
+                systemctl --user disable --now login-monitoring-check.timer
+            rm -f .config/systemd/user/login-monitoring-check.{service,timer} monitoring/login-monitoring-check
+        fi
+
         chmod 600 .environment
-        chmod 700 monitoring/login-monitoring-check
+        chmod 700 monitoring/monitoring-check
         mkdir -p var .config/systemd/user
 
-        cat >.config/systemd/user/login-monitoring-check.service <<'UNIT'
+        cat >.config/systemd/user/monitoring-check.service <<'UNIT'
         [Unit]
-        Description=hsadmin-NG login-monitoring-check
+        Description=hsadmin-NG monitoring-check
 
         [Service]
         Type=oneshot
         TimeoutStartSec=120
         EnvironmentFile=%h/.environment
-        ExecStart=%h/monitoring/login-monitoring-check --matrix-webhook
-        StandardOutput=append:%h/var/login-monitoring.log
+        ExecStart=%h/monitoring/monitoring-check --matrix-webhook
+        StandardOutput=append:%h/var/monitoring.log
         StandardError=inherit
         UNIT
 
-        cat >.config/systemd/user/login-monitoring-check.timer <<UNIT
+        cat >.config/systemd/user/monitoring-check.timer <<UNIT
         [Unit]
-        Description=hsadmin-NG login-monitoring-check every $interval minutes
+        Description=hsadmin-NG monitoring-check every $interval minutes
 
         [Timer]
         OnCalendar=*:0/$interval
@@ -764,17 +778,17 @@ cmdMonitorDeploy() {
         UNIT
 
         step "reloading the systemd user daemon" systemctl --user daemon-reload
-        step "enabling and starting the timer" systemctl --user enable --now login-monitoring-check.timer
+        step "enabling and starting the timer" systemctl --user enable --now monitoring-check.timer
 
         echo -n "running the first check now ... "
-        if systemctl --user start login-monitoring-check.service </dev/null; then
-            echo "done: $(tail -1 var/login-monitoring.log)"
+        if systemctl --user start monitoring-check.service </dev/null; then
+            echo "done: $(tail -1 var/monitoring.log)"
         else
             echo "FAILED:"
-            tail -25 var/login-monitoring.log
+            tail -25 var/monitoring.log
             exit 1
         fi
-        systemctl --user list-timers login-monitoring-check.timer --no-pager
+        systemctl --user list-timers monitoring-check.timer --no-pager
 REMOTE_SCRIPT
     )
 }
@@ -782,17 +796,17 @@ REMOTE_SCRIPT
 # Runs the monitoring check once now (the oneshot .service, not the timer) and
 # reports the last log line; on failure it shows the tail of the log.
 cmdMonitorRun() {
-    if ssh "$backendLogin" systemctl --user start login-monitoring-check.service </dev/null; then
-        ssh "$backendLogin" tail -1 var/login-monitoring.log
+    if ssh "$backendLogin" systemctl --user start monitoring-check.service </dev/null; then
+        ssh "$backendLogin" tail -1 var/monitoring.log
     else
         echo "check FAILED:" >&2
-        ssh "$backendLogin" tail -25 var/login-monitoring.log >&2
+        ssh "$backendLogin" tail -25 var/monitoring.log >&2
         exit 1
     fi
 }
 
 # Lists the alerts the monitor currently holds active. An alert is active exactly while its
-# state file exists (the checker removes it on RESOLVED), so this reads the three state files
+# state file exists (the checker removes it on RESOLVED), so this reads the state files
 # the checker uses and reports each active one with since/count/next-due. The state-file path
 # and backoff are resolved from ~/.environment just as the checker's defaults do.
 cmdMonitorAlerts() {
@@ -800,8 +814,8 @@ cmdMonitorAlerts() {
         set -uo pipefail
         [ -f .environment ] && { set -a; . ./.environment; set +a; }
 
-        stateFile=${HSADMINNG_LOGIN_MONITOR_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/login-monitoring-check.state}
-        alarmRepeat=${HSADMINNG_LOGIN_MONITOR_ALARM_REPEAT:-1,2,4,8,16,24}
+        stateFile=${HSADMINNG_MONITORING_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/monitoring-check.state}
+        alarmRepeat=${HSADMINNG_MONITORING_ALARM_REPEAT:-1,2,4,8,16,24}
         # mirror the checker's fallback, so an invalid value cannot crash the arithmetic below
         [[ "$alarmRepeat" =~ ^[0-9]+(,[0-9]+)*$ ]] || alarmRepeat=1,2,4,8,16,24
         now=$(date +%s)
@@ -837,6 +851,7 @@ cmdMonitorAlerts() {
         report "privileges" "${stateFile%.state}.critical.state"
         report "latency (SLOW)" "${stateFile%.state}.slow.state"
         report "keycloak-sync"  "${stateFile%.state}.sync.state"
+        report "bank-directory" "${stateFile%.state}.bank-directory.state"
 
         [ "$found" -eq 0 ] && echo "no active alerts"
         exit 0
@@ -848,11 +863,11 @@ REMOTE_SCRIPT
 cmdMonitorStatus() {
     # via stdin, because `bash -c <script>` would lose its argument to ssh's argument flattening
     exec ssh "$backendLogin" bash -s < <(unindented <<'REMOTE_SCRIPT'
-        systemctl --user status login-monitoring-check.timer --no-pager || true
+        systemctl --user status monitoring-check.timer --no-pager || true
         echo
-        systemctl --user list-timers login-monitoring-check.timer --no-pager || true
+        systemctl --user list-timers monitoring-check.timer --no-pager || true
         echo "last check:"
-        tail -1 var/login-monitoring.log 2>/dev/null || echo "  (no log yet)"
+        tail -1 var/monitoring.log 2>/dev/null || echo "  (no log yet)"
 REMOTE_SCRIPT
     )
 }
@@ -887,16 +902,16 @@ case "$target" in
             start|stop|restart|status|enable|disable)  lifecycle backend "$action" ;;
             *)                                         badAction backend "$action" ;;
         esac ;;
-    login-monitor)
+    monitoring)
         action=${1:-}; shift || true
         case "$action" in
             deploy)                             cmdMonitorDeploy "$@" ;;
             run)                                cmdMonitorRun ;;
-            log)                                cmdLog var/login-monitoring.log "$@" ;;
+            log)                                cmdLog var/monitoring.log "$@" ;;
             status)                             cmdMonitorStatus ;;
             alerts)                             cmdMonitorAlerts ;;
-            start|stop|restart|enable|disable)  lifecycle login-monitor "$action" ;;
-            *)                                  badAction login-monitor "$action" ;;
+            start|stop|restart|enable|disable)  lifecycle monitoring "$action" ;;
+            *)                                  badAction monitoring "$action" ;;
         esac ;;
     ssh)          cmdSsh "$@" ;;
     upload)       cmdUpload "$@" ;;

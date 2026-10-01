@@ -19,6 +19,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,6 +41,8 @@ import java.util.TreeSet;
 public class HsOfficeBankDirectoryImporter {
 
     private static final Duration TIMEOUT = Duration.ofMinutes(1);
+    // imported versions stay, they tell which version is current and which need no further import
+    private static final Duration RUN_RETENTION = Duration.ofDays(366);
     private static final List<String> REQUIRED_COLUMNS = List.of(
             "Bankleitzahl", "Merkmal", "Bezeichnung", "BIC", "Änderungskennzeichen");
 
@@ -82,6 +85,36 @@ public class HsOfficeBankDirectoryImporter {
     public record Imported(URI sourceUrl) {
     }
 
+    /** What a monitoring may learn about a failed attempt; the exception message stays in the log. */
+    static class ImportFailure extends IOException {
+
+        enum Kind { HTTP_ERROR, NO_RESPONSE, INVALID_FILE, INTERNAL }
+
+        final Kind kind;
+        final String request;
+        final Integer httpStatus;
+        final Integer line;
+
+        ImportFailure(final Kind kind, final String request, final Integer httpStatus, final Integer line,
+                final String message, final Throwable cause) {
+            super(message, cause);
+            this.kind = kind;
+            this.request = request;
+            this.httpStatus = httpStatus;
+            this.line = line;
+        }
+
+        static ImportFailure invalidFile(final Integer line, final String message) {
+            return new ImportFailure(Kind.INVALID_FILE, null, null, line, message, null);
+        }
+
+        static ImportFailure of(final Exception exc) {
+            return exc instanceof ImportFailure failure
+                    ? failure
+                    : new ImportFailure(Kind.INTERNAL, null, null, null, exc.getMessage(), exc);
+        }
+    }
+
     @Scheduled(
             initialDelayString = "${hsadminng.bank-directory.import.initial-delay}",
             fixedDelayString = "${hsadminng.bank-directory.import.interval}")
@@ -90,20 +123,42 @@ public class HsOfficeBankDirectoryImporter {
     }
 
     private void importIfNewVersion(final int attempt) {
+        val startedAt = Instant.now();
         try {
             val currentUrl = currentVersionUrl();
             if (alreadyImported(currentUrl)) {
                 log.info("bank directory {} is already imported", currentUrl);
+                recordRun(startedAt, "UNCHANGED", currentUrl, null, null);
                 return;
             }
-            val file = parse(download(currentUrl));
+            val file = parse(currentUrl, download(currentUrl));
             transaction.executeWithoutResult(status -> replaceBundesbankRows(currentUrl, file));
             log.info("bank directory {} imported with {} banks", currentUrl, file.banks().size());
             checkAgainst(currentUrl);
         } catch (final IOException | RuntimeException exc) {
+            recordRun(startedAt, "FAILED", null, null, ImportFailure.of(exc));
             retryOrGiveUp(attempt, exc);
         } catch (final InterruptedException exc) {
             Thread.currentThread().interrupt();
+        }
+    }
+
+    // an imported version gets recorded along with its banks; not recording another run must not trigger a retry
+    private void recordRun(final Instant startedAt, final String outcome, final URI currentUrl, final Integer bankCount,
+            final ImportFailure failure) {
+        try {
+            jdbc.update("""
+                            insert into hs_office.bank_directory_import (startedAt, outcome, sourceUrl, bankCount,
+                                    failureKind, failureRequest, failureHttpStatus, failureLine)
+                                values (?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                    Timestamp.from(startedAt), outcome, currentUrl == null ? null : currentUrl.toString(), bankCount,
+                    failure == null ? null : failure.kind.name(), failure == null ? null : failure.request,
+                    failure == null ? null : failure.httpStatus, failure == null ? null : failure.line);
+            jdbc.update("delete from hs_office.bank_directory_import where outcome <> 'IMPORTED' and startedAt < ?",
+                    Timestamp.from(startedAt.minus(RUN_RETENTION)));
+        } catch (final RuntimeException exc) {
+            log.warn("bank directory import run of {} could not be recorded", startedAt, exc);
         }
     }
 
@@ -131,7 +186,8 @@ public class HsOfficeBankDirectoryImporter {
 
     /** The configured URL redirects to the current version, whose URL thus identifies it. */
     private URI currentVersionUrl() throws IOException, InterruptedException {
-        val response = http.send(
+        val request = "HEAD " + sourceUrl;
+        val response = send(request,
                 HttpRequest.newBuilder(sourceUrl).method("HEAD", HttpRequest.BodyPublishers.noBody()).timeout(TIMEOUT).build(),
                 HttpResponse.BodyHandlers.discarding());
         if (response.statusCode() == 200) {
@@ -141,7 +197,17 @@ public class HsOfficeBankDirectoryImporter {
         if (response.statusCode() / 100 == 3 && location.isPresent()) {
             return sourceUrl.resolve(location.get());
         }
-        throw new IOException("HTTP " + response.statusCode() + " without redirect for " + sourceUrl);
+        throw new ImportFailure(ImportFailure.Kind.HTTP_ERROR, request, response.statusCode(), null,
+                "HTTP " + response.statusCode() + " without redirect for " + sourceUrl, null);
+    }
+
+    private <B> HttpResponse<B> send(final String request, final HttpRequest httpRequest,
+            final HttpResponse.BodyHandler<B> bodyHandler) throws ImportFailure, InterruptedException {
+        try {
+            return http.send(httpRequest, bodyHandler);
+        } catch (final IOException exc) {
+            throw new ImportFailure(ImportFailure.Kind.NO_RESPONSE, request, null, null, exc.toString(), exc);
+        }
     }
 
     private boolean alreadyImported(final URI currentUrl) {
@@ -151,31 +217,46 @@ public class HsOfficeBankDirectoryImporter {
     }
 
     private String download(final URI currentUrl) throws IOException, InterruptedException {
-        val response = http.send(
+        val request = "GET " + currentUrl;
+        val response = send(request,
                 HttpRequest.newBuilder(currentUrl).GET().timeout(TIMEOUT).build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.ISO_8859_1));
         if (response.statusCode() != 200) {
-            throw new IOException("HTTP " + response.statusCode() + " for " + currentUrl);
+            throw new ImportFailure(ImportFailure.Kind.HTTP_ERROR, request, response.statusCode(), null,
+                    "HTTP " + response.statusCode() + " for " + currentUrl, null);
         }
         return response.body();
     }
 
+    private static BankCodeFile parse(final URI currentUrl, final String csv) throws ImportFailure {
+        try {
+            return parse(csv);
+        } catch (final ImportFailure failure) {
+            throw new ImportFailure(failure.kind, "GET " + currentUrl, null, failure.line, failure.getMessage(), failure);
+        }
+    }
+
     /** Only the record with Merkmal 1 carries the BIC of a bank code, 'D' marks a bank code as deleted. */
-    static BankCodeFile parse(final String csv) throws IOException {
-        val lines = csv.lines().filter(line -> !line.isBlank()).toList();
-        if (lines.isEmpty()) {
-            throw new IOException("empty bank directory");
+    static BankCodeFile parse(final String csv) throws ImportFailure {
+        val lines = csv.lines().toList();
+        if (lines.stream().allMatch(String::isBlank)) {
+            throw ImportFailure.invalidFile(null, "empty bank directory");
         }
         val columns = Arrays.asList(fields(lines.getFirst()));
         if (!columns.containsAll(REQUIRED_COLUMNS)) {
-            throw new IOException("bank directory lacks some of the columns " + REQUIRED_COLUMNS + ": " + columns);
+            throw ImportFailure.invalidFile(1, "bank directory lacks some of the columns " + REQUIRED_COLUMNS + ": " + columns);
         }
         val banks = new ArrayList<Bank>();
         val deletedBankCodes = new TreeSet<String>();
-        for (val line : lines.subList(1, lines.size())) {
+        for (int lineNumber = 2; lineNumber <= lines.size(); ++lineNumber) {
+            val line = lines.get(lineNumber - 1);
+            if (line.isBlank()) {
+                continue;
+            }
             val fields = fields(line);
             if (fields.length != columns.size()) {
-                throw new IOException("bank directory line with " + fields.length + " instead of " + columns.size() + " fields: " + line);
+                throw ImportFailure.invalidFile(lineNumber,
+                        "bank directory line with " + fields.length + " instead of " + columns.size() + " fields: " + line);
             }
             if (fields[columns.indexOf("Änderungskennzeichen")].equals("D")) {
                 deletedBankCodes.add(fields[columns.indexOf("Bankleitzahl")]);
@@ -184,7 +265,7 @@ public class HsOfficeBankDirectoryImporter {
             }
         }
         if (banks.isEmpty()) {
-            throw new IOException("bank directory without any bank");
+            throw ImportFailure.invalidFile(null, "bank directory without any bank");
         }
         return new BankCodeFile(banks, deletedBankCodes);
     }

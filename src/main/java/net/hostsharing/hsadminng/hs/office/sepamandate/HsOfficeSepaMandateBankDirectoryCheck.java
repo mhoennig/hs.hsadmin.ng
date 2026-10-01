@@ -2,15 +2,16 @@ package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankDirectoryController;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankDirectoryImporter;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountIssues;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-/** Tells after a bank-directory import whether bank accounts which still get debited need a correction. */
+/** Tells after a bank-directory import and to the monitoring whether bank accounts which still get debited need a correction. */
 @Slf4j
 @Component
-public class HsOfficeSepaMandateBankDirectoryCheck {
+public class HsOfficeSepaMandateBankDirectoryCheck implements HsOfficeBankDirectoryController.SepaMandateIssues {
 
     private final HsOfficeSepaMandateRealRepository sepaMandateRealRepo;
     private final HsOfficeBankAccountIssues bankAccountIssues;
@@ -34,7 +35,8 @@ public class HsOfficeSepaMandateBankDirectoryCheck {
         }
     }
 
-    int countValidSepaMandatesWithIssues() {
+    @Override
+    public int countValidSepaMandatesWithIssues() {
         val germanBankDirectory = bankAccountIssues.germanBankDirectory();
         return Math.toIntExact(sepaMandateRealRepo.findBankAccountsOfValidSepaMandates().stream()
                 .filter(bankAccount -> germanBankDirectory.hasIssues(bankAccount.getIban(), bankAccount.getBic()))

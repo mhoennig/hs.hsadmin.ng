@@ -1,0 +1,29 @@
+get:
+    summary: Returns the status of the bank-directory import.
+    description: |
+        Returns the currently imported version of the bank directory, the time of the last successful attempt
+        and the most recent attempts, also failed ones.
+        Deliberately public (unauthenticated) so that external monitoring can poll it without credentials;
+        it shows neither bank accounts nor exception messages.
+    tags:
+        - hs-office-bank-directory
+    operationId: getBankDirectoryImportStatus
+    parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 10
+          description: The maximum number of recent attempts to return.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'hs-office-bank-directory-schemas.yaml#/components/schemas/HsOfficeBankDirectoryImportStatus'
+        "400":
+            $ref: 'error-responses.yaml#/components/responses/BadRequest'

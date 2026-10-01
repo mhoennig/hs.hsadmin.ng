@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import lombok.val;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankDirectoryImporter.Bank;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankDirectoryImporter.ImportFailure;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +27,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.IOException;
 import java.net.URI;
+import java.sql.Timestamp;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -42,6 +44,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -118,8 +121,9 @@ class HsOfficeBankDirectoryImporterUnitTest {
 
         @Test
         void rejectsALineWithAnotherNumberOfFields() {
-            assertThatThrownBy(() -> HsOfficeBankDirectoryImporter.parse(HEADER + "\n\"98010000\";\"1\";\"Beispielbank\""))
-                    .isInstanceOf(IOException.class).hasMessageStartingWith("bank directory line with 3 instead of 5 fields");
+            assertThatThrownBy(() -> HsOfficeBankDirectoryImporter.parse(HEADER + "\n\n\"98010000\";\"1\";\"Beispielbank\""))
+                    .isInstanceOf(IOException.class).hasMessageStartingWith("bank directory line with 3 instead of 5 fields")
+                    .extracting("kind", "line").containsExactly(ImportFailure.Kind.INVALID_FILE, 3);
         }
 
         @Test
@@ -185,6 +189,7 @@ class HsOfficeBankDirectoryImporterUnitTest {
 
             bundesbank.verify(0, getRequestedFor(urlEqualTo("/blob/hash1/blz.csv")));
             verify(jdbc, never()).batchUpdate(anyString(), anyList(), anyInt(), any(ParameterizedPreparedStatementSetter.class));
+            verifyRun("UNCHANGED", bundesbank.baseUrl() + "/blob/hash1/blz.csv", null, null, null, null, null);
         }
 
         @Test
@@ -194,6 +199,7 @@ class HsOfficeBankDirectoryImporterUnitTest {
             importer.importIfNewVersion();
 
             verify(jdbc, never()).update(anyString());
+            verifyRun("FAILED", null, null, "HTTP_ERROR", "HEAD " + bundesbank.baseUrl() + "/blob/0/blz.csv", 404, null);
         }
 
         @Test
@@ -205,6 +211,52 @@ class HsOfficeBankDirectoryImporterUnitTest {
             importer.importIfNewVersion();
 
             verify(jdbc, never()).update(anyString());
+            verifyRun("FAILED", null, null, "HTTP_ERROR", "GET " + bundesbank.baseUrl() + "/blob/hash1/blz.csv", 500, null);
+        }
+
+        @Test
+        void recordsAFailedAttemptIfTheBundesbankDoesNotAnswer() {
+            val unreachableUrl = bundesbank.baseUrl() + "/blob/0/blz.csv";
+            bundesbank.stop();
+
+            importer.importIfNewVersion();
+
+            verifyRun("FAILED", null, null, "NO_RESPONSE", "HEAD " + unreachableUrl, null, null);
+        }
+
+        @Test
+        void recordsTheLineOfAnInvalidFile() {
+            givenImported(false);
+            givenRedirectTo("hash1");
+            bundesbank.stubFor(get("/blob/hash1/blz.csv").willReturn(aResponse()
+                    .withBody((HEADER + "\r\n\"98010000\";\"1\"\r\n").getBytes(StandardCharsets.ISO_8859_1))));
+
+            importer.importIfNewVersion();
+
+            verifyRun("FAILED", null, null, "INVALID_FILE", "GET " + bundesbank.baseUrl() + "/blob/hash1/blz.csv", null, 2);
+        }
+
+        @Test
+        void recordsAnInternalFailureWithoutDetails() {
+            givenRedirectTo("hash1");
+            when(jdbc.queryForObject(anyString(), eq(Boolean.class), anyString())).thenThrow(new IllegalStateException("database down"));
+
+            importer.importIfNewVersion();
+
+            verifyRun("FAILED", null, null, "INTERNAL", null, null, null);
+        }
+
+        @Test
+        void neitherFailsNorRetriesIfTheRunCannotBeRecorded(final CapturedOutput output) {
+            givenImported(true);
+            givenRedirectTo("hash1");
+            when(jdbc.update(startsWith("insert into hs_office.bank_directory_import (startedAt,"), any(Object[].class)))
+                    .thenThrow(new IllegalStateException("database down"));
+
+            importer.importIfNewVersion();
+
+            verifyNoMoreInteractions(scheduler);
+            assertThat(output).contains("could not be recorded");
         }
 
         @Test
@@ -247,6 +299,14 @@ class HsOfficeBankDirectoryImporterUnitTest {
             clearInvocations(scheduler);
             delays.add(Duration.between(before, startTime.getValue()).plusSeconds(30).truncatedTo(ChronoUnit.MINUTES));
             retry.getValue().run();
+        }
+
+        private void verifyRun(
+                final String outcome, final String sourceUrl, final Integer bankCount,
+                final String failureKind, final String failureRequest, final Integer failureHttpStatus, final Integer failureLine) {
+            verify(jdbc).update(startsWith("insert into hs_office.bank_directory_import (startedAt,"), any(Timestamp.class),
+                    eq(outcome), eq(sourceUrl), eq(bankCount),
+                    eq(failureKind), eq(failureRequest), eq(failureHttpStatus), eq(failureLine));
         }
 
         private void givenImported(final boolean imported) {

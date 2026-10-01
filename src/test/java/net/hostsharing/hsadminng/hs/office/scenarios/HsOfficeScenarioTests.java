@@ -10,6 +10,8 @@ import net.hostsharing.hsadminng.hs.office.scenarios.contact.QueryRelations;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFromContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.CreateBankAccount;
+import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.AttemptBundesbankImportWhileUnavailable;
+import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.FetchBankDirectoryImportStatus;
 import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.ImportBundesbankBankDirectory;
 import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.ListBankAccountsWithBankName;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateDebitorAsBillingSystem;
@@ -749,6 +751,41 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .expected("expectedBic", "NEUBDEB0XXX")
                     .expected("expectedBankName", "Neue Beispielbank")
                     .thenExpect(HttpStatus.CREATED);
+        }
+
+        @Test
+        @Order(3021)
+        @Scenario({"313.01", "313.03"})
+        @Requires("Bank Directory: Bundesbank 2026-09")
+        void shouldFetchBankDirectoryImportStatusAfterImport() {
+            new FetchBankDirectoryImportStatus(scenarioTest)
+                    .given("bundesbankVersion", "2026-09")
+                    .expected("expectedLatestOutcome", "IMPORTED")
+                    // the valid SEPA mandates with wrong BIC and with unknown bank code of scenario 311.01
+                    .expected("expectedSepaMandatesWithIssues", 2)
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3022)
+        @Requires("Bank Directory: Bundesbank 2026-09")
+        @Produces("Bank Directory Import: Bundesbank answers 503")
+        void shouldAttemptBundesbankImportWhileUnavailable() {
+            new AttemptBundesbankImportWhileUnavailable(scenarioTest)
+                    .given("bundesbankHttpStatus", 503)
+                    .thenExpectScheduledJobRun();
+        }
+
+        @Test
+        @Order(3023)
+        @Scenario({"313.02"})
+        @Requires("Bank Directory Import: Bundesbank answers 503")
+        void shouldFetchBankDirectoryImportStatusAfterFailedAttempt() {
+            new FetchBankDirectoryImportStatus(scenarioTest)
+                    .given("bundesbankVersion", "2026-09")
+                    .expected("expectedLatestOutcome", "FAILED")
+                    .expected("expectedHttpStatus", 503)
+                    .thenExpect(HttpStatus.OK);
         }
     }
 

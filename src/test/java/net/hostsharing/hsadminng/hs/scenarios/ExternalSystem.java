@@ -88,6 +88,16 @@ public enum ExternalSystem {
             return this;
         }
 
+        public Stub fails(final String resolvablePath, final int httpStatus) {
+            val path = ScenarioTest.resolve(resolvablePath, DROP_COMMENTS);
+            server.stubFor(any(urlEqualTo(path)).willReturn(aResponse().withStatus(httpStatus)));
+            testReport.printLine("```");
+            testReport.printLine(name + ": " + path + " => " + httpStatus);
+            testReport.printLine("```");
+            testReport.printLine("");
+            return this;
+        }
+
         public Stub serves(final String resolvablePath, final String contentType, final String resolvableBody) {
             val path = ScenarioTest.resolve(resolvablePath, DROP_COMMENTS);
             val body = ScenarioTest.resolve(resolvableBody, DROP_COMMENTS);

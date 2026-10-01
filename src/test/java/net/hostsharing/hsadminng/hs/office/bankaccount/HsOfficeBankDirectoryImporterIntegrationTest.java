@@ -94,6 +94,22 @@ class HsOfficeBankDirectoryImporterIntegrationTest {
         bundesbank.verify(1, getRequestedFor(urlEqualTo("/blob/hash1/blz.csv")));
         assertThat(publishedEvents).containsExactly(
                 new HsOfficeBankDirectoryImporter.Imported(URI.create(bundesbank.baseUrl() + "/blob/hash1/blz.csv")));
+        assertThat(runs()).containsExactly(
+                "IMPORTED|" + bundesbank.baseUrl() + "/blob/hash1/blz.csv|3|null|null|null",
+                "UNCHANGED|" + bundesbank.baseUrl() + "/blob/hash1/blz.csv|null|null|null|null");
+    }
+
+    @Test
+    void recordsAFailedAttemptWithTheAnswerOfTheBundesbank() {
+        // given
+        bundesbank.stubFor(head(urlEqualTo("/blob/0/blz.csv")).willReturn(aResponse().withStatus(503)));
+
+        // when
+        importer.importIfNewVersion();
+
+        // then
+        assertThat(runs()).containsExactly(
+                "FAILED|null|null|HTTP_ERROR|HEAD " + bundesbank.baseUrl() + "/blob/0/blz.csv|503");
     }
 
     @Test
@@ -165,6 +181,17 @@ class HsOfficeBankDirectoryImporterIntegrationTest {
 
     private List<String> importedUrls() {
         return jdbc.queryForList("select sourceUrl from hs_office.bank_directory_import where outcome = 'IMPORTED'", String.class);
+    }
+
+    private List<String> runs() {
+        return jdbc.queryForList("""
+                        select outcome || '|' || coalesce(sourceUrl, 'null') || '|' || coalesce(bankCount::text, 'null')
+                                || '|' || coalesce(failureKind, 'null') || '|' || coalesce(failureRequest, 'null')
+                                || '|' || coalesce(failureHttpStatus::text, 'null')
+                            from hs_office.bank_directory_import
+                            order by startedAt
+                        """,
+                String.class);
     }
 
     private long count(final String condition) {

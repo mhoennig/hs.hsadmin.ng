@@ -58,6 +58,9 @@ paths:
   /api/hs/office/bankaccounts/{bankAccountUUID}:
     $ref: "hs-office-bankaccounts-with-uuid.yaml"
 
+  /api/hs/office/bank-directory/import-status:
+    $ref: "hs-office-bank-directory-import-status.yaml"
+
 
   # Debitors
 

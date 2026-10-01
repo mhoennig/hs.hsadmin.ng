@@ -11,6 +11,8 @@ tasks.register("convertMarkdownToHtml") {
     // Define the template file using project.file
     val templateFile = project.file("doc/scenarios/.template.html")
     inputs.file(templateFile).withPathSensitivity(PathSensitivity.NONE)
+    val linkFilterFile = project.file("doc/scenarios/.md-links-to-html.lua")
+    inputs.file(linkFilterFile).withPathSensitivity(PathSensitivity.NONE)
 
     // The scenario tests write the markdown reports outside any registered output directory,
     // otherwise Gradle's stale-output cleanup could delete them before this task runs.
@@ -57,6 +59,7 @@ tasks.register("convertMarkdownToHtml") {
                 "pandoc",
                 file.absolutePath,
                 "--template", templateFile.absolutePath,
+                "--lua-filter", linkFilterFile.absolutePath,
                 "-o", outputFile.absolutePath
             ).inheritIO().start()
             p.waitFor()

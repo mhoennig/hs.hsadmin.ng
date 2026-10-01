@@ -62,3 +62,17 @@ create table hs_office.bank_directory_import
     bankCount           integer
 );
 --//
+
+
+-- ============================================================================
+--changeset michael.hoennig:hs-office-bank-directory-IMPORT-FAILURE endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+-- Unlike exception messages, these details are safe to show a monitoring publicly.
+alter table hs_office.bank_directory_import
+    add column failureKind          varchar(20) check (failureKind in ('HTTP_ERROR', 'NO_RESPONSE', 'INVALID_FILE', 'INTERNAL')),
+    add column failureRequest       varchar(520),
+    add column failureHttpStatus    integer,
+    add column failureLine          integer,
+    add check ((outcome = 'FAILED') = (failureKind is not null));
+--//
