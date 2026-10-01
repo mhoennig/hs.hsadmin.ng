@@ -410,6 +410,58 @@ class ContextUnitTest {
         }
 
         @Test
+        void registerWithHttpServletRequestMasksSensitivePropertyOnlyInNestedObject() throws IOException {
+            givenRequest("POST", "http://localhost:9999/api/hs/hosting/assets", Map.ofEntries(
+                            Map.entry("content-type", "application/json")),
+                    """
+                    {
+                        "type": "UNIX_USER",
+                        "config": { "password": "given-password" }
+                    }""");
+
+            context.define("current-subject");
+
+            verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String currentRequest) ->
+                    currentRequest.contains("\"password\":\"<masked>\"")
+                            && !currentRequest.contains("given-password")));
+        }
+
+        @Test
+        void registerWithHttpServletRequestMasksSensitivePropertyOnlyInArray() throws IOException {
+            givenRequest("POST", "http://localhost:9999/api/hs/hosting/assets", Map.ofEntries(
+                            Map.entry("content-type", "application/json")),
+                    """
+                    [
+                        { "type": "UNIX_USER" },
+                        { "password": "given-password" }
+                    ]""");
+
+            context.define("current-subject");
+
+            verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String currentRequest) ->
+                    currentRequest.contains("\"password\":\"<masked>\"")
+                            && !currentRequest.contains("given-password")));
+        }
+
+        @Test
+        void registerWithHttpServletRequestKeepsJsonBodyWithoutSensitivePropertiesVerbatim() throws IOException {
+            val body = """
+                    {
+                        "type": "UNIX_USER",
+                        "config": { "shell": "/bin/bash" },
+                        "subHostingAssets": [ { "type": "EMAIL_ALIAS" } ]
+                    }""";
+            givenRequest("POST", "http://localhost:9999/api/hs/hosting/assets", Map.ofEntries(
+                            Map.entry("content-type", "application/json")),
+                    body);
+
+            context.define("current-subject");
+
+            verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String currentRequest) ->
+                    currentRequest.contains(body)));
+        }
+
+        @Test
         void registerWithHttpServletRequestMasksCredentialHeaders() throws IOException {
             givenRequest("GET", "http://localhost:9999/api/endpoint", Map.ofEntries(
                             Map.entry("content-type", "application/json"),
