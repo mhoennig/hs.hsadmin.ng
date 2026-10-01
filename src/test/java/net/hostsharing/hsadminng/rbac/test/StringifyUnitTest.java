@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.test;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
+import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.junit.jupiter.api.Test;
@@ -136,5 +137,28 @@ class StringifyUnitTest {
         final var given = new SubBeanWithQuotedValues("some key", 1234, true);
         final var result = given.toString();
         assertThat(result).isEqualTo("SubBeanWithQuotedValues('some key': '1234': 'active')");
+    }
+
+    @DisplayAs("displayed bean")
+    public static class BeanWithDisplayAs {
+    }
+
+    // built inside the tests because PIT does not re-run static initializers for each mutant
+    @Test
+    void stringifyWithExplicitNameIgnoresDisplayAs() {
+        val result = stringify(BeanWithDisplayAs.class, "explicit name").apply(new BeanWithDisplayAs());
+        assertThat(result).isEqualTo("explicit name()");
+    }
+
+    @Test
+    void stringifyWithoutExplicitNameUsesDisplayAs() {
+        val result = stringify(BeanWithDisplayAs.class).apply(new BeanWithDisplayAs());
+        assertThat(result).isEqualTo("displayed bean()");
+    }
+
+    @Test
+    void stringifyWithoutExplicitNameAndWithoutDisplayAsUsesSimpleClassName() {
+        val result = stringify(SubBeanWithQuotedValues.class).apply(new SubBeanWithQuotedValues());
+        assertThat(result).isEqualTo("SubBeanWithQuotedValues()");
     }
 }
