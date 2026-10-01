@@ -1,8 +1,8 @@
-# PR#XXX: Mutation-CRAP mit werkcrappit, Schwellwert 10
+# PR#317: Mutation-CRAP mit werkcrappit, Schwellwert 10
 
 ## Relevante Links (Hostsharing-intern)
 
-- GitEA-PR: noch nicht angelegt; die Nummer ersetzt `XXX` in Dateiname und Titel.
+- GitEA-PR: https://dev.hostsharing.net/hostsharing/hs.hsadmin.ng/pulls/317
 
 ## Relevante Links (öffentlich)
 
@@ -33,9 +33,12 @@ Alle übrigen 1152 bewerteten Methoden liegen bei höchstens 10.
 - `settings.gradle`: die Maven-Registry von git.javagil.de für das Gradle-Plugin.
 - `build.gradle.kts`: Plugin `de.hoennig.werkcrappit`, dieselbe Registry für `werkcrappit-pit`,
   und `werkcrappit { maxMutationCrap = 10 }`.
-- `.werkator.yml`: `mutationCrapCheck` nach `pitestPartial` bzw. `pitestFull`.
+- `.werkator.yml`: `mutationCrapCheck` nach `pitestPartial` in den Branch-Builds
+  und nach `pitestFull` im Build für `master`.
 
 `maxMutationCrap = 10` heißt „höchstens 10“: Das Gate scheitert erst bei einem Wert über 10.
+Der Schwellwert steht von Anfang an im Branch;
+der Branch-Build bleibt rot, bis die sechs Methoden unten behoben sind.
 
 ### Vorher zu beheben
 
@@ -69,10 +72,6 @@ Die zählen hier nicht, denn PIT nutzt nur `*UnitTest` und `*RestTest`.
 `maskProperties` maskiert Passwörter im geloggten Request-Body.
 Heute bemerkt kein Test, wenn die Rekursion in verschachtelte Objekte oder Arrays bricht;
 ein Passwort dort gelangte dann im Klartext ins Log.
-
-## Offene Fragen
-
-- Soll die Mutation-CRAP-Prüfung auch im Build für `master` laufen oder nur in den Branch-Builds?
 
 ## Voraussetzungs-PRs
 

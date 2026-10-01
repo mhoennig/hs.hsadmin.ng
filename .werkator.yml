@@ -39,7 +39,7 @@ builds:
     # `outputs.cacheIf { false }` instead of `--no-build-cache`.
     # --profile writes a per-task timing report under build/reports/profile,
     # archived with the artifacts.
-    buildCommand: ./gradlew --console=plain --no-daemon --profile jacocoTestReport pitestPartial check generateDocumentation -x dependencyCheckAnalyze smokeTest prQuickCheck
+    buildCommand: ./gradlew --console=plain --no-daemon --profile jacocoTestReport pitestPartial mutationCrapCheck check generateDocumentation -x dependencyCheckAnalyze smokeTest prQuickCheck
     artifactDirs:
       - build/reports
       - build/doc
@@ -69,7 +69,7 @@ builds:
     # prQuickCheck is deliberately absent: it asserts that HEAD contains origin/master,
     # which on master is either tautological or, when master moves during the build,
     # a failure of a perfectly healthy build.
-    buildCommand: ./gradlew --console=plain --no-daemon --profile jacocoTestReport pitestFull check generateDocumentation -x dependencyCheckAnalyze smokeTest bootJarWithDocumentation
+    buildCommand: ./gradlew --console=plain --no-daemon --profile jacocoTestReport pitestFull mutationCrapCheck check generateDocumentation -x dependencyCheckAnalyze smokeTest bootJarWithDocumentation
     # Lists replace instead of merging, so the inherited entries are repeated here.
     artifactDirs:
       - build/reports

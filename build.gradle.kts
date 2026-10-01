@@ -26,6 +26,7 @@ plugins {
     id("com.gorylenko.gradle-git-properties") version "4.0.1"    // exposes git commit info via Actuator info endpoint
     id("io.openapiprocessor.openapi-processor") version "2026.2" // generates Controller-interface and resources from API-spec
     id("info.solidsoft.pitest") version "1.19.0"                 // performs mutation testing
+    id("de.hoennig.werkcrappit") version "0.3.1"                 // Mutation-CRAP per method, gate mutationCrapCheck
     id("se.patrikerdes.use-latest-versions") version "0.2.19"    // updates module and plugin versions
     id("io.github.ben-manes.versions") version "0.64.0"          // determines which dependencies have updates
 }
@@ -64,6 +65,7 @@ configurations {
 repositories {
     mavenCentral()
     maven { url = uri("https://repo.spring.io/milestone") }
+    maven { url = uri("https://git.javagil.de/api/packages/mi/maven") } // werkcrappit
 }
 
 val JAVA_VERSION = 25
@@ -413,6 +415,12 @@ configure<PitestPluginExtension> {
     outputFormats.set(listOf("XML", "HTML"))
     timestampedReports.set(false)
 }
+// Mutation-CRAP = C² × (1 − MS)³ + C per method; mutationCrapCheck fails above the limit.
+// 10 holds the state of 2026-10-01 after fixing the six methods above it, see doc/PR/*PR#317*.
+werkcrappit {
+    maxMutationCrap = 10
+}
+
 tasks.named("pitest") {
     val reportFile = layout.buildDirectory.file("reports/pitest/index.html")
     doFirst { // Why not doLast? See README.md!
