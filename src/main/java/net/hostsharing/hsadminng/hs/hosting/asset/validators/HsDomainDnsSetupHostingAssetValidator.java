@@ -98,6 +98,7 @@ public class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityVal
     String toZonefileString(final HsHostingAsset assetEntity) {
         // TODO.spec: we need to expand the templates (auto-...) in the same way as in Saltstack, with proper IP-numbers etc.
         // TODO.impl: auto-AUTOCONFIG-RR auto-AUTODISCOVER-RR missing
+        // TODO.impl: auto-AAAA-RR reads "auto-AAA-RR" and auto-WILDCARD-MX-RR reads "auto-SPF-RR"
         return """
                 $TTL {ttl}
 
@@ -117,8 +118,8 @@ public class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityVal
                 {userRRs}
                 """
                 .replace("{ttl}", assetEntity.getDirectValue("TTL", Integer.class, 43200).toString())
-                .replace("{auto-SOA}", assetEntity.getDirectValue("auto-SOA", Boolean.class, false).equals(true)
-                        ? """
+                .replace("{auto-SOA}", autoRR(assetEntity, "auto-SOA", false,
+                        """
                             {domain}.   IN     SOA h00.hostsharing.net. hostmaster.hostsharing.net. (
                                                             1303649373      ; serial secs since Jan 1 1970
                                                                     6H      ; refresh (>=10000)
@@ -126,53 +127,63 @@ public class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityVal
                                                                     1W      ; expire
                                                                     1H      ; minimum
                                                             )
-                            """
-                        : "; no auto-SOA"
-                )
-                .replace("{auto-NS-RR}", assetEntity.getDirectValue("auto-NS-RR", Boolean.class, true)
-                        ? """
+                            """,
+                        "auto-SOA"))
+                .replace("{auto-NS-RR}", autoRR(assetEntity, "auto-NS-RR", true,
+                        """
                             {domain}.      IN      NS      dns1.hostsharing.net.
                             {domain}.      IN      NS      dns2.hostsharing.net.
                             {domain}.      IN      NS      dns3.hostsharing.net.
-                            """
-                        : "; no auto-NS-RR")
-                .replace("{auto-MX-RR}", assetEntity.getDirectValue("auto-MX-RR", Boolean.class, true)
-                        ?   """
+                            """,
+                        "auto-NS-RR"))
+                .replace("{auto-MX-RR}", autoRR(assetEntity, "auto-MX-RR", true,
+                        """
                             {domain}.      IN      MX      30 mailin1.hostsharing.net.
                             {domain}.      IN      MX      30 mailin2.hostsharing.net.
                             {domain}.      IN      MX      30 mailin3.hostsharing.net.
-                            """
-                        : "; no auto-MX-RR")
-                .replace("{auto-A-RR}",  assetEntity.getDirectValue("auto-A-RR", Boolean.class, true)
-                        ? "{domain}.      IN  A       83.223.95.160" // arbitrary IP-number
-                        : "; no auto-A-RR")
-                .replace("{auto-AAAA-RR}",  assetEntity.getDirectValue("auto-AAA-RR", Boolean.class, true)
-                        ? "{domain}.      IN  AAAA    2a01:37:1000::53df:5fa0:0" // arbitrary IP-number
-                        : "; no auto-AAAA-RR")
-                .replace("{auto-DKIM-RR}", assetEntity.getDirectValue("auto-DKIM-RR", Boolean.class, true)
-                        ? "default._domainkey 21600 IN TXT \"v=DKIM1; h=sha256; k=rsa; s=email; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmdM9d15bqe94zbHVcKKpUF875XoCWHKRap/sG3NJZ9xZ/BjfGXmqoEYeFNpX3CB7pOXhH5naq4N+6gTjArTviAiVThHXyebhrxaf1dVS4IUC6raTEyQrWPZUf7ZxXmcCYvOdV4jIQ8GRfxwxqibIJcmMiufXTLIgRUif5uaTgFwIDAQAB\""
-                        : "; no auto-DKIM-RR")
-                .replace("{auto-SPF-RR}", assetEntity.getDirectValue("auto-SPF-RR", Boolean.class, true)
-                        ? "{domain}.      IN  TXT      \"v=spf1 include:spf.hostsharing.net ?all\""
-                        : "; no auto-SPF-RR")
-                .replace("{auto-WILDCARD-MX-RR}", assetEntity.getDirectValue("auto-SPF-RR", Boolean.class, true)
-                        ? """
+                            """,
+                        "auto-MX-RR"))
+                .replace("{auto-A-RR}", autoRR(assetEntity, "auto-A-RR", true,
+                        "{domain}.      IN  A       83.223.95.160", // arbitrary IP-number
+                        "auto-A-RR"))
+                .replace("{auto-AAAA-RR}", autoRR(assetEntity, "auto-AAA-RR", true,
+                        "{domain}.      IN  AAAA    2a01:37:1000::53df:5fa0:0", // arbitrary IP-number
+                        "auto-AAAA-RR"))
+                .replace("{auto-DKIM-RR}", autoRR(assetEntity, "auto-DKIM-RR", true,
+                        "default._domainkey 21600 IN TXT \"v=DKIM1; h=sha256; k=rsa; s=email; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmdM9d15bqe94zbHVcKKpUF875XoCWHKRap/sG3NJZ9xZ/BjfGXmqoEYeFNpX3CB7pOXhH5naq4N+6gTjArTviAiVThHXyebhrxaf1dVS4IUC6raTEyQrWPZUf7ZxXmcCYvOdV4jIQ8GRfxwxqibIJcmMiufXTLIgRUif5uaTgFwIDAQAB\"",
+                        "auto-DKIM-RR"))
+                .replace("{auto-SPF-RR}", autoRR(assetEntity, "auto-SPF-RR", true,
+                        "{domain}.      IN  TXT      \"v=spf1 include:spf.hostsharing.net ?all\"",
+                        "auto-SPF-RR"))
+                .replace("{auto-WILDCARD-MX-RR}", autoRR(assetEntity, "auto-SPF-RR", true,
+                        """
                             *.{domain}.      IN      MX      30 mailin1.hostsharing.net.
                             *.{domain}.      IN      MX      30 mailin1.hostsharing.net.
                             *.{domain}.      IN      MX      30 mailin1.hostsharing.net.
-                            """
-                        : "; no auto-WILDCARD-MX-RR")
-                .replace("{auto-WILDCARD-A-RR}", assetEntity.getDirectValue("auto-WILDCARD-A-RR", Boolean.class, true)
-                        ? "*.{domain}.      IN  A       83.223.95.160" // arbitrary IP-number
-                        : "; no auto-WILDCARD-A-RR")
-                .replace("{auto-WILDCARD-AAAA-RR}", assetEntity.getDirectValue("auto-WILDCARD-AAAA-RR", Boolean.class, true)
-                        ? "*.{domain}.      IN  AAAA    2a01:37:1000::53df:5fa0:0" // arbitrary IP-number
-                        : "; no auto-WILDCARD-AAAA-RR")
-                .replace("{auto-WILDCARD-SPF-RR}", assetEntity.getDirectValue("auto-WILDCARD-SPF-RR", Boolean.class, true)
-                        ? "*.{domain}.      IN  TXT      \"v=spf1 include:spf.hostsharing.net ?all\""
-                        : "; no auto-WILDCARD-SPF-RR")
+                            """,
+                        "auto-WILDCARD-MX-RR"))
+                .replace("{auto-WILDCARD-A-RR}", autoRR(assetEntity, "auto-WILDCARD-A-RR", true,
+                        "*.{domain}.      IN  A       83.223.95.160", // arbitrary IP-number
+                        "auto-WILDCARD-A-RR"))
+                .replace("{auto-WILDCARD-AAAA-RR}", autoRR(assetEntity, "auto-WILDCARD-AAAA-RR", true,
+                        "*.{domain}.      IN  AAAA    2a01:37:1000::53df:5fa0:0", // arbitrary IP-number
+                        "auto-WILDCARD-AAAA-RR"))
+                .replace("{auto-WILDCARD-SPF-RR}", autoRR(assetEntity, "auto-WILDCARD-SPF-RR", true,
+                        "*.{domain}.      IN  TXT      \"v=spf1 include:spf.hostsharing.net ?all\"",
+                        "auto-WILDCARD-SPF-RR"))
                 .replace("{domain}", fqdn(assetEntity))
                 .replace("{userRRs}", getPropertyValues(assetEntity, "user-RR"));
+    }
+
+    private static String autoRR(
+            final HsHostingAsset assetEntity,
+            final String propertyName,
+            final boolean enabledByDefault,
+            final String resourceRecords,
+            final String resourceRecordsName) {
+        return assetEntity.getDirectValue(propertyName, Boolean.class, enabledByDefault)
+                ? resourceRecords
+                : "; no " + resourceRecordsName;
     }
 
     private String fqdn(final HsHostingAsset assetEntity) {

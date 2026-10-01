@@ -56,7 +56,7 @@ denn der Mutation-CRAP ist nie kleiner als die Komplexität.
 |------:|---------------------------------------------------------------|---:|--------:|-------:|
 | 12,72 | `Context.maskProperties`                                      |  6 |     3/7 |   6,00 |
 | 12,41 | `IntegerProperty.deferredInit`                                |  5 |     2/6 |   5,00 |
-| 12,00 | `HsDomainDnsSetupHostingAssetValidator.toZonefileString`      | 12 |   12/12 |    ≤ 9 |
+| 12,00 | `HsDomainDnsSetupHostingAssetValidator.toZonefileString`      | 12 |   12/12 |   1,00 |
 | 12,00 | `Stringify.<init>`                                            |  3 |     0/2 |   4,13 |
 | 12,00 | `HsOfficePartnerController.optionallyCreateExPartnerRelation` |  3 |     0/2 |   4,13 |
 | 11,60 | `HsOfficeDebitorController.postNewDebitor`                    |  7 |    6/11 |   9,36 |
@@ -65,7 +65,8 @@ Was jeweils fehlte:
 
 1. `maskProperties`: ein zu maskierendes Feld in einem verschachtelten Objekt und eines in einem Array.
 2. `deferredInit`: `min` zusammen mit `minFrom` und `max` zusammen mit `maxFrom` lösen die Exception aus.
-3. `toZonefileString`: keine Tests, sondern eine Aufteilung, z. B. je Record-Typ eine Methode.
+3. `toZonefileString`: keine Tests, sondern eine Aufteilung;
+   die Hilfsmethode `autoRR` wählt je Record-Typ zwischen Records und Kommentar.
 4. `Stringify.<init>`: ein `Stringify` ohne expliziten Namen, mit und ohne `@DisplayAs`.
 5. `optionallyCreateExPartnerRelation`: Eine gewechselte Partner-Person speichert eine `EX_PARTNER`-Relation,
    eine unveränderte nicht.
@@ -77,3 +78,7 @@ Die zählen hier nicht, denn PIT nutzt nur `*UnitTest` und `*RestTest`.
 `maskProperties` maskiert Passwörter im Request-Body im Log.
 Zuvor bemerkte kein Test, wenn die Rekursion in verschachtelte Objekte oder Arrays branch;
 ein Passwort dort gelangte dann im Klartext ins Log.
+
+- [ ] TODO.impl: `toZonefileString` liest für `auto-AAAA-RR` den Schlüssel `auto-AAA-RR`
+  und für `auto-WILDCARD-MX-RR` den Schlüssel `auto-SPF-RR`;
+  die Aufteilung ändert dieses Verhalten bewusst nicht.
