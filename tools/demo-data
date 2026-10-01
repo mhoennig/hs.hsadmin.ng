@@ -44,8 +44,8 @@
 # that inside the container, where the pg_restore version matches the one which wrote the dump.
 #
 # The dataset is served with the profiles `fake-jwt,without-test-data,demo-bankcodes`. `without-test-data` is
-# not optional: without it the start writes test partners and test subjects into the dataset for
-# good. `hsh-demo_admin` is the only login in every dataset, and `fake-jwt` accepts any password.
+# not optional: without it the start writes test partners and test subjects into the dataset for good.
+# `hsh-demo_admin` is the only login in every dataset, and `fake-jwt` accepts any password.
 # `demo-bankcodes` loads the demo banks, which the generated demo IBANs need to pass the bank directory check.
 #
 # The image, container, port and app-port options can also come from the environment as

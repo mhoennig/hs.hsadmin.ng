@@ -11,6 +11,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFr
 import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.CreateBankAccount;
 import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.ImportBundesbankBankDirectory;
+import net.hostsharing.hsadminng.hs.office.scenarios.bankaccount.ListBankAccountsWithBankName;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateDebitorAsBillingSystem;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToCreateSepaMandateAsBillingSystem;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.AttemptToListRelationsAsBillingSystem;
@@ -28,6 +29,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaManda
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllDebitorsWithCompleteMasterData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListAllValidSepaMandates;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListDebitorsWithCompleteMasterData;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListSepaMandatesOfDebitorWithBankName;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.ListValidSepaMandatesOfDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.ChangeMembershipFeeExemption;
@@ -439,6 +441,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("iban", "DE56990300000000594937")
                     .given("bic", "DEMRDEF0")
                     .expected("expectedBic", "DEMRDEF0")
+                    .expected("expectedBankName", "Regionalbank Musterhausen")
                     .thenExpect(HttpStatus.CREATED);
         }
 
@@ -451,6 +454,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("iban", "DE56990300000000594937")
                     .given("bic", "DEMRDEF0XXX")
                     .expected("expectedBic", "DEMRDEF0XXX")
+                    .expected("expectedBankName", "Regionalbank Musterhausen")
                     .thenExpect(HttpStatus.CREATED);
         }
 
@@ -474,6 +478,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("holder", "Test AG - BIC completed from bank directory")
                     .given("iban", "DE56990300000000594937")
                     .expected("expectedBic", "DEMRDEF0")
+                    .expected("expectedBankName", "Regionalbank Musterhausen")
                     .thenExpect(HttpStatus.CREATED);
         }
 
@@ -512,6 +517,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("bic", "GENODEMIGLS")
                     .given("overrideBankDirectory", true)
                     .expected("expectedBic", "GENODEMIGLS")
+                    .expected("expectedBankName", "Regionalbank Musterhausen")
                     .thenExpect(HttpStatus.CREATED);
         }
 
@@ -545,13 +551,16 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Test
         @Order(3007)
         @Scenario({"302.06"})
+        @Produces("BankAccount: Test AG - Austrian bank account of a bank not in the directory")
         void shouldCreateForeignBankAccountWithStructurallyValidBic() {
             new CreateBankAccount(scenarioTest)
                     .given("holder", "Test AG - Austrian bank account of a bank not in the directory")
                     .given("iban", "AT429999800000000001")
                     .given("bic", "NODIATW0")
                     .expected("expectedBic", "NODIATW0")
-                    .thenExpect(HttpStatus.CREATED);
+                    // no expectedBankName, because this bank is not in the directory
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
         }
 
         @Test
@@ -568,12 +577,47 @@ class HsOfficeScenarioTests extends ScenarioTest {
         @Test
         @Order(3009)
         @Scenario({"302.07"})
+        @Produces("BankAccount: Test AG - Austrian bank account of a bank in the directory")
         void shouldCompleteBicOfForeignBankAccountInDirectory() {
             new CreateBankAccount(scenarioTest)
                     .given("holder", "Test AG - Austrian bank account of a bank in the directory")
                     .given("iban", "AT049999900000000001")
                     .expected("expectedBic", "DEMOATW0")
-                    .thenExpect(HttpStatus.CREATED);
+                    .expected("expectedBankName", "Demobank Österreich")
+                    .thenExpect(HttpStatus.CREATED)
+                    .keep();
+        }
+
+        @Test
+        @Order(3011)
+        @Scenario({"303.01"})
+        void shouldShowBankNameOfExistingBankAccount() {
+            new ListBankAccountsWithBankName(scenarioTest)
+                    .given("holder", "Fourth eG")
+                    .expected("expectedBankName", "Genossenschaftsbank Süd")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3014)
+        @Scenario({"303.02"})
+        @Requires("BankAccount: Test AG - Austrian bank account of a bank in the directory")
+        void shouldShowBankNameOfForeignBankAccountInDirectory() {
+            new ListBankAccountsWithBankName(scenarioTest)
+                    .given("holder", "Test AG - Austrian bank account of a bank in the directory")
+                    .expected("expectedBankName", "Demobank Österreich")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3024)
+        @Scenario({"303.03"})
+        @Requires("BankAccount: Test AG - Austrian bank account of a bank not in the directory")
+        void shouldShowNoBankNameOfForeignBankAccountNotInDirectory() {
+            new ListBankAccountsWithBankName(scenarioTest)
+                    .given("holder", "Test AG - Austrian bank account of a bank not in the directory")
+                    // no expectedBankName, because this bank is not in the directory
+                    .thenExpect(HttpStatus.OK);
         }
 
         @Test
@@ -596,6 +640,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("holder", "Test AG - bank account at a newly imported bank")
                     .given("iban", "DE45980500000000307001")
                     .expected("expectedBic", "NEUBDEB0XXX")
+                    .expected("expectedBankName", "Neue Beispielbank")
                     .thenExpect(HttpStatus.CREATED);
         }
     }
@@ -626,6 +671,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("bankAccountHolder", "Test AG - debit bank account")
                     .given("bankAccountIBAN", "DE56990300000000594937")
                     .given("bankAccountBIC", "DEMRDEF0")
+                    .expected("expectedBankName", "Regionalbank Musterhausen")
                     .thenExpect(HttpStatus.OK)
                     .keep();
         }
@@ -649,6 +695,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .given("bankAccountHolder", "Test AG - former debit bank account")
                     .given("bankAccountIBAN", "DE33990300000137075030")
                     .given("bankAccountBIC", "DEMRDEF0")
+                    .expected("expectedBankName", "Regionalbank Musterhausen")
                     .thenExpect(HttpStatus.OK)
                     .keep();
         }
@@ -681,6 +728,18 @@ class HsOfficeScenarioTests extends ScenarioTest {
                     .expected("minimumMandateCount", 4)
                     .expected("validMandateReference", "Test AG - main debitor")
                     .expected("unexpectedMandateReference", "Test AG - former bank account")
+                    .thenExpect(HttpStatus.OK);
+        }
+
+        @Test
+        @Order(3106)
+        @Scenario({"303.04"})
+        @Requires("SEPA-Mandate: Test AG")
+        void shouldShowBankNameOfSepaMandatesOfDebitor() {
+            new ListSepaMandatesOfDebitorWithBankName(scenarioTest)
+                    .given("debitorNumber", "D-3101000")
+                    .given("mandateReference", "Test AG - main debitor")
+                    .expected("expectedBankName", "Regionalbank Musterhausen")
                     .thenExpect(HttpStatus.OK);
         }
 

@@ -28,12 +28,6 @@ for example:
 
 Write declarations without backticks; backticks are only to be able to mention these tags for documentation purposes.
 
-Each scenario brings its own line budget.
-If the PR document legitimately needs even more lines,
-declare the approved maximum here as well:
-
-- `pr-quick-check:max-pr-doc-lines=<n>`: reason why the document has to be that long
-
 ## The Scenarios
 
 This section is optional for maintenance, bug-fixing or tooling-PRs, but required for features.
@@ -91,6 +85,12 @@ This section is required.
 Here you describe the changes you made and why you made them.
 
 If necessary, you can link to an ADR (Architecture Decision Record).
+
+Each scenario brings its own line budget.
+If the PR document legitimately needs even more lines,
+declare the approved maximum here as a remark:
+
+- `pr-quick-check:max-pr-doc-lines=<n>`: reason why the document has to be that long
 
 ## Open Questions
 

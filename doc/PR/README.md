@@ -62,7 +62,8 @@ A `released: <YYYY-MM-DD>` line right below the heading names the day the PR is 
 news page sorts and shows by.
 The file name is no reliable release date, because a PR document is started long before its merge —
 PR#212 was started in December and merged in March.
-`tools/pr-quick-check` therefore insists that this date is the current one.
+`tools/pr-quick-check` therefore insists that this date is at most two days from the current one,
+so that a delayed build does not fail just because of the date.
 
 Write each note as a dated statement about a change, not as a description of the current state.
 The news page keeps a note after later changes, thus a note about the current state would silently

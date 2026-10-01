@@ -84,3 +84,14 @@ Conventions:
       NExt differs in finding the version: list the provisions instead of following a redirect,
       pick the one valid today (older and next versions are provided as well),
       and cope with the download confirmation after which a file may no longer be available.
+- [ ] TODO.doc: Find a way to date the release notes by the actual production release.
+      The `released:` date of a PR document names the day of its merge to master,
+      but production gets updated much later, thus these dates are wrong for the news page.
+      `tools/pr-quick-check` only keeps the date near the build day, see PR#303.
+      No concrete approach is known yet.
+- [ ] TODO.feat: Let `overrideBankDirectory` of a bank account also record its bank as a `MANUAL` entry
+      in `hs_office.bank`, e.g. under a name like `addToBankDirectory`.
+      Today it just accepts the given BIC, thus foreign banks still need SQL by Operations (see PR#303),
+      and the next bank account at the same bank neither gets its BIC completed nor shows a bank name.
+      Open: where the bank name comes from, and whether a known bank code with a different BIC
+      updates the entry or stays a per-account override; the Bundesbank import replaces German entries anyway.

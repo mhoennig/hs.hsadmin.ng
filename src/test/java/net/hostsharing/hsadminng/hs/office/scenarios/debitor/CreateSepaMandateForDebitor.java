@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.debitor;
 
+import net.hostsharing.hsadminng.hs.scenarios.PathAssertion;
 import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 
@@ -45,5 +46,10 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
                 }
                 """))
                 .expecting(CREATED).expecting(JSON);
+    }
+
+    @Override
+    protected void verify(final HttpResponse response) {
+        new PathAssertion("bankAccount.bankName").contains("%{expectedBankName}").accept(response);
     }
 }

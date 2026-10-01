@@ -49,5 +49,12 @@ public class CreateBankAccount extends UseCase<CreateBankAccount> {
     @Override
     protected void verify(final HttpResponse response) {
         path("bic").contains("%{expectedBic}").accept(response);
+        // an empty expectation means the bank is not in the directory, thus the response carries no bankName
+        val expectedBankName = ScenarioTest.resolve("%{expectedBankName???}", DROP_COMMENTS);
+        if (expectedBankName == null || expectedBankName.isEmpty()) {
+            response.path("bankName").isNull();
+        } else {
+            response.path("bankName").isEqualTo(expectedBankName);
+        }
     }
 }

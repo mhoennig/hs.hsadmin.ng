@@ -16,6 +16,8 @@ from pathlib import Path
 MARKER_WORD = "FIX" + "ME"
 MAX_PR_DOC_LINES = 200
 MAX_SCOPE_SCORE = 35
+# A build may run a few days after the release date was set, e.g. after a rebase or a queued CI.
+RELEASE_DATE_TOLERANCE_DAYS = 2
 # Beyond this, a branch is stale rather than open work, and its conflicts are noise.
 CONFLICT_SCAN_DAYS = 30
 PR_DOC_BASE_LINES = 50
@@ -441,7 +443,7 @@ def check_verified_by_sections(pr_doc):
 
 def check_release_note_date(pr_doc):
     """A PR document is started long before the PR is merged, thus its file name is no reliable
-    release date; the note names the day it goes live and has to be current at build time."""
+    release date; the note names the day it goes live and has to be about current at build time."""
     text = pr_doc.read_text(encoding="utf-8")
     if RELEASE_NOTE_HEADING not in text:
         return []
@@ -452,13 +454,15 @@ def check_release_note_date(pr_doc):
             f"{pr_doc} has a release note without a release date; add a line "
             "`released: <YYYY-MM-DD>` right below its heading"
         ]
-    today = date.today().isoformat()
-    if match.group(1) != today:
+    today = date.today()
+    released = date.fromisoformat(match.group(1))
+    if abs((released - today).days) > RELEASE_DATE_TOLERANCE_DAYS:
         return [
-            f"{pr_doc} declares the release note as released on {match.group(1)}, but today is "
-            f"{today}; a merged note keeps this date, thus set it to the day of the merge"
+            f"{pr_doc} declares the release note as released on {released}, but today is "
+            f"{today}; a merged note keeps this date, thus set it to the day of the merge, "
+            f"at most {RELEASE_DATE_TOLERANCE_DAYS} days apart"
         ]
-    print(f"PASSED: the release note is dated {today}")
+    print(f"PASSED: the release note is dated {released}, at most {RELEASE_DATE_TOLERANCE_DAYS} days from today")
     return []
 
 

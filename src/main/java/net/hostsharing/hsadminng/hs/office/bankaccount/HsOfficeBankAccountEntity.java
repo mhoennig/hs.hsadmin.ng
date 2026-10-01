@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacSpec;
 import net.hostsharing.hsadminng.repr.Stringify;
 import net.hostsharing.hsadminng.repr.Stringifyable;
+import org.hibernate.annotations.Formula;
 
 import jakarta.persistence.*;
 import java.io.IOException;
@@ -46,6 +47,14 @@ public class HsOfficeBankAccountEntity implements BaseEntity<HsOfficeBankAccount
     private String iban;
 
     private String bic;
+
+    /* Read-only join on the bank directory; POST answers from the directory entry it validated against. */
+    @Formula("""
+            (select b.name from hs_office.bank b
+                 where b.countryCode = left(iban, 2)
+                   and b.bankCode = hs_office.iban_bank_code(iban, length(b.bankCode)))
+            """)
+    private String bankName;
 
     @Override
     public String toString() {

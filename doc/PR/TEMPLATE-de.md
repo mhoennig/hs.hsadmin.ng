@@ -27,12 +27,6 @@ Die Obergrenze darf Raum für weitere zusammengehörige Änderungen lassen, zum 
 
 Deklarationen ohne Backticks übernehmen; in Backticks gelten sie nur als Erwähnung.
 
-Jedes Szenario bringt eigenes Zeilenbudget mit.
-Braucht das PR-Dokument darüber hinaus berechtigterweise mehr Zeilen,
-hier ebenso die genehmigte Obergrenze deklarieren:
-
-- `pr-quick-check:max-pr-doc-lines=<n>`: Grund, warum das Dokument so lang sein muss
-
 ## Die Szenarien
 
 Dieser Abschnitt ist optional für Wartungs-, Bugfix- und Werkzeug-PRs, aber Pflicht für Features.
@@ -93,6 +87,12 @@ Dieser Abschnitt ist Pflicht.
 Hier die vorgenommenen Änderungen beschreiben und warum sie so umgesetzt wurden.
 
 Bei Bedarf auf ein ADR (Architecture Decision Record) verlinken.
+
+Jedes Szenario bringt eigenes Zeilenbudget mit.
+Braucht das PR-Dokument darüber hinaus berechtigterweise mehr Zeilen,
+hier als Anmerkung die genehmigte Obergrenze deklarieren:
+
+- `pr-quick-check:max-pr-doc-lines=<n>`: Grund, warum das Dokument so lang sein muss
 
 ## Offene Fragen
 

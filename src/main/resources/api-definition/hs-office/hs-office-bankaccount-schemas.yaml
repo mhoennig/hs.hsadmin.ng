@@ -15,6 +15,12 @@ components:
                     type: string
                 bic:
                     type: string
+                bankName:
+                    type: string
+                    readOnly: true
+                    description: |
+                        The name of the bank, looked up in the bank directory by the country and bank code of the IBAN.
+                        Empty for a bank which is not in the directory, which only happens outside Germany.
 
         HsOfficeBankAccountInsert:
             type: object

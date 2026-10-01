@@ -64,7 +64,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
         context.assumeRoles(assumedRoles);
 
-        validateOrCompleteBic(body, Iban.valueOf(body.getIban()));
+        val bank = validateOrCompleteBic(body, Iban.valueOf(body.getIban()));
 
         final var entityToSave = mapper.map(body, HsOfficeBankAccountEntity.class);
 
@@ -76,6 +76,8 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
                         .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeBankAccountResource.class);
+        // the entity reads bankName through a formula, which Hibernate only evaluates when loading
+        mapped.setBankName(bank == null ? null : bank.getName());
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -112,13 +114,14 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     }
 
     // The bank directory determines the BIC; it is meant to be complete for German IBANs, for other countries only manually maintained.
-    private void validateOrCompleteBic(final HsOfficeBankAccountInsertResource body, final Iban iban) {
+    private HsOfficeBankEntity validateOrCompleteBic(final HsOfficeBankAccountInsertResource body, final Iban iban) {
         val bank = bankOfIban(body, iban);
         if (body.getBic() == null) {
             body.setBic(bicFromDirectory(bank, body.getIban()));
         } else {
             validateGivenBic(body, bank);
         }
+        return bank;
     }
 
     private HsOfficeBankEntity bankOfIban(final HsOfficeBankAccountInsertResource body, final Iban iban) {
