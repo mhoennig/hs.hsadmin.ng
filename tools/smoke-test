@@ -20,6 +20,11 @@
 #
 # Overridable via environment:
 #   HSADMINNG_SMOKE_TEST_PG_PORT          host port of the throw-away database (default 15432)
+#   HSADMINNG_SMOKE_TEST_PG_HOST          address the application reaches that port on; the default is
+#                                         TESTCONTAINERS_HOST_OVERRIDE if set, as a rootless Docker with
+#                                         slirp4netns offers its published ports on 10.0.2.100, not on
+#                                         the client's 127.0.0.1 (the bind address 127.0.0.1 of `-p`
+#                                         refers to the daemon's network, not to the client's)
 #   HSADMINNG_SMOKE_TEST_APP_PORT         application port, management port is +1 (default 8090)
 #   HSADMINNG_SMOKE_TEST_STARTUP_TIMEOUT  seconds to wait for the application (default 300)
 
@@ -28,6 +33,7 @@ cd "$(dirname "$0")/.." || exit 1
 PG_CONTAINER=hsadmin-ng-smoke-test-postgres
 PG_IMAGE=postgres:17.7-trixie # keep in sync with the README and the normal local database
 PG_PORT=${HSADMINNG_SMOKE_TEST_PG_PORT:-15432}
+PG_HOST=${HSADMINNG_SMOKE_TEST_PG_HOST:-${TESTCONTAINERS_HOST_OVERRIDE:-127.0.0.1}}
 APP_PORT=${HSADMINNG_SMOKE_TEST_APP_PORT:-8090}
 STARTUP_TIMEOUT=${HSADMINNG_SMOKE_TEST_STARTUP_TIMEOUT:-300}
 LOG_FILE=build/smoke-test/bootRun.log
@@ -84,7 +90,7 @@ source .unset-environment
 
 # same environment as an .environment-fake-jwt-local setup, but pointing to the
 # throw-away database and to a separate application port
-export HSADMINNG_POSTGRES_JDBC_URL=jdbc:postgresql://127.0.0.1:$PG_PORT/postgres
+export HSADMINNG_POSTGRES_JDBC_URL=jdbc:postgresql://$PG_HOST:$PG_PORT/postgres
 export HSADMINNG_POSTGRES_ADMIN_USERNAME=postgres
 export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
 export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted

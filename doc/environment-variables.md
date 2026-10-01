@@ -117,6 +117,19 @@ Consumed by JUnit tests (`src/test/...`), the Gradle build, and Testcontainers.
 | `HSADMINNG_TEST_MAX_PARALLEL_FORKS`       | max parallel test JVMs for the tag-scoped Gradle test tasks (`HsadminTestTasksPlugin`)                                                                                                                                                  | `3`                                                                        |
 | `DOCKER_HOST`                             | Docker-/Podman-socket used by Testcontainers, see the Podman HOWTO chapters in the [README](../README.md)                                                                                                                               | Docker default socket; example: `unix:///run/user/1000/podman/podman.sock` |
 | `TESTCONTAINERS_RYUK_DISABLED`            | disables the Testcontainers cleanup container, needed for Podman, see the Podman HOWTO chapters in the [README](../README.md)                                                                                                           | `false`                                                                    |
+| `TESTCONTAINERS_HOST_OVERRIDE`            | address under which Testcontainers and `tools/smoke-test` reach published container ports; needed where they do not listen on `127.0.0.1`, e.g. a rootless Docker with slirp4netns offers them on `10.0.2.100`                          | none; example: `10.0.2.100`                                                |
+
+## Smoke-Test (`tools/smoke-test`)
+
+`tools/smoke-test` boots the application against a throw-away Docker-PostgreSQL and exercises the shell tooling;
+it exports its complete environment itself, so these variables only adjust ports and addresses.
+
+| Variable                               | Purpose                                                                                                                                                                                           | Default/Example                                         |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|
+| `HSADMINNG_SMOKE_TEST_PG_PORT`         | host port of the throw-away database container                                                                                                                                                    | `15432`                                                 |
+| `HSADMINNG_SMOKE_TEST_PG_HOST`         | address the application reaches that port on; the bind address `127.0.0.1` of the container refers to the Docker daemon's network, which with slirp4netns offers the port on `10.0.2.100` instead | `TESTCONTAINERS_HOST_OVERRIDE` if set, else `127.0.0.1` |
+| `HSADMINNG_SMOKE_TEST_APP_PORT`        | application port, the management port is this plus one                                                                                                                                            | `8090`                                                  |
+| `HSADMINNG_SMOKE_TEST_STARTUP_TIMEOUT` | seconds to wait for the application to start                                                                                                                                                      | `300`                                                   |
 
 ## CI and Miscellaneous
 
