@@ -211,7 +211,59 @@ class HsOfficeDebitorControllerRestTest {
                         .accept(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("message", containsString("exactly one of debitorRel and debitorRelUuid must be supplied")));
+                .andExpect(jsonPath("message", containsString(
+                        "exactly one of debitorRel and debitorRelUuid must be supplied, but found none")));
+    }
+
+    @Test
+    void rejectsPostWithDebitorRelAndDebitorRelUuid() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/office/debitors")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "debitorRel": {
+                                        "anchor.uuid": "%s",
+                                        "holder.uuid": "%s",
+                                        "contact.uuid": "%s"
+                                    },
+                                    "debitorRel.uuid": "%s",
+                                    "debitorNumberSuffix": "00",
+                                    "billable": true,
+                                    "defaultPrefix": "abc"
+                                }
+                                """.formatted(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString(
+                        "exactly one of debitorRel and debitorRelUuid must be supplied, but found both")));
+    }
+
+    @Test
+    void rejectsPostWithDebitorRelMark() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/hs/office/debitors")
+                        .header("Authorization", bearer("hsh-alex_superuser"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "debitorRel": {
+                                        "anchor.uuid": "%s",
+                                        "holder.uuid": "%s",
+                                        "mark": "some mark",
+                                        "contact.uuid": "%s"
+                                    },
+                                    "debitorNumberSuffix": "00",
+                                    "billable": true,
+                                    "defaultPrefix": "abc"
+                                }
+                                """.formatted(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()))
+                        .accept(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message", containsString("debitorRel.mark must be null")));
     }
 
     @Test

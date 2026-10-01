@@ -59,7 +59,7 @@ denn der Mutation-CRAP ist nie kleiner als die Komplexität.
 | 12,00 | `HsDomainDnsSetupHostingAssetValidator.toZonefileString`      | 12 |   12/12 |   1,00 |
 | 12,00 | `Stringify.<init>`                                            |  3 |     0/2 |   3,00 |
 | 12,00 | `HsOfficePartnerController.optionallyCreateExPartnerRelation` |  3 |     0/2 |   3,00 |
-| 11,60 | `HsOfficeDebitorController.postNewDebitor`                    |  7 |    6/11 |   9,36 |
+| 11,60 | `HsOfficeDebitorController.postNewDebitor`                    |  7 |    6/11 |   7,04 |
 
 Was jeweils fehlte:
 
@@ -71,7 +71,8 @@ Was jeweils fehlte:
    im Testrumpf gebaut, denn PIT führt Static-Initializer nicht je Mutant neu aus.
 5. `optionallyCreateExPartnerRelation`: Eine gewechselte Partner-Person speichert eine `EX_PARTNER`-Relation,
    eine unveränderte nicht.
-6. `postNewDebitor`: `debitorRel` und `debitorRelUuid` zugleich oder keines von beiden ergeben 400.
+6. `postNewDebitor`: `debitorRel` und `debitorRelUuid` zugleich, keines von beiden
+   oder `debitorRel.mark` ergeben je eine eigene 400-Meldung.
 
 Die beiden Controller-Methoden prüften vielleicht auch schon Integrationstests.
 Die zählen hier nicht, denn PIT nutzt nur `*UnitTest` und `*RestTest`.
