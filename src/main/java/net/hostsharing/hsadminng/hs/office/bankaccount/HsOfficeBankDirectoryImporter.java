@@ -288,7 +288,7 @@ public class HsOfficeBankDirectoryImporter {
         var quoted = false;
         for (int i = 0; i < line.length(); ++i) {
             val c = line.charAt(i);
-            if (c == '"' && quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+            if (isEscapedQuote(line, i, quoted)) {
                 field.append('"');
                 ++i;
             } else if (c == '"') {
@@ -302,6 +302,11 @@ public class HsOfficeBankDirectoryImporter {
         }
         fields.add(field.toString());
         return fields.toArray(String[]::new);
+    }
+
+    /** Inside a quoted field, two double quotes stand for one. */
+    private static boolean isEscapedQuote(final String line, final int i, final boolean quoted) {
+        return quoted && line.charAt(i) == '"' && i + 1 < line.length() && line.charAt(i + 1) == '"';
     }
 
     /** The Bundesbank supersedes the German banks seeded from the existing bank accounts and those entered by hand. */

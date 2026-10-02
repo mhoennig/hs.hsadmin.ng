@@ -42,7 +42,8 @@ die sechs Methoden darüber behebt dieser PR, siehe „Zusätzliche Änderungen�
 
 ## Zusätzliche Änderungen
 
-Mit dem Schwellwert 10 scheiterte das Gate an diesen sechs Methoden.
+Mit dem Schwellwert 10 scheiterte das Gate an den ersten sechs dieser Methoden.
+Die siebte lag mit 10,00 genau auf dem Schwellwert und hätte bei der nächsten Verzweigung gestoppt.
 Bei fünf genügte ein weiterer getöteter Mutant;
 `toZonefileString` brauchte keine Tests, sondern eine Aufteilung,
 denn der Mutation-CRAP ist nie kleiner als die Komplexität.
@@ -55,6 +56,7 @@ denn der Mutation-CRAP ist nie kleiner als die Komplexität.
 | 12,00 | `Stringify.<init>`                                            |  3 |     0/2 |   3,00 |
 | 12,00 | `HsOfficePartnerController.optionallyCreateExPartnerRelation` |  3 |     0/2 |   3,00 |
 | 11,60 | `HsOfficeDebitorController.postNewDebitor`                    |  7 |    6/11 |   7,04 |
+| 10,00 | `HsOfficeBankDirectoryImporter.fields`                        | 10 |    alle |   7,00 |
 
 Was jeweils fehlte:
 
@@ -68,6 +70,8 @@ Was jeweils fehlte:
    eine unveränderte nicht.
 6. `postNewDebitor`: `debitorRel` und `debitorRelUuid` zugleich, keines von beiden
    oder `debitorRel.mark` ergeben je eine eigene 400-Meldung.
+7. `fields`: keine Tests, sondern eine Aufteilung;
+   die Hilfsmethode `isEscapedQuote` erkennt das verdoppelte Anführungszeichen im quotierten Feld (C 5, 5,00).
 
 Die beiden Controller-Methoden prüften vielleicht auch schon Integrationstests.
 Die zählen hier nicht, denn PIT nutzt nur `*UnitTest` und `*RestTest`.
