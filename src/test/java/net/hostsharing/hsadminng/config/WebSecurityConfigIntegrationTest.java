@@ -183,6 +183,22 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
+    void codeCityAllowsCodeChartaToLoadIt() {
+        val response = corsGetRequest("/doc/codecharta/mutation-crap.cc.json", "https://codecharta.com", null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN))
+                .isEqualTo("https://codecharta.com");
+    }
+
+    @Test
+    void codeCityIsNotSharedWithOtherOrigins() {
+        val response = corsGetRequest("/doc/codecharta/mutation-crap.cc.json", "https://denied.example", null);
+
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isNull();
+    }
+
+    @Test
     void preflightPostToPongAllowsConfiguredOrigin() {
         val response = corsPreflightRequest("/api/pong", "https://allowed.example", "POST");
 

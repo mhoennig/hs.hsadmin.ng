@@ -174,6 +174,9 @@ public abstract class BaseWebSecurityConfig {
                 // without a dev-server-proxy: GET for discovery/JWKS/userinfo, POST for the token endpoint
                 registry.addMapping("/fake-jwt/**").allowedOrigins(allowedOrigins)
                         .allowedMethods("GET", "POST");
+                // the CodeCharta viewer loads the bundled code city by its URL from the reader's browser
+                registry.addMapping("/doc/codecharta/**").allowedOrigins("https://codecharta.com")
+                        .allowedMethods("GET");
             }
         };
     }

@@ -26,7 +26,7 @@ plugins {
     id("com.gorylenko.gradle-git-properties") version "4.0.1"    // exposes git commit info via Actuator info endpoint
     id("io.openapiprocessor.openapi-processor") version "2026.2" // generates Controller-interface and resources from API-spec
     id("info.solidsoft.pitest") version "1.19.0"                 // performs mutation testing
-    id("de.javagil.werkcrappit") version "0.8.0"                 // Mutation-CRAP per method, gate mutationCrapCheck
+    id("de.javagil.werkcrappit") version "0.9.0"                 // Mutation-CRAP per method, gate mutationCrapCheck
     id("se.patrikerdes.use-latest-versions") version "0.2.19"    // updates module and plugin versions
     id("io.github.ben-manes.versions") version "0.64.0"          // determines which dependencies have updates
 }
@@ -419,6 +419,9 @@ configure<PitestPluginExtension> {
 // 10 holds the state of 2026-10-01 after fixing the six methods above it, see doc/PR/*PR#317*.
 werkcrappit {
     maxMutationCrap = 10
+    codeCharta {
+        excludeClasses = listOf("**.generated.**")
+    }
 }
 
 tasks.named("pitest") {
@@ -551,6 +554,14 @@ tasks.register<GradleBuild>("bootJarWithBuildTime") {
 
     tasks = listOf("bootJar")
     startParameter.projectProperties = startParameter.projectProperties + ("includeBuildTime" to "true")
+}
+
+// only the release build runs pitestFull, so only its jar carries the code city, at /doc/codecharta
+if (project.hasProperty("includeRenderedDocumentation")) {
+    tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+        dependsOn("mutationCrapCodeCharta")
+        from(layout.buildDirectory.dir("reports/codecharta")) { into("BOOT-INF/classes/static/doc/codecharta") }
+    }
 }
 
 tasks.register<GradleBuild>("bootJarWithDocumentation") {
