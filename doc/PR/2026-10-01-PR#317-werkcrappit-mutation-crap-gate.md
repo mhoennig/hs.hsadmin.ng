@@ -96,3 +96,19 @@ ein Passwort dort gelangte dann im Klartext ins Log.
 - [ ] TODO.impl: `toZonefileString` liest für `auto-AAAA-RR` den Schlüssel `auto-AAA-RR`
   und für `auto-WILDCARD-MX-RR` den Schlüssel `auto-SPF-RR`;
   die Aufteilung ändert dieses Verhalten bewusst nicht.
+
+### `config` nicht mehr ganz von PIT ausgenommen
+
+Bisher schloss PIT das ganze Package `config` aus; in der Code-City war es deshalb grau.
+Dort liegt aber längst Logik mit eigenen Unit-Tests: Filter für API-Keys und Rollen, der `ActuatorSanitizer`, der `FakeJwtController`.
+Ausgenommen bleiben nur reine Spring-Verdrahtung (`DocumentationWebConfig`, `JsonObjectMapperConfiguration`,
+`MessagesResourceConfig`, `WebSecurityConfig`) und `JwtFakeBearer` ohne eigene Tests.
+
+Ein Messlauf fand dabei zwei Methoden über 10, beide mit Komplexität 3 und keinem getöteten Mutanten:
+
+1. `ActuatorSanitizer.isRegex`: Kein Test unterschied einen als Regex gelesenen Schlüssel von einem als Suffix gelesenen;
+   `aPlainKeyMatchesAsSuffix` und `aRegexKeyMatchesAsAWholeNotAsSuffix` tun es.
+2. `BaseWebSecurityConfig$1.addCorsMappings`: Nur der Integrationstest prüfte die CORS-Mappings, PIT nutzt ihn nicht;
+   zwei Unit-Tests prüfen jetzt die Ursprünge je Mapping, mit und ohne konfigurierte Ursprünge.
+
+Danach haben beide 3,00, und das Gate hält.
