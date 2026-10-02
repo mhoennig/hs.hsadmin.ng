@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 import static net.hostsharing.hsadminng.config.JwtFakeBearer.RSA_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +49,35 @@ class BaseWebSecurityConfigUnitTest {
     @AfterEach
     void stopHttpServer() {
         httpServer.stop(0);
+    }
+
+    @Test
+    void corsAllowsTheConfiguredOriginsForTheApiAndTheCodeCharta() {
+        val registry = new InspectableCorsRegistry();
+
+        config.corsConfigurer("https://a.example,https://b.example", "https://viewer.example").addCorsMappings(registry);
+
+        assertThat(registry.origins("/api/**")).containsExactly("https://a.example", "https://b.example");
+        assertThat(registry.origins("/fake-jwt/**")).containsExactly("https://a.example", "https://b.example");
+        assertThat(registry.origins("/api/ping")).containsExactly("*");
+        assertThat(registry.origins("/doc/codecharta/**")).containsExactly("https://viewer.example");
+    }
+
+    @Test
+    void corsAllowsAnyOriginForTheApiWithoutConfiguredOrigins() {
+        val registry = new InspectableCorsRegistry();
+
+        config.corsConfigurer("", "https://viewer.example").addCorsMappings(registry);
+
+        assertThat(registry.origins("/api/**")).containsExactly("*");
+    }
+
+    // CorsRegistry keeps its mappings protected
+    private static class InspectableCorsRegistry extends CorsRegistry {
+
+        List<String> origins(final String pathPattern) {
+            return getCorsConfigurations().get(pathPattern).getAllowedOrigins();
+        }
     }
 
     @Test

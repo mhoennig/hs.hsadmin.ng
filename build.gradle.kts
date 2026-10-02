@@ -382,7 +382,12 @@ configure<PitestPluginExtension> {
     targetClasses.set(listOf("net.hostsharing.hsadminng.**")) // Use .set() for Property<List<String>>
     excludedClasses.set(
         listOf(
-            "net.hostsharing.hsadminng.config.**",
+            // pure Spring wiring, and the token helper of the fake-jwt profile without tests of its own
+            "net.hostsharing.hsadminng.config.DocumentationWebConfig",
+            "net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration",
+            "net.hostsharing.hsadminng.config.MessagesResourceConfig",
+            "net.hostsharing.hsadminng.config.WebSecurityConfig",
+            "net.hostsharing.hsadminng.config.JwtFakeBearer",
             // "net.hostsharing.hsadminng.**.*Controller",
             "net.hostsharing.hsadminng.**.generated.**",
             "net.hostsharing.hsadminng.rbac.generator.**",

@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.config;
 
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.endpoint.SanitizableData;
@@ -42,6 +43,24 @@ class ActuatorSanitizerUnitTest {
         final var sanitizedData = actuatorSanitizer.apply(data);
 
         assertThat(sanitizedData.getValue()).isEqualTo(SanitizableData.SANITIZED_VALUE);
+    }
+
+    @Test
+    void aPlainKeyMatchesAsSuffix() {
+        final var data = createSanitizableData("myCustomSecret", "my-custom-secret");
+        final var sanitizedData = actuatorSanitizer.apply(data);
+
+        assertThat(sanitizedData.getValue()).isEqualTo(SanitizableData.SANITIZED_VALUE);
+    }
+
+    @Test
+    void aRegexKeyMatchesAsAWholeNotAsSuffix() {
+        val sanitizer = new ActuatorSanitizer(List.of("secret+key"));
+
+        assertThat(sanitizer.apply(createSanitizableData("secretkey", "value")).getValue())
+                .isEqualTo(SanitizableData.SANITIZED_VALUE);
+        assertThat(sanitizer.apply(createSanitizableData("mysecretkey", "value")).getValue())
+                .isEqualTo("value");
     }
 
     @Test
