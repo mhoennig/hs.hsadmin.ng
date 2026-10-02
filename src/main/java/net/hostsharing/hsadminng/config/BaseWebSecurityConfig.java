@@ -156,7 +156,9 @@ public abstract class BaseWebSecurityConfig {
 
     @Bean
     public WebMvcConfigurer corsConfigurer(
-            @Value("${hsadminng.cors.allowed-origins:*}") final String corsAllowedOrigins) {
+            @Value("${hsadminng.cors.allowed-origins:*}") final String corsAllowedOrigins,
+            @Value("${hsadminng.codecharta.allowed-origins:https://javagil.de,https://codecharta.com}")
+            final String codeChartaAllowedOrigins) {
 
         return new WebMvcConfigurer() {
 
@@ -175,7 +177,7 @@ public abstract class BaseWebSecurityConfig {
                 registry.addMapping("/fake-jwt/**").allowedOrigins(allowedOrigins)
                         .allowedMethods("GET", "POST");
                 // the CodeCharta viewer loads the bundled code city by its URL from the reader's browser
-                registry.addMapping("/doc/codecharta/**").allowedOrigins("https://codecharta.com")
+                registry.addMapping("/doc/codecharta/**").allowedOrigins(codeChartaAllowedOrigins.split(","))
                         .allowedMethods("GET");
             }
         };

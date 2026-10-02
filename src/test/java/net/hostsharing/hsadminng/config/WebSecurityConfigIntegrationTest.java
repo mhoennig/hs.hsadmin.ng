@@ -192,6 +192,15 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
+    void codeCityAllowsThePatchedCodeChartaToLoadIt() {
+        val response = corsGetRequest("/doc/codecharta/mutation-crap.cc.json", "https://javagil.de", null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN))
+                .isEqualTo("https://javagil.de");
+    }
+
+    @Test
     void codeCityIsNotSharedWithOtherOrigins() {
         val response = corsGetRequest("/doc/codecharta/mutation-crap.cc.json", "https://denied.example", null);
 

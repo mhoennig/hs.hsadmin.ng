@@ -91,6 +91,9 @@ hsadminng:
         leakproof:
     cors:
         allowed-origins: ${ALLOWED_ORIGINS:*} # for compatibility with env-based CORS-configuration
+    codecharta:
+        # the CodeCharta viewers that may load the bundled code city by its URL
+        allowed-origins: https://javagil.de,https://codecharta.com
     fake-jwt:
         # env override replaces this list, so a deployed frontend host must re-list loopback if still needed
         # You can also use the env-var variant of the Spring property: HSADMINNG_FAKE_JWT_CLIENT_HOSTS,
