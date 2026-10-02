@@ -39,7 +39,7 @@ builds:
     # `outputs.cacheIf { false }` instead of `--no-build-cache`.
     # --profile writes a per-task timing report under build/reports/profile,
     # archived with the artifacts.
-    buildCommand: ./gradlew --console=plain --no-daemon --profile jacocoTestReport pitestPartial mutationCrapCheck check generateDocumentation -x dependencyCheckAnalyze smokeTest prQuickCheck
+    buildCommand: ./gradlew --console=plain --no-daemon --profile jacocoTestReport pitestPartial mutationCrapCheck mutationCrapCodeCharta check generateDocumentation -x dependencyCheckAnalyze smokeTest prQuickCheck
     artifactDirs:
       - build/reports
       - build/doc
