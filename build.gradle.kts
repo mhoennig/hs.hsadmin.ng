@@ -26,7 +26,7 @@ plugins {
     id("com.gorylenko.gradle-git-properties") version "4.0.1"    // exposes git commit info via Actuator info endpoint
     id("io.openapiprocessor.openapi-processor") version "2026.2" // generates Controller-interface and resources from API-spec
     id("info.solidsoft.pitest") version "1.19.0"                 // performs mutation testing
-    id("de.hoennig.werkcrappit") version "0.3.1"                 // Mutation-CRAP per method, gate mutationCrapCheck
+    id("de.javagil.werkcrappit") version "0.4.0"                 // Mutation-CRAP per method, gate mutationCrapCheck
     id("se.patrikerdes.use-latest-versions") version "0.2.19"    // updates module and plugin versions
     id("io.github.ben-manes.versions") version "0.64.0"          // determines which dependencies have updates
 }

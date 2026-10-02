@@ -31,7 +31,7 @@ der höchste Wert war 12,72.
 Alle übrigen 1152 bewerteten Methoden haben einen Mutation-CRAP-Wert von höchstens 10.
 
 - `settings.gradle`: die Maven-Registry von git.javagil.de für das Gradle-Plugin.
-- `build.gradle.kts`: Plugin `de.hoennig.werkcrappit`, dieselbe Registry für `werkcrappit-pit`,
+- `build.gradle.kts`: Plugin `de.javagil.werkcrappit` 0.4.0, dieselbe Registry für `werkcrappit-pit`,
   und `werkcrappit { maxMutationCrap = 10 }`.
 - `.werkator.yml`: `mutationCrapCheck` nach `pitestPartial` in den Branch-Builds
   und nach `pitestFull` im Build für `master`.
