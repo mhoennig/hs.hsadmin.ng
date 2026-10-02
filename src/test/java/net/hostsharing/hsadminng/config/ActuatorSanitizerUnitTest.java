@@ -47,8 +47,8 @@ class ActuatorSanitizerUnitTest {
 
     @Test
     void aPlainKeyMatchesAsSuffix() {
-        final var data = createSanitizableData("myCustomSecret", "my-custom-secret");
-        final var sanitizedData = actuatorSanitizer.apply(data);
+        val data = createSanitizableData("myCustomSecret", "my-custom-secret");
+        val sanitizedData = actuatorSanitizer.apply(data);
 
         assertThat(sanitizedData.getValue()).isEqualTo(SanitizableData.SANITIZED_VALUE);
     }
