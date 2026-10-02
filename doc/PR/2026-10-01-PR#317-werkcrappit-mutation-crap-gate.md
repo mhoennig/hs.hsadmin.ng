@@ -31,7 +31,7 @@ der höchste Wert war 12,72.
 Alle übrigen 1152 bewerteten Methoden haben einen Mutation-CRAP-Wert von höchstens 10.
 
 - `settings.gradle`: die Maven-Registry von git.javagil.de für das Gradle-Plugin.
-- `build.gradle.kts`: Plugin `de.javagil.werkcrappit` 0.9.0, dieselbe Registry für `werkcrappit-pit`,
+- `build.gradle.kts`: Plugin `de.javagil.werkcrappit` 0.10.0, dieselbe Registry für `werkcrappit-pit`,
   und `werkcrappit { maxMutationCrap = 10 }`.
 - `.werkator.yml`: `mutationCrapCheck` nach `pitestPartial` in den Branch-Builds
   und nach `pitestFull` im Build für `master`.
@@ -42,6 +42,7 @@ Alle übrigen 1152 bewerteten Methoden haben einen Mutation-CRAP-Wert von höchs
   Generierter Code ist per `codeCharta { excludeClasses }` ausgenommen.
 - `bootJarWithDocumentation` bündelt die Code-City unter `/doc/codecharta/`,
   und die Doku-Übersicht verlinkt sie; nur im Release-Build, denn nur dort läuft `pitestFull`.
+  Die Seite dort öffnet die Stadt per Link direkt im CodeCharta-Viewer.
 - `BaseWebSecurityConfig`: CORS für `/doc/codecharta/**`, nur `GET` von `https://codecharta.com`,
   damit der CodeCharta-Viewer die Datei per URL aus dem Browser des Lesers laden kann.
 
