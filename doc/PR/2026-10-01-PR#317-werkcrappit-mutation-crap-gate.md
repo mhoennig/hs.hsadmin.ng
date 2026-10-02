@@ -4,10 +4,6 @@
 
 - GitEA-PR: https://dev.hostsharing.net/hostsharing/hs.hsadmin.ng/pulls/317
 
-## Relevante Links (öffentlich)
-
-- werkcrappit: https://git.javagil.de/mi/werkcrappit, Anleitung `docs/guides/hsadmin-ng.md`
-
 ## Das Problem
 
 Der PIT-Report von hsadmin-ng zeigt, welche Mutanten überleben, aber nicht, wo Komplexität und schwache Tests zusammenkommen.
@@ -28,9 +24,8 @@ Ein solcher Mutation-CRAP soll nun als Gate im build verwendet werden.
 
 ## Die Lösung
 
-### werkcrappit einbinden
-
-Werkcrappit ist solch ein Mutation-CRAP-Plugin für piTest und Gradle.
+Werkcrappit ist solch ein Mutation-CRAP-Plugin für piTest und Gradle:
+https://git.javagil.de/mi/werkcrappit, Anleitung für hsadmin-ng in `docs/guides/hsadmin-ng.md`.
 Ein Probelauf am 2026-10-01 auf master `c8955b2e5` fand sechs Methoden mit einem Mutation-CRAP-Wert über 10;
 der höchste Wert war 12,72.
 Alle übrigen 1152 bewerteten Methoden haben einen Mutation-CRAP-Wert von höchstens 10.
@@ -43,9 +38,9 @@ Alle übrigen 1152 bewerteten Methoden haben einen Mutation-CRAP-Wert von höchs
 
 `maxMutationCrap = 10` heißt „höchstens 10“: Das Gate scheitert erst bei einem Wert über 10.
 Der Schwellwert steht von Anfang an im Branch;
-der Branch-Build bleibt rot, bis die sechs Methoden unten behoben sind.
+die sechs Methoden darüber behebt dieser PR, siehe „Zusätzliche Änderungen“.
 
-### Zusätzliche Änderungen
+## Zusätzliche Änderungen
 
 Mit dem Schwellwert 10 scheiterte das Gate an diesen sechs Methoden.
 Bei fünf genügte ein weiterer getöteter Mutant;
